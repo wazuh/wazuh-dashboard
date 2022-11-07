@@ -3,5 +3,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export * from './drag_drop_context';
-export * from './types';
+export { createTableConfig } from './table_viz_type';
