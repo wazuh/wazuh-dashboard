@@ -1,0 +1,25 @@
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # At 00:00 on Monday.
+  workflow_dispatch: # on button click
+
+jobs:
+  sync:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        branch: [main, 2.x, 2.3.0] # branches to track and sync from OSD
+
+    steps:
+      - uses: tgymnich/fork-sync@v1.6.3
+        with:
+          head: ${{ matrix.branch }}
+          base: ${{ matrix.branch }}
+          merge_method: rebase
+          pr_title: Sync Wazuh Dashboard fork
+          pr_message: Update Wazuh Dashboard with lastest changes from OpenSearch Dashboards using the rebase strategy to replay our work on top.
+          auto_merge: false
