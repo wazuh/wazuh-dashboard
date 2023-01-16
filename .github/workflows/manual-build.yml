@@ -20,9 +20,9 @@ env:
   OSD_SNAPSHOT_SKIP_VERIFY_CHECKSUM: true
 
 jobs:
-  build-min-artifact-tests-linux:
+  generate-linux-image:
     runs-on: ubuntu-latest
-    name: Build min release artifacts on Linux
+    name: Generate Linux image
     defaults:
       run:
         working-directory: ./artifacts
