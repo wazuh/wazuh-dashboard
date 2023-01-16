@@ -33,10 +33,7 @@ jobs:
             ext: tar.gz
             suffix: linux-x64
             script: build-platform --linux --skip-os-packages
-          - name: Linux ARM64
-            ext: tar.gz
-            suffix: linux-arm64
-            script: build-platform --linux-arm --skip-os-packages
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
