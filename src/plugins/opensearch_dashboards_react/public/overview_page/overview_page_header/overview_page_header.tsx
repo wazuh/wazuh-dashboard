@@ -159,6 +159,8 @@ export const OverviewPageHeader: FC<Props> = ({
           {!hideToolbar && (
             <EuiFlexItem grow={false}>
               <EuiFlexGroup className="osdOverviewPageHeader__actions" responsive={false} wrap>
+                {/*
+                Disable the home button for adding sample data
                 <EuiFlexItem className="osdOverviewPageHeader__actionItem" grow={false}>
                   <RedirectAppLinks application={application}>
                     <EuiButtonEmpty
@@ -176,6 +178,7 @@ export const OverviewPageHeader: FC<Props> = ({
                     </EuiButtonEmpty>
                   </RedirectAppLinks>
                 </EuiFlexItem>
+                */}
 
                 {showManagementLink && isManagementEnabled ? (
                   <EuiFlexItem className="osdOverviewPageHeader__actionItem" grow={false}>
