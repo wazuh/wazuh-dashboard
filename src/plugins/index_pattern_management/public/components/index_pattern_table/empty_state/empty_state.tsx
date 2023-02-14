@@ -172,6 +172,8 @@ export const EmptyState = ({
               />
             </EuiFlexItem> */}
             {getMlCardState() !== MlCardState.HIDDEN ? mlCard : <></>}
+            {/*
+            Disable card to add sample data when we dont have data
             <EuiFlexItem>
               <EuiCard
                 className="inpEmptyState__card"
@@ -191,6 +193,7 @@ export const EmptyState = ({
                 }
               />
             </EuiFlexItem>
+            */}
           </EuiFlexGrid>
           <EuiSpacer size="xxl" />
           <div className="inpEmptyState__footer">

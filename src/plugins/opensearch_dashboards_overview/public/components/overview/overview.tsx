@@ -264,9 +264,11 @@ export const Overview: FC<Props> = ({ newsFetchResult, solutions, features, bran
                         : 'osdOverviewData--expanded'
                     }`}
                   >
+                    {/*
                     <EuiFlexItem>
                       <AddData addBasePath={addBasePath} features={addDataFeatures} />
                     </EuiFlexItem>
+                    */}
 
                     <EuiFlexItem>
                       <ManageData addBasePath={addBasePath} features={manageDataFeatures} />
