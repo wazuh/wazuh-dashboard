@@ -82,7 +82,7 @@ export const config = {
         defaultValue: 'Wazuh',
       }),
       useExpandedHeader: schema.boolean({
-        defaultValue: false,
+        defaultValue: true,
       }),
     }),
   }),
