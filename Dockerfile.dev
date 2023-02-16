@@ -1,0 +1,20 @@
+ARG NODE_VERSION=14.20.0
+FROM node:${NODE_VERSION} AS base
+ARG WDSECURITYVERSION=2.4
+
+USER node
+ADD --chown=node:node ./ /home/node/wazuh-dashboard
+WORKDIR /home/node/wazuh-dashboard
+RUN yarn osd bootstrap
+
+WORKDIR /home/node/wazuh-dashboard/plugins
+RUN git clone --depth 1 --branch $WDSECURITYVERSION https://github.com/wazuh/wazuh-security-dashboards-plugin.git
+WORKDIR /home/node/wazuh-dashboard/plugins/wazuh-security-dashboards-plugin
+RUN yarn install
+
+RUN mkdir -p /home/node/wazuh-dashboard/data/wazuh/config
+
+FROM node:${NODE_VERSION}
+USER node
+COPY --from=base /home/node/wazuh-dashboard /home/node/wazuh-dashboard
+WORKDIR /home/node/wazuh-dashboard
