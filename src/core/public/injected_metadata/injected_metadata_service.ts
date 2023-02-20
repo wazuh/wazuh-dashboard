@@ -53,6 +53,7 @@ export interface InjectedMetadataParams {
     version: string;
     buildNumber: number;
     branch: string;
+    wazuhVersion: string;
     basePath: string;
     serverBasePath: string;
     category?: AppCategory;
@@ -146,6 +147,10 @@ export class InjectedMetadataService {
       getBranding: () => {
         return this.state.branding;
       },
+
+      getWazuhVersion: () => {
+        return this.state.wazuhVersion;
+      },
     };
   }
 }
@@ -180,6 +185,7 @@ export interface InjectedMetadataSetup {
     [key: string]: unknown;
   };
   getBranding: () => Branding;
+  getWazuhVersion: () => string;
 }
 
 /** @internal */
