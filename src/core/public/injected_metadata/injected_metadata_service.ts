@@ -151,6 +151,10 @@ export class InjectedMetadataService {
       getWazuhVersion: () => {
         return this.state.wazuhVersion;
       },
+
+      getWazuhDocVersion: () => {
+        return this.state.wazuhVersion.slice(0, 3) || 'current';
+      },
     };
   }
 }
@@ -186,6 +190,7 @@ export interface InjectedMetadataSetup {
   };
   getBranding: () => Branding;
   getWazuhVersion: () => string;
+  getWazuhDocVersion: () => string;
 }
 
 /** @internal */
