@@ -245,7 +245,7 @@ export class ChromeService {
           basePath={http.basePath}
           breadcrumbs$={breadcrumbs$.pipe(takeUntil(this.stop$))}
           customNavLink$={customNavLink$.pipe(takeUntil(this.stop$))}
-          opensearchDashboardsDocLink={docLinks.links.wazuh.gettingStarted}
+          opensearchDashboardsDocLink={docLinks.links.wazuh.index}
           forceAppSwitcherNavigation$={navLinks.getForceAppSwitcherNavigation$()}
           helpExtension$={helpExtension$.pipe(takeUntil(this.stop$))}
           helpSupportUrl$={helpSupportUrl$.pipe(takeUntil(this.stop$))}
