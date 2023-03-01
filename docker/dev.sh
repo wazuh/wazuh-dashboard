@@ -7,7 +7,7 @@ export REPO_PATH="../"
 export SECURITY_PLUGIN_REPO_PATH="../../wazuh-security-dashboards-plugin"
 export WZD_CONFIG_PATH="./config/wzd/opensearch_dashboards.yml"
 export NODE_VERSION=$(cat $REPO_PATH/.nvmrc)
-export OPENSEARCH_VERSION=$1 || $(node -e "console.log(require('$REPO_PATH/package.json').version)")
+export OPENSEARCH_VERSION=$1 
 
 case $2 in
     up)
