@@ -82,6 +82,9 @@ const packageMock = {
     number: 1,
     sha: '',
   },
+  wazuh: {
+    version: '4.x.x',
+  },
 };
 
 const manifestPath = (...pluginPath: string[]) =>
