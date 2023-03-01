@@ -113,6 +113,8 @@ export const GettingStarted: FC<Props> = ({ addBasePath, isDarkTheme, apps }) =>
 
             <EuiSpacer size="xl" />
 
+            {/*
+            Disable the overview button for adding sample data
             <RedirectAppLinks application={application}>
               <EuiButton
                 fill
@@ -125,6 +127,7 @@ export const GettingStarted: FC<Props> = ({ addBasePath, isDarkTheme, apps }) =>
                 />
               </EuiButton>
             </RedirectAppLinks>
+            */}
           </div>
         </EuiFlexItem>
 
