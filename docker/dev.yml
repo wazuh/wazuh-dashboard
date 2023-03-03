@@ -56,7 +56,6 @@ services:
         cd /home/node/wzd
         tail -f /dev/null
       "
-    # entrypoint: ["tail", "-f", "/dev/null"]
 
 volumes:
   opensearch-data:
