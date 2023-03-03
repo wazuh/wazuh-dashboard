@@ -31,7 +31,7 @@ Docker Desktop for Linux and Docker Engine](https://docs.docker.com/desktop/inst
     ```bash
     sudo groupadd -g 100999 docker-desktop
     sudo useradd -u 100999 -g 100999 -M docker-desktop
-    sudo chown -R $USER:docker-desktop $WZD_HOME
+    sudo chown -R docker-desktop:docker-desktop $WZD_HOME
     sudo usermod -aG docker-desktop $USER
     ```
 
