@@ -13,6 +13,7 @@ env:
   OPENSEARCH_SNAPSHOT_CMD: 'node ../scripts/opensearch snapshot'
   SPEC: 'cypress/integration/core-opensearch-dashboards/opensearch-dashboards/**/*.js,'
   CYPRESS_ENV: 'env CYPRESS_VISBUILDER_ENABLED=true '
+  OPENSEARCH_VERSION: ${{ vars.OPENSEARCH_VERSION }}
 
 jobs:
   cypress-tests:
