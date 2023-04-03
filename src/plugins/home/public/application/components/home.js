@@ -76,7 +76,10 @@ export class Home extends Component {
 
   componentDidMount() {
     this._isMounted = true;
-    this.fetchIsNewOpenSearchDashboardsInstance();
+    // is commented and the skipWelcome function is added to avoid loading
+    // the add sample data page the first time the application is accessed.
+    // this.fetchIsNewOpenSearchDashboardsInstance();
+    this.skipWelcome();
 
     const homeTitle = i18n.translate('home.breadcrumbs.homeTitle', { defaultMessage: 'Home' });
     getServices().chrome.setBreadcrumbs([{ text: homeTitle }]);
