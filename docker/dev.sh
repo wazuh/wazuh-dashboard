@@ -20,25 +20,25 @@ export OPENSEARCH_VERSION=$(bash dev-tools/get-version.sh)
 COMPOSE_CMD="docker compose -f $COMPOSE_FILE"
 
 print_variables() {
-    echo  "NODE_VERSION: $NODE_VERSION"
-    echo  "OPENSEARCH_VERSION: $OPENSEARCH_VERSION"
+    echo "NODE_VERSION: $NODE_VERSION"
+    echo "OPENSEARCH_VERSION: $OPENSEARCH_VERSION"
 }
 
 case $1 in
-    up)
-        print_variables
-        $COMPOSE_CMD up -d
-        ;;
-    down)
-        echo "Cleaning up..."
-        $COMPOSE_CMD exec wazuh-dashboard yarn osd clean
-        $COMPOSE_CMD down
-        ;;
-    stop)
-        $COMPOSE_CMD stop
-        ;;
-    *)
-        echo "Usage: $0 {up|down|stop} [security]"
-        exit 1
-        ;;
+up)
+    print_variables
+    $COMPOSE_CMD up -d
+    ;;
+down)
+    echo "Cleaning up..."
+    $COMPOSE_CMD exec wazuh-dashboard yarn osd clean
+    $COMPOSE_CMD down
+    ;;
+stop)
+    $COMPOSE_CMD stop
+    ;;
+*)
+    echo "Usage: $0 {up|down|stop} [security]"
+    exit 1
+    ;;
 esac
