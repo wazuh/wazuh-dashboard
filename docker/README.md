@@ -1,6 +1,6 @@
 # Frontend development environments
 
-Install [Docker Desktop][0] as per its instructions, available for Windows, Mac 
+Install [Docker Desktop][docker-desktop] as per its instructions, available for Windows, Mac 
 and Linux (Ubuntu, Debian & Fedora).
 This ensures that the development experience between Linux, Mac and Windows is as
 similar as possible.
@@ -9,18 +9,18 @@ similar as possible.
 step by step as described in their documentation. Make sure that your system
 meets the system requirements before installing Docker Desktop, and read any 
 post-installation note, specially on Linux: [Differences between 
-Docker Desktop for Linux and Docker Engine](https://docs.docker.com/desktop/install/linux-install/#differences-between-docker-desktop-for-linux-and-docker-engine)
-
+Docker Desktop for Linux and Docker Engine][docker-variant].
 ## Pre-requisites
 
- 1. Assign resources to [Docker Desktop][0]. The requirements for the 
+ 1. Assign resources to [Docker Desktop][docker-desktop]. The requirements for the 
  environments are:
     - 8 GB of RAM (minimum)
     - 4 cores
 
     The more resources the better ☺
 
-2. Have the [wazuh-dashboard](https://github.com/wazuh/wazuh-dashboard) repository and the [wazuh-security-dashboards-plugin](https://github.com/wazuh/wazuh-security-dashboards-plugin) repository cloned to the same level
+2. Clone the [wazuh-dashboard][app-repo] and the [wazuh-security-dashboards-plugin][security-repo] 
+ repositories at the same level.
  
 3. Set up user permissions
 
@@ -43,8 +43,8 @@ use different contexts.
 
 Carefully read these two sections of the Docker documentation:
 
-- [Differences between Docker Desktop for Linux and Docker Engine](https://docs.docker.com/desktop/install/linux-install/#differences-between-docker-desktop-for-linux-and-docker-engine)
-- [Switch between Docker Desktop and Docker Engine](https://docs.docker.com/desktop/install/linux-install/#context)
+- [Differences between Docker Desktop for Linux and Docker Engine][docker-variant].
+- [Switch between Docker Desktop and Docker Engine][docker-context].
 
 Docker Desktop will change to its context automatically at start, so be sure 
 that any existing Docker container using the default context is **stopped** 
@@ -57,11 +57,18 @@ Use the sh script to up the environment.
 Example:
 
 ```bash
-./dev.sh 2.5.0 up
+Usage: ./dev.sh {up|down|stop} [security]
 ```
 
-Once the containers are up, connect a shell to the development container, run yarn osd bootstrap to install the project dependencies. Then run yarn start to start the application.
+Once the `wazuh-dashboard` container is up, attach a shell to it and run `yarn start --no-base-path` 
+to start the application.
+
+The dependencies of the project will be installed automatically by the `installed` container, 
+even for the security plugin, if the security flag is provided.
 
 
-
-[0]: <https://docs.docker.com/get-docker/> "Docker Desktop"
+[docker-desktop]: https://docs.docker.com/get-docker
+[docker-variant]: https://docs.docker.com/desktop/install/linux-install/#differences-between-docker-desktop-for-linux-and-docker-engine
+[docker-context]: https://docs.docker.com/desktop/install/linux-install/#context
+[app-repo]: https://github.com/wazuh/wazuh-dashboard
+[security-repo]:https://github.com/wazuh/wazuh-security-dashboards-plugin
