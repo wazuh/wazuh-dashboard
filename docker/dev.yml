@@ -7,7 +7,6 @@ services:
     container_name: installer-${OPENSEARCH_VERSION}
     volumes:
       - ${REPO_PATH}:/home/node/app
-      # - ${SECURITY_PLUGIN_REPO_PATH}:/home/node/app/plugins/security
     user: "1000:1000"
     working_dir: /home/node/app
     command: >
