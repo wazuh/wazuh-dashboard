@@ -14,8 +14,8 @@ fi
 
 # Common variables
 export REPO_PATH=$(pwd)
-export NODE_VERSION=$(cat .nvmrc)
-export OPENSEARCH_VERSION=$(bash dev-tools/get-version.sh)
+export NODE_VERSION=$(cat $REPO_PATH/.nvmrc)
+export OPENSEARCH_VERSION=$(bash $REPO_PATH/docker/get_version.sh)
 
 COMPOSE_CMD="docker compose -f $COMPOSE_FILE"
 
