@@ -77,7 +77,7 @@ jobs:
           working-directory: ${{ env.FTR_PATH }}
           start: ${{ env.OPENSEARCH_SNAPSHOT_CMD }}, ${{ env.START_CMD }}
           wait-on: 'http://localhost:9200, http://localhost:5601'
-          command: ${{ env.CYPRESS_ENV }} yarn cypress:run-without-security --browser chromium --spec ${{ env.SPEC }} --config '{"ignoreTestFiles":"**/dashboard_sanity_test_spec.js"}'
+          command: ${{ env.CYPRESS_ENV }} yarn cypress:run-without-security --browser chromium --spec ${{ env.SPEC }} --config ignoreTestFiles='**/dashboard_sanity_test_spec.js'
 
       # Screenshots are only captured on failure, will change this once we do visual regression tests
       - uses: actions/upload-artifact@v3
