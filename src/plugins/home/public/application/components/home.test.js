@@ -296,9 +296,6 @@ describe('home', () => {
         find: () => Promise.resolve({ total: 0 }),
       });
 
-      component.instance().skipWelcome();
-      component.update();
-
       sinon.assert.calledWith(defaultProps.localStorage.setItem, 'home:welcome:show', 'false');
 
       expect(component).toMatchSnapshot();

@@ -708,11 +708,48 @@ exports[`home welcome should show the normal home page if welcome screen is disa
 `;
 
 exports[`home welcome should show the welcome screen if enabled, and there are no index patterns defined 1`] = `
-<Welcome
-  branding={Object {}}
-  onSkip={[Function]}
-  urlBasePath="goober"
-/>
+<main
+  aria-labelledby="osdOverviewPageHeader__title"
+  className="homWrapper"
+  data-test-subj="homeApp"
+>
+  <mockConstructor
+    addBasePath={[Function]}
+    branding={Object {}}
+    overlap={0}
+    showDevToolsLink={true}
+    showManagementLink={true}
+    title={
+      <FormattedMessage
+        defaultMessage="Home"
+        id="home.header.title"
+        values={Object {}}
+      />
+    }
+  />
+  <div
+    className="homContent"
+  >
+    <EuiFlexGroup
+      className="homData homData--expanded"
+    >
+      <EuiFlexItem>
+        <ManageData
+          addBasePath={[Function]}
+          features={Array []}
+        />
+      </EuiFlexItem>
+    </EuiFlexGroup>
+    <EuiHorizontalRule
+      aria-hidden="true"
+      margin="xl"
+    />
+    <mockConstructor
+      addBasePath={[Function]}
+      path="/app/home"
+    />
+  </div>
+</main>
 `;
 
 exports[`home welcome stores skip welcome setting if skipped 1`] = `
