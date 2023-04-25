@@ -40,7 +40,6 @@ import {
 import { HOME_APP_BASE_PATH } from '../../../common/constants';
 import { FeatureCatalogueCategory } from '../../services';
 import { getServices } from '../opensearch_dashboards_services';
-// import { AddData } from './add_data';
 import { ManageData } from './manage_data';
 import { SolutionsSection } from './solutions_section';
 import { Welcome } from './welcome';
@@ -176,13 +175,6 @@ export class Home extends Component {
                 : 'homData--expanded'
             }`}
           >
-            {/*
-            Disable the card to add sample data on the home page
-            <EuiFlexItem>
-              <AddData addBasePath={addBasePath} features={addDataFeatures} />
-            </EuiFlexItem>
-            */}
-
             <EuiFlexItem>
               <ManageData addBasePath={addBasePath} features={manageDataFeatures} />
             </EuiFlexItem>

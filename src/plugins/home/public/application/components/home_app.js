@@ -33,11 +33,7 @@ import { I18nProvider } from '@osd/i18n/react';
 import PropTypes from 'prop-types';
 import { Home } from './home';
 import { FeatureDirectory } from './feature_directory';
-// import { TutorialDirectory } from './tutorial_directory';
-// import { Tutorial } from './tutorial/tutorial';
 import { HashRouter as Router, Switch, Route } from 'react-router-dom';
-// import { getTutorial } from '../load_tutorials';
-// import { replaceTemplateStrings } from './tutorial/replace_template_strings';
 import { getServices } from '../opensearch_dashboards_services';
 import { useMount } from 'react-use';
 
@@ -50,48 +46,12 @@ const RedirectToDefaultApp = () => {
 };
 
 export function HomeApp({ directories, solutions }) {
-  const {
-    savedObjectsClient,
-    getBasePath,
-    addBasePath,
-    // environmentService,
-    telemetry,
-  } = getServices();
-  // const environment = environmentService.getEnvironment();
-  // const isCloudEnabled = environment.cloud;
-
-  // const renderTutorialDirectory = (props) => {
-  //   return (
-  //     <TutorialDirectory
-  //       addBasePath={addBasePath}
-  //       openTab={props.match.params.tab}
-  //       isCloudEnabled={isCloudEnabled}
-  //     />
-  //   );
-  // };
-
-  // const renderTutorial = (props) => {
-  //   return (
-  //     <Tutorial
-  //       addBasePath={addBasePath}
-  //       isCloudEnabled={isCloudEnabled}
-  //       getTutorial={getTutorial}
-  //       replaceTemplateStrings={replaceTemplateStrings}
-  //       tutorialId={props.match.params.id}
-  //       bulkCreate={savedObjectsClient.bulkCreate}
-  //     />
-  //   );
-  // };
+  const { savedObjectsClient, getBasePath, addBasePath, telemetry } = getServices();
 
   return (
     <I18nProvider>
       <Router>
         <Switch>
-          {/*
-            Disable routes to add sample data
-            <Route path="/tutorial/:id" render={renderTutorial} />
-            <Route path="/tutorial_directory/:tab?" render={renderTutorialDirectory} />FlexItem>
-           */}
           <Route exact path="/feature_directory">
             <FeatureDirectory addBasePath={addBasePath} directories={directories} />
           </Route>
