@@ -108,7 +108,6 @@ export const GettingStarted: FC<Props> = ({ addBasePath, isDarkTheme, apps }) =>
             </EuiFlexGrid>
 
             <EuiSpacer size="xl" />
-
           </div>
         </EuiFlexItem>
 
