@@ -1,0 +1,9 @@
+server.host: "0.0.0.0"
+
+opensearchDashboards.branding:
+  useExpandedHeader: false
+
+opensearch.hosts: ["https://indexer:9200"]
+opensearch.username: "admin" # Default username on the docker image
+opensearch.password: "admin" # Default password on the docker image
+opensearch.ssl.verificationMode: none
