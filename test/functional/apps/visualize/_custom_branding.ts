@@ -28,10 +28,7 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
   const expectedWelcomeMessage = 'Welcome to OpenSearch';
 
   describe('OpenSearch Dashboards branding configuration', function customHomeBranding() {
-    /**
-     * This test is skipped because the overview page is not available.
-     */
-    describe.skip('should render overview page', async () => {
+    describe('should render overview page', async () => {
       this.tags('includeFirefox');
 
       before(async function () {
