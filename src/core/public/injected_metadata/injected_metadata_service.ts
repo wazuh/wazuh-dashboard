@@ -90,7 +90,7 @@ export interface InjectedMetadataParams {
 export class InjectedMetadataService {
   private state: InjectedMetadataParams['injectedMetadata'];
 
-  constructor(private readonly params: InjectedMetadataParams) {
+  constructor(params: InjectedMetadataParams) {
     this.state = deepFreeze(params.injectedMetadata) as InjectedMetadataParams['injectedMetadata'];
   }
 
