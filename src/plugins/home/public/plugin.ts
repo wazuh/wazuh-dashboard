@@ -130,7 +130,8 @@ export class HomePublicPlugin
     urlForwarding.forwardApp('home', 'home');
 
     const featureCatalogue = { ...this.featuresCatalogueRegistry.setup() };
-
+    // Disable sample data in home/view app directory
+    // To activate it again, remove visible() and change showOnHomePage to true.
     featureCatalogue.register({
       id: 'home_tutorial_directory',
       title: i18n.translate('home.tutorialDirectory.featureCatalogueTitle', {
@@ -140,9 +141,12 @@ export class HomePublicPlugin
         defaultMessage: 'Get started with sample data, visualizations, and dashboards.',
       }),
       icon: 'indexOpen',
-      showOnHomePage: true,
+      showOnHomePage: false,
       path: `${HOME_APP_BASE_PATH}#/tutorial_directory`,
       category: 'data' as FeatureCatalogueCategory.DATA,
+      visible() {
+        return false;
+      },
       order: 500,
     });
 
