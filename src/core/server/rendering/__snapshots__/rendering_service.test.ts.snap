@@ -30,6 +30,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": "4.4.0",
     },
   },
   "i18n": Object {
@@ -50,6 +51,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "4.4.0",
 }
 `;
 
@@ -83,6 +85,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": "4.4.0",
     },
   },
   "i18n": Object {
@@ -103,6 +106,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "4.4.0",
 }
 `;
 
@@ -136,6 +140,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": "4.4.0",
     },
   },
   "i18n": Object {
@@ -160,6 +165,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "4.4.0",
 }
 `;
 
@@ -193,6 +199,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": "4.4.0",
     },
   },
   "i18n": Object {
@@ -213,6 +220,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "4.4.0",
 }
 `;
 
@@ -246,6 +254,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": "4.4.0",
     },
   },
   "i18n": Object {
@@ -266,5 +275,6 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "4.4.0",
 }
 `;

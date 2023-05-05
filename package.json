@@ -19,6 +19,9 @@
     "number": 8467,
     "sha": "6cb7fec4e154faa0a4a3fee4b33dfef91b9870d9"
   },
+  "wazuh": {
+    "version": "4.4.0"
+  },
   "homepage": "https://opensearch.org",
   "bugs": {
     "url": "http://github.com/opensearch-project/OpenSearch-Dashboards/issues"
