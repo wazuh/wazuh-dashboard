@@ -208,7 +208,7 @@ class HeaderHelpMenuUI extends Component<Props, State> {
         <EuiButtonEmpty href={opensearchDashboardsDocLink} target="_blank" size="xs" flush="left">
           <FormattedMessage
             id="core.ui.chrome.headerGlobalNav.helpMenuOpenSearchDashboardsDocumentationTitle"
-            defaultMessage="Documentation"
+            defaultMessage="Wazuh documentation"
           />
         </EuiButtonEmpty>
 
