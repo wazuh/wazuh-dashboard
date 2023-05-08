@@ -153,7 +153,7 @@ export class InjectedMetadataService {
       },
 
       getWazuhDocVersion: () => {
-        return this.state.wazuhVersion?.slice(0, 3) || 'current';
+        return this.state.wazuhVersion?.split('.').slice(0, 2).join('.') || 'current';
       },
     };
   }
