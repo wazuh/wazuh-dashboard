@@ -367,7 +367,7 @@ exports[`Overview render 1`] = `
           ],
         }
       }
-      path="/app/opensearch_dashboards_overview"
+      path="/app/home/"
     />
   </div>
 </main>
@@ -852,7 +852,7 @@ exports[`Overview without features 1`] = `
           ],
         }
       }
-      path="/app/opensearch_dashboards_overview"
+      path="/app/home/"
     />
   </div>
 </main>
@@ -1173,7 +1173,7 @@ exports[`Overview without solutions 1`] = `
           ],
         }
       }
-      path="/app/opensearch_dashboards_overview"
+      path="/app/home/"
     />
   </div>
 </main>
