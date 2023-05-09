@@ -89,11 +89,11 @@ export interface InjectedMetadataParams {
  * @internal
  */
 export class InjectedMetadataService {
-  private state = deepFreeze(
-    this.params.injectedMetadata
-  ) as InjectedMetadataParams['injectedMetadata'];
+  private state: InjectedMetadataParams['injectedMetadata'];
 
-  constructor(private readonly params: InjectedMetadataParams) {}
+  constructor(params: InjectedMetadataParams) {
+    this.state = deepFreeze(params.injectedMetadata) as InjectedMetadataParams['injectedMetadata'];
+  }
 
   public start(): InjectedMetadataStart {
     return this.setup();
@@ -158,7 +158,7 @@ export class InjectedMetadataService {
       },
 
       getWazuhDocVersion: () => {
-        return this.state.wazuhVersion.slice(0, 3) || 'current';
+        return this.state.wazuhVersion?.split('.').slice(0, 2).join('.') || 'current';
       },
     };
   }
