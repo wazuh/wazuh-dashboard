@@ -367,7 +367,7 @@ exports[`Overview render 1`] = `
           ],
         }
       }
-      path="/app/opensearch_dashboards_overview"
+      path="/app/home/"
     />
   </div>
 </main>
@@ -852,7 +852,7 @@ exports[`Overview without features 1`] = `
           ],
         }
       }
-      path="/app/opensearch_dashboards_overview"
+      path="/app/home/"
     />
   </div>
 </main>
@@ -1033,75 +1033,6 @@ exports[`Overview without solutions 1`] = `
           className="osdOverviewData osdOverviewData--expanded"
         >
           <EuiFlexItem>
-            <AddData
-              addBasePath={
-                [MockFunction] {
-                  "calls": Array [
-                    Array [
-                      "opensearch_dashboards_landing_page",
-                    ],
-                    Array [
-                      "/plugins/opensearchDashboardsOverview/assets/solutions_opensearch_dashboards_light_2x.png",
-                    ],
-                    Array [
-                      "path-to-solution-two",
-                    ],
-                    Array [
-                      "/plugins/opensearchDashboardsOverview/assets/solutions_solution_2_light_2x.png",
-                    ],
-                    Array [
-                      "path-to-solution-three",
-                    ],
-                    Array [
-                      "/plugins/opensearchDashboardsOverview/assets/solutions_solution_3_light_2x.png",
-                    ],
-                    Array [
-                      "path-to-solution-four",
-                    ],
-                    Array [
-                      "/plugins/opensearchDashboardsOverview/assets/solutions_solution_4_light_2x.png",
-                    ],
-                  ],
-                  "results": Array [
-                    Object {
-                      "type": "return",
-                      "value": "opensearch_dashboards_landing_page",
-                    },
-                    Object {
-                      "type": "return",
-                      "value": "/plugins/opensearchDashboardsOverview/assets/solutions_opensearch_dashboards_light_2x.png",
-                    },
-                    Object {
-                      "type": "return",
-                      "value": "path-to-solution-two",
-                    },
-                    Object {
-                      "type": "return",
-                      "value": "/plugins/opensearchDashboardsOverview/assets/solutions_solution_2_light_2x.png",
-                    },
-                    Object {
-                      "type": "return",
-                      "value": "path-to-solution-three",
-                    },
-                    Object {
-                      "type": "return",
-                      "value": "/plugins/opensearchDashboardsOverview/assets/solutions_solution_3_light_2x.png",
-                    },
-                    Object {
-                      "type": "return",
-                      "value": "path-to-solution-four",
-                    },
-                    Object {
-                      "type": "return",
-                      "value": "/plugins/opensearchDashboardsOverview/assets/solutions_solution_4_light_2x.png",
-                    },
-                  ],
-                }
-              }
-              features={Array []}
-            />
-          </EuiFlexItem>
-          <EuiFlexItem>
             <ManageData
               addBasePath={
                 [MockFunction] {
@@ -1242,7 +1173,7 @@ exports[`Overview without solutions 1`] = `
           ],
         }
       }
-      path="/app/opensearch_dashboards_overview"
+      path="/app/home/"
     />
   </div>
 </main>

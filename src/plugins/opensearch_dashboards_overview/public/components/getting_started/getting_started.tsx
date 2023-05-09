@@ -30,7 +30,6 @@
 
 import React, { FC } from 'react';
 import {
-  EuiButton,
   EuiCard,
   EuiFlexGrid,
   EuiFlexGroup,
@@ -43,10 +42,7 @@ import {
 } from '@elastic/eui';
 import { FormattedMessage } from '@osd/i18n/react';
 import { CoreStart } from 'opensearch-dashboards/public';
-import {
-  RedirectAppLinks,
-  useOpenSearchDashboards,
-} from '../../../../../../src/plugins/opensearch_dashboards_react/public';
+import { useOpenSearchDashboards } from '../../../../../../src/plugins/opensearch_dashboards_react/public';
 import { FeatureCatalogueEntry } from '../../../../../../src/plugins/home/public';
 import { PLUGIN_ID } from '../../../common';
 
@@ -112,19 +108,6 @@ export const GettingStarted: FC<Props> = ({ addBasePath, isDarkTheme, apps }) =>
             </EuiFlexGrid>
 
             <EuiSpacer size="xl" />
-
-            <RedirectAppLinks application={application}>
-              <EuiButton
-                fill
-                iconType="indexOpen"
-                href={addBasePath('/app/management/opensearch-dashboards/indexPatterns')}
-              >
-                <FormattedMessage
-                  defaultMessage="Add your data"
-                  id="opensearchDashboardsOverview.gettingStarted.addDataButtonLabel"
-                />
-              </EuiButton>
-            </RedirectAppLinks>
           </div>
         </EuiFlexItem>
 

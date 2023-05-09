@@ -64,7 +64,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\",\\"darkModeUrl\\":\\"/darkModeMark\\"},\\"loadingLogo\\":{\\"defaultUrl\\":\\"/defaultModeLoadingLogo\\",\\"darkModeUrl\\":\\"/darkModeLoadingLogo\\"},\\"title\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\",\\"darkModeUrl\\":\\"/darkModeMark\\"},\\"loadingLogo\\":{\\"defaultUrl\\":\\"/defaultModeLoadingLogo\\",\\"darkModeUrl\\":\\"/darkModeLoadingLogo\\"},\\"title\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -202,7 +202,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\",\\"darkModeUrl\\":\\"/darkModeMark\\"},\\"loadingLogo\\":{\\"defaultUrl\\":\\"/defaultModeLoadingLogo\\"},\\"title\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\",\\"darkModeUrl\\":\\"/darkModeMark\\"},\\"loadingLogo\\":{\\"defaultUrl\\":\\"/defaultModeLoadingLogo\\"},\\"title\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -340,7 +340,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\",\\"darkModeUrl\\":\\"/darkModeMark\\"},\\"loadingLogo\\":{},\\"title\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\",\\"darkModeUrl\\":\\"/darkModeMark\\"},\\"loadingLogo\\":{},\\"title\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -481,7 +481,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\"},\\"loadingLogo\\":{},\\"title\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\"},\\"loadingLogo\\":{},\\"title\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -622,7 +622,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{},\\"loadingLogo\\":{},\\"title\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{},\\"loadingLogo\\":{},\\"title\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -785,7 +785,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\"},\\"loadingLogo\\":{\\"defaultUrl\\":\\"defaultModeLoadingLogo/\\"},\\"applicationTitle\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\"},\\"loadingLogo\\":{\\"defaultUrl\\":\\"defaultModeLoadingLogo/\\"},\\"applicationTitle\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -925,7 +925,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\"},\\"loadingLogo\\":{},\\"applicationTitle\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{\\"defaultUrl\\":\\"/defaultModeMark\\"},\\"loadingLogo\\":{},\\"applicationTitle\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -1068,7 +1068,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{},\\"loadingLogo\\":{},\\"applicationTitle\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{},\\"loadingLogo\\":{},\\"applicationTitle\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -1229,7 +1229,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{},\\"loadingLogo\\":{},\\"faviconUrl\\":\\"/customFavicon\\",\\"title\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{},\\"loadingLogo\\":{},\\"faviconUrl\\":\\"/customFavicon\\",\\"title\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"
@@ -1390,7 +1390,7 @@ Array [
     data="{\\"strictCsp\\":true}"
   />,
   <osd-injected-metadata
-    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{},\\"loadingLogo\\":{},\\"title\\":\\"custom title\\"}}"
+    data="{\\"version\\":\\"opensearchDashboardsVersion\\",\\"buildNumber\\":1,\\"wazuhVersion\\":\\"4.x.x\\",\\"basePath\\":\\"\\",\\"serverBasePath\\":\\"\\",\\"env\\":{\\"packageInfo\\":{\\"version\\":\\"\\",\\"branch\\":\\"\\",\\"buildNum\\":1,\\"buildSha\\":\\"\\",\\"dist\\":true,\\"wazuhVersion\\":\\"\\"},\\"mode\\":{\\"name\\":\\"production\\",\\"dev\\":true,\\"prod\\":false}},\\"anonymousStatusPage\\":false,\\"i18n\\":{\\"translationsUrl\\":\\"\\"},\\"csp\\":{\\"warnLegacyBrowsers\\":true},\\"uiPlugins\\":[],\\"legacyMetadata\\":{\\"uiSettings\\":{\\"defaults\\":{\\"legacyInjectedUiSettingDefaults\\":true},\\"user\\":{}}},\\"branding\\":{\\"darkMode\\":false,\\"logo\\":{},\\"mark\\":{},\\"loadingLogo\\":{},\\"title\\":\\"custom title\\"}}"
   />,
   <div
     class="osdWelcomeView"

@@ -53,6 +53,7 @@ export interface InjectedMetadataParams {
     version: string;
     buildNumber: number;
     branch: string;
+    wazuhVersion: string;
     basePath: string;
     serverBasePath: string;
     category?: AppCategory;
@@ -87,11 +88,11 @@ export interface InjectedMetadataParams {
  * @internal
  */
 export class InjectedMetadataService {
-  private state = deepFreeze(
-    this.params.injectedMetadata
-  ) as InjectedMetadataParams['injectedMetadata'];
+  private state: InjectedMetadataParams['injectedMetadata'];
 
-  constructor(private readonly params: InjectedMetadataParams) {}
+  constructor(params: InjectedMetadataParams) {
+    this.state = deepFreeze(params.injectedMetadata) as InjectedMetadataParams['injectedMetadata'];
+  }
 
   public start(): InjectedMetadataStart {
     return this.setup();
@@ -146,6 +147,14 @@ export class InjectedMetadataService {
       getBranding: () => {
         return this.state.branding;
       },
+
+      getWazuhVersion: () => {
+        return this.state.wazuhVersion;
+      },
+
+      getWazuhDocVersion: () => {
+        return this.state.wazuhVersion?.split('.').slice(0, 2).join('.') || 'current';
+      },
     };
   }
 }
@@ -180,6 +189,8 @@ export interface InjectedMetadataSetup {
     [key: string]: unknown;
   };
   getBranding: () => Branding;
+  getWazuhVersion: () => string;
+  getWazuhDocVersion: () => string;
 }
 
 /** @internal */
