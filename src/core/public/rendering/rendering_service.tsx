@@ -61,7 +61,7 @@ export class RenderingService {
     /**
      * This is done so that modifications to login styles are only applied to the login.
      */
-    const pathName = chromeUi.props.application.history.location.pathname;
+    const pathName = chromeUi.props.application?.history?.location?.pathname || '';
     const classContent = pathName === '/app/login' ? 'content wz-login' : 'content';
 
     ReactDOM.render(
