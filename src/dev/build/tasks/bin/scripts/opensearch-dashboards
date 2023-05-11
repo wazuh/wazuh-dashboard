@@ -25,7 +25,24 @@ while [ -h "$SCRIPT" ] ; do
   fi
 done
 
-# Get an absolute path for OSD_HOME
-OSD_HOME="$(cd "$(dirname "${SCRIPT}")/.."; pwd)"
+DIR="$(dirname "${SCRIPT}")/.."
+CONFIG_DIR=${OSD_PATH_CONF:-"/etc/wazuh-dashboard"}
 
-OSD_NODE_OPTS_PREFIX="--no-warnings --max-http-header-size=65536" OSD_USE_NODE_JS_FILE_PATH=/src/cli/dist NODE_ENV=production ${OSD_HOME}/bin/use_node "${@}"
+if [ -x "${DIR}/node/bin/node" ]; then
+  NODE="${DIR}/node/bin/node"
+else
+  NODE="$(which node)"
+fi
+
+if [ ! -x "$NODE" ]; then
+  echo "unable to find usable node.js executable."
+  exit 1
+fi
+
+if [ -f "${CONFIG_DIR}/node.options" ]; then
+  OSD_NODE_OPTS="$(grep -v ^# < ${CONFIG_DIR}/node.options | xargs)"
+fi
+
+# Wazuh: changed due to https://github.com/wazuh/wazuh-kibana-app/issues/3887
+NODE_OPTIONS="--no-warnings --max-http-header-size=65536 $OSD_NODE_OPTS $NODE_OPTIONS"
+NODE_ENV=production "${NODE}" ${NODE_OPTIONS} "${DIR}/src/cli/dist" ${@}
