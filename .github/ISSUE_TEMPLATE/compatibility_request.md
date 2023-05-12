@@ -1,8 +1,8 @@
 ---
 name: Compatibility request
-about: Suggest supporting a new platform version OpenSearch
+about: Suggest supporting a new version of OpenSearch
 title: 'Compatibility with OpenSearch (version)'
-labels: compatibility
+labels: compatibility, level/task, type/research
 assignees: ''
 
 ---
@@ -15,7 +15,7 @@ For that, we need to:
 
 - [ ] Review opensearch and opensearch-dashboard latest stable changelog. 
 - [ ] Identify improvements and potential impact on the UI.
-- [ ] Update version with changes made in Wazuh
+- [ ] Create new tracking and development branches.
 - [ ] Develop a testing environment to verify our components would work under this new build.
 
 

@@ -2,7 +2,7 @@
 name: New release
 about: "[wazuh-team] Track the effort of the team to release a new version of Wazuh"
 title: Support for Wazuh 4.x.x
-labels: enhancement
+labels: level/task, type/enhancement
 assignees: ''
 
 ---
@@ -30,4 +30,4 @@ Example:
 
 ### Supported versions
 
-Same as on [previous releases](https://github.com/wazuh/wazuh-kibana-app/wiki/Compatibility)
+Same as on [previous releases](https://github.com/wazuh/wazuh-dashboard/wiki/Compatibility)
