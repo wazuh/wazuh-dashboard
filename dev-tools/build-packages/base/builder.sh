@@ -15,8 +15,9 @@ architecture="$1"
 revision="$2"
 future="$3"
 repository="$4"
-reference="$5"
-opensearch_version="2.6.0"
+version="$5"
+reference="$6"
+opensearch_version="2.4.1"
 base_dir=/opt/wazuh-dashboard-base
 
 # -----------------------------------------------------------------------------
@@ -34,9 +35,8 @@ if [ "${reference}" ];then
     curl -sL https://github.com/wazuh/wazuh-packages/tarball/"${reference}" | tar xz
     cp -r ./wazuh*/* /root/
     version=$(curl -sL https://raw.githubusercontent.com/wazuh/wazuh-packages/${reference}/VERSION | cat)
-else
-    version=$(cat /root/VERSION)
 fi
+
 if [ "${future}" = "yes" ];then
     version="99.99.0"
 fi
@@ -63,17 +63,17 @@ fi
 mkdir -p /tmp/output
 cd /opt
 #tar -xzf opensearch-dashboards-2.6.0-SNAPSHOT-linux-x64.tar.gz
-mv opensearch-dashboards-* "${base_dir}"
+mv opensearch-dashboards* "${base_dir}"
 #curl -sL https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/"${opensearch_version}"/opensearch-dashboards-"${opensearch_version}"-linux-${architecture}.tar.gz | tar xz
 
 #pip3 install pathfix.py
 #/usr/bin/pathfix.py -pni "/usr/bin/python3 -s" opensearch-dashboards-"${opensearch_version}" > /dev/null 2>&1
 
 # Remove unnecessary files and set up configuration
- cd "${base_dir}"
+cd "${base_dir}"
 # find -type l -exec rm -rf {} \;
 # rm -rf ./config/*
-cp -r /root/stack/dashboard/base/files/etc ./
+cp -r /root/build-packages/base/files/etc ./
 # cp ./etc/custom_welcome/template.js.hbs ./src/legacy/ui/ui_render/bootstrap/template.js.hbs
 # cp ./etc/custom_welcome/light_theme.style.css ./src/core/server/core_app/assets/legacy_light_theme.css
 # cp ./etc/custom_welcome/*svg ./src/core/server/core_app/assets/
@@ -151,7 +151,7 @@ cp -r /root/stack/dashboard/base/files/etc ./
 # gzip -c ./plugins/securityDashboards/target/public/securityDashboards.chunk.5.js > ./plugins/securityDashboards/target/public/securityDashboards.chunk.5.js.gz
 # brotli -c ./plugins/securityDashboards/target/public/securityDashboards.chunk.5.js > ./plugins/securityDashboards/target/public/securityDashboards.chunk.5.js.br
 # # Add VERSION file
- cp /root/VERSION .
+ echo ${version} > ./VERSION
 # Add exception for wazuh plugin install
  wazuh_plugin="if (plugin.includes(\'wazuh\')) {\n    return plugin;\n  } else {\n    return \`\${LATEST_PLUGIN_BASE_URL}\/\${version}\/latest\/\${platform}\/\${arch}\/tar\/builds\/opensearch-dashboards\/plugins\/\${plugin}-\${version}.zip\`;\n  }"
  sed -i "s|return \`\${LATEST_PLUGIN_BASE_URL}\/\${version}\/latest\/\${platform}\/\${arch}\/tar\/builds\/opensearch-dashboards\/plugins\/\${plugin}-\${version}.zip\`;|$wazuh_plugin|" ./src/cli_plugin/install/settings.js
@@ -160,7 +160,7 @@ cp -r /root/stack/dashboard/base/files/etc ./
  unzip wazuh*.zip 'opensearch-dashboards/wazuh/package.json'
  build_number=$(jq -r '.version' ./opensearch-dashboards/wazuh/package.json | tr -d '.')$(jq -r '.revision' ./opensearch-dashboards/wazuh/package.json)
  rm -rf ./opensearch-dashboards
-rm -f ./wazuh*.zip
+ rm -f ./wazuh*.zip
  jq ".build.number=${build_number}" ./package.json > ./package.json.tmp
  mv ./package.json.tmp ./package.json
 
@@ -170,7 +170,7 @@ rm -f ./wazuh*.zip
 #  /bin/bash ./bin/opensearch-dashboards-plugin remove anomalyDetectionDashboards --allow-root
 #  /bin/bash ./bin/opensearch-dashboards-plugin remove observabilityDashboards --allow-root
 #  /bin/bash ./bin/opensearch-dashboards-plugin remove securityAnalyticsDashboards --allow-root
-  /bin/bash ./bin/opensearch-dashboards-plugin install file:/opt/security-dashboards-2.6.0.0.zip --allow-root
+  /bin/bash ./bin/opensearch-dashboards-plugin install file:/opt/security-dashboards.zip --allow-root
 
  find -type d -exec chmod 750 {} \;
  find -type f -perm 644 -exec chmod 640 {} \;

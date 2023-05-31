@@ -28,8 +28,8 @@ RUN cd brotli && chmod +x ./bootstrap && ./bootstrap && ./configure --prefix=/us
 
 # Add the scripts to build the RPM package
 ADD builder.sh /usr/local/bin/builder
-ADD opensearch-dashboards-2.6.0-linux-x64.tar.gz /opt
-ADD security-dashboards-2.6.0.0.zip /opt
+ADD opensearch-dashboards.tar.gz /opt
+ADD security-dashboards.zip /opt
 RUN chmod +x /usr/local/bin/builder
 
 # Set the entrypoint

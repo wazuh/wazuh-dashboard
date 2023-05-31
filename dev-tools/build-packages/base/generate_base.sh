@@ -19,7 +19,13 @@ architecture="x64"
 outdir="${current_path}/output"
 revision="1"
 future="no"
+app_url=""
+security_url=""
+dashboard_path=""
+dashboard_url=""
+security_path=""
 url=""
+version=""
 
 # -----------------------------------------------------------------------------
 
@@ -29,8 +35,7 @@ clean() {
     exit_code=$1
 
     # Clean the files
-    rm -rf ${dockerfile_path}/{*.sh,*.tar.xz,*-dashboards-*}
-
+    rm -rf ${dockerfile_path}/{*.sh,*.tar.xz,*-dashboards-*,*.tar.gz,*.zip}
     exit ${exit_code}
 }
 
@@ -44,23 +49,39 @@ build() {
 
     # Copy the necessary files
     cp ${current_path}/builder.sh ${dockerfile_path}
-    cp ${current_path}/opensearch-dashboards-2.6.0-linux-x64.tar.gz ${dockerfile_path}
-    cp ${current_path}/security-dashboards-2.6.0.0.zip ${dockerfile_path}
+
+    if [ "${dashboard_path}" ];then
+        cp ${dashboard_path} ${dockerfile_path}/opensearch-dashboards.tar.gz || { clean 1; }
+    elif [ "${dashboard_url}" ];then
+        wget -O ${dockerfile_path}/opensearch-dashboards.tar.gz ${dashboard_url} || { clean 1; }
+    else
+        echo "No dashboard url or path provided"
+        clean 1
+    fi
+
+    if [ "${security_path}" ];then
+        cp ${security_path} ${dockerfile_path}/security-dashboards.zip || { clean 1; }
+    elif [ "${security_url}" ];then
+        wget -O ${dockerfile_path}/security-dashboards.zip ${security_url} || { clean 1; }
+    else
+        echo "No security url or path provided"
+        clean 1
+    fi
+
 
     if [ "${repository}" ];then
         url="${repository}"
     fi
-
     # Build the Docker image
     docker build -t ${container_name} ${dockerfile_path} || return 1
 
     if [ "${reference}" ];then
         docker run -t --rm -v ${outdir}/:/tmp/output:Z \
-            ${container_name} ${architecture} ${revision} ${future} ${url} ${reference}  || return 1
+            ${container_name} ${architecture} ${revision} ${future} ${url} ${version} ${reference}   || return 1
     else
         docker run -t --rm -v ${outdir}/:/tmp/output:Z \
-            -v ${current_path}/../../..:/root:Z \
-            ${container_name} ${architecture} ${revision} ${future} ${url} || return 1
+            -v ${current_path}/../..:/root:Z \
+            ${container_name} ${architecture} ${revision} ${future} ${url} ${version} || return 1
     fi
 
     echo "Base file $(ls -Art ${outdir} | tail -n 1) added to ${outdir}."
@@ -73,13 +94,21 @@ build() {
 help() {
     echo
     echo "Usage: $0 [OPTIONS]"
-    echo
     echo "    --app-url <url>            [Optional] Set the repository from where the Wazuh plugin should be downloaded. By default, will be used pre-release."
+
+    echo "    --dashboard-url <url>      Set the repository from where the .tar.gz file containing Wazuh Dashboard should be downloaded. "
+    echo "    --dashboard-path <path>    Set the location of the .tar.gz file containing the Wazuh Dashboard."
+    echo "    --security-url <url>       Set the repository from where the .zip file containing the Security plugin should be downloaded."
+    echo "    --security-path <path>     Set the location of the .zip file containing the security plugin."
+    echo "    -v, --version <rev>        Wazuh version"
+    echo "    At least one of the dashboard and one of the security options must be provided"
+    echo
     echo "    -s, --store <path>         [Optional] Set the destination path of package. By default, an output folder will be created."
     echo "    --reference <ref>          [Optional] wazuh-packages branch or tag"
     echo "    --future                   [Optional] Build test future package 99.99.0 Used for development purposes."
     echo "    -r, --revision <rev>       [Optional] Package revision. By default ${revision}"
     echo "    -h, --help                 Show this help."
+
     echo
     exit $1
 }
@@ -101,9 +130,49 @@ main() {
                 help 1
             fi
             ;;
+        "--dashboard-url")
+            if [ -n "$2" ]; then
+                dashboard_url="$2"
+                shift 2
+            else
+                help 1
+            fi
+            ;;
+        "--security-url")
+            if [ -n "$2" ]; then
+                security_url="$2"
+                shift 2
+            else
+                help 1
+            fi
+            ;;
+        "--dashboard-path")
+            if [ -n "$2" ]; then
+                dashboard_path="$2"
+                shift 2
+            else
+                help 1
+            fi
+            ;;
+        "--security-path")
+            if [ -n "$2" ]; then
+                security_path="$2"
+                shift 2
+            else
+                help 1
+            fi
+            ;;
         "-s"|"--store")
             if [ -n "${2}" ]; then
                 outdir="${2}"
+                shift 2
+            else
+                help 1
+            fi
+            ;;
+            "-v"|"--version")
+            if [ -n "${2}" ]; then
+                version="${2}"
                 shift 2
             else
                 help 1
