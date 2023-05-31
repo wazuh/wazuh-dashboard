@@ -15,7 +15,8 @@ architecture=$1
 revision=$2
 future=$3
 repository=$4
-reference=$5
+version=$5
+reference=$6
 directory_base="/usr/share/wazuh-dashboard"
 
 if [ -z "${revision}" ]; then
@@ -27,8 +28,6 @@ if [ "${future}" = "yes" ];then
 else
     if [ "${reference}" ];then
         version=$(curl -sL https://raw.githubusercontent.com/wazuh/wazuh-packages/${reference}/VERSION | cat)
-    else
-        version=$(cat /root/VERSION)
     fi
 fi
 
@@ -58,10 +57,10 @@ mkdir -p ${source_dir}/debian
 # Including spec file
 if [ "${reference}" ];then
     curl -sL https://github.com/wazuh/wazuh-packages/tarball/${reference} | tar zx
-    cp -r ./wazuh*/stack/dashboard/deb/debian/* ${source_dir}/debian/
+    cp -r ./wazuh*/build-packages/deb/debian/* ${source_dir}/debian/
     cp -r ./wazuh*/* /root/
 else
-    cp -r /root/stack/dashboard/deb/debian/* ${source_dir}/debian/
+    cp -r /root/build-packages/deb/debian/* ${source_dir}/debian/
 fi
 
 
@@ -69,6 +68,8 @@ fi
 cd ${build_dir}/${target} && tar -czf ${pkg_name}.orig.tar.gz "${pkg_name}"
 
 # Configure the package with the different parameters
+echo ${version}
+echo ${revision}
 sed -i "s:VERSION:${version}:g" ${source_dir}/debian/changelog
 sed -i "s:RELEASE:${revision}:g" ${source_dir}/debian/changelog
 sed -i "s:export INSTALLATION_DIR=.*:export INSTALLATION_DIR=${directory_base}:g" ${source_dir}/debian/rules
