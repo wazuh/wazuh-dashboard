@@ -71,6 +71,9 @@ mv opensearch-dashboards* "${base_dir}"
 
 # Remove unnecessary files and set up configuration
 cd "${base_dir}"
+grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
+grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
+rm -rf ./plugins/*
 # find -type l -exec rm -rf {} \;
 # rm -rf ./config/*
 cp -r /root/build-packages/base/files/etc ./
@@ -163,7 +166,6 @@ cp -r /root/build-packages/base/files/etc ./
  rm -f ./wazuh*.zip
  jq ".build.number=${build_number}" ./package.json > ./package.json.tmp
  mv ./package.json.tmp ./package.json
-
 
 # # Remove plugins
 #  /bin/bash ./bin/opensearch-dashboards-plugin remove queryWorkbenchDashboards --allow-root
