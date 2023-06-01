@@ -13,22 +13,12 @@ set -e
 target="wazuh-dashboard"
 architecture=$1
 revision=$2
-future=$3
-repository=$4
-version=$5
-reference=$6
+repository=$3
+version=$4
 directory_base="/usr/share/wazuh-dashboard"
 
 if [ -z "${revision}" ]; then
     revision="1"
-fi
-
-if [ "${future}" = "yes" ];then
-    version="99.99.0"
-else
-    if [ "${reference}" ];then
-        version=$(curl -sL https://raw.githubusercontent.com/wazuh/wazuh-packages/${reference}/VERSION | cat)
-    fi
 fi
 
 if [ "${repository}" ];then
@@ -59,13 +49,7 @@ pkg_name=${target}-${version}
 mkdir ${build_dir}/${pkg_name}
 
 # Including spec file
-if [ "${reference}" ];then
-    curl -sL https://github.com/wazuh/wazuh-packages/tarball/${reference} | tar zx
-    cp ./wazuh*/build-packages/rpm/${target}.spec ${rpm_build_dir}/SPECS/${pkg_name}.spec
-    cp -r ./wazuh*/* /root/
-else
-    cp /root/build-packages/rpm/${target}.spec ${rpm_build_dir}/SPECS/${pkg_name}.spec
-fi
+cp /root/build-packages/rpm/${target}.spec ${rpm_build_dir}/SPECS/${pkg_name}.spec
 
 # Generating source tar.gz
 cd ${build_dir} && tar czf "${rpm_build_dir}/SOURCES/${pkg_name}.tar.gz" "${pkg_name}"

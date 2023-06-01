@@ -15,7 +15,6 @@ revision="1"
 build_docker="yes"
 rpm_x86_builder="rpm_dashboard_builder_x86"
 rpm_builder_dockerfile="${current_path}/docker"
-future="no"
 base_cmd=""
 url=""
 build_base="yes"
@@ -55,12 +54,6 @@ build_rpm() {
 
     if [ "${build_base}" == "yes" ];then
         # Base generation
-        if [ "${future}" == "yes" ];then
-            base_cmd+="--future "
-        fi
-        if [ "${reference}" ];then
-            base_cmd+="--reference ${reference}"
-        fi
         if [ "${url}" ];then
             base_cmd+="--app-url ${url} "
         fi
@@ -89,16 +82,12 @@ build_rpm() {
 
     # Build the RPM package with a Docker container
     volumes="-v ${outdir}/:/tmp:Z"
-    if [ "${reference}" ];then
-        docker run -t --rm ${volumes} \
-            ${container_name} ${architecture} ${revision} \
-            ${future} ${url} ${version} ${reference} || return 1
-    else
-        docker run -t --rm ${volumes} \
-            -v ${current_path}/../..:/root:Z \
-            ${container_name} ${architecture} \
-            ${revision} ${future} ${url} ${version} || return 1
-    fi
+
+    docker run -t --rm ${volumes} \
+      -v ${current_path}/../..:/root:Z \
+      ${container_name} ${architecture} \
+      ${revision}  ${url} ${version} || return 1
+
 
     echo "Package $(ls -Art ${outdir} | tail -n 1) added to ${outdir}."
 
@@ -131,18 +120,15 @@ help() {
     echo "    --security-url <url>       Set the repository from where the .zip file containing the Security plugin should be downloaded."
     echo "    --security-path <path>     Set the location of the .zip file containing the security plugin."
     echo "    -v, --version <rev>        Wazuh version"
-    echo "    At least one of the app and one of the security options must be provided"
-    echo
     echo "    -a, --architecture <arch>  [Optional] Target architecture of the package [x86_64]."
     echo "    -b, --build-base <yes/no>  [Optional] Build a new base or use a existing one. By default, yes."
     echo "    -r, --revision <rev>       [Optional] Package revision. By default: 1."
     echo "    -s, --store <path>         [Optional] Set the destination path of package. By default, an output folder will be created."
-    echo "    --reference <ref>          [Optional] wazuh-packages branch to download SPECs, not used by default."
     echo "    --dont-build-docker        [Optional] Locally built docker image will be used instead of generating a new one."
-    echo "    --future                   [Optional] Build test future package 99.99.0 Used for development purposes."
     echo "    --app-url                  [Optional] Valid URL for custom app."
     echo "    -h, --help                 Show this help."
     echo
+    echo "    At least one of the app and one of the security options must be provided"
     exit $1
 }
 
@@ -226,20 +212,8 @@ main() {
                 help 1
             fi
             ;;
-        "--reference")
-            if [ -n "$2" ]; then
-                reference="$2"
-                shift 2
-            else
-                help 1
-            fi
-            ;;
         "--dont-build-docker")
             build_docker="no"
-            shift 1
-            ;;
-        "--future")
-            future="yes"
             shift 1
             ;;
         "-s"|"--store")
