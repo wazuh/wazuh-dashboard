@@ -11,14 +11,12 @@
 set -e
 
 
-reference=""
 current_path="$( cd $(dirname $0) ; pwd -P )"
 dockerfile_path="${current_path}/docker"
 container_name="dashboard_base_builder"
 architecture="x64"
 outdir="${current_path}/output"
 revision="1"
-future="no"
 app_url=""
 security_url=""
 dashboard_path=""
