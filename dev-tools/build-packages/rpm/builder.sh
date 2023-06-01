@@ -15,7 +15,8 @@ architecture=$1
 revision=$2
 future=$3
 repository=$4
-reference=$5
+version=$5
+reference=$6
 directory_base="/usr/share/wazuh-dashboard"
 
 if [ -z "${revision}" ]; then
@@ -27,8 +28,6 @@ if [ "${future}" = "yes" ];then
 else
     if [ "${reference}" ];then
         version=$(curl -sL https://raw.githubusercontent.com/wazuh/wazuh-packages/${reference}/VERSION | cat)
-    else
-        version=$(cat /root/VERSION)
     fi
 fi
 
@@ -62,10 +61,10 @@ mkdir ${build_dir}/${pkg_name}
 # Including spec file
 if [ "${reference}" ];then
     curl -sL https://github.com/wazuh/wazuh-packages/tarball/${reference} | tar zx
-    cp ./wazuh*/stack/dashboard/rpm/${target}.spec ${rpm_build_dir}/SPECS/${pkg_name}.spec
+    cp ./wazuh*/build-packages/rpm/${target}.spec ${rpm_build_dir}/SPECS/${pkg_name}.spec
     cp -r ./wazuh*/* /root/
 else
-    cp /root/stack/dashboard/rpm/${target}.spec ${rpm_build_dir}/SPECS/${pkg_name}.spec
+    cp /root/build-packages/rpm/${target}.spec ${rpm_build_dir}/SPECS/${pkg_name}.spec
 fi
 
 # Generating source tar.gz
@@ -74,7 +73,7 @@ cd ${build_dir} && tar czf "${rpm_build_dir}/SOURCES/${pkg_name}.tar.gz" "${pkg_
 # Building RPM
 /usr/bin/rpmbuild --define "_topdir ${rpm_build_dir}" --define "_version ${version}" \
     --define "_release ${revision}" --define "_localstatedir ${directory_base}" \
-    --define "_url ${url}" \
+    --define "_url ${url}" -v \
     --target ${architecture} -ba ${rpm_build_dir}/SPECS/${pkg_name}.spec
 
 cd ${pkg_path} && sha512sum ${rpm_file} > /tmp/${rpm_file}.sha512
