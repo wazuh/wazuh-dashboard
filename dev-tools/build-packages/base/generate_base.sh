@@ -50,6 +50,7 @@ build() {
     # Copy the necessary files
     cp ${current_path}/builder.sh ${dockerfile_path}
 
+    # Verify that the necessary fields are provided
     if [ "${dashboard_path}" ];then
         cp ${dashboard_path} ${dockerfile_path}/opensearch-dashboards.tar.gz || { clean 1; }
     elif [ "${dashboard_url}" ];then
@@ -68,21 +69,22 @@ build() {
         clean 1
     fi
 
+    if [ ! "${version}" ];then
+        echo "No version provided"
+        clean 1
+    fi
 
     if [ "${repository}" ];then
         url="${repository}"
     fi
+
     # Build the Docker image
     docker build -t ${container_name} ${dockerfile_path} || return 1
 
-    if [ "${reference}" ];then
-        docker run -t --rm -v ${outdir}/:/tmp/output:Z \
-            ${container_name} ${architecture} ${revision} ${future} ${url} ${version} ${reference}   || return 1
-    else
-        docker run -t --rm -v ${outdir}/:/tmp/output:Z \
-            -v ${current_path}/../..:/root:Z \
-            ${container_name} ${architecture} ${revision} ${future} ${url} ${version} || return 1
-    fi
+    docker run -t --rm -v ${outdir}/:/tmp/output:Z \
+      -v ${current_path}/../..:/root:Z \
+      ${container_name} ${architecture} ${revision} ${url} ${version} || return 1
+
 
     echo "Base file $(ls -Art ${outdir} | tail -n 1) added to ${outdir}."
 
@@ -95,21 +97,16 @@ help() {
     echo
     echo "Usage: $0 [OPTIONS]"
     echo "    --app-url <url>            [Optional] Set the repository from where the Wazuh plugin should be downloaded. By default, will be used pre-release."
-
     echo "    --dashboard-url <url>      Set the repository from where the .tar.gz file containing Wazuh Dashboard should be downloaded. "
     echo "    --dashboard-path <path>    Set the location of the .tar.gz file containing the Wazuh Dashboard."
     echo "    --security-url <url>       Set the repository from where the .zip file containing the Security plugin should be downloaded."
     echo "    --security-path <path>     Set the location of the .zip file containing the security plugin."
     echo "    -v, --version <rev>        Wazuh version"
-    echo "    At least one of the dashboard and one of the security options must be provided"
-    echo
     echo "    -s, --store <path>         [Optional] Set the destination path of package. By default, an output folder will be created."
-    echo "    --reference <ref>          [Optional] wazuh-packages branch or tag"
-    echo "    --future                   [Optional] Build test future package 99.99.0 Used for development purposes."
     echo "    -r, --revision <rev>       [Optional] Package revision. By default ${revision}"
     echo "    -h, --help                 Show this help."
-
     echo
+    echo "    At least one of the dashboard and one of the security options must be provided"
     exit $1
 }
 
@@ -177,18 +174,6 @@ main() {
             else
                 help 1
             fi
-            ;;
-        "--reference")
-            if [ -n "${2}" ]; then
-                reference="${2}"
-                shift 2
-            else
-                help 1
-            fi
-            ;;
-        "--future")
-            future="yes"
-            shift 1
             ;;
         "-r"|"--revision")
             if [ -n "${2}" ]; then
