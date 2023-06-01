@@ -13,22 +13,12 @@ set -e
 target="wazuh-dashboard"
 architecture=$1
 revision=$2
-future=$3
-repository=$4
-version=$5
-reference=$6
+repository=$3
+version=$4
 directory_base="/usr/share/wazuh-dashboard"
 
 if [ -z "${revision}" ]; then
     revision="1"
-fi
-
-if [ "${future}" = "yes" ];then
-    version="99.99.0"
-else
-    if [ "${reference}" ];then
-        version=$(curl -sL https://raw.githubusercontent.com/wazuh/wazuh-packages/${reference}/VERSION | cat)
-    fi
 fi
 
 if [ "${repository}" ];then
@@ -55,14 +45,7 @@ source_dir="${pkg_path}/${pkg_name}"
 mkdir -p ${source_dir}/debian
 
 # Including spec file
-if [ "${reference}" ];then
-    curl -sL https://github.com/wazuh/wazuh-packages/tarball/${reference} | tar zx
-    cp -r ./wazuh*/build-packages/deb/debian/* ${source_dir}/debian/
-    cp -r ./wazuh*/* /root/
-else
-    cp -r /root/build-packages/deb/debian/* ${source_dir}/debian/
-fi
-
+cp -r /root/build-packages/deb/debian/* ${source_dir}/debian/
 
 # Generating directory structure to build the .deb package
 cd ${build_dir}/${target} && tar -czf ${pkg_name}.orig.tar.gz "${pkg_name}"
