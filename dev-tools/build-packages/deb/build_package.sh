@@ -83,8 +83,8 @@ build_deb() {
     volumes="-v ${outdir}/:/tmp:Z"
     docker run -t --rm ${volumes} \
         -v ${current_path}/../..:/root:Z \
-        ${container_name} ${architecture} ${revision} \
-        ${future} ${url} ${version} || return 1
+        ${container_name} ${architecture}  \
+        ${revision} ${url} ${version} || return 1
 
     echo "Package $(ls -Art ${outdir} | tail -n 1) added to ${outdir}."
 
