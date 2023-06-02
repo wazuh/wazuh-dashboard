@@ -1798,7 +1798,7 @@ exports[`Header help menu hides survey link 1`] = `
                             <span
                               class="euiButtonEmpty__text"
                             >
-                              Documentation
+                              Wazuh documentation
                             </span>
                           </span>
                         </a>
@@ -1815,7 +1815,7 @@ exports[`Header help menu hides survey link 1`] = `
                             <span
                               class="euiButtonEmpty__text"
                             >
-                              Community
+                              Ask Wazuh
                             </span>
                           </span>
                         </button>
@@ -1828,7 +1828,7 @@ exports[`Header help menu hides survey link 1`] = `
                         />
                         <a
                           class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                          href="https://github.com/opensearch-project/OpenSearch-Dashboards/issues/new/choose"
+                          href="https://github.com/wazuh/wazuh/issues/new/choose"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -2019,11 +2019,11 @@ exports[`Header help menu hides survey link 1`] = `
                                     className="euiButtonEmpty__text"
                                   >
                                     <FormattedMessage
-                                      defaultMessage="Documentation"
+                                      defaultMessage="Wazuh documentation"
                                       id="core.ui.chrome.headerGlobalNav.helpMenuOpenSearchDashboardsDocumentationTitle"
                                       values={Object {}}
                                     >
-                                      Documentation
+                                      Wazuh documentation
                                     </FormattedMessage>
                                   </span>
                                 </span>
@@ -2065,11 +2065,11 @@ exports[`Header help menu hides survey link 1`] = `
                                     className="euiButtonEmpty__text"
                                   >
                                     <FormattedMessage
-                                      defaultMessage="Community"
+                                      defaultMessage="Ask Wazuh"
                                       id="core.ui.chrome.headerGlobalNav.helpMenuAskOpenSearchTitle"
                                       values={Object {}}
                                     >
-                                      Community
+                                      Ask Wazuh
                                     </FormattedMessage>
                                   </span>
                                 </span>
@@ -2092,14 +2092,14 @@ exports[`Header help menu hides survey link 1`] = `
                           </EuiSpacer>
                           <EuiButtonEmpty
                             flush="left"
-                            href="https://github.com/opensearch-project/OpenSearch-Dashboards/issues/new/choose"
+                            href="https://github.com/wazuh/wazuh/issues/new/choose"
                             iconType="logoGithub"
                             size="xs"
                             target="_blank"
                           >
                             <a
                               className="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                              href="https://github.com/opensearch-project/OpenSearch-Dashboards/issues/new/choose"
+                              href="https://github.com/wazuh/wazuh/issues/new/choose"
                               rel="noopener noreferrer"
                               target="_blank"
                             >
@@ -3958,7 +3958,7 @@ exports[`Header help menu renders survey link 1`] = `
                             <span
                               class="euiButtonEmpty__text"
                             >
-                              Documentation
+                              Wazuh documentation
                             </span>
                           </span>
                         </a>
@@ -3975,7 +3975,7 @@ exports[`Header help menu renders survey link 1`] = `
                             <span
                               class="euiButtonEmpty__text"
                             >
-                              Community
+                              Ask Wazuh
                             </span>
                           </span>
                         </button>
@@ -4008,7 +4008,7 @@ exports[`Header help menu renders survey link 1`] = `
                         />
                         <a
                           class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                          href="https://github.com/opensearch-project/OpenSearch-Dashboards/issues/new/choose"
+                          href="https://github.com/wazuh/wazuh/issues/new/choose"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -4199,11 +4199,11 @@ exports[`Header help menu renders survey link 1`] = `
                                     className="euiButtonEmpty__text"
                                   >
                                     <FormattedMessage
-                                      defaultMessage="Documentation"
+                                      defaultMessage="Wazuh documentation"
                                       id="core.ui.chrome.headerGlobalNav.helpMenuOpenSearchDashboardsDocumentationTitle"
                                       values={Object {}}
                                     >
-                                      Documentation
+                                      Wazuh documentation
                                     </FormattedMessage>
                                   </span>
                                 </span>
@@ -4245,11 +4245,11 @@ exports[`Header help menu renders survey link 1`] = `
                                     className="euiButtonEmpty__text"
                                   >
                                     <FormattedMessage
-                                      defaultMessage="Community"
+                                      defaultMessage="Ask Wazuh"
                                       id="core.ui.chrome.headerGlobalNav.helpMenuAskOpenSearchTitle"
                                       values={Object {}}
                                     >
-                                      Community
+                                      Ask Wazuh
                                     </FormattedMessage>
                                   </span>
                                 </span>
@@ -4321,14 +4321,14 @@ exports[`Header help menu renders survey link 1`] = `
                           </EuiSpacer>
                           <EuiButtonEmpty
                             flush="left"
-                            href="https://github.com/opensearch-project/OpenSearch-Dashboards/issues/new/choose"
+                            href="https://github.com/wazuh/wazuh/issues/new/choose"
                             iconType="logoGithub"
                             size="xs"
                             target="_blank"
                           >
                             <a
                               className="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                              href="https://github.com/opensearch-project/OpenSearch-Dashboards/issues/new/choose"
+                              href="https://github.com/wazuh/wazuh/issues/new/choose"
                               rel="noopener noreferrer"
                               target="_blank"
                             >
