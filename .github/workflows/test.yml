@@ -1,0 +1,26 @@
+# This is a basic workflow that is manually triggered
+
+name: Build
+
+on:
+  workflow_dispatch
+
+jobs:
+  generate-base-image:
+    runs-on: ubuntu-latest
+    name: Generate Linux image
+    defaults:
+      run:
+        working-directory: ./artifacts
+    strategy:
+      matrix:
+        include:
+          - name: Linux x64
+            ext: tar.gz
+            suffix: linux-x64
+            script: build-platform --linux --skip-os-packages --release
+
+    steps:
+      - name: Build the base Docker image
+        run: docker build -t dashboard_base_builder --file ./dev-tools/build-packages/base/docker/Dockerfile
+
