@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Build
+name: Test
 
 on:
   workflow_dispatch
