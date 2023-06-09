@@ -183,7 +183,7 @@ jobs:
             yarn-
 
       - name: Setup chromedriver
-        run: yarn add --dev chromedriver@112.0.0
+        run: node scripts/upgrade_chromedriver.js
 
       - name: Run bootstrap (Linux)
         if: matrix.os != 'windows-latest'
