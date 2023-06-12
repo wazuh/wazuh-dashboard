@@ -208,7 +208,7 @@ class HeaderHelpMenuUI extends Component<Props, State> {
         <EuiButtonEmpty href={opensearchDashboardsDocLink} target="_blank" size="xs" flush="left">
           <FormattedMessage
             id="core.ui.chrome.headerGlobalNav.helpMenuOpenSearchDashboardsDocumentationTitle"
-            defaultMessage="Wazuh documentation"
+            defaultMessage="Documentation"
           />
         </EuiButtonEmpty>
 
@@ -217,7 +217,7 @@ class HeaderHelpMenuUI extends Component<Props, State> {
         <EuiButtonEmpty href={helpSupportUrl} target="_blank" size="xs" flush="left">
           <FormattedMessage
             id="core.ui.chrome.headerGlobalNav.helpMenuAskOpenSearchTitle"
-            defaultMessage="Ask Wazuh"
+            defaultMessage="Community"
           />
         </EuiButtonEmpty>
 
