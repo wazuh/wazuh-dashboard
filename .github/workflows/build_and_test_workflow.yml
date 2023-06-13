@@ -179,9 +179,6 @@ jobs:
           restore-keys: |
             yarn-
 
-      - name: Setup chromedriver
-        run: yarn add --dev chromedriver --ignore-engines
-
       - name: Run bootstrap (Linux)
         if: matrix.os != 'windows-latest'
         run: yarn osd bootstrap
@@ -189,6 +186,9 @@ jobs:
       - name: Run bootstrap (Windows)
         if: matrix.os == 'windows-latest'
         run: yarn osd bootstrap || yarn osd bootstrap
+
+      - name: Setup chromedriver
+        run: yarn add --dev chromedriver --ignore-engines
 
       - name: Build plugins
         run: node scripts/build_opensearch_dashboards_platform_plugins --no-examples --workers 10
