@@ -188,7 +188,7 @@ jobs:
         run: yarn osd bootstrap || yarn osd bootstrap
 
       - name: Setup chromedriver
-        run: yarn add --dev chromedriver --ignore-engines
+        run: yarn add --dev chromedriver@113.0.0 --ignore-engines
 
       - name: Build plugins
         run: node scripts/build_opensearch_dashboards_platform_plugins --no-examples --workers 10
