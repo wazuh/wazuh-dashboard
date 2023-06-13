@@ -1798,7 +1798,7 @@ exports[`Header help menu hides survey link 1`] = `
                             <span
                               class="euiButtonEmpty__text"
                             >
-                              Wazuh documentation
+                              Documentation
                             </span>
                           </span>
                         </a>
@@ -1815,7 +1815,7 @@ exports[`Header help menu hides survey link 1`] = `
                             <span
                               class="euiButtonEmpty__text"
                             >
-                              Ask Wazuh
+                              Community
                             </span>
                           </span>
                         </button>
@@ -2019,11 +2019,11 @@ exports[`Header help menu hides survey link 1`] = `
                                     className="euiButtonEmpty__text"
                                   >
                                     <FormattedMessage
-                                      defaultMessage="Wazuh documentation"
+                                      defaultMessage="Documentation"
                                       id="core.ui.chrome.headerGlobalNav.helpMenuOpenSearchDashboardsDocumentationTitle"
                                       values={Object {}}
                                     >
-                                      Wazuh documentation
+                                      Documentation
                                     </FormattedMessage>
                                   </span>
                                 </span>
@@ -2065,11 +2065,11 @@ exports[`Header help menu hides survey link 1`] = `
                                     className="euiButtonEmpty__text"
                                   >
                                     <FormattedMessage
-                                      defaultMessage="Ask Wazuh"
+                                      defaultMessage="Community"
                                       id="core.ui.chrome.headerGlobalNav.helpMenuAskOpenSearchTitle"
                                       values={Object {}}
                                     >
-                                      Ask Wazuh
+                                      Community
                                     </FormattedMessage>
                                   </span>
                                 </span>
@@ -3958,7 +3958,7 @@ exports[`Header help menu renders survey link 1`] = `
                             <span
                               class="euiButtonEmpty__text"
                             >
-                              Wazuh documentation
+                              Documentation
                             </span>
                           </span>
                         </a>
@@ -3975,7 +3975,7 @@ exports[`Header help menu renders survey link 1`] = `
                             <span
                               class="euiButtonEmpty__text"
                             >
-                              Ask Wazuh
+                              Community
                             </span>
                           </span>
                         </button>
@@ -4199,11 +4199,11 @@ exports[`Header help menu renders survey link 1`] = `
                                     className="euiButtonEmpty__text"
                                   >
                                     <FormattedMessage
-                                      defaultMessage="Wazuh documentation"
+                                      defaultMessage="Documentation"
                                       id="core.ui.chrome.headerGlobalNav.helpMenuOpenSearchDashboardsDocumentationTitle"
                                       values={Object {}}
                                     >
-                                      Wazuh documentation
+                                      Documentation
                                     </FormattedMessage>
                                   </span>
                                 </span>
@@ -4245,11 +4245,11 @@ exports[`Header help menu renders survey link 1`] = `
                                     className="euiButtonEmpty__text"
                                   >
                                     <FormattedMessage
-                                      defaultMessage="Ask Wazuh"
+                                      defaultMessage="Community"
                                       id="core.ui.chrome.headerGlobalNav.helpMenuAskOpenSearchTitle"
                                       values={Object {}}
                                     >
-                                      Ask Wazuh
+                                      Community
                                     </FormattedMessage>
                                   </span>
                                 </span>

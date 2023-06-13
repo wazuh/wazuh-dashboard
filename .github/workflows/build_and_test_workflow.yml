@@ -180,7 +180,7 @@ jobs:
             yarn-
 
       - name: Setup chromedriver
-        run: yarn add --dev chromedriver@112.0.0
+        run: yarn add --dev chromedriver --ignore-engines
 
       - name: Run bootstrap (Linux)
         if: matrix.os != 'windows-latest'
