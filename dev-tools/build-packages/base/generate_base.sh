@@ -79,9 +79,19 @@ build() {
     # Build the Docker image
     docker build -t ${container_name} ${dockerfile_path} || return 1
 
+    local_file='file://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+    if [[ $url =~ $local_file ]];then
+      local_path=`echo $url | sed 's/file:\/\///'`
+      file_name=`basename $local_path`
+      docker run -t --rm -v ${outdir}/:/tmp/output:Z \
+      -v ${current_path}/../..:/root:Z -v ${local_path}:/tmp/${file_name}\
+      ${container_name} ${architecture} ${revision} ${url} ${version} || return 1
+    else
     docker run -t --rm -v ${outdir}/:/tmp/output:Z \
       -v ${current_path}/../..:/root:Z \
       ${container_name} ${architecture} ${revision} ${url} ${version} || return 1
+    fi
+
 
 
     echo "Base file $(ls -Art ${outdir} | tail -n 1) added to ${outdir}."

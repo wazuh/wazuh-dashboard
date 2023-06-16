@@ -24,7 +24,14 @@ fi
 if [ "${repository}" ];then
     valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
     if [[ $repository =~ $valid_url ]];then
+    local_file='file://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+      if [[ $repository =~ $local_file ]];then
+        local_path=`echo $repository | sed 's/file:\/\///'`
+        file_name=`basename $local_path`
+        url="file:///tmp/${file_name}"
+      else
         url="${repository}"
+      fi
         if ! curl --output /dev/null --silent --head --fail "${url}"; then
             echo "The given URL to download the Wazuh plugin zip does not exist: ${url}"
             exit 1

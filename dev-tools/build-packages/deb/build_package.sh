@@ -80,7 +80,14 @@ build_deb() {
     fi
 
     # Build the Debian package with a Docker container
-    volumes="-v ${outdir}/:/tmp:Z"
+    local_file='file://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+    if [[ $url =~ $local_file ]];then
+      local_path=`echo $url | sed 's/file:\/\///'`
+      file_name=`basename $local_path`
+      volumes="-v ${outdir}/:/tmp:Z -v ${local_path}:/tmp/${file_name}"
+    else
+        volumes="-v ${outdir}/:/tmp:Z"
+    fi
     docker run -t --rm ${volumes} \
         -v ${current_path}/../..:/root:Z \
         ${container_name} ${architecture}  \

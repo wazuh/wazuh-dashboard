@@ -80,8 +80,18 @@ build_rpm() {
         docker build -t ${container_name} ${dockerfile_path} || return 1
     fi
 
+
+    local_file='file://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+    if [[ $url =~ $local_file ]];then
+      local_path=`echo $url | sed 's/file:\/\///'`
+      file_name=`basename $local_path`
+      volumes="-v ${outdir}/:/tmp:Z -v ${local_path}:/tmp/${file_name}"
+    else
+        volumes="-v ${outdir}/:/tmp:Z"
+    fi
     # Build the RPM package with a Docker container
-    volumes="-v ${outdir}/:/tmp:Z"
+
+
 
     docker run -t --rm ${volumes} \
       -v ${current_path}/../..:/root:Z \
