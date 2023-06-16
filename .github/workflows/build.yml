@@ -38,6 +38,16 @@ jobs:
           npm i -g yarn@1.22.10
           yarn config set network-timeout 1000000 -g
 
+
+      ### TODO: review the strategy to get this variables, currently are hardcoded
+      - name: Setup Variables
+        run: |
+          echo "ARCHITECTURE=amd64" >> $GITHUB_ENV
+          echo "REVISION=1" >> $GITHUB_ENV
+          echo "URL=https://packages-dev.wazuh.com/pre-release/ui/dashboard/wazuh-4.4.0-1.zip" >> $GITHUB_ENV
+          echo "WAZUHVERSION=4.4.0" >> $GITHUB_ENV
+
+
       - name: Configure Yarn Cache
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
@@ -55,7 +65,7 @@ jobs:
 
       - name: Get artifact build name
         run: |
-          echo "ARTIFACT_BUILD_NAME=opensearch-dashboards-${{ env.VERSION }}-${{ matrix.suffix }}.${{ matrix.ext }}" >> $GITHUB_ENV
+          echo "ARTIFACT_BUILD_NAME=opensearch-dashboards.tar.gz" >> $GITHUB_ENV
 
       - name: Run bootstrap
         run: yarn osd bootstrap
@@ -63,9 +73,78 @@ jobs:
       - name: Build `${{ matrix.name }}`
         run: yarn ${{ matrix.script }} --release
 
+      - name: Get artifact build name
+        run: |
+          echo "ARTIFACT_BUILD_NAME=opensearch-dashboards-${{ env.VERSION }}-${{ matrix.suffix }}.${{ matrix.ext }}" >> $GITHUB_ENV
+
+      - name: Get current directory
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          mkdir security
+
+      ### TODO: See how to get the correct ref from the repository. It should be the same as the dashboard version
+      - name: Clone security plugin repository
+        uses: actions/checkout@v3
+        with:
+          repository: wazuh/wazuh-security-dashboards-plugin
+          path: ${{ env.CURRENT_DIR }}/plugins/security
+          ref: '2.4.1'
+
+      - name: Build the Security plugin
+        run: |
+          cd ${{ env.CURRENT_DIR }}/plugins/security
+          sed -i 's/${pluginName}-${packageJson.version}.zip/${pluginName}.zip/g' ./build_tools/rename_zip.js
+          yarn build
+
+      - name: Build the base builder Docker image
+        run: |
+          cp ${{ env.CURRENT_DIR }}/plugins/security/build/security-dashboards.zip ${{ env.CURRENT_DIR }}/target/
+          cp ./dev-tools/build-packages/base/docker/Dockerfile .
+          cp ./dev-tools/build-packages/base/builder.sh .
+          cp ./target/${{env.ARTIFACT_BUILD_NAME}} ./opensearch-dashboards.tar.gz
+          docker build -t dashboard_base_builder .
+
+      - name: Run the base build process with Docker
+        run: |
+          docker run -t --rm -v ${{ env.CURRENT_DIR }}/target/:/tmp/output:Z \
+          -v ${{ env.CURRENT_DIR }}/dev-tools/:/root:Z \
+          dashboard_base_builder ${{ env.ARCHITECTURE }} ${{ env.REVISION }} ${{ env.URL }} ${{ env.WAZUHVERSION }}
+
+      - name: Build the deb builder Docker image
+        run: |
+          cp ./dev-tools/build-packages/deb/docker/amd64/Dockerfile .
+          cp ./dev-tools/build-packages/deb/builder.sh .
+          cp ./target/${{env.ARTIFACT_BUILD_NAME}} .
+          docker build -t deb_dashboard_builder_amd64 .
+
+      - name: Run the deb build process with Docker
+        run: |
+          docker run -t --rm -v ${{ env.CURRENT_DIR }}/target/:/tmp:Z \
+          -v ${{ env.CURRENT_DIR }}/dev-tools/:/root:Z \
+          deb_dashboard_builder_amd64 ${{ env.ARCHITECTURE }} ${{ env.REVISION }} ${{ env.URL }} ${{ env.WAZUHVERSION }}
+
+      - name: Build the rpm builder Docker image
+        run: |
+          cp ./dev-tools/build-packages/rpm/docker/x86_64/Dockerfile .
+          cp ./dev-tools/build-packages/rpm/builder.sh .
+          cp ./target/${{env.ARTIFACT_BUILD_NAME}} .
+          docker build -t rpm_dashboard_builder_x86 .
+
+      - name: Run the rpm build process with Docker
+        run: |
+          docker run -t --rm -v ${{ env.CURRENT_DIR }}/target/:/tmp:Z \
+          -v ${{ env.CURRENT_DIR }}/dev-tools/:/root:Z \
+          rpm_dashboard_builder_x86 ${{ env.ARCHITECTURE }} ${{ env.REVISION }} ${{ env.URL }} ${{ env.WAZUHVERSION }}
+
+      - name: Copy artifacts
+        run: |
+          mkdir ${{ env.CURRENT_DIR }}/target/output
+          cp ${{ env.CURRENT_DIR }}/target/wazuh-dashboard-${{ env.WAZUHVERSION }}* ${{ env.CURRENT_DIR }}/target/output/
+          cp ${{ env.CURRENT_DIR }}/target/wazuh-dashboard_${{ env.WAZUHVERSION }}* ${{ env.CURRENT_DIR }}/target/output/
+
       - uses: actions/upload-artifact@v3
         if: success()
         with:
-          name: ${{ matrix.suffix }}-${{ env.VERSION }}
-          path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
-          retention-days: 1
+         name: wazuh-dashboard-${{ env.WAZUHVERSION }}
+         path: ./artifacts/target/output/
+         retention-days: 30
