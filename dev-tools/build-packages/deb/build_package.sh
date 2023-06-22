@@ -43,10 +43,21 @@ build_deb() {
     container_name="$1"
     dockerfile_path="$2"
 
+
+        # Verify that the necessary fields are provided
+    if [ ! "${dashboard_path}" ] && [ ! "${dashboard_url}" ];then
+        echo "No dashboard url or path provided"
+        clean 1
+    fi
+
+    if [ ! "${security_path}" ] && [ ! "${security_url}" ];then
+        echo "No security url or path provided"
+        clean 1
+    fi
+
     if [ "${repository}" ];then
         url="${repository}"
     fi
-
     # Copy the necessary files
     cp ${current_path}/builder.sh ${dockerfile_path}
 
