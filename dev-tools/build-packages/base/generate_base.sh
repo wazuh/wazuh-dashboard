@@ -60,7 +60,7 @@ build() {
     if [[ $base =~ $valid_url ]]; then
         if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
             echo "The given URL or Path to the Wazuh Dashboard base is not working: ${base}"
-            xit 1
+            clean 1
         fi
     else
         echo "The given URL or Path to the Wazuh Dashboard base is not valid: ${base}"
@@ -79,9 +79,9 @@ build() {
 
     wazuh_name="wazuh-dashboard-$version-$revision-linux-x64"
 
-    echo
-    echo Building the pacakage...
-    echo
+  echo
+  echo Building the package...
+  echo
 
     # Extract the app and rename to $wazuh_name
     directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
@@ -105,9 +105,10 @@ build() {
     # Enable the default configuration (renaming)
     cp $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
 
-    # Fix ambiguous shebangs (necessary for RPM building)
-    grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
-    grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
+  # TODO: investigate to remove this if possible
+  # Fix ambiguous shebangs (necessary for RPM building)
+  grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
+  grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
 
     # Compress
     echo
@@ -132,7 +133,7 @@ help() {
     echo "    -b, --base <url/path>         Set the location of the .tar.gz file containing the base wazuh-dashboard build."
     echo "    -s, --security <url/path>     Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
     echo "    -v, --version <version>       Set the version of this build."
-    echo "    -r, --revision <revision      [Optional] Set the revision of this build. By default, it is set to 1."
+    echo "    -r, --revision <revision>      [Optional] Set the revision of this build. By default, it is set to 1."
     echo "    -o, --output <path>           [Optional] Set the destination path of package. By default, an output folder will be created."
     echo "    -h, --help                    Show this help."
     echo
