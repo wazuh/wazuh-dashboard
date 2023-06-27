@@ -16,6 +16,7 @@ output="${current_path}/output"
 revision="1"
 security=""
 version=""
+config_path=$(pwd)/../../../config
 
 trap ctrl_c INT
 
@@ -28,7 +29,7 @@ clean() {
     rm -rf app.zip wazuh-dashboard.tar.gz security.zip $directory_name $wazuh_name
 
     if [ $exit_code != 0 ]; then
-        rm -rf output/$wazuh_name.tar.gz
+        rm -rf $output/$wazuh_name.tar.gz
     fi
 
     exit ${exit_code}
@@ -41,83 +42,85 @@ ctrl_c() {
 # -----------------------------------------------------------------------------
 
 build() {
-
-  #Validate and download files to build the package
-  valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
-  echo
-  echo "Downloading files..."
-  echo
-  if [[ $app =~ $valid_url ]];then
-    if ! curl --output app.zip --silent --fail "${app}"; then
-      echo "The given URL or Path to the Wazuh App is not working: ${app}"
-      clean 1
+    # Validate and download files to build the package
+    valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+    echo
+    echo "Downloading files..."
+    echo
+    if [[ $app =~ $valid_url ]]; then
+        if ! curl --output app.zip --silent --fail "${app}"; then
+            echo "The given URL or Path to the Wazuh App is not working: ${app}"
+            clean 1
+        fi
+    else
+        echo "The given URL or Path to the Wazuh App is not valid: ${app}"
+        clean 1
     fi
-  else
-    echo "The given URL or Path to the Wazuh App is not valid: ${app}"
-    clean 1
-  fi
 
-  if [[ $base =~ $valid_url ]];then
-    if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
-      echo "The given URL or Path to the Wazuh Dashboard base is not working: ${base}"
-      xit 1
+    if [[ $base =~ $valid_url ]]; then
+        if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
+            echo "The given URL or Path to the Wazuh Dashboard base is not working: ${base}"
+            xit 1
+        fi
+    else
+        echo "The given URL or Path to the Wazuh Dashboard base is not valid: ${base}"
+        clean 1
     fi
-  else
-    echo "The given URL or Path to the Wazuh Dashboard base is not valid: ${base}"
-    clean 1
-  fi
 
-  if [[ $security =~ $valid_url ]];then
-    if ! curl --output security.zip --silent --fail "${security}"; then
+    if [[ $security =~ $valid_url ]]; then
+        if ! curl --output security.zip --silent --fail "${security}"; then
             echo "The given URL or Path to the Wazuh Security Plugin is not working: ${security}"
             clean 1
+        fi
+    else
+        echo "The given URL or Path to the Wazuh Security Plugin is not valid: ${security}"
+        clean 1
     fi
-  else
-    echo "The given URL or Path to the Wazuh Security Plugin is not valid: ${security}"
-    clean 1
-  fi
 
-  wazuh_name="wazuh-dashboard-$version-$revision-linux-x64"
+    wazuh_name="wazuh-dashboard-$version-$revision-linux-x64"
 
-  echo
-  echo Building the pacakage...
-  echo
+    echo
+    echo Building the pacakage...
+    echo
 
-  #Extract the plugin and move it to the tmp folder
-  directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##'  | sort -u)
-  tar -zxf wazuh-dashboard.tar.gz
-  mv $directory_name $wazuh_name
-  cd $wazuh_name
+    # Extract the app and rename to $wazuh_name
+    directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
+    tar -zxf wazuh-dashboard.tar.gz
+    mv $directory_name $wazuh_name
+    echo "------------"
+    echo $directory_name
+    echo "------------"
+    cd $wazuh_name
 
-  #Install plugins
-  bin/opensearch-dashboards-plugin install alertingDashboards
-  bin/opensearch-dashboards-plugin install customImportMapDashboards
-  bin/opensearch-dashboards-plugin install ganttChartDashboards
-  bin/opensearch-dashboards-plugin install indexManagementDashboards
-  bin/opensearch-dashboards-plugin install notificationsDashboards
-  bin/opensearch-dashboards-plugin install reportsDashboards
-  bin/opensearch-dashboards-plugin install file:../security.zip
-  bin/opensearch-dashboards-plugin install file:../app.zip
+    # Install plugins
+    bin/opensearch-dashboards-plugin install alertingDashboards
+    bin/opensearch-dashboards-plugin install customImportMapDashboards
+    bin/opensearch-dashboards-plugin install ganttChartDashboards
+    bin/opensearch-dashboards-plugin install indexManagementDashboards
+    bin/opensearch-dashboards-plugin install notificationsDashboards
+    bin/opensearch-dashboards-plugin install reportsDashboards
+    bin/opensearch-dashboards-plugin install file:../security.zip
+    bin/opensearch-dashboards-plugin install file:../app.zip
 
-  # Enable the default configuration (renaming)
-  mv config/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
+    # Enable the default configuration (renaming)
+    cp $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
 
-  # Fix ambiguous shebangs (necessary for RPM building)
-  grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
-  grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
+    # Fix ambiguous shebangs (necessary for RPM building)
+    grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
+    grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
 
-  # Compress
-  echo
-  echo Compressing the package...
-  echo
-  cd ..
-  mkdir -p output
-  tar -czf output/$wazuh_name.tar.gz $wazuh_name
+    # Compress
+    echo
+    echo Compressing the package...
+    echo
+    cd ..
+    mkdir -p $output
+    tar -czf $output/$wazuh_name.tar.gz $wazuh_name
 
-  echo
-  echo DONE!
-  echo
-  clean 0
+    echo
+    echo DONE!
+    echo
+    clean 0
 }
 
 # -----------------------------------------------------------------------------
@@ -126,8 +129,8 @@ help() {
     echo
     echo "Usage: $0 [OPTIONS]"
     echo "    -a, --app <url/path>          Set the location of the .zip file containing the Wazuh plugin."
-    echo "    -b, --base <url/path>         Set the location of the .tar.gz file containing the base Wazuh Dashboard build."
-    echo "    -s, --security <url/path>     Set the location of the .zip file containing the Wazuh Security plugin."
+    echo "    -b, --base <url/path>         Set the location of the .tar.gz file containing the base wazuh-dashboard build."
+    echo "    -s, --security <url/path>     Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
     echo "    -v, --version <version>       Set the version of this build."
     echo "    -r, --revision <revision      [Optional] Set the revision of this build. By default, it is set to 1."
     echo "    -o, --output <path>           [Optional] Set the destination path of package. By default, an output folder will be created."
@@ -139,13 +142,12 @@ help() {
 # -----------------------------------------------------------------------------
 
 main() {
-    while [ -n "${1}" ]
-    do
+    while [ -n "${1}" ]; do
         case "${1}" in
-        "-h"|"--help")
+        "-h" | "--help")
             help 0
             ;;
-        "-a"|"--app")
+        "-a" | "--app")
             if [ -n "$2" ]; then
                 app="$2"
                 shift 2
@@ -153,7 +155,7 @@ main() {
                 help 1
             fi
             ;;
-        "-s"|"--security")
+        "-s" | "--security")
             if [ -n "${2}" ]; then
                 security="${2}"
                 shift 2
@@ -161,7 +163,7 @@ main() {
                 help 0
             fi
             ;;
-        "-b"|"--base")
+        "-b" | "--base")
             if [ -n "${2}" ]; then
                 base="${2}"
                 shift 2
@@ -169,7 +171,7 @@ main() {
                 help 0
             fi
             ;;
-        "-v"|"--version")
+        "-v" | "--version")
             if [ -n "${2}" ]; then
                 version="${2}"
                 shift 2
@@ -177,13 +179,13 @@ main() {
                 help 0
             fi
             ;;
-        "-r"|"--revision")
+        "-r" | "--revision")
             if [ -n "${2}" ]; then
                 revision="${2}"
                 shift 2
             fi
             ;;
-        "-o"|"--output")
+        "-o" | "--output")
             if [ -n "${2}" ]; then
                 output="${2}"
                 shift 2
@@ -192,11 +194,12 @@ main() {
         *)
 
             help 1
+            ;;
         esac
     done
 
     if [ -z "$app" ] | [ -z "$base" ] | [ -z "$security" ] | [ -z "$version" ]; then
-      help 1
+        help 1
     fi
 
     build || exit 1
