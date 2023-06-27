@@ -10,30 +10,27 @@
 
 set -e
 
-
-current_path="$( cd $(dirname $0) ; pwd -P )"
-dockerfile_path="${current_path}/docker"
-container_name="dashboard_base_builder"
-architecture="x64"
-outdir="${current_path}/output"
+app=""
+base=""
+output="${current_path}/output"
 revision="1"
-app_url=""
-security_url=""
-dashboard_path=""
-dashboard_url=""
-security_path=""
-url=""
+security=""
 version=""
-
-# -----------------------------------------------------------------------------
 
 trap ctrl_c INT
 
 clean() {
     exit_code=$1
-
+    echo
+    echo "Cleaning temporary files..."
+    echo
     # Clean the files
-    rm -rf ${dockerfile_path}/{*.sh,*.tar.xz,*-dashboards-*,*.tar.gz,*.zip}
+    rm -rf app.zip wazuh-dashboard.tar.gz security.zip $directory_name $wazuh_name
+
+    if [ $exit_code != 0 ]; then
+        rm -rf output/$wazuh_name.tar.gz
+    fi
+
     exit ${exit_code}
 }
 
@@ -45,58 +42,82 @@ ctrl_c() {
 
 build() {
 
-    # Copy the necessary files
-    cp ${current_path}/builder.sh ${dockerfile_path}
-
-    # Verify that the necessary fields are provided
-    if [ "${dashboard_path}" ];then
-        cp ${dashboard_path} ${dockerfile_path}/opensearch-dashboards.tar.gz || { clean 1; }
-    elif [ "${dashboard_url}" ];then
-        wget -O ${dockerfile_path}/opensearch-dashboards.tar.gz ${dashboard_url} || { clean 1; }
-    else
-        echo "No dashboard url or path provided"
-        clean 1
+  #Validate and download files to build the package
+  valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+  echo
+  echo "Downloading files..."
+  echo
+  if [[ $app =~ $valid_url ]];then
+    if ! curl --output app.zip --silent --fail "${app}"; then
+      echo "The given URL or Path to the Wazuh App is not working: ${app}"
+      clean 1
     fi
+  else
+    echo "The given URL or Path to the Wazuh App is not valid: ${app}"
+    clean 1
+  fi
 
-    if [ "${security_path}" ];then
-        cp ${security_path} ${dockerfile_path}/security-dashboards.zip || { clean 1; }
-    elif [ "${security_url}" ];then
-        wget -O ${dockerfile_path}/security-dashboards.zip ${security_url} || { clean 1; }
-    else
-        echo "No security url or path provided"
-        clean 1
+  if [[ $base =~ $valid_url ]];then
+    if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
+      echo "The given URL or Path to the Wazuh Dashboard base is not working: ${base}"
+      xit 1
     fi
+  else
+    echo "The given URL or Path to the Wazuh Dashboard base is not valid: ${base}"
+    clean 1
+  fi
 
-    if [ ! "${version}" ];then
-        echo "No version provided"
-        clean 1
+  if [[ $security =~ $valid_url ]];then
+    if ! curl --output security.zip --silent --fail "${security}"; then
+            echo "The given URL or Path to the Wazuh Security Plugin is not working: ${security}"
+            clean 1
     fi
+  else
+    echo "The given URL or Path to the Wazuh Security Plugin is not valid: ${security}"
+    clean 1
+  fi
 
-    if [ "${repository}" ];then
-        url="${repository}"
-    fi
+  wazuh_name="wazuh-dashboard-$version-$revision-linux-x64"
 
-    # Build the Docker image
-    docker build -t ${container_name} ${dockerfile_path} || return 1
+  echo
+  echo Building the pacakage...
+  echo
 
-    local_file='file://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
-    if [[ $url =~ $local_file ]];then
-      local_path=`echo $url | sed 's/file:\/\///'`
-      file_name=`basename $local_path`
-      docker run -t --rm -v ${outdir}/:/tmp/output:Z \
-      -v ${current_path}/../..:/root:Z -v ${local_path}:/tmp/${file_name}\
-      ${container_name} ${architecture} ${revision} ${url} ${version} || return 1
-    else
-    docker run -t --rm -v ${outdir}/:/tmp/output:Z \
-      -v ${current_path}/../..:/root:Z \
-      ${container_name} ${architecture} ${revision} ${url} ${version} || return 1
-    fi
+  #Extract the plugin and move it to the tmp folder
+  directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##'  | sort -u)
+  tar -zxf wazuh-dashboard.tar.gz
+  mv $directory_name $wazuh_name
+  cd $wazuh_name
 
+  #Install plugins
+  bin/opensearch-dashboards-plugin install alertingDashboards
+  bin/opensearch-dashboards-plugin install customImportMapDashboards
+  bin/opensearch-dashboards-plugin install ganttChartDashboards
+  bin/opensearch-dashboards-plugin install indexManagementDashboards
+  bin/opensearch-dashboards-plugin install notificationsDashboards
+  bin/opensearch-dashboards-plugin install reportsDashboards
+  bin/opensearch-dashboards-plugin install file:../security.zip
+  bin/opensearch-dashboards-plugin install file:../app.zip
 
+  # Enable the default configuration (renaming)
+  mv config/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
 
-    echo "Base file $(ls -Art ${outdir} | tail -n 1) added to ${outdir}."
+  # Fix ambiguous shebangs (necessary for RPM building)
+  grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
+  grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
 
-    return 0
+  # Compress
+  echo
+  echo Compressing the package...
+  echo
+  cd ..
+  mkdir -p output
+  tar -czf output/$wazuh_name.tar.gz $wazuh_name
+
+  echo
+  echo DONE!
+  echo
+  clean 0
 }
 
 # -----------------------------------------------------------------------------
@@ -104,17 +125,14 @@ build() {
 help() {
     echo
     echo "Usage: $0 [OPTIONS]"
-    echo "    --app-url <url>            [Optional] Set the repository from where the Wazuh plugin should be downloaded. By default, will be used pre-release."
-    echo "    --dashboard-url <url>      Set the repository from where the .tar.gz file containing Wazuh Dashboard should be downloaded. "
-    echo "    --dashboard-path <path>    Set the location of the .tar.gz file containing the Wazuh Dashboard."
-    echo "    --security-url <url>       Set the repository from where the .zip file containing the Security plugin should be downloaded."
-    echo "    --security-path <path>     Set the location of the .zip file containing the security plugin."
-    echo "    -v, --version <rev>        Wazuh version"
-    echo "    -s, --store <path>         [Optional] Set the destination path of package. By default, an output folder will be created."
-    echo "    -r, --revision <rev>       [Optional] Package revision. By default ${revision}"
-    echo "    -h, --help                 Show this help."
+    echo "    -a, --app <url/path>          Set the location of the .zip file containing the Wazuh plugin."
+    echo "    -b, --base <url/path>         Set the location of the .tar.gz file containing the base Wazuh Dashboard build."
+    echo "    -s, --security <url/path>     Set the location of the .zip file containing the Wazuh Security plugin."
+    echo "    -v, --version <version>       Set the version of this build."
+    echo "    -r, --revision <revision      [Optional] Set the revision of this build. By default, it is set to 1."
+    echo "    -o, --output <path>           [Optional] Set the destination path of package. By default, an output folder will be created."
+    echo "    -h, --help                    Show this help."
     echo
-    echo "    At least one of the dashboard and one of the security options must be provided"
     exit $1
 }
 
@@ -127,78 +145,63 @@ main() {
         "-h"|"--help")
             help 0
             ;;
-        "--app-url")
+        "-a"|"--app")
             if [ -n "$2" ]; then
-                repository="$2"
+                app="$2"
                 shift 2
             else
                 help 1
             fi
             ;;
-        "--dashboard-url")
-            if [ -n "$2" ]; then
-                dashboard_url="$2"
-                shift 2
-            else
-                help 1
-            fi
-            ;;
-        "--security-url")
-            if [ -n "$2" ]; then
-                security_url="$2"
-                shift 2
-            else
-                help 1
-            fi
-            ;;
-        "--dashboard-path")
-            if [ -n "$2" ]; then
-                dashboard_path="$2"
-                shift 2
-            else
-                help 1
-            fi
-            ;;
-        "--security-path")
-            if [ -n "$2" ]; then
-                security_path="$2"
-                shift 2
-            else
-                help 1
-            fi
-            ;;
-        "-s"|"--store")
+        "-s"|"--security")
             if [ -n "${2}" ]; then
-                outdir="${2}"
+                security="${2}"
                 shift 2
             else
-                help 1
+                help 0
             fi
             ;;
-            "-v"|"--version")
+        "-b"|"--base")
+            if [ -n "${2}" ]; then
+                base="${2}"
+                shift 2
+            else
+                help 0
+            fi
+            ;;
+        "-v"|"--version")
             if [ -n "${2}" ]; then
                 version="${2}"
                 shift 2
             else
-                help 1
+                help 0
             fi
             ;;
         "-r"|"--revision")
             if [ -n "${2}" ]; then
                 revision="${2}"
                 shift 2
-            else
-                help 1
+            fi
+            ;;
+        "-o"|"--output")
+            if [ -n "${2}" ]; then
+                output="${2}"
+                shift 2
             fi
             ;;
         *)
+
             help 1
         esac
     done
 
-    build || clean 1
+    if [ -z "$app" ] | [ -z "$base" ] | [ -z "$security" ] | [ -z "$version" ]; then
+      help 1
+    fi
 
-    clean 0
+    build || exit 1
+
+    exit 0
 }
 
 main "$@"
