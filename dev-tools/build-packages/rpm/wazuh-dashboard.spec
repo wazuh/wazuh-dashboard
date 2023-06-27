@@ -30,7 +30,7 @@ ExclusiveOS: linux
 %global CONFIG_DIR /etc/%{name}
 %global PID_DIR /run/%{name}
 %global INSTALL_DIR /usr/share/%{name}
-%global DASHBOARD_FILE wazuh-dashboard-base-%{version}-%{release}-linux-x64.tar.xz
+%global DASHBOARD_FILE wazuh-dashboard.tar.gz
 %define _source_payload w9.gzdio
 %define _binary_payload w9.gzdio
 
@@ -44,7 +44,7 @@ Wazuh dashboard is a user interface and visualization tool for security-related 
 
 %prep
 
-cp /tmp/%{DASHBOARD_FILE} ./
+cp /opt/%{DASHBOARD_FILE} ./
 
 groupadd %{GROUP}
 useradd -g %{GROUP} %{USER}
@@ -65,8 +65,8 @@ mkdir -p %{buildroot}/etc/systemd/system
 mkdir -p %{buildroot}%{_initrddir}
 mkdir -p %{buildroot}/etc/default
 
-cp wazuh-dashboard-base/etc/node.options %{buildroot}%{CONFIG_DIR}
-cp wazuh-dashboard-base/etc/opensearch_dashboards.yml %{buildroot}%{CONFIG_DIR}
+cp wazuh-dashboard-base/config/node.options %{buildroot}%{CONFIG_DIR}
+cp wazuh-dashboard-base/config/opensearch_dashboards.yml %{buildroot}%{CONFIG_DIR}
 cp wazuh-dashboard-base/VERSION %{buildroot}%{INSTALL_DIR}
 
 mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
@@ -75,21 +75,16 @@ mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
 
 mkdir -p %{buildroot}%{INSTALL_DIR}/config
 
-cp %{buildroot}%{INSTALL_DIR}/etc/services/wazuh-dashboard.service %{buildroot}/etc/systemd/system/wazuh-dashboard.service
-cp %{buildroot}%{INSTALL_DIR}/etc/services/default %{buildroot}/etc/default/wazuh-dashboard
+cp %{buildroot}%{INSTALL_DIR}/wazuh-dashboard.service %{buildroot}/etc/systemd/system/wazuh-dashboard.service
+cp %{buildroot}%{INSTALL_DIR}/default %{buildroot}/etc/default/wazuh-dashboard
 
 chmod 640 %{buildroot}/etc/systemd/system/wazuh-dashboard.service
 chmod 640 %{buildroot}/etc/default/wazuh-dashboard
-
-rm -rf %{buildroot}%{INSTALL_DIR}/etc/
 
 find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
 find %{buildroot}%{CONFIG_DIR} -exec chown %{USER}:%{GROUP} {} \;
 
 chown root:root %{buildroot}/etc/systemd/system/wazuh-dashboard.service
-
-runuser %{USER} --shell="/bin/bash" --command="%{buildroot}%{INSTALL_DIR}/bin/opensearch-dashboards-plugin install %{_url}"
-
 
 find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -exec chown %{USER}:%{GROUP} {} \;
 find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 644 -exec chmod 640 {} \;

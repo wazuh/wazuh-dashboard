@@ -55,7 +55,7 @@ build_deb() {
   tar -zxf wazuh-dashboard.tar.gz
   rm wazuh-dashboard.tar.gz
   mv $directory_name wazuh-dashboard-base
-  cp files/* wazuh-dashboard-base
+  cp ../config/* wazuh-dashboard-base
   echo ${version} > wazuh-dashboard-base/VERSION
   tar -czf ./wazuh-dashboard.tar.gz wazuh-dashboard-base
 
