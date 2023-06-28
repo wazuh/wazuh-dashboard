@@ -10,14 +10,20 @@
 
 set -e
 
-current_path="$( cd $(dirname $0) ; pwd -P )"
+# Inputs
 app=""
 base=""
-output="${current_path}/output"
 revision="1"
 security=""
 version=""
-config_path=$(pwd)/../../../config
+
+# Paths
+current_path="$( cd $(dirname $0) ; pwd -P )"
+config_path=$(realpath $current_path/../../../config)
+
+# Folders
+out_dir="${current_path}/output"
+tmp_dir="${current_path}/tmp"
 
 trap ctrl_c INT
 
@@ -27,10 +33,11 @@ clean() {
     echo "Cleaning temporary files..."
     echo
     # Clean the files
-    rm -rf app.zip wazuh-dashboard.tar.gz security.zip $directory_name $wazuh_name
+    rm -r $tmp_dir
 
     if [ $exit_code != 0 ]; then
-        rm -rf $output/$wazuh_name.tar.gz
+        rm $out_dir/*.tar.gz
+        rmdir $out_dir
     fi
 
     exit ${exit_code}
@@ -48,6 +55,8 @@ build() {
     echo
     echo "Downloading files..."
     echo
+    mkdir -p $tmp_dir
+    cd $tmp_dir
     if [[ $app =~ $valid_url ]]; then
         if ! curl --output app.zip --silent --fail "${app}"; then
             echo "The given URL or Path to the Wazuh App is not working: ${app}"
@@ -78,20 +87,15 @@ build() {
         clean 1
     fi
 
-    wazuh_name="wazuh-dashboard-$version-$revision-linux-x64"
-
-  echo
-  echo Building the package...
-  echo
-
-    # Extract the app and rename to $wazuh_name
-    directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
     tar -zxf wazuh-dashboard.tar.gz
-    mv $directory_name $wazuh_name
-    echo "------------"
-    echo $directory_name
-    echo "------------"
-    cd $wazuh_name
+    directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
+    working_dir="wazuh-dashboard-$version-$revision-linux-x64"
+    mv $directory_name $working_dir
+    cd $working_dir
+
+    echo
+    echo Building the package...
+    echo
 
     # Install plugins
     bin/opensearch-dashboards-plugin install alertingDashboards
@@ -106,18 +110,18 @@ build() {
     # Enable the default configuration (renaming)
     cp $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
 
-  # TODO: investigate to remove this if possible
-  # Fix ambiguous shebangs (necessary for RPM building)
-  grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
-  grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
+    # TODO: investigate to remove this if possible
+    # Fix ambiguous shebangs (necessary for RPM building)
+    grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
+    grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
 
     # Compress
     echo
     echo Compressing the package...
     echo
     cd ..
-    mkdir -p $output
-    tar -czf $output/$wazuh_name.tar.gz $wazuh_name
+    mkdir -p $out_dir
+    tar -czvf $out_dir/$working_dir.tar.gz $working_dir
 
     echo
     echo DONE!
