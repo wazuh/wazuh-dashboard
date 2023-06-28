@@ -2,8 +2,8 @@ Source: wazuh-dashboard
 Section: admin
 Priority: extra
 Maintainer: Wazuh, Inc <info@wazuh.com>
-Build-Depends: debhelper (>= 9), libcap2-bin
-Standards-Version: 4.0.0
+Build-Depends: debhelper-compat (= 12)
+Standards-Version: 4.5.0
 Homepage: https://www.wazuh.com
 
 Package: wazuh-dashboard

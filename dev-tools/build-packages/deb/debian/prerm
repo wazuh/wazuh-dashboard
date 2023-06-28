@@ -30,18 +30,16 @@ REMOVE_SERVICE=false
 
 case "$1" in
 
-
-    # Debian ####################################################
-    remove)
-        STOP_REQUIRED=true
-        REMOVE_SERVICE=true
+# Debian ####################################################
+remove)
+    STOP_REQUIRED=true
+    REMOVE_SERVICE=true
     ;;
-    upgrade|deconfigure|failed-upgrade)
-    ;;
+upgrade | deconfigure | failed-upgrade) ;;
 
-    *)
-        echo "prerm called with unknown argument \`$1'" >&2
-        exit 1
+*)
+    echo "prerm called with unknown argument \`$1'" >&2
+    exit 1
     ;;
 
 esac
@@ -63,7 +61,7 @@ if [ "$STOP_REQUIRED" = "true" ]; then
     # but do not have an /etc/init.d/ directory
     # this tries to start the wazuh-dashboard service on these
     # as well without failing this script
-    elif [ -x /etc/rc.d/init.d/"${NAME}" ] ; then
+    elif [ -x /etc/rc.d/init.d/"${NAME}" ]; then
         /etc/rc.d/init.d/"${NAME}" stop
     fi
     echo " OK"
@@ -71,11 +69,11 @@ fi
 
 if [ "$REMOVE_SERVICE" = "true" ]; then
     if command -v systemctl >/dev/null; then
-        systemctl disable "${NAME}".service > /dev/null 2>&1 || true
+        systemctl disable "${NAME}".service >/dev/null 2>&1 || true
     fi
 
     if command -v chkconfig >/dev/null; then
-        chkconfig --del "${NAME}" 2> /dev/null || true
+        chkconfig --del "${NAME}" 2>/dev/null || true
     fi
 
     if command -v update-rc.d >/dev/null; then
