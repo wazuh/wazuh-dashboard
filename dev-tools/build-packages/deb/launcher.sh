@@ -8,8 +8,6 @@
 # License (version 2) as published by the FSF - Free Software
 # Foundation.
 
-current_path="$( cd $(dirname $0) ; pwd -P )"
-outdir="${current_path}/output"
 revision="1"
 architecture="amd64"
 build_docker="yes"
@@ -19,6 +17,16 @@ build_base="yes"
 package=""
 version=""
 
+
+# Paths
+current_path="$( cd $(dirname $0) ; pwd -P )"
+config_path=$(realpath $current_path/../config)
+
+# Folders
+out_dir="${current_path}/output"
+tmp_dir="${current_path}/tmp"
+
+
 trap ctrl_c INT
 
 clean() {
@@ -27,10 +35,11 @@ clean() {
     echo "Cleaning temporary files..."
     echo
     # Clean the files
-    rm -rf ${dockerfile_path}/{*.sh,*.tar.gz,wazuh-*,*.tar.gz,*.zip} wazuh-dashboard.tar.gz wazuh-dashboard-base
-
+    rm -r $tmp_dir
+    rm $current_path/docker/amd64/*.sh
     if [ $exit_code != 0 ]; then
-        rm -rf $output/*
+        rm $out_dir/*
+        rmdir $out_dir
     fi
 
     exit ${exit_code}
@@ -50,6 +59,10 @@ build_deb() {
   echo
   echo "Downloading files..."
   echo
+
+  mkdir -p $tmp_dir
+  cd $tmp_dir
+  
   if [[ $package =~ $valid_url ]];then
     if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${package}"; then
       echo "The given URL or Path to the Wazuh Dashboard package is not working: ${package}"
@@ -70,7 +83,7 @@ build_deb() {
   tar -zxf wazuh-dashboard.tar.gz
   rm wazuh-dashboard.tar.gz
   mv $directory_name wazuh-dashboard-base
-  cp ../config/* wazuh-dashboard-base
+  cp $config_path/* wazuh-dashboard-base
   echo ${version} > wazuh-dashboard-base/VERSION
   tar -czf ./wazuh-dashboard.tar.gz wazuh-dashboard-base
 
@@ -84,13 +97,14 @@ build_deb() {
   fi
 
   # Build the Debian package with a Docker container
-  volumes="-v ${outdir}/:/tmp:Z -v ${current_path}/wazuh-dashboard.tar.gz:/opt/wazuh-dashboard.tar.gz"
+  mkdir -p $out_dir 
+  volumes="-v ${out_dir}/:/tmp:Z -v ${tmp_dir}/wazuh-dashboard.tar.gz:/opt/wazuh-dashboard.tar.gz"
   docker run -t --rm ${volumes} \
     -v ${current_path}/../..:/root:Z \
     ${container_name} ${architecture}  \
     ${revision} ${version} || return 1
 
-  echo "Package $(ls -Art ${outdir} | tail -n 1) added to ${outdir}."
+  echo "Package $(ls -Art ${out_dir} | tail -n 1) added to ${out_dir}."
 
   echo
   echo DONE!
@@ -101,7 +115,7 @@ build_deb() {
 
 build() {
     build_name="${deb_amd64_builder}"
-    file_path="${deb_builder_dockerfile}/${architecture}"
+    file_path="../${deb_builder_dockerfile}/${architecture}"
     build_deb ${build_name} ${file_path} || return 1
     return 0
 }
@@ -158,7 +172,7 @@ main() {
             ;;
         "-s"|"--output")
             if [ -n "${2}" ]; then
-                outdir="${2}"
+                out_dir="${2}"
                 shift 2
             else
                 help 1
