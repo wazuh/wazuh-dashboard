@@ -10,6 +10,7 @@
 
 set -e
 
+current_path="$( cd $(dirname $0) ; pwd -P )"
 app=""
 base=""
 output="${current_path}/output"
