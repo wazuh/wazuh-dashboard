@@ -23,9 +23,15 @@ trap ctrl_c INT
 
 clean() {
     exit_code=$1
-
+    echo
+    echo "Cleaning temporary files..."
+    echo
     # Clean the files
     rm -rf ${dockerfile_path}/{*.sh,*.tar.gz,wazuh-*,*.tar.gz,*.zip} wazuh-dashboard.tar.gz wazuh-dashboard-base
+
+    if [ $exit_code != 0 ]; then
+        rm -rf $output/*
+    fi
 
     exit ${exit_code}
 }
@@ -38,8 +44,12 @@ build_deb() {
   container_name="$1"
   dockerfile_path="$2"
 
+  # Validate and download files to build the package
   valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
 
+  echo
+  echo "Downloading files..."
+  echo
   if [[ $package =~ $valid_url ]];then
     if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${package}"; then
       echo "The given URL or Path to the Wazuh Dashboard package is not working: ${package}"
@@ -49,6 +59,11 @@ build_deb() {
     echo "The given URL or Path to the Wazuh Dashboard package is not valid: ${package}"
     clean 1
   fi
+
+
+  echo
+  echo Building the package...
+  echo
 
  # Prepare the package
   directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##'  | sort -u)
@@ -76,6 +91,10 @@ build_deb() {
     ${revision} ${version} || return 1
 
   echo "Package $(ls -Art ${outdir} | tail -n 1) added to ${outdir}."
+
+  echo
+  echo DONE!
+  echo
 
   return 0
 }
