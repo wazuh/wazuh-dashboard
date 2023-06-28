@@ -56,7 +56,8 @@ build_rpm() {
   tar -zxf wazuh-dashboard.tar.gz
   rm wazuh-dashboard.tar.gz
   mv $directory_name wazuh-dashboard-base
-  cp ../config/* wazuh-dashboard-base
+  mkdir -p wazuh-dashboard-base/etc/services
+  cp ../config/* wazuh-dashboard-base/etc/services
   echo ${version} > wazuh-dashboard-base/VERSION
   tar -czf ./wazuh-dashboard.tar.gz wazuh-dashboard-base
 

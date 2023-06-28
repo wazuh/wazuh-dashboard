@@ -75,11 +75,13 @@ mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
 
 mkdir -p %{buildroot}%{INSTALL_DIR}/config
 
-cp %{buildroot}%{INSTALL_DIR}/wazuh-dashboard.service %{buildroot}/etc/systemd/system/wazuh-dashboard.service
-cp %{buildroot}%{INSTALL_DIR}/default %{buildroot}/etc/default/wazuh-dashboard
+cp %{buildroot}%{INSTALL_DIR}/etc/services/wazuh-dashboard.service %{buildroot}/etc/systemd/system/wazuh-dashboard.service
+cp %{buildroot}%{INSTALL_DIR}/etc/services/default %{buildroot}/etc/default/wazuh-dashboard
 
 chmod 640 %{buildroot}/etc/systemd/system/wazuh-dashboard.service
 chmod 640 %{buildroot}/etc/default/wazuh-dashboard
+
+rm -rf %{buildroot}%{INSTALL_DIR}/etc/
 
 find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
 find %{buildroot}%{CONFIG_DIR} -exec chown %{USER}:%{GROUP} {} \;
