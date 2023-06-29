@@ -45,8 +45,7 @@ mk-build-deps -ir -t "apt-get -o Debug::pkgProblemResolver=yes -y"
 debuild --no-lintian -b -uc -us \
     -eINSTALLATION_DIR="${directory_base}" \
     -eVERSION="${version}" \
-    -eREVISION="${revision}" \
-    -eURL="${url}"
+    -eREVISION="${revision}"
 
 cd ${pkg_path} && sha512sum ${deb_file} >/tmp/${deb_file}.sha512
 mv ${pkg_path}/${deb_file} /tmp/

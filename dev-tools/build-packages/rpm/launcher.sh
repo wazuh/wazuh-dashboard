@@ -128,7 +128,7 @@ help() {
     echo "    -v, --version <rev>        Wazuh version"
     echo "    -p, --package <path>       Set the location of the .tar.gz file containing the Wazuh Dashboard package."
     echo "    -r, --revision <rev>       [Optional] Package revision. By default: 1."
-    echo "    -s, --store <path>         [Optional] Set the destination path of package. By default, an output folder will be created."
+    echo "    -o, --output <path>         [Optional] Set the destination path of package. By default, an output folder will be created."
     echo "    --dont-build-docker        [Optional] Locally built Docker image will be used instead of generating a new one."
     echo "    -h, --help                 Show this help."
     echo
@@ -169,7 +169,7 @@ main() {
             build_docker="no"
             shift 1
             ;;
-        "-s" | "--store")
+        "-o" | "--output")
             if [ -n "${2}" ]; then
                 outdir="${2}"
                 shift 2
