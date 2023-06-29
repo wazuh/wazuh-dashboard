@@ -125,7 +125,7 @@ help() {
     echo
     echo "Usage: $0 [OPTIONS]"
     echo
-    echo "    -v, --version <rev>        Wazuh version"
+    echo "    -v, --version <version>        Wazuh version"
     echo "    -p, --package <path>       Set the location of the .tar.gz file containing the Wazuh Dashboard package."
     echo "    -r, --revision <rev>       [Optional] Package revision. By default: 1."
     echo "    -o, --output <path>         [Optional] Set the destination path of package. By default, an output folder will be created."
