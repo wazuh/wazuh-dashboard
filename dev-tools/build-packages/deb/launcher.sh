@@ -8,15 +8,17 @@
 # License (version 2) as published by the FSF - Free Software
 # Foundation.
 
-revision="1"
-architecture="amd64"
-build_docker="yes"
-deb_amd64_builder="deb_dashboard_builder_amd64"
-deb_builder_dockerfile="${current_path}/docker"
-build_base="yes"
+# Inputs
 package=""
 version=""
+revision="1"
+architecture="amd64"
+build_base="yes"
+build_docker="yes"
 
+# Constants
+deb_amd64_builder="deb_dashboard_builder_amd64"
+deb_builder_dockerfile="${current_path}/docker"
 
 # Paths
 current_path="$( cd $(dirname $0) ; pwd -P )"
@@ -25,7 +27,6 @@ config_path=$(realpath $current_path/../config)
 # Folders
 out_dir="${current_path}/output"
 tmp_dir="${current_path}/tmp"
-
 
 trap ctrl_c INT
 
@@ -50,67 +51,65 @@ ctrl_c() {
 }
 
 build_deb() {
-  container_name="$1"
-  dockerfile_path="$2"
+    container_name="$1"
+    dockerfile_path="$2"
 
-  # Validate and download files to build the package
-  valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+    # Validate and download files to build the package
+    valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
 
-  echo
-  echo "Downloading files..."
-  echo
+    echo
+    echo "Downloading files..."
+    echo
 
-  mkdir -p $tmp_dir
-  cd $tmp_dir
-  
-  if [[ $package =~ $valid_url ]];then
-    if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${package}"; then
-      echo "The given URL or Path to the Wazuh Dashboard package is not working: ${package}"
-      clean 1
+    mkdir -p $tmp_dir
+    cd $tmp_dir
+
+    if [[ $package =~ $valid_url ]]; then
+        if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${package}"; then
+            echo "The given URL or Path to the Wazuh Dashboard package is not working: ${package}"
+            clean 1
+        fi
+    else
+        echo "The given URL or Path to the Wazuh Dashboard package is not valid: ${package}"
+        clean 1
     fi
-  else
-    echo "The given URL or Path to the Wazuh Dashboard package is not valid: ${package}"
-    clean 1
-  fi
 
+    echo
+    echo Building the package...
+    echo
 
-  echo
-  echo Building the package...
-  echo
+    # Prepare the package
+    directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
+    tar -zxf wazuh-dashboard.tar.gz
+    rm wazuh-dashboard.tar.gz
+    mv $directory_name wazuh-dashboard-base
+    cp $config_path/* wazuh-dashboard-base
+    echo ${version} >wazuh-dashboard-base/VERSION
+    tar -czf ./wazuh-dashboard.tar.gz wazuh-dashboard-base
 
- # Prepare the package
-  directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##'  | sort -u)
-  tar -zxf wazuh-dashboard.tar.gz
-  rm wazuh-dashboard.tar.gz
-  mv $directory_name wazuh-dashboard-base
-  cp $config_path/* wazuh-dashboard-base
-  echo ${version} > wazuh-dashboard-base/VERSION
-  tar -czf ./wazuh-dashboard.tar.gz wazuh-dashboard-base
+    # Copy the necessary files
+    cp ${current_path}/builder.sh ${dockerfile_path}
 
+    # Build the Docker image
+    if [[ ${build_docker} == "yes" ]]; then
+        docker build -t ${container_name} ${dockerfile_path} || return 1
+    fi
 
-  # Copy the necessary files
-  cp ${current_path}/builder.sh ${dockerfile_path}
+    # Build the Debian package with a Docker container
+    mkdir -p $out_dir
+    volumes="-v ${out_dir}/:/tmp:Z -v ${tmp_dir}/wazuh-dashboard.tar.gz:/opt/wazuh-dashboard.tar.gz"
+    docker run -t --rm ${volumes} \
+        -v ${current_path}/../..:/root:Z \
+        ${container_name} ${architecture} \
+        ${revision} ${version} || return 1
 
-  # Build the Docker image
-  if [[ ${build_docker} == "yes" ]]; then
-    docker build -t ${container_name} ${dockerfile_path} || return 1
-  fi
+    echo "Package $(ls -Art ${out_dir} | tail -n 1) added to ${out_dir}."
 
-  # Build the Debian package with a Docker container
-  mkdir -p $out_dir 
-  volumes="-v ${out_dir}/:/tmp:Z -v ${tmp_dir}/wazuh-dashboard.tar.gz:/opt/wazuh-dashboard.tar.gz"
-  docker run -t --rm ${volumes} \
-    -v ${current_path}/../..:/root:Z \
-    ${container_name} ${architecture}  \
-    ${revision} ${version} || return 1
+    echo
+    echo DONE!
+    echo
 
-  echo "Package $(ls -Art ${out_dir} | tail -n 1) added to ${out_dir}."
-
-  echo
-  echo DONE!
-  echo
-
-  return 0
+    return 0
 }
 
 build() {
@@ -128,21 +127,19 @@ help() {
     echo "    -p, --package <path>       Set the location of the .tar.gz file containing the Wazuh Dashboard package."
     echo "    -r, --revision <rev>       [Optional] Package revision. By default: 1."
     echo "    -s, --output <path>        [Optional] Set the destination path of package. By default, an output folder will be created."
-    echo "    --dont-build-docker        [Optional] Locally built docker image will be used instead of generating a new one."
+    echo "    --dont-build-docker        [Optional] Locally built Docker image will be used instead of generating a new one."
     echo "    -h, --help                 Show this help."
     echo
     exit $1
 }
 
-
 main() {
-    while [ -n "${1}" ]
-    do
+    while [ -n "${1}" ]; do
         case "${1}" in
-        "-h"|"--help")
+        "-h" | "--help")
             help 0
             ;;
-        "-p"|"--package")
+        "-p" | "--package")
             if [ -n "${2}" ]; then
                 package="${2}"
                 shift 2
@@ -150,7 +147,7 @@ main() {
                 help 1
             fi
             ;;
-        "-v"|"--version")
+        "-v" | "--version")
             if [ -n "${2}" ]; then
                 version="${2}"
                 shift 2
@@ -158,7 +155,7 @@ main() {
                 help 1
             fi
             ;;
-        "-r"|"--revision")
+        "-r" | "--revision")
             if [ -n "${2}" ]; then
                 revision="${2}"
                 shift 2
@@ -170,7 +167,7 @@ main() {
             build_docker="no"
             shift 1
             ;;
-        "-s"|"--output")
+        "-s" | "--output")
             if [ -n "${2}" ]; then
                 out_dir="${2}"
                 shift 2
@@ -180,11 +177,12 @@ main() {
             ;;
         *)
             help 1
+            ;;
         esac
     done
 
-    if [ -z "$package" ] | [ -z "$version" ] ; then
-      help 1
+    if [ -z "$package" ] | [ -z "$version" ]; then
+        help 1
     fi
 
     build || clean 1
