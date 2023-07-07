@@ -109,6 +109,7 @@ build() {
 
     # Enable the default configuration (renaming)
     cp $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
+    cp $config_path/node.options.prod config/node.options
 
     # TODO: investigate to remove this if possible
     # Fix ambiguous shebangs (necessary for RPM building)
