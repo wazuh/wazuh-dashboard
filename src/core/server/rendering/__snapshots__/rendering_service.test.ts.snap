@@ -30,7 +30,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
-      "wazuhVersion": "4.6.0",
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -85,7 +85,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
-      "wazuhVersion": "4.6.0",
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -140,7 +140,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
-      "wazuhVersion": "4.6.0",
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -199,7 +199,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
-      "wazuhVersion": "4.6.0",
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -254,7 +254,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
-      "wazuhVersion": "4.6.0",
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {

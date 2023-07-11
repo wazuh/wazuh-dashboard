@@ -43,7 +43,7 @@ const packageInfos: RawPackageInfo = {
     sha: 'one',
   },
   wazuh: {
-    version: '4.5.0',
+    version: '4.x.x',
   },
 };
 
@@ -213,7 +213,7 @@ test('correctly creates environment with constructor.', () => {
         sha: 'feature-v1-build-sha',
       },
       wazuh: {
-        version: '4.5.0',
+        version: '4.x.x',
       },
     },
     getEnvOptions({
