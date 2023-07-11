@@ -388,16 +388,16 @@ exports[`Home button icon  in condensed dark mode  uses opensearch mark if custo
 >
   <EuiIcon
     className="logoImage"
-    data-test-image-url="base/ui/default_branding/opensearch_mark_dark_mode.svg"
+    data-test-image-url="base/ui/default_branding/home_dark_mode.svg"
     data-test-subj="defaultMark"
     size="l"
     title="custom title home"
-    type="base/ui/default_branding/opensearch_mark_dark_mode.svg"
+    type="base/ui/default_branding/home_dark_mode.svg"
   >
     <span
       className="logoImage"
-      data-euiicon-type="base/ui/default_branding/opensearch_mark_dark_mode.svg"
-      data-test-image-url="base/ui/default_branding/opensearch_mark_dark_mode.svg"
+      data-euiicon-type="base/ui/default_branding/home_dark_mode.svg"
+      data-test-image-url="base/ui/default_branding/home_dark_mode.svg"
       data-test-subj="defaultMark"
       size="l"
       title="custom title home"
@@ -519,16 +519,16 @@ exports[`Home button icon  in condensed dark mode  uses opensearch mark if no ma
 >
   <EuiIcon
     className="logoImage"
-    data-test-image-url="base/ui/default_branding/opensearch_mark_dark_mode.svg"
+    data-test-image-url="base/ui/default_branding/home_dark_mode.svg"
     data-test-subj="defaultMark"
     size="l"
     title="custom title home"
-    type="base/ui/default_branding/opensearch_mark_dark_mode.svg"
+    type="base/ui/default_branding/home_dark_mode.svg"
   >
     <span
       className="logoImage"
-      data-euiicon-type="base/ui/default_branding/opensearch_mark_dark_mode.svg"
-      data-test-image-url="base/ui/default_branding/opensearch_mark_dark_mode.svg"
+      data-euiicon-type="base/ui/default_branding/home_dark_mode.svg"
+      data-test-image-url="base/ui/default_branding/home_dark_mode.svg"
       data-test-subj="defaultMark"
       size="l"
       title="custom title home"
@@ -789,16 +789,16 @@ exports[`Home button icon  in condensed light mode  uses opensearch mark if cust
 >
   <EuiIcon
     className="logoImage"
-    data-test-image-url="base/ui/default_branding/opensearch_mark_default_mode.svg"
+    data-test-image-url="base/ui/default_branding/home_default_mode.svg"
     data-test-subj="defaultMark"
     size="l"
     title="custom title home"
-    type="base/ui/default_branding/opensearch_mark_default_mode.svg"
+    type="base/ui/default_branding/home_default_mode.svg"
   >
     <span
       className="logoImage"
-      data-euiicon-type="base/ui/default_branding/opensearch_mark_default_mode.svg"
-      data-test-image-url="base/ui/default_branding/opensearch_mark_default_mode.svg"
+      data-euiicon-type="base/ui/default_branding/home_default_mode.svg"
+      data-test-image-url="base/ui/default_branding/home_default_mode.svg"
       data-test-subj="defaultMark"
       size="l"
       title="custom title home"
@@ -920,16 +920,16 @@ exports[`Home button icon  in condensed light mode  uses opensearch mark if no m
 >
   <EuiIcon
     className="logoImage"
-    data-test-image-url="base/ui/default_branding/opensearch_mark_default_mode.svg"
+    data-test-image-url="base/ui/default_branding/home_default_mode.svg"
     data-test-subj="defaultMark"
     size="l"
     title="custom title home"
-    type="base/ui/default_branding/opensearch_mark_default_mode.svg"
+    type="base/ui/default_branding/home_default_mode.svg"
   >
     <span
       className="logoImage"
-      data-euiicon-type="base/ui/default_branding/opensearch_mark_default_mode.svg"
-      data-test-image-url="base/ui/default_branding/opensearch_mark_default_mode.svg"
+      data-euiicon-type="base/ui/default_branding/home_default_mode.svg"
+      data-test-image-url="base/ui/default_branding/home_default_mode.svg"
       data-test-subj="defaultMark"
       size="l"
       title="custom title home"
