@@ -3,12 +3,27 @@
 name: Build
 
 on:
-  workflow_dispatch
-
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Wazuh version'
+        required: true
+        default: '4.4.0'
+      revision:
+        description: 'Wazuh revision'
+        required: true
+        default: '1'
+      wazuhappurl:
+        description: 'Wazuh app zip URL'
+        required: true
+        default: 'https://packages-dev.wazuh.com/pre-release/ui/dashboard/wazuh-4.4.0-1.zip'
+      securityref:
+        description: 'Branch or tag of the security plugin repository (by default same as the current branch)'
+        required: false
 jobs:
-  generate-linux-image:
+  generate-packages:
     runs-on: ubuntu-latest
-    name: Generate Linux image
+    name: Generate Packages
     defaults:
       run:
         working-directory: ./artifacts
@@ -38,16 +53,19 @@ jobs:
           npm i -g yarn@1.22.10
           yarn config set network-timeout 1000000 -g
 
-
-      ### TODO: review the strategy to get this variables, currently are hardcoded
       - name: Setup Variables
         run: |
           echo "ARCHITECTURE=amd64" >> $GITHUB_ENV
           echo "REVISION=1" >> $GITHUB_ENV
-          echo "URL=https://packages-dev.wazuh.com/pre-release/ui/dashboard/wazuh-4.4.0-1.zip" >> $GITHUB_ENV
-          echo "WAZUHVERSION=4.4.0" >> $GITHUB_ENV
-
-
+          echo "WAZUH_APP=${{ github.event.inputs.wazuhappurl }}" >> $GITHUB_ENV
+          echo "WAZUH_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          echo "WAZUH_REVISION=${{ github.event.inputs.revision }}" >> $GITHUB_ENV
+          if [ "${{ github.event.inputs.securityref }}" ]; then
+            echo "SECURITY_REF=${{ github.event.inputs.securityref }}" >> $GITHUB_ENV
+          else
+            echo "SECURITY_REF=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
+      
       - name: Configure Yarn Cache
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
@@ -62,11 +80,7 @@ jobs:
       - name: Get package version
         run: |
           echo "VERSION=$(yarn --silent pkg-version)" >> $GITHUB_ENV
-
-      - name: Get artifact build name
-        run: |
-          echo "ARTIFACT_BUILD_NAME=opensearch-dashboards.tar.gz" >> $GITHUB_ENV
-
+      
       - name: Run bootstrap
         run: yarn osd bootstrap
 
@@ -80,15 +94,22 @@ jobs:
       - name: Get current directory
         run: |
           echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
-          mkdir security
+          mkdir security     
 
-      ### TODO: See how to get the correct ref from the repository. It should be the same as the dashboard version
       - name: Clone security plugin repository
         uses: actions/checkout@v3
         with:
           repository: wazuh/wazuh-security-dashboards-plugin
           path: ${{ env.CURRENT_DIR }}/plugins/security
-          ref: '2.4.1'
+          ref: '${{ env.SECURITY_REF }}'
+
+      - name: Get security package version
+        run: |
+          SECURITY_VERSION=`cat ${{ env.CURRENT_DIR }}/plugins/security/package.json|grep version|head -1|awk -F: '{ print $2 }'|sed 's/[",]//g'|tr -d [:space:]|grep -Eo '[0-9]+\.[0-9]+\.[0-9]+'`
+          if [ ${{ env.VERSION }} != $SECURITY_VERSION ]; then
+            echo "Error. Security plugin version $SECURITY_VERSION not compatible with Dashboards version ${{ env.VERSION }}."
+            return 1
+          fi
 
       - name: Build the Security plugin
         run: |
@@ -96,55 +117,54 @@ jobs:
           sed -i 's/${pluginName}-${packageJson.version}.zip/${pluginName}.zip/g' ./build_tools/rename_zip.js
           yarn build
 
-      - name: Build the base builder Docker image
+      - name: Build the Wazuh Base
         run: |
-          cp ${{ env.CURRENT_DIR }}/plugins/security/build/security-dashboards.zip ${{ env.CURRENT_DIR }}/target/
-          cp ./dev-tools/build-packages/base/docker/Dockerfile .
-          cp ./dev-tools/build-packages/base/builder.sh .
-          cp ./target/${{env.ARTIFACT_BUILD_NAME}} ./opensearch-dashboards.tar.gz
-          docker build -t dashboard_base_builder .
+          bash ${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/generate_base.sh -s file://${{ env.CURRENT_DIR }}/plugins/security/build/security-dashboards.zip -b file://${{ env.CURRENT_DIR }}/target/${{ env.ARTIFACT_BUILD_NAME }} --app ${{ env.WAZUH_APP }} -v ${{ env.WAZUH_VERSION }} -r ${{ env.WAZUH_REVISION }}
 
-      - name: Run the base build process with Docker
+      
+      - name: Get base package name
         run: |
-          docker run -t --rm -v ${{ env.CURRENT_DIR }}/target/:/tmp/output:Z \
-          -v ${{ env.CURRENT_DIR }}/dev-tools/:/root:Z \
-          dashboard_base_builder ${{ env.ARCHITECTURE }} ${{ env.REVISION }} ${{ env.URL }} ${{ env.WAZUHVERSION }}
-
-      - name: Build the deb builder Docker image
+          echo "WAZUH_BASE=$(ls ${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/output)" >> $GITHUB_ENV     
+      
+      - name: Build the deb package
         run: |
-          cp ./dev-tools/build-packages/deb/docker/amd64/Dockerfile .
-          cp ./dev-tools/build-packages/deb/builder.sh .
-          cp ./target/${{env.ARTIFACT_BUILD_NAME}} .
-          docker build -t deb_dashboard_builder_amd64 .
+          bash ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/launcher.sh -p file://${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/output/${{env.WAZUH_BASE}} -v ${{ env.WAZUH_VERSION }} -r ${{ env.WAZUH_REVISION }}
 
-      - name: Run the deb build process with Docker
+      - name: Get deb package name
         run: |
-          docker run -t --rm -v ${{ env.CURRENT_DIR }}/target/:/tmp:Z \
-          -v ${{ env.CURRENT_DIR }}/dev-tools/:/root:Z \
-          deb_dashboard_builder_amd64 ${{ env.ARCHITECTURE }} ${{ env.REVISION }} ${{ env.URL }} ${{ env.WAZUHVERSION }}
+          echo "WAZUH_DEB=$(ls ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output | grep '.deb$')" >> $GITHUB_ENV     
+            
 
-      - name: Build the rpm builder Docker image
+      - name: Build the rpm package
         run: |
-          cp ./dev-tools/build-packages/rpm/docker/x86_64/Dockerfile .
-          cp ./dev-tools/build-packages/rpm/builder.sh .
-          cp ./target/${{env.ARTIFACT_BUILD_NAME}} .
-          docker build -t rpm_dashboard_builder_x86 .
+          bash ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/launcher.sh -p file://${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/output/${{env.WAZUH_BASE}} -v ${{ env.WAZUH_VERSION }} -r ${{ env.WAZUH_REVISION }}
 
-      - name: Run the rpm build process with Docker
+      - name: Get rpm package name
         run: |
-          docker run -t --rm -v ${{ env.CURRENT_DIR }}/target/:/tmp:Z \
-          -v ${{ env.CURRENT_DIR }}/dev-tools/:/root:Z \
-          rpm_dashboard_builder_x86 ${{ env.ARCHITECTURE }} ${{ env.REVISION }} ${{ env.URL }} ${{ env.WAZUHVERSION }}
-
-      - name: Copy artifacts
-        run: |
-          mkdir ${{ env.CURRENT_DIR }}/target/output
-          cp ${{ env.CURRENT_DIR }}/target/wazuh-dashboard-${{ env.WAZUHVERSION }}* ${{ env.CURRENT_DIR }}/target/output/
-          cp ${{ env.CURRENT_DIR }}/target/wazuh-dashboard_${{ env.WAZUHVERSION }}* ${{ env.CURRENT_DIR }}/target/output/
-
-      - uses: actions/upload-artifact@v3
+          echo "WAZUH_RPM=$(ls ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output | grep '.rpm$')" >> $GITHUB_ENV     
+      
+      
+      - name: Upload tar.gz package
+        uses: actions/upload-artifact@v3
         if: success()
         with:
-         name: wazuh-dashboard-${{ env.WAZUHVERSION }}
-         path: ./artifacts/target/output/
+         name: ${{env.WAZUH_BASE}}
+         path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/output/${{env.WAZUH_BASE}}
          retention-days: 30
+
+      - name: Upload deb package
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+         name: ${{env.WAZUH_DEB}}
+         path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/${{env.WAZUH_DEB}}
+         retention-days: 30
+
+      - name: Upload rpm package
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+         name: ${{env.WAZUH_RPM}}
+         path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/${{env.WAZUH_RPM}}
+         retention-days: 30
+   
