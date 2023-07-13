@@ -20,7 +20,6 @@ on:
       securityref:
         description: 'Branch or tag of the security plugin repository (by default same as the current branch)'
         required: false
-        default: ${{ github.ref_name }}
 jobs:
   generate-packages:
     runs-on: ubuntu-latest
@@ -61,7 +60,11 @@ jobs:
           echo "WAZUH_APP=${{ github.event.inputs.wazuhappurl }}" >> $GITHUB_ENV
           echo "WAZUH_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
           echo "WAZUH_REVISION=${{ github.event.inputs.revision }}" >> $GITHUB_ENV
-          echo "SECURITY_REF=${{ github.event.inputs.securityref }}" >> $GITHUB_ENV
+          if [ "${{ github.event.inputs.securityref }}" ]; then
+            echo "SECURITY_REF=${{ github.event.inputs.securityref }}" >> $GITHUB_ENV
+          else
+            echo "SECURITY_REF=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
       
       - name: Configure Yarn Cache
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
