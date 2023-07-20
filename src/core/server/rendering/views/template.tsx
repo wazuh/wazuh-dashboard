@@ -66,10 +66,10 @@ export const Template: FunctionComponent<Props> = ({
     </svg>
   );
   const openSearchLogoSpinner = (
-    <img alt="wazuh-animated-logo" src={`${uiPublicUrl}/spinners/light_mode_spinner.gif`}/>
+    <img alt="wazuh-animated-logo" src={`${uiPublicUrl}/spinners/light_mode_spinner.gif`} />
   );
   const openSearchLogoSpinnerDark = (
-    <img alt="wazuh-animated-logo" src={`${uiPublicUrl}/spinners/dark_mode_spinner.gif`}/>
+    <img alt="wazuh-animated-logo" src={`${uiPublicUrl}/spinners/dark_mode_spinner.gif`} />
   );
 
   const loadingLogoDefault = injectedMetadata.branding.loadingLogo?.defaultUrl;
