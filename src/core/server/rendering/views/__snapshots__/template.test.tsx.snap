@@ -635,8 +635,8 @@ Array [
       data-test-subj="loadingLogo"
     >
       <img
-          alt="wazuh-animated-logo"
-          src="[object Object]/ui/spinners/dark_mode_spinner.gif"
+        alt="wazuh-animated-logo"
+        src="[object Object]/ui/spinners/dark_mode_spinner.gif"
       />
       <div
         class="osdWelcomeText"
@@ -1053,8 +1053,8 @@ Array [
       data-test-subj="loadingLogo"
     >
       <img
-          alt="wazuh-animated-logo"
-          src="[object Object]/ui/spinners/dark_mode_spinner.gif"
+        alt="wazuh-animated-logo"
+        src="[object Object]/ui/spinners/dark_mode_spinner.gif"
       />
       <div
         class="osdWelcomeText"
@@ -1186,8 +1186,8 @@ Array [
       data-test-subj="loadingLogo"
     >
       <img
-          alt="wazuh-animated-logo"
-          src="[object Object]/ui/spinners/dark_mode_spinner.gif"
+        alt="wazuh-animated-logo"
+        src="[object Object]/ui/spinners/dark_mode_spinner.gif"
       />
       <div
         class="osdWelcomeText"
@@ -1319,8 +1319,8 @@ Array [
       data-test-subj="loadingLogo"
     >
       <img
-          alt="wazuh-animated-logo"
-          src="[object Object]/ui/spinners/dark_mode_spinner.gif"
+        alt="wazuh-animated-logo"
+        src="[object Object]/ui/spinners/dark_mode_spinner.gif"
       />
       <div
         class="osdWelcomeText"
