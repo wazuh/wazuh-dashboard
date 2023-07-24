@@ -3,12 +3,27 @@
 name: Build
 
 on:
-  workflow_dispatch
-
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Wazuh version'
+        required: true
+        default: '4.4.0'
+      revision:
+        description: 'Wazuh revision'
+        required: true
+        default: '1'
+      wazuhappurl:
+        description: 'Wazuh app zip URL'
+        required: true
+        default: 'https://packages-dev.wazuh.com/pre-release/ui/dashboard/wazuh-4.4.0-1.zip'
+      securityref:
+        description: 'Branch or tag of the security plugin repository (by default same as the current branch)'
+        required: false
 jobs:
-  generate-linux-image:
+  generate-packages:
     runs-on: ubuntu-latest
-    name: Generate Linux image
+    name: Generate Packages
     defaults:
       run:
         working-directory: ./artifacts
@@ -38,6 +53,19 @@ jobs:
           npm i -g yarn@1.22.10
           yarn config set network-timeout 1000000 -g
 
+      - name: Setup Variables
+        run: |
+          echo "ARCHITECTURE=amd64" >> $GITHUB_ENV
+          echo "REVISION=1" >> $GITHUB_ENV
+          echo "WAZUH_APP=${{ github.event.inputs.wazuhappurl }}" >> $GITHUB_ENV
+          echo "WAZUH_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          echo "WAZUH_REVISION=${{ github.event.inputs.revision }}" >> $GITHUB_ENV
+          if [ "${{ github.event.inputs.securityref }}" ]; then
+            echo "SECURITY_REF=${{ github.event.inputs.securityref }}" >> $GITHUB_ENV
+          else
+            echo "SECURITY_REF=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
+      
       - name: Configure Yarn Cache
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
@@ -52,20 +80,91 @@ jobs:
       - name: Get package version
         run: |
           echo "VERSION=$(yarn --silent pkg-version)" >> $GITHUB_ENV
-
-      - name: Get artifact build name
-        run: |
-          echo "ARTIFACT_BUILD_NAME=opensearch-dashboards-${{ env.VERSION }}-${{ matrix.suffix }}.${{ matrix.ext }}" >> $GITHUB_ENV
-
+      
       - name: Run bootstrap
         run: yarn osd bootstrap
 
       - name: Build `${{ matrix.name }}`
         run: yarn ${{ matrix.script }} --release
 
-      - uses: actions/upload-artifact@v3
+      - name: Get artifact build name
+        run: |
+          echo "ARTIFACT_BUILD_NAME=opensearch-dashboards-${{ env.VERSION }}-${{ matrix.suffix }}.${{ matrix.ext }}" >> $GITHUB_ENV
+
+      - name: Get current directory
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          mkdir security     
+
+      - name: Clone security plugin repository
+        uses: actions/checkout@v3
+        with:
+          repository: wazuh/wazuh-security-dashboards-plugin
+          path: ${{ env.CURRENT_DIR }}/plugins/security
+          ref: '${{ env.SECURITY_REF }}'
+
+      - name: Get security package version
+        run: |
+          SECURITY_VERSION=`cat ${{ env.CURRENT_DIR }}/plugins/security/package.json|grep version|head -1|awk -F: '{ print $2 }'|sed 's/[",]//g'|tr -d [:space:]|grep -Eo '[0-9]+\.[0-9]+\.[0-9]+'`
+          if [ ${{ env.VERSION }} != $SECURITY_VERSION ]; then
+            echo "Error. Security plugin version $SECURITY_VERSION not compatible with Dashboards version ${{ env.VERSION }}."
+            return 1
+          fi
+
+      - name: Build the Security plugin
+        run: |
+          cd ${{ env.CURRENT_DIR }}/plugins/security
+          sed -i 's/${pluginName}-${packageJson.version}.zip/${pluginName}.zip/g' ./build_tools/rename_zip.js
+          yarn build
+
+      - name: Build the Wazuh Base
+        run: |
+          bash ${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/generate_base.sh -s file://${{ env.CURRENT_DIR }}/plugins/security/build/security-dashboards.zip -b file://${{ env.CURRENT_DIR }}/target/${{ env.ARTIFACT_BUILD_NAME }} --app ${{ env.WAZUH_APP }} -v ${{ env.WAZUH_VERSION }} -r ${{ env.WAZUH_REVISION }}
+
+      
+      - name: Get base package name
+        run: |
+          echo "WAZUH_BASE=$(ls ${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/output)" >> $GITHUB_ENV     
+      
+      - name: Build the deb package
+        run: |
+          bash ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/launcher.sh -p file://${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/output/${{env.WAZUH_BASE}} -v ${{ env.WAZUH_VERSION }} -r ${{ env.WAZUH_REVISION }}
+
+      - name: Get deb package name
+        run: |
+          echo "WAZUH_DEB=$(ls ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output | grep '.deb$')" >> $GITHUB_ENV     
+            
+
+      - name: Build the rpm package
+        run: |
+          bash ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/launcher.sh -p file://${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/output/${{env.WAZUH_BASE}} -v ${{ env.WAZUH_VERSION }} -r ${{ env.WAZUH_REVISION }}
+
+      - name: Get rpm package name
+        run: |
+          echo "WAZUH_RPM=$(ls ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output | grep '.rpm$')" >> $GITHUB_ENV     
+      
+      
+      - name: Upload tar.gz package
+        uses: actions/upload-artifact@v3
         if: success()
         with:
-          name: ${{ matrix.suffix }}-${{ env.VERSION }}
-          path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
-          retention-days: 30
+         name: ${{env.WAZUH_BASE}}
+         path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/base/output/${{env.WAZUH_BASE}}
+         retention-days: 30
+
+      - name: Upload deb package
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+         name: ${{env.WAZUH_DEB}}
+         path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/${{env.WAZUH_DEB}}
+         retention-days: 30
+
+      - name: Upload rpm package
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+         name: ${{env.WAZUH_RPM}}
+         path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/${{env.WAZUH_RPM}}
+         retention-days: 30
+   
