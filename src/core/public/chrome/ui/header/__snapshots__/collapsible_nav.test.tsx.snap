@@ -128,14 +128,14 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/test/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/test/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/test/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -2071,14 +2071,14 @@ exports[`CollapsibleNav renders the default nav 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/test/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/test/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/test/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -2374,14 +2374,14 @@ exports[`CollapsibleNav renders the default nav 2`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/test/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/test/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/test/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -2677,14 +2677,14 @@ exports[`CollapsibleNav renders the default nav 3`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/test/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/test/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/test/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -5503,14 +5503,14 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/test/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/test/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_spinner_on_dark.svg",
+        "url": "/test/ui/logos/spinner_on_dark.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -6606,14 +6606,14 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/test/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/test/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/test/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {

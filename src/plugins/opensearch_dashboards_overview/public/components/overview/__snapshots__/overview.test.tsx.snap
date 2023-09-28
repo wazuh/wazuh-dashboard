@@ -76,14 +76,14 @@ exports[`Overview renders with solutions and features 1`] = `
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.gif",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.gif",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.gif",
         },
         "Application": Object {
           "dark": Object {
@@ -561,14 +561,14 @@ exports[`Overview renders with solutions and without features 1`] = `
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.gif",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.gif",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.gif",
         },
         "Application": Object {
           "dark": Object {
@@ -1046,14 +1046,14 @@ exports[`Overview renders without solutions and with features 1`] = `
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.gif",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.gif",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.gif",
         },
         "Application": Object {
           "dark": Object {

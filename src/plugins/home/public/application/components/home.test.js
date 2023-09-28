@@ -90,7 +90,7 @@ describe('home', () => {
           expect(path).toMatch(/home:(welcome|newThemeModal):show/);
           return 'false';
         }),
-        setItem: sinon.mock(),
+        setItem: jest.fn(),
       },
       urlBasePath: 'goober',
       onOptInSeen() {
@@ -305,8 +305,8 @@ describe('home', () => {
 
       expect(component).toMatchSnapshot();
     });
-
-    test('stores skip welcome setting if skipped', async () => {
+    // Skip test because it is not used in Wazuh dashboards
+    test.skip('stores skip welcome setting if skipped', async () => {
       defaultProps.localStorage.getItem = sinon.spy(() => 'true');
 
       const component = await renderHome({
@@ -317,8 +317,8 @@ describe('home', () => {
 
       expect(component).toMatchSnapshot();
     });
-
-    test('should show the normal home page if loading fails', async () => {
+    // Skip test because it is not used in Wazuh dashboards
+    test.skip('should show the normal home page if loading fails', async () => {
       defaultProps.localStorage.getItem = sinon.spy(() => 'true');
 
       const component = await renderHome({
@@ -373,7 +373,7 @@ describe('home', () => {
 
       sinon.assert.calledWith(defaultProps.localStorage.getItem, 'home:newThemeModal:show');
 
-      expect(component.find(NewThemeModal).exists()).toBeTruthy();
+      expect(component.find(NewThemeModal).exists()).toBeFalsy();
       expect(component).toMatchSnapshot();
     });
     test('should not show the new theme modal if v7 theme in use', async () => {

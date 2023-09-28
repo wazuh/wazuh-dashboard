@@ -599,12 +599,6 @@ exports[`home new theme modal should show the new theme modal if not previously 
       className="homData homData--expanded"
     >
       <EuiFlexItem>
-        <AddData
-          addBasePath={[Function]}
-          features={Array []}
-        />
-      </EuiFlexItem>
-      <EuiFlexItem>
         <ManageData
           addBasePath={[Function]}
           features={Array []}
@@ -614,10 +608,6 @@ exports[`home new theme modal should show the new theme modal if not previously 
     <EuiHorizontalRule
       aria-hidden="true"
       margin="xl"
-    />
-    <NewThemeModal
-      addBasePath={[Function]}
-      onClose={[Function]}
     />
     <mockConstructor
       addBasePath={[Function]}
