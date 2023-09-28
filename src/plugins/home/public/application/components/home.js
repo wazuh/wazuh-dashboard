@@ -87,7 +87,9 @@ export class Home extends Component {
     // is commented and the skipWelcome function is added to avoid loading
     // the add sample data page the first time the application is accessed.
     // this.fetchIsNewOpenSearchDashboardsInstance();
+    // Wazuh dashboard changes
     this.skipWelcome();
+    this.dismissNewThemeModal();
 
     const homeTitle = i18n.translate('home.breadcrumbs.homeTitle', { defaultMessage: 'Home' });
     getServices().chrome.setBreadcrumbs([{ text: homeTitle }]);
