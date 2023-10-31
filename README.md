@@ -49,7 +49,7 @@ This project is licensed under the [Apache v2.0 License](LICENSE.txt).
 <!-- Links -->
 
 [opensearch-dashboards]: https://github.com/opensearch-project/OpenSearch-Dashboards
-[wazuh-plugin]: https://github.com/wazuh/wazuh-kibana-app
+[wazuh-plugin]: https://github.com/wazuh/wazuh-dashboard-plugins
 [wazuh-web]: https://wazuh.com
 [wazuh-docs]: https://documentation.wazuh.com
 [slack-invite]: https://join.slack.com/t/wazuh/shared_invite/zt-1lgu531ur-7M_k_ZQbpdo4QCn_pHee3w

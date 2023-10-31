@@ -66,5 +66,5 @@ bash launcher.sh \
     --package file:///home/user/wazuh-dashboard/dev-tools/build-packages/base/output/wazuh-dashboard-4.6.0-1-linux-x64.tar.gz
 ```
 
-[wazuh-plugin]: https://github.com/wazuh/wazuh-kibana-app
+[wazuh-plugin]: https://github.com/wazuh/wazuh-dashboard-plugins
 [wazuh-security-plugin]: https://github.com/wazuh/wazuh-security-dashboards-plugin
