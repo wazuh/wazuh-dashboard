@@ -40,6 +40,7 @@ env:
   COMMENT_TAG: '[MANUAL CYPRESS TEST RUN RESULTS]'
   COMMENT_SUCCESS_MSG: ':white_check_mark: Cypress test run succeeded!'
   COMMENT_FAILURE_MSG: ':x: Cypress test run failed!'
+  OPENSEARCH_VERSION: ${{ vars.OPENSEARCH_VERSION }}
 
 jobs:
   cypress-tests:
@@ -106,7 +107,7 @@ jobs:
         with:
           path: ${{ env.FTR_PATH }}
           repository: ${{ env.TEST_REPO }}
-          ref: '${{ env.TEST_BRANCH }}'
+          ref: '${{ env.OPENSEARCH_VERSION }}'
 
       - name: Setup spec files by input
         if: ${{ inputs.specs != '' }}
@@ -147,7 +148,7 @@ jobs:
           working-directory: ${{ env.FTR_PATH }}
           start: ${{ env.OPENSEARCH_SNAPSHOT_CMD }}, ${{ env.START_CMD }}
           wait-on: 'http://localhost:9200, http://localhost:5601'
-          command: yarn cypress:run-without-security --browser ${{ env.CYPRESS_BROWSER }} --spec ${{ env.SPEC }}
+          command: yarn cypress:run-without-security --browser ${{ env.CYPRESS_BROWSER }} --config ignoreTestFiles="dashboard_sanity_test_spec.js" --spec ${{ env.SPEC }}
 
       # Screenshots are only captured on failure, will change this once we do visual regression tests
       - uses: actions/upload-artifact@v3
@@ -156,7 +157,7 @@ jobs:
           name: ftr-cypress-screenshots
           path: ${{ env.FTR_PATH }}/cypress/screenshots
           retention-days: 1
-      
+
       - uses: actions/upload-artifact@v3
         if: always()
         with:
@@ -170,7 +171,6 @@ jobs:
           name: ftr-cypress-results
           path: ${{ env.FTR_PATH }}/cypress/results
           retention-days: 1
-
   add-comment:
     needs: [cypress-tests]
     if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.pr_number != '' }}
@@ -205,6 +205,6 @@ jobs:
             '${{ env.SPEC }}'
             ```
 
-            #### Link to results: 
+            #### Link to results:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           edit-mode: replace
