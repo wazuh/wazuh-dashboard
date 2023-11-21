@@ -57,10 +57,15 @@ build() {
     echo
     mkdir -p $tmp_dir
     cd $tmp_dir
+    mkdir -p applications
     if [[ $app =~ $valid_url ]]; then
-        if ! curl --output app.zip --silent --fail "${app}"; then
-            echo "The given URL or Path to the Wazuh App is not working: ${app}"
+        if ! curl --output applications/app.zip --silent --fail "${app}"; then
+            echo "The given URL or Path to the Wazuh Apps is not working: ${app}"
             clean 1
+        else
+            echo "Extracting applications from app.zip"
+            unzip -q applications/app.zip -d applications
+            rm applications/app.zip
         fi
     else
         echo "The given URL or Path to the Wazuh App is not valid: ${app}"
@@ -68,9 +73,21 @@ build() {
     fi
 
     if [[ $base =~ $valid_url ]]; then
-        if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
-            echo "The given URL or Path to the Wazuh Dashboard base is not working: ${base}"
-            clean 1
+        if [[ $base =~ .*\.zip ]]; then
+            if ! curl --output wazuh-dashboard.zip --silent --fail "${base}"; then
+                echo "The given URL or Path to the Wazuh Dashboard base is not working: ${base}"
+                clean 1
+            else
+                echo "Extracting Wazuh Dashboard base"
+                unzip -q wazuh-dashboard.zip -d .
+                rm wazuh-dashboard.zip
+                mv $(ls | grep opensearch-dashboard) wazuh-dashboard.tar.gz
+            fi
+        else
+            if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
+                echo "The given URL or Path to the Wazuh Dashboard base is not working: ${base}"
+                clean 1
+            fi
         fi
     else
         echo "The given URL or Path to the Wazuh Dashboard base is not valid: ${base}"
@@ -78,9 +95,13 @@ build() {
     fi
 
     if [[ $security =~ $valid_url ]]; then
-        if ! curl --output security.zip --silent --fail "${security}"; then
+        if ! curl --output applications/security.zip --silent --fail "${security}"; then
             echo "The given URL or Path to the Wazuh Security Plugin is not working: ${security}"
             clean 1
+        else
+            echo "Extracting Security application"
+            unzip -q applications/security.zip -d applications
+            rm applications/security.zip
         fi
     else
         echo "The given URL or Path to the Wazuh Security Plugin is not valid: ${security}"
@@ -104,8 +125,15 @@ build() {
     bin/opensearch-dashboards-plugin install indexManagementDashboards
     bin/opensearch-dashboards-plugin install notificationsDashboards
     bin/opensearch-dashboards-plugin install reportsDashboards
-    bin/opensearch-dashboards-plugin install file:../security.zip
-    bin/opensearch-dashboards-plugin install file:../app.zip
+    # Install Wazuh apps and Security app
+    plugins=$(ls $tmp_dir/applications)
+    echo $plugins
+    for plugin in $plugins; do
+        echo $plugin
+        if [[ $plugin =~ .*\.zip ]]; then
+            bin/opensearch-dashboards-plugin install file:../applications/$plugin
+        fi
+    done
 
     # Enable the default configuration (renaming)
     cp $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
