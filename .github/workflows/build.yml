@@ -3,22 +3,27 @@
 name: Build
 
 on:
-  workflow_dispatch
-
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        description: 'Wazuh dashboard version'
+        required: true
+        default: '4.9.0'
+      REVISION:
+        description: 'Wazuh dashboard revision'
+        required: true
+        default: '1'
 jobs:
-  generate-linux-image:
+  build:
     runs-on: ubuntu-latest
-    name: Generate Linux image
+    name: Build
     defaults:
       run:
         working-directory: ./artifacts
     strategy:
       matrix:
-        include:
-          - name: Linux x64
-            ext: tar.gz
-            suffix: linux-x64
-            script: build-platform --linux --skip-os-packages --release
+        DISTRIBUTION: [ tar.gz ]
+        ARCHITECTURE: [ x64, arm64 ]
 
     steps:
       - name: Checkout code
@@ -55,17 +60,25 @@ jobs:
 
       - name: Get artifact build name
         run: |
-          echo "ARTIFACT_BUILD_NAME=opensearch-dashboards-${{ env.VERSION }}-${{ matrix.suffix }}.${{ matrix.ext }}" >> $GITHUB_ENV
+          echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ inputs.VERSION }}-${{ inputs.REVISION }}_${{ matrix.ARCHITECTURE }}_${{ github.sha }}.${{ matrix.DISTRIBUTION }}" >> $GITHUB_ENV
 
       - name: Run bootstrap
-        run: yarn osd bootstrap
+        run: yarn osd bootstrap --allow-root
 
-      - name: Build `${{ matrix.name }}`
-        run: yarn ${{ matrix.script }} --release
+      - name: Build linux-x64
+        if: matrix.ARCHITECTURE == 'x64'
+        run: yarn build-platform --linux --skip-os-packages --release
+
+      - name: Build linux-arm64
+        if: matrix.ARCHITECTURE == 'arm64'
+        run: yarn build-platform --linux-arm --skip-os-packages --release
+
+      - name: Rename artifact
+        run: mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ matrix.ARCHITECTURE }}.${{ matrix.DISTRIBUTION }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
 
       - uses: actions/upload-artifact@v3
         if: success()
         with:
-          name: ${{ matrix.suffix }}-${{ env.VERSION }}
+          name: wazuh-dashboard_${{ inputs.VERSION }}-${{ inputs.REVISION }}_${{ matrix.ARCHITECTURE }}_${{ github.sha }}.${{ matrix.DISTRIBUTION }}
           path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
           retention-days: 30
