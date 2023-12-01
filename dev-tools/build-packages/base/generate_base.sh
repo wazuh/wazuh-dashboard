@@ -53,7 +53,7 @@ build() {
     # Validate and download files to build the package
     valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
     echo
-    echo "Downloading files..."
+    echo "Downloading plugins..."
     echo
     mkdir -p $tmp_dir
     cd $tmp_dir
@@ -72,6 +72,10 @@ build() {
         clean 1
     fi
 
+    echo
+    echo "Downloading dashboards..."
+    echo
+
     if [[ $base =~ $valid_url ]]; then
         if [[ $base =~ .*\.zip ]]; then
             if ! curl --output wazuh-dashboard.zip --silent --fail "${base}"; then
@@ -81,7 +85,7 @@ build() {
                 echo "Extracting Wazuh Dashboard base"
                 unzip -q wazuh-dashboard.zip -d .
                 rm wazuh-dashboard.zip
-                mv $(ls | grep opensearch-dashboard) wazuh-dashboard.tar.gz
+                mv $(ls | grep wazuh-dashboard) wazuh-dashboard.tar.gz
             fi
         else
             if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
@@ -93,6 +97,10 @@ build() {
         echo "The given URL or Path to the Wazuh Dashboard base is not valid: ${base}"
         clean 1
     fi
+
+    echo
+    echo "Downloading security plugin..."
+    echo
 
     if [[ $security =~ $valid_url ]]; then
         if ! curl --output applications/security.zip --silent --fail "${security}"; then
