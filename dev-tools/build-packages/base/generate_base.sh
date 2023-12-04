@@ -157,7 +157,9 @@ build() {
     echo Compressing the package...
     echo
     cd ..
-    mkdir -p $out_dir
+    if [ ! -d "$out_dir" ]; then
+      mkdir -p $out_dir
+    fi
     tar -czvf $out_dir/$working_dir.tar.gz $working_dir
 
     echo

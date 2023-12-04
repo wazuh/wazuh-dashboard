@@ -96,7 +96,9 @@ build_deb() {
     fi
 
     # Build the Debian package with a Docker container
-    mkdir -p $out_dir
+    if [ ! -d "$out_dir" ]; then
+      mkdir -p $out_dir
+    fi
     volumes="-v ${out_dir}/:/tmp:Z -v ${tmp_dir}/wazuh-dashboard.tar.gz:/opt/wazuh-dashboard.tar.gz"
     docker run -t --rm ${volumes} \
         -v ${current_path}/../..:/root:Z \

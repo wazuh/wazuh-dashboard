@@ -16,12 +16,12 @@ current_path="$( cd $(dirname $0) ; pwd -P )"
 build_tar() {
   echo "Building tar package..."
   cd ./base
-  # bash ./generate_base.sh -a $app -b $base -s $security -v $version -r $revision
+  bash ./generate_base.sh -a $app -b $base -s $security -v $version -r $revision
 
-  name_package_tar = $(ls ./output)
+  name_package_tar=$(ls ./output)
 
   if [ "$tar" == "yes" ]; then
-    echo $(pwd)
+    echo "Moving tar package to $output"
     mv $current_path/base/output/$name_package_tar $output/$name_package_tar
   fi
   cd ../
@@ -30,14 +30,19 @@ build_tar() {
 build_deb() {
   echo "Building deb package..."
   cd ./deb
-  # bash ./launcher.sh -v $version -r $revision -p file://$current_path/base/output/$name_package_tar
+  bash ./launcher.sh -v $version -r $revision -p file://$output/$name_package_tar
+  name_package_tar=$(ls ./output)
+  echo "Moving deb package to $output/deb"
+  mv $current_path/deb/output $output/deb
   cd ../
 }
 
 build_rpm() {
   echo "Building rpm package..."
   cd ./rpm
-  # bash ./launcher.sh -v $version -r $revision -p file://$current_path/base/output/$name_package_tar
+  bash ./launcher.sh -v $version -r $revision -p file://$output/$name_package_tar
+  echo "Moving rpm package to $output/rpm"
+  mv $current_path/rpm/output $output/rpm
   cd ../
 }
 
@@ -46,7 +51,7 @@ build() {
   name_package_tar="wazuh-dashboard-$version-$revision-linux-x64.tar.gz"
 
   if [ ! -d "$output" ]; then
-    mkdir -p $output
+    mkdir $output
   fi
 
   if [ "$all_platforms" == "yes" ]; then
@@ -66,6 +71,11 @@ build() {
   if [ $rpm == "yes" ]; then
     echo "Building rpm package..."
     build_rpm
+  fi
+
+  if [ "$tar" == "no" ]; then
+    echo "Removing tar package..."
+    rm -r $current_path/base/output
   fi
 }
 
@@ -164,6 +174,12 @@ main() {
     done
 
     if [ -z "$app" ] | [ -z "$base" ] | [ -z "$security" ] | [ -z "$version" ]; then
+        echo "You must specify the app, base, security and version."
+        help 1
+    fi
+
+    if [ "$all_platforms" == "no" ] && [ "$deb" == "no" ] && [ "$rpm" == "no" ] && [ "$tar" == "no" ]; then
+        echo "You must specify at least one package to build."
         help 1
     fi
 
