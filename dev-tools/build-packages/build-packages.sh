@@ -29,8 +29,9 @@ build_tar() {
 
 build_deb() {
   echo "Building deb package..."
+  name_package_tar=$(find $output -name "*.tar.gz")
   cd ./deb
-  bash ./launcher.sh -v $version -r $revision -p file://$output/$name_package_tar
+  bash ./launcher.sh -v $version -r $revision -p file://$name_package_tar
   name_package_tar=$(ls ./output)
   echo "Moving deb package to $output/deb"
   mv $current_path/deb/output $output/deb
@@ -39,8 +40,9 @@ build_deb() {
 
 build_rpm() {
   echo "Building rpm package..."
+  name_package_tar=$(find $output -name "*.tar.gz")
   cd ./rpm
-  bash ./launcher.sh -v $version -r $revision -p file://$output/$name_package_tar
+  bash ./launcher.sh -v $version -r $revision -p file://$name_package_tar
   echo "Moving rpm package to $output/rpm"
   mv $current_path/rpm/output $output/rpm
   cd ../
