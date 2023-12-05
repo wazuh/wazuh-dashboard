@@ -27,7 +27,7 @@ deb_file="${target}_${version}-${revision}_${architecture}.deb"
 mkdir -p ${source_dir}/debian
 
 # Including spec file
-cp -r /root/build_packages/deb/debian/* ${source_dir}/debian/
+cp -r /root/build-packages/deb/debian/* ${source_dir}/debian/
 
 # Generating directory structure to build the .deb package
 cd ${build_dir}/${target} && tar -czf ${pkg_name}.orig.tar.gz "${pkg_name}"
