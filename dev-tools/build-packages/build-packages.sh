@@ -20,10 +20,8 @@ build_tar() {
 
   name_package_tar=$(ls ./output)
 
-  if [ "$tar" == "yes" ]; then
-    echo "Moving tar package to $output"
-    mv $current_path/base/output/$name_package_tar $output/$name_package_tar
-  fi
+  echo "Moving tar package to $output"
+  mv $current_path/base/output/$name_package_tar $output/$name_package_tar
   cd ../
 }
 
@@ -77,7 +75,7 @@ build() {
 
   if [ "$tar" == "no" ]; then
     echo "Removing tar package..."
-    rm -r $current_path/base/output
+    rm -r $(find $output -name "*.tar.gz")
   fi
 }
 

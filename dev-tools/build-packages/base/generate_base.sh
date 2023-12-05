@@ -160,7 +160,7 @@ build() {
     if [ ! -d "$out_dir" ]; then
       mkdir -p $out_dir
     fi
-    tar -czvf $out_dir/$working_dir.tar.gz $working_dir
+    tar -czf $out_dir/$working_dir.tar.gz $working_dir
 
     echo
     echo DONE!
