@@ -58,6 +58,7 @@ build() {
     mkdir -p $tmp_dir
     cd $tmp_dir
     mkdir -p applications
+    mkdir -p dashboards
     if [[ $app =~ $valid_url ]]; then
         if ! curl --output applications/app.zip --silent --fail "${app}"; then
             echo "The given URL or Path to the Wazuh Apps is not working: ${app}"
@@ -83,9 +84,9 @@ build() {
                 clean 1
             else
                 echo "Extracting Wazuh Dashboard base"
-                unzip -q wazuh-dashboard.zip -d .
+                unzip -q wazuh-dashboard.zip -d ./dashboards/
                 rm wazuh-dashboard.zip
-                mv $(ls | grep wazuh-dashboard) wazuh-dashboard.tar.gz
+                mv ./dashboards/$(ls ./dashboards) wazuh-dashboard.tar.gz
             fi
         else
             if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
