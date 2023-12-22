@@ -1,16 +1,21 @@
 #!/bin/sh
 
-# Definir el nombre del contenedor y los archivos que se van a verificar
+# Package name
 PACKAGE=""
+# Container name
 CONTAINER_NAME="wazuh-dashboard"
+# Files to check
 FILES="/etc/wazuh-dashboard/opensearch_dashboards.yml /usr/share/wazuh-dashboard"
+# Owner of the files
 FILE_OWNER="wazuh-dashboard"
 
+# Remove container and image
 clean() {
   docker stop $CONTAINER_NAME
   docker rmi $CONTAINER_NAME
 }
 
+# Check if files exist and are owned by wazuh-dashboard
 files_exist() {
   for FILE in $FILES; do
     if docker exec $CONTAINER_NAME ls $FILE >/dev/null 2>&1; then
@@ -29,7 +34,7 @@ files_exist() {
   done
 }
 
-
+# Run test
 test() {
 
   if [[ $PACKAGE == *".deb" ]]; then
@@ -46,7 +51,7 @@ test() {
   files_exist
 }
 
-
+# Show help
 help() {
   echo
   echo "Usage: $0 [OPTIONS]"
