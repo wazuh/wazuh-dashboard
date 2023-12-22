@@ -51,6 +51,9 @@ export const CreatePackageJson: Task = {
         distributable: true,
         release: config.isRelease,
       },
+      wazuh: {
+        version: pkg.wazuh.version,
+      },
       repository: pkg.repository,
       engines: {
         node: pkg.engines.node,
