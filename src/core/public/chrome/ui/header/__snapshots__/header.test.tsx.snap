@@ -1432,14 +1432,14 @@ exports[`Header handles visibility and lock changes 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -2089,14 +2089,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                       "AnimatedMark": Object {
                         "dark": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                          "url": "/ui/logos/spinner_on_dark.gif",
                         },
                         "light": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.gif",
                         },
                         "type": "default",
-                        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                        "url": "/ui/logos/spinner_on_light.gif",
                       },
                       "Application": Object {
                         "dark": Object {
@@ -2591,14 +2591,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.gif",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.gif",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.gif",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -3344,14 +3344,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.gif",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.gif",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.gif",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -3573,7 +3573,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                         data-euiicon-type="home"
                                         data-test-image-url="home"
                                         data-test-subj="homeIcon"
-                                        title="opensearch dashboards home"
+                                        title="Wazuh dashboards home"
                                       />
                                     </div>
                                     <div
@@ -3637,14 +3637,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                                           "AnimatedMark": Object {
                                             "dark": Object {
                                               "type": "default",
-                                              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                                              "url": "/ui/logos/spinner_on_dark.gif",
                                             },
                                             "light": Object {
                                               "type": "default",
-                                              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                              "url": "/ui/logos/spinner_on_light.gif",
                                             },
                                             "type": "default",
-                                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                            "url": "/ui/logos/spinner_on_light.gif",
                                           },
                                           "Application": Object {
                                             "dark": Object {
@@ -3703,7 +3703,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                         data-test-image-url="home"
                                         data-test-subj="homeIcon"
                                         size="m"
-                                        title="opensearch dashboards home"
+                                        title="Wazuh dashboards home"
                                         type="home"
                                       >
                                         <span
@@ -3712,7 +3712,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                           data-test-image-url="home"
                                           data-test-subj="homeIcon"
                                           size="m"
-                                          title="opensearch dashboards home"
+                                          title="Wazuh dashboards home"
                                         />
                                       </EuiIcon>
                                     </HomeIcon>
@@ -6015,14 +6015,14 @@ exports[`Header handles visibility and lock changes 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.gif",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.gif",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.gif",
           },
           "Application": Object {
             "dark": Object {
@@ -8154,14 +8154,14 @@ exports[`Header renders condensed header 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -8923,14 +8923,14 @@ exports[`Header renders condensed header 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.gif",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.gif",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.gif",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -9105,10 +9105,10 @@ exports[`Header renders condensed header 1`] = `
                                     >
                                       <span
                                         class="logoImage"
-                                        data-euiicon-type="/ui/logos/opensearch_mark_on_light.svg"
-                                        data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
-                                        data-test-subj="defaultMark"
-                                        title="opensearch dashboards home"
+                                        data-euiicon-type="home"
+                                        data-test-image-url="home"
+                                        data-test-subj="homeIcon"
+                                        title="Wazuh dashboards home"
                                       />
                                     </div>
                                     <div
@@ -9176,14 +9176,14 @@ exports[`Header renders condensed header 1`] = `
                                           "AnimatedMark": Object {
                                             "dark": Object {
                                               "type": "default",
-                                              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                                              "url": "/ui/logos/spinner_on_dark.gif",
                                             },
                                             "light": Object {
                                               "type": "default",
-                                              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                              "url": "/ui/logos/spinner_on_light.gif",
                                             },
                                             "type": "default",
-                                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                            "url": "/ui/logos/spinner_on_light.gif",
                                           },
                                           "Application": Object {
                                             "dark": Object {
@@ -9239,19 +9239,19 @@ exports[`Header renders condensed header 1`] = `
                                     >
                                       <EuiIcon
                                         className="logoImage"
-                                        data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
-                                        data-test-subj="defaultMark"
-                                        size="l"
-                                        title="opensearch dashboards home"
-                                        type="/ui/logos/opensearch_mark_on_light.svg"
+                                        data-test-image-url="home"
+                                        data-test-subj="homeIcon"
+                                        size="m"
+                                        title="Wazuh dashboards home"
+                                        type="home"
                                       >
                                         <span
                                           className="logoImage"
-                                          data-euiicon-type="/ui/logos/opensearch_mark_on_light.svg"
-                                          data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
-                                          data-test-subj="defaultMark"
-                                          size="l"
-                                          title="opensearch dashboards home"
+                                          data-euiicon-type="home"
+                                          data-test-image-url="home"
+                                          data-test-subj="homeIcon"
+                                          size="m"
+                                          title="Wazuh dashboards home"
                                         />
                                       </EuiIcon>
                                     </HomeIcon>
@@ -11545,14 +11545,14 @@ exports[`Header renders condensed header 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.gif",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.gif",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.gif",
           },
           "Application": Object {
             "dark": Object {

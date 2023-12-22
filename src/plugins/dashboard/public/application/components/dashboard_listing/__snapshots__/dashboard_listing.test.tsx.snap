@@ -152,14 +152,14 @@ exports[`dashboard listing hideWriteControls 1`] = `
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -480,6 +480,7 @@ exports[`dashboard listing hideWriteControls 1`] = `
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -825,6 +826,9 @@ exports[`dashboard listing hideWriteControls 1`] = `
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -1291,14 +1295,14 @@ exports[`dashboard listing render table listing with initial filters from URL 1`
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -1619,6 +1623,7 @@ exports[`dashboard listing render table listing with initial filters from URL 1`
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -1964,6 +1969,9 @@ exports[`dashboard listing render table listing with initial filters from URL 1`
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -2491,14 +2499,14 @@ exports[`dashboard listing renders call to action when no dashboards exist 1`] =
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -2819,6 +2827,7 @@ exports[`dashboard listing renders call to action when no dashboards exist 1`] =
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -3164,6 +3173,9 @@ exports[`dashboard listing renders call to action when no dashboards exist 1`] =
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -3691,14 +3703,14 @@ exports[`dashboard listing renders table rows 1`] = `
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -4019,6 +4031,7 @@ exports[`dashboard listing renders table rows 1`] = `
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -4364,6 +4377,9 @@ exports[`dashboard listing renders table rows 1`] = `
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -4891,14 +4907,14 @@ exports[`dashboard listing renders warning when listingLimit is exceeded 1`] = `
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -5219,6 +5235,7 @@ exports[`dashboard listing renders warning when listingLimit is exceeded 1`] = `
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -5564,6 +5581,9 @@ exports[`dashboard listing renders warning when listingLimit is exceeded 1`] = `
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },

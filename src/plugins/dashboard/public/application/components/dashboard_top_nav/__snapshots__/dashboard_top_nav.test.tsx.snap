@@ -140,14 +140,14 @@ exports[`Dashboard top nav render in embed mode 1`] = `
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -372,6 +372,7 @@ exports[`Dashboard top nav render in embed mode 1`] = `
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -717,6 +718,9 @@ exports[`Dashboard top nav render in embed mode 1`] = `
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -1104,14 +1108,14 @@ exports[`Dashboard top nav render in embed mode, and force hide filter bar 1`] =
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -1336,6 +1340,7 @@ exports[`Dashboard top nav render in embed mode, and force hide filter bar 1`] =
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -1681,6 +1686,9 @@ exports[`Dashboard top nav render in embed mode, and force hide filter bar 1`] =
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -2068,14 +2076,14 @@ exports[`Dashboard top nav render in embed mode, components can be forced show b
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -2300,6 +2308,7 @@ exports[`Dashboard top nav render in embed mode, components can be forced show b
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -2645,6 +2654,9 @@ exports[`Dashboard top nav render in embed mode, components can be forced show b
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -3032,14 +3044,14 @@ exports[`Dashboard top nav render in full screen mode with appended URL param bu
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -3264,6 +3276,7 @@ exports[`Dashboard top nav render in full screen mode with appended URL param bu
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -3609,6 +3622,9 @@ exports[`Dashboard top nav render in full screen mode with appended URL param bu
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -3996,14 +4012,14 @@ exports[`Dashboard top nav render in full screen mode, no componenets should be 
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -4228,6 +4244,7 @@ exports[`Dashboard top nav render in full screen mode, no componenets should be 
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -4573,6 +4590,9 @@ exports[`Dashboard top nav render in full screen mode, no componenets should be 
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },
@@ -4960,14 +4980,14 @@ exports[`Dashboard top nav render with all components 1`] = `
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                    "url": "/ui/logos/spinner_on_dark.gif",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                    "url": "/ui/logos/spinner_on_light.gif",
                   },
                   "type": "default",
-                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                  "url": "/ui/logos/spinner_on_light.gif",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -5192,6 +5212,7 @@ exports[`Dashboard top nav render with all components 1`] = `
             "docLinks": Object {
               "DOC_LINK_VERSION": "mocked-test-branch",
               "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+              "WAZUH_DOC_VERSION": "4.x",
               "links": Object {
                 "noDocumentation": Object {
                   "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -5537,6 +5558,9 @@ exports[`Dashboard top nav render with all components 1`] = `
                   "visualize": Object {
                     "guide": "https://opensearch.org/docs/mocked-test-branchvisualize/viz-index/",
                   },
+                },
+                "wazuh": Object {
+                  "index": "https://documentation.wazuh.com/4.x/index.html",
                 },
               },
             },

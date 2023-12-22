@@ -34,11 +34,7 @@ import PropTypes from 'prop-types';
 import { Home } from './legacy/home';
 import { Homepage } from './homepage';
 import { FeatureDirectory } from './feature_directory';
-import { TutorialDirectory } from './tutorial_directory';
-import { Tutorial } from './tutorial/tutorial';
 import { HashRouter as Router, Switch, Route } from 'react-router-dom';
-import { getTutorial } from '../load_tutorials';
-import { replaceTemplateStrings } from './tutorial/replace_template_strings';
 import { getServices } from '../opensearch_dashboards_services';
 import { useMount } from 'react-use';
 import { USE_NEW_HOME_PAGE } from '../../../common/constants';
@@ -104,8 +100,6 @@ export function HomeApp({ directories, solutions }) {
     <I18nProvider>
       <Router>
         <Switch>
-          <Route path="/tutorial/:id" render={renderTutorial} />
-          <Route path="/tutorial_directory/:tab?" render={renderTutorialDirectory} />
           <Route exact path="/feature_directory">
             <FeatureDirectory addBasePath={addBasePath} directories={directories} />
           </Route>

@@ -85,7 +85,12 @@ export class Home extends Component {
 
   componentDidMount() {
     this._isMounted = true;
-    this.fetchIsNewOpenSearchDashboardsInstance();
+    // is commented and the skipWelcome function is added to avoid loading
+    // the add sample data page the first time the application is accessed.
+    // this.fetchIsNewOpenSearchDashboardsInstance();
+    // Wazuh dashboard changes
+    this.skipWelcome();
+    this.dismissNewThemeModal();
 
     const homeTitle = i18n.translate('home.breadcrumbs.homeTitle', { defaultMessage: 'Home' });
     getServices().chrome.setBreadcrumbs([{ text: homeTitle }]);
@@ -187,16 +192,11 @@ export class Home extends Component {
           ) : null}
 
           <EuiFlexGroup
-            className={`homData ${
-              addDataFeatures.length === 1 && manageDataFeatures.length === 1
+            className={`homData ${addDataFeatures.length === 1 && manageDataFeatures.length === 1
                 ? 'homData--compressed'
                 : 'homData--expanded'
-            }`}
+              }`}
           >
-            <EuiFlexItem>
-              <AddData addBasePath={addBasePath} features={addDataFeatures} />
-            </EuiFlexItem>
-
             <EuiFlexItem>
               <ManageData addBasePath={addBasePath} features={manageDataFeatures} />
             </EuiFlexItem>
