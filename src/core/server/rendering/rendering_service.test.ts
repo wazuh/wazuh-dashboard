@@ -56,6 +56,7 @@ const INJECTED_METADATA = {
       buildSha: expect.any(String),
       dist: expect.any(Boolean),
       version: expect.any(String),
+      wazuhVersion: expect.any(String),
     },
   },
 };
