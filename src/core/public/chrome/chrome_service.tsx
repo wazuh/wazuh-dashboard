@@ -265,13 +265,13 @@ export class ChromeService {
           basePath={http.basePath}
           breadcrumbs$={breadcrumbs$.pipe(takeUntil(this.stop$))}
           customNavLink$={customNavLink$.pipe(takeUntil(this.stop$))}
-          opensearchDashboardsDocLink={docLinks.links.opensearchDashboards.introduction}
+          opensearchDashboardsDocLink={docLinks.links.wazuh.index}
           forceAppSwitcherNavigation$={navLinks.getForceAppSwitcherNavigation$()}
           helpExtension$={helpExtension$.pipe(takeUntil(this.stop$))}
           helpSupportUrl$={helpSupportUrl$.pipe(takeUntil(this.stop$))}
           homeHref={application.getUrlForApp('home')}
           isVisible$={this.isVisible$}
-          opensearchDashboardsVersion={injectedMetadata.getOpenSearchDashboardsVersion()}
+          opensearchDashboardsVersion={injectedMetadata.getWazuhVersion()}
           navLinks$={navLinks.getNavLinks$()}
           recentlyAccessed$={recentlyAccessed.get$()}
           navControlsLeft$={navControls.getLeft$()}

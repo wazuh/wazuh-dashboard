@@ -34,11 +34,7 @@ import PropTypes from 'prop-types';
 import { Home } from './legacy/home';
 import { Homepage } from './homepage';
 import { FeatureDirectory } from './feature_directory';
-import { TutorialDirectory } from './tutorial_directory';
-import { Tutorial } from './tutorial/tutorial';
 import { HashRouter as Router, Switch, Route } from 'react-router-dom';
-import { getTutorial } from '../load_tutorials';
-import { replaceTemplateStrings } from './tutorial/replace_template_strings';
 import { getServices } from '../opensearch_dashboards_services';
 import { useMount } from 'react-use';
 import { USE_NEW_HOME_PAGE } from '../../../common/constants';
@@ -51,59 +47,8 @@ const RedirectToDefaultApp = () => {
   return null;
 };
 
-const renderTutorialDirectory = (props) => {
-  const { addBasePath, environmentService } = getServices();
-  const environment = environmentService.getEnvironment();
-  const isCloudEnabled = environment.cloud;
-
-  return (
-    <TutorialDirectory
-      addBasePath={addBasePath}
-      openTab={props.match.params.tab}
-      isCloudEnabled={isCloudEnabled}
-      withoutHomeBreadCrumb={props.withoutHomeBreadCrumb}
-    />
-  );
-};
-
-export function ImportSampleDataApp() {
-  return (
-    <I18nProvider>
-      {renderTutorialDirectory({
-        // Pass a fixed tab to avoid TutorialDirectory missing openTab property
-        match: {
-          params: { tab: 'sampleData' },
-        },
-        withoutHomeBreadCrumb: true,
-      })}
-    </I18nProvider>
-  );
-}
-
 export function HomeApp({ directories, solutions }) {
-  const {
-    savedObjectsClient,
-    getBasePath,
-    addBasePath,
-    environmentService,
-    telemetry,
-    uiSettings,
-  } = getServices();
-  const environment = environmentService.getEnvironment();
-  const isCloudEnabled = environment.cloud;
-
-  const renderTutorial = (props) => {
-    return (
-      <Tutorial
-        addBasePath={addBasePath}
-        isCloudEnabled={isCloudEnabled}
-        getTutorial={getTutorial}
-        replaceTemplateStrings={replaceTemplateStrings}
-        tutorialId={props.match.params.id}
-        bulkCreate={savedObjectsClient.bulkCreate}
-      />
-    );
-  };
+  const { savedObjectsClient, getBasePath, addBasePath, telemetry, uiSettings } = getServices();
 
   const legacyHome = (
     <Home
@@ -123,8 +68,6 @@ export function HomeApp({ directories, solutions }) {
     <I18nProvider>
       <Router>
         <Switch>
-          <Route path="/tutorial/:id" render={renderTutorial} />
-          <Route path="/tutorial_directory/:tab?" render={renderTutorialDirectory} />
           <Route exact path="/feature_directory">
             <FeatureDirectory addBasePath={addBasePath} directories={directories} />
           </Route>

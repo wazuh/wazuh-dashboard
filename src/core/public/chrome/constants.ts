@@ -28,9 +28,9 @@
  * under the License.
  */
 
-export const OPENSEARCH_DASHBOARDS_ASK_OPENSEARCH_LINK = 'https://forum.opensearch.org/';
-export const GITHUB_CREATE_ISSUE_LINK =
-  'https://github.com/opensearch-project/OpenSearch-Dashboards/issues/new/choose';
+export const OPENSEARCH_DASHBOARDS_FEEDBACK_LINK = 'https://wazuh.com/community/join-us-on-slack';
+export const OPENSEARCH_DASHBOARDS_ASK_OPENSEARCH_LINK = OPENSEARCH_DASHBOARDS_FEEDBACK_LINK;
+export const GITHUB_CREATE_ISSUE_LINK = 'https://github.com/wazuh/wazuh/issues/new/choose';
 
 export enum RightNavigationOrder {
   // order of dev tool should be after advance settings
