@@ -1,0 +1,212 @@
+name: Build final packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      REFERENCE_SECURITY_PLUGIN:
+        description: 'Reference Wazuh security packages (branch/tag/commit)'
+        required: true
+        default: ''
+      REFERENCE_WAZUH_PLUGINS:
+        description: 'Reference Wazuh plugins (branch/tag/commit)'
+        required: true
+        default: ''
+      REFERENCE_WAZUH_DASHBOARD:
+        description: 'Reference Wazuh dashboard (branch/tag/commit)'
+        required: true
+        default: ''
+      DISTRIBUTION:
+        description: 'Distribution to build (deb | rpm | tar | all-platforms)'
+        required: true
+        default: ''
+
+jobs:
+  build-plugins:
+    name: Build plugins
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
+    with:
+      reference: ${{ inputs.REFERENCE_WAZUH_PLUGINS }}
+
+  build-dashboard:
+    name: Build dashboard
+    uses: wazuh/wazuh-dashboard/.github/workflows/build.yml@4.9.0
+    with:
+      CHECKOUT_TO: ${{ inputs.REFERENCE_WAZUH_DASHBOARD }}
+
+  build-security-plugin:
+    name: Build security plugin
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.9.0
+    with:
+      reference: ${{ inputs.REFERENCE_SECURITY_PLUGIN }}
+
+
+  Build-base-package:
+    needs: [build-plugins, build-dashboard, build-security-plugin]
+    runs-on: ubuntu-latest
+    name: Generate final packages
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO: Add arm64 support
+        ARCHITECTURE: [ x64 ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup variables
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+
+      - name: Setup packages names
+        run: |
+          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_${{ matrix.ARCHITECTURE }}_${{ inputs.REFERENCE_WAZUH_DASHBOARD }}.tar.gz" >> $GITHUB_ENV
+          echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_SECURITY_PLUGIN }}.zip" >> $GITHUB_ENV
+          echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_WAZUH_PLUGINS }}.zip" >> $GITHUB_ENV
+
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.WAZUH_DASHBOARD_SLIM }}
+          path: ${{ env.CURRENT_DIR }}/artifacts/dashboard
+
+      - name: Download security plugin artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.WAZUH_SECURITY_PLUGIN }}
+          path: ${{ env.CURRENT_DIR }}/artifacts/security-plugin
+
+      - name: Download plugins artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.WAZUH_PLUGINS }}
+          path: ${{ env.CURRENT_DIR }}/artifacts/plugins
+
+      - name: Zip plugins
+        run: |
+          zip -r -j ${{ env.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ env.CURRENT_DIR }}/artifacts/plugins
+          zip -r -j ${{ env.CURRENT_DIR }}/artifacts/security-package.zip ${{ env.CURRENT_DIR }}/artifacts/security-plugin
+          zip -r -j ${{ env.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ env.CURRENT_DIR }}/artifacts/dashboard/${{ env.WAZUH_DASHBOARD_SLIM }}
+
+
+      - name: Build packages
+        run: |
+          cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages
+          bash ./build-packages.sh \
+            -v ${{ env.VERSION }} \
+            -r ${{ env.REVISION }} \
+            -a file://${{env.CURRENT_DIR}}/artifacts/wazuh-package.zip \
+            -s file://${{env.CURRENT_DIR}}/artifacts/security-package.zip \
+            -b file://${{env.CURRENT_DIR}}/artifacts/dashboard-package.zip \
+            --tar
+
+
+      - name: Upload tar packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
+          retention-days: 30
+
+  build-deb-package:
+    needs: [Build-base-package]
+    if: ( contains(inputs.DISTRIBUTION, 'deb') || contains(inputs.DISTRIBUTION, 'all-platforms') )
+    runs-on: ubuntu-latest
+    name: Build deb package
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO: Add arm64 support
+        ARCHITECTURE: [ x64 ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup variables
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
+          path: ${{ env.CURRENT_DIR }}/artifacts/dashboard-tar
+
+      - name: Build packages
+        run: |
+          cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/
+          bash ./launcher.sh \
+            -v ${{ env.VERSION }} \
+            -r ${{ env.REVISION }} \
+            -p file://${{env.CURRENT_DIR}}/artifacts/dashboard-tar/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
+
+      - name: Upload deb packages
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
+          retention-days: 30
+
+
+  build-rpm-package:
+    needs: [Build-base-package]
+    if: ( contains(inputs.DISTRIBUTION, 'rpm') || contains(inputs.DISTRIBUTION, 'all-platforms') )
+    runs-on: ubuntu-latest
+    name: Build rpm package
+    strategy:
+      fail-fast: false
+      matrix:
+        ARCHITECTURE: [ x64 ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup variables
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
+          path: ${{ env.CURRENT_DIR }}/artifacts/dashboard-tar
+
+      - name: Build packages
+        run: |
+          cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/
+          bash ./launcher.sh \
+            -v ${{ env.VERSION }} \
+            -r ${{ env.REVISION }} \
+            -p file://${{env.CURRENT_DIR}}/artifacts/dashboard-tar/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
+
+      - name: Upload rpm packages
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
+          retention-days: 30

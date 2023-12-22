@@ -28,7 +28,10 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
   const expectedWelcomeMessage = 'Welcome to OpenSearch';
 
   describe('OpenSearch Dashboards branding configuration', function customHomeBranding() {
-    describe('should render overview page', async () => {
+    /**
+     * This test is skipped because the overview page is not available.
+     */
+    describe.skip('should render overview page', async () => {
       this.tags('includeFirefox');
 
       before(async function () {
@@ -81,7 +84,10 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
         });
       });
 
-      it('with customized logo', async () => {
+      /**
+       * This test is omitted because the welcome page has been removed.
+       */
+      it.skip('with customized logo', async () => {
         await testSubjects.existOrFail('welcomeCustomLogo');
         const actualLabel = await testSubjects.getAttribute(
           'welcomeCustomLogo',
@@ -90,7 +96,7 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
         expect(actualLabel.toUpperCase()).to.equal(expectedMarkLogo.toUpperCase());
       });
 
-      it('with customized title', async () => {
+      it.skip('with customized title', async () => {
         await testSubjects.existOrFail('welcomeCustomTitle');
         const actualLabel = await testSubjects.getAttribute(
           'welcomeCustomTitle',
@@ -99,7 +105,7 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
         expect(actualLabel.toUpperCase()).to.equal(expectedWelcomeMessage.toUpperCase());
       });
 
-      it('with customized logo in dark mode', async () => {
+      it.skip('with customized logo in dark mode', async () => {
         await PageObjects.common.navigateToApp('management/opensearch-dashboards/settings');
         await PageObjects.settings.toggleAdvancedSettingCheckbox('theme:darkMode');
         await PageObjects.common.navigateToApp('home');

@@ -55,6 +55,7 @@ interface Package {
   workspaces: {
     packages: string[];
   };
+  wazuh: { version: string };
   [key: string]: unknown;
 }
 

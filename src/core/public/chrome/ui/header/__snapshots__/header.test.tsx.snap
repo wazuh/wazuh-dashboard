@@ -2125,14 +2125,14 @@ exports[`Header handles visibility and lock changes 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -3014,14 +3014,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                       "AnimatedMark": Object {
                         "dark": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                          "url": "/ui/logos/spinner_on_dark.gif",
                         },
                         "light": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.gif",
                         },
                         "type": "default",
-                        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                        "url": "/ui/logos/spinner_on_light.gif",
                       },
                       "Application": Object {
                         "dark": Object {
@@ -3631,14 +3631,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.gif",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.gif",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.gif",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -4501,14 +4501,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.gif",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.gif",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.gif",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -4698,11 +4698,68 @@ exports[`Header handles visibility and lock changes 1`] = `
                       delay="long"
                       position="top"
                     >
+<<<<<<< HEAD
                       <span
                         className="euiToolTipAnchor"
                         onKeyUp={[Function]}
                         onMouseOut={[Function]}
                         onMouseOver={[Function]}
+=======
+                      <EuiButtonEmpty
+                        aria-label="Go to home page"
+                        buttonRef={
+                          Object {
+                            "current": <a
+                              aria-label="Go to home page"
+                              class="euiButtonEmpty euiButtonEmpty--text euiHeaderSectionItemButton header__homeLoaderNavButton"
+                              data-test-subj="homeLoader"
+                              href="/"
+                              rel="noreferrer"
+                              title="Go to home page"
+                            >
+                              <span
+                                class="euiButtonContent euiButtonEmpty__content"
+                              >
+                                <span
+                                  class="euiButtonEmpty__text"
+                                >
+                                  <span
+                                    class="euiHeaderSectionItemButton__content"
+                                  >
+                                    <div
+                                      class="homeIconContainer"
+                                    >
+                                      <span
+                                        class="logoImage"
+                                        data-euiicon-type="home"
+                                        data-test-image-url="home"
+                                        data-test-subj="homeIcon"
+                                        title="Wazuh dashboards home"
+                                      />
+                                    </div>
+                                    <div
+                                      class="loaderContainer"
+                                    >
+                                      <span
+                                        aria-hidden="true"
+                                        aria-label="Loading content"
+                                        class="euiLoadingSpinner euiLoadingSpinner--medium osdLoadingIndicator-hidden"
+                                        data-test-subj="globalLoadingIndicator-hidden"
+                                      />
+                                    </div>
+                                  </span>
+                                </span>
+                              </span>
+                            </a>,
+                          }
+                        }
+                        className="euiHeaderSectionItemButton header__homeLoaderNavButton"
+                        color="text"
+                        data-test-subj="homeLoader"
+                        href="/"
+                        onClick={[Function]}
+                        title="Go to home page"
+>>>>>>> a4c086a559 (Compatibility with OpenSearch 2.11.1 (#131))
                       >
                         <EuiHeaderSectionItemButton
                           aria-label="Go to home page"
@@ -4795,6 +4852,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                   <span
                                     className="euiButtonEmpty__text"
                                   >
+<<<<<<< HEAD
                                     <span
                                       className="euiHeaderSectionItemButton__content"
                                     >
@@ -4911,6 +4969,113 @@ exports[`Header handles visibility and lock changes 1`] = `
                                                       "subscriber": [Circular],
                                                     },
                                                   ],
+=======
+                                    <HomeIcon
+                                      branding={Object {}}
+                                      logos={
+                                        Object {
+                                          "AnimatedMark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/spinner_on_dark.gif",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/spinner_on_light.gif",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/spinner_on_light.gif",
+                                          },
+                                          "Application": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                          },
+                                          "CenterMark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                          },
+                                          "Mark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                          },
+                                          "OpenSearch": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/opensearch_on_light.svg",
+                                          },
+                                          "colorScheme": "light",
+                                        }
+                                      }
+                                    >
+                                      <EuiIcon
+                                        className="logoImage"
+                                        data-test-image-url="home"
+                                        data-test-subj="homeIcon"
+                                        size="m"
+                                        title="Wazuh dashboards home"
+                                        type="home"
+                                      >
+                                        <span
+                                          className="logoImage"
+                                          data-euiicon-type="home"
+                                          data-test-image-url="home"
+                                          data-test-subj="homeIcon"
+                                          size="m"
+                                          title="Wazuh dashboards home"
+                                        />
+                                      </EuiIcon>
+                                    </HomeIcon>
+                                  </div>
+                                  <div
+                                    className="loaderContainer"
+                                  >
+                                    <LoadingIndicator
+                                      loadingCount$={
+                                        BehaviorSubject {
+                                          "_isScalar": false,
+                                          "_value": 0,
+                                          "closed": false,
+                                          "hasError": false,
+                                          "isStopped": false,
+                                          "observers": Array [
+                                            Subscriber {
+                                              "_parentOrParents": null,
+                                              "_subscriptions": Array [
+                                                SubjectSubscription {
+                                                  "_parentOrParents": [Circular],
+                                                  "_subscriptions": null,
+>>>>>>> a4c086a559 (Compatibility with OpenSearch 2.11.1 (#131))
                                                   "closed": false,
                                                   "destination": SafeSubscriber {
                                                     "_complete": undefined,
@@ -7494,14 +7659,14 @@ exports[`Header handles visibility and lock changes 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.gif",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.gif",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.gif",
           },
           "Application": Object {
             "dark": Object {
@@ -13323,14 +13488,14 @@ exports[`Header renders condensed header 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.gif",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.gif",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.gif",
       },
       "Application": Object {
         "dark": Object {
@@ -14365,14 +14530,14 @@ exports[`Header renders condensed header 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.gif",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.gif",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.gif",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -14518,11 +14683,68 @@ exports[`Header renders condensed header 1`] = `
                       delay="long"
                       position="top"
                     >
+<<<<<<< HEAD
                       <span
                         className="euiToolTipAnchor"
                         onKeyUp={[Function]}
                         onMouseOut={[Function]}
                         onMouseOver={[Function]}
+=======
+                      <EuiButtonEmpty
+                        aria-label="Go to home page"
+                        buttonRef={
+                          Object {
+                            "current": <a
+                              aria-label="Go to home page"
+                              class="euiButtonEmpty euiButtonEmpty--text euiHeaderSectionItemButton header__homeLoaderNavButton"
+                              data-test-subj="homeLoader"
+                              href="/"
+                              rel="noreferrer"
+                              title="Go to home page"
+                            >
+                              <span
+                                class="euiButtonContent euiButtonEmpty__content"
+                              >
+                                <span
+                                  class="euiButtonEmpty__text"
+                                >
+                                  <span
+                                    class="euiHeaderSectionItemButton__content"
+                                  >
+                                    <div
+                                      class="homeIconContainer"
+                                    >
+                                      <span
+                                        class="logoImage"
+                                        data-euiicon-type="home"
+                                        data-test-image-url="home"
+                                        data-test-subj="homeIcon"
+                                        title="Wazuh dashboards home"
+                                      />
+                                    </div>
+                                    <div
+                                      class="loaderContainer"
+                                    >
+                                      <span
+                                        aria-hidden="true"
+                                        aria-label="Loading content"
+                                        class="euiLoadingSpinner euiLoadingSpinner--medium osdLoadingIndicator-hidden"
+                                        data-test-subj="globalLoadingIndicator-hidden"
+                                      />
+                                    </div>
+                                  </span>
+                                </span>
+                              </span>
+                            </a>,
+                          }
+                        }
+                        className="euiHeaderSectionItemButton header__homeLoaderNavButton"
+                        color="text"
+                        data-test-subj="homeLoader"
+                        href="/"
+                        onClick={[Function]}
+                        title="Go to home page"
+>>>>>>> a4c086a559 (Compatibility with OpenSearch 2.11.1 (#131))
                       >
                         <EuiHeaderSectionItemButton
                           aria-label="Go to home page"
@@ -14615,6 +14837,7 @@ exports[`Header renders condensed header 1`] = `
                                   <span
                                     className="euiButtonEmpty__text"
                                   >
+<<<<<<< HEAD
                                     <span
                                       className="euiHeaderSectionItemButton__content"
                                     >
@@ -14735,6 +14958,117 @@ exports[`Header renders condensed header 1`] = `
                                                       "subscriber": [Circular],
                                                     },
                                                   ],
+=======
+                                    <HomeIcon
+                                      branding={
+                                        Object {
+                                          "useExpandedHeader": false,
+                                        }
+                                      }
+                                      logos={
+                                        Object {
+                                          "AnimatedMark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/spinner_on_dark.gif",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/spinner_on_light.gif",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/spinner_on_light.gif",
+                                          },
+                                          "Application": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                          },
+                                          "CenterMark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                          },
+                                          "Mark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                          },
+                                          "OpenSearch": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/opensearch_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/opensearch_on_light.svg",
+                                          },
+                                          "colorScheme": "light",
+                                        }
+                                      }
+                                    >
+                                      <EuiIcon
+                                        className="logoImage"
+                                        data-test-image-url="home"
+                                        data-test-subj="homeIcon"
+                                        size="m"
+                                        title="Wazuh dashboards home"
+                                        type="home"
+                                      >
+                                        <span
+                                          className="logoImage"
+                                          data-euiicon-type="home"
+                                          data-test-image-url="home"
+                                          data-test-subj="homeIcon"
+                                          size="m"
+                                          title="Wazuh dashboards home"
+                                        />
+                                      </EuiIcon>
+                                    </HomeIcon>
+                                  </div>
+                                  <div
+                                    className="loaderContainer"
+                                  >
+                                    <LoadingIndicator
+                                      loadingCount$={
+                                        BehaviorSubject {
+                                          "_isScalar": false,
+                                          "_value": 0,
+                                          "closed": false,
+                                          "hasError": false,
+                                          "isStopped": false,
+                                          "observers": Array [
+                                            Subscriber {
+                                              "_parentOrParents": null,
+                                              "_subscriptions": Array [
+                                                SubjectSubscription {
+                                                  "_parentOrParents": [Circular],
+                                                  "_subscriptions": null,
+>>>>>>> a4c086a559 (Compatibility with OpenSearch 2.11.1 (#131))
                                                   "closed": false,
                                                   "destination": SafeSubscriber {
                                                     "_complete": undefined,
@@ -17309,14 +17643,14 @@ exports[`Header renders condensed header 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.gif",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.gif",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.gif",
           },
           "Application": Object {
             "dark": Object {

@@ -1,6 +1,7 @@
 .aws-config.json
 .signing-config.json
 .ackrc
+/dev-tools/build-packages/*/output
 /.opensearch
 /.chromium
 /package.json.bak
