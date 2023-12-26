@@ -34,6 +34,21 @@ files_exist() {
   done
 }
 
+check_opensearch_dashboard_yml() {
+  docker cp ../../config/opensearch_dashboards.prod.yml $CONTAINER_NAME:/tmp/opensearch_dashboards.yml
+
+  diff_opensearch_dashboard_yml=$(docker exec $CONTAINER_NAME diff /etc/wazuh-dashboard/opensearch_dashboards.yml /tmp/opensearch_dashboards.yml)
+
+  if [ -n "$diff_opensearch_dashboard_yml" ]; then
+    echo "ERROR: opensearch_dashboards.yml is not the same as the one in the package"
+    echo $diff_opensearch_dashboard_yml
+    clean
+    exit 1
+  fi
+  echo $(docker exec $CONTAINER_NAME diff /etc/wazuh-dashboard/opensearch_dashboards.yml /tmp/opensearch_dashboards.yml)
+  echo "opensearch_dashboards.yml is the same as the one in the package"
+}
+
 # Run test
 test() {
 
@@ -49,6 +64,8 @@ test() {
   fi
 
   files_exist
+
+  check_opensearch_dashboard_yml
 }
 
 # Show help
