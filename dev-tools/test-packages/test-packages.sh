@@ -34,6 +34,7 @@ files_exist() {
   done
 }
 
+# Check if opensearch_dashboards.yml is the same as the one in the package
 check_opensearch_dashboard_yml() {
   docker cp ../../config/opensearch_dashboards.prod.yml $CONTAINER_NAME:/tmp/opensearch_dashboards.yml
 
@@ -49,15 +50,73 @@ check_opensearch_dashboard_yml() {
   echo "opensearch_dashboards.yml is the same as the one in the package"
 }
 
+# Check if metadata is correct for deb packages
+check_metadata_deb() {
+
+  IFS='_' read -r -a arrayNameFile <<< "$PACKAGE"
+  metadataVersion=$(docker exec $CONTAINER_NAME apt show wazuh-dashboard | grep Version | awk '{print $2}')
+  metadataPackage=$(docker exec $CONTAINER_NAME apt show wazuh-dashboard | grep Package | awk '{print $2}')
+  metadataStatus=$(docker exec $CONTAINER_NAME apt show wazuh-dashboard | grep Status)
+
+  # Check if metadata is correct
+  if [ "${arrayNameFile[1]}" != "$metadataVersion" ]; then
+    echo "ERROR: metadata version is not the same as the one in the package"
+    echo "metadata version: $metadataVersion"
+    echo "package version: ${arrayNameFile[1]}"
+    clean
+    exit 1
+  elif [ "${arrayNameFile[0]}" != "$metadataPackage" ]; then
+    echo "ERROR: metadata package is not the same as the one in the package"
+    echo "metadata package: $metadataPackage"
+    echo "package package: ${arrayNameFile[0]}"
+    clean
+    exit 1
+  elif [ "$metadataStatus" != "Status: install ok installed" ]; then
+    echo "ERROR: metadata status is not 'Status: install ok installed'"
+    echo "metadata status: $metadataStatus"
+    clean
+    exit 1
+  fi
+
+  echo "metadata version is correct: $metadataVersion"
+  echo "metadata package is correct: $metadataPackage"
+  echo "metadata status is $metadataStatus"
+}
+
+check_metadata_rpm() {
+  metadataVersion=$(docker exec $CONTAINER_NAME rpm -q --qf '%{VERSION}-%{RELEASE}' wazuh-dashboard)
+  metadataPackage=$(docker exec $CONTAINER_NAME rpm -q --qf '%{NAME}' wazuh-dashboard)
+
+  # Check if metadata is correct
+  if [[ $PACKAGE != *"$metadataVersion"* ]]; then
+    echo "ERROR: metadata version is not the same as the one in the package"
+    echo "metadata version: $metadataVersion"
+    echo "package version: $PACKAGE"
+    clean
+    exit 1
+  elif [[ $PACKAGE != "$metadataPackage"* ]]; then
+    echo "ERROR: metadata package is not the same as the one in the package"
+    echo "metadata package: $metadataPackage"
+    echo "package package: $PACKAGE"
+    clean
+    exit 1
+  fi
+
+  echo "metadata version is correct: $metadataVersion"
+  echo "metadata package is correct: $metadataPackage"
+}
+
 # Run test
 test() {
 
   if [[ $PACKAGE == *".deb" ]]; then
     docker build --build-arg PACKAGE=$PACKAGE -t $CONTAINER_NAME ./deb/
     docker run -it --rm -d --name $CONTAINER_NAME $CONTAINER_NAME
+    check_metadata_deb
   elif [[ $PACKAGE == *".rpm" ]]; then
     docker build --build-arg PACKAGE=$PACKAGE -t $CONTAINER_NAME ./rpm/
     docker run -it --rm -d --name $CONTAINER_NAME $CONTAINER_NAME
+    check_metadata_rpm
   else
     echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm ))"
     exit 1
