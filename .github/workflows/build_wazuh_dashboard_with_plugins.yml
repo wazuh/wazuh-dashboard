@@ -210,3 +210,73 @@ jobs:
           name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
           path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
           retention-days: 30
+
+
+  test-package-deb:
+    needs: [build-deb-package]
+    runs-on: ubuntu-latest
+    name: Test packages
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup variables
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+
+      - name: Download deb package
+        uses: actions/download-artifact@v3
+        with:
+          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
+          path: ${{ env.CURRENT_DIR }}/dev-tools/test-packages/deb
+
+      - name: Run test
+        run: |
+          cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh \
+            -p wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
+
+
+  test-package-rpm:
+    needs: [build-rpm-package]
+    runs-on: ubuntu-latest
+    name: Test packages
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup variables
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+
+      - name: Download rpm package
+        uses: actions/download-artifact@v3
+        with:
+          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
+          path: ${{ env.CURRENT_DIR }}/dev-tools/test-packages/rpm
+
+      - name: Run test
+        run: |
+          cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh \
+            -p wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
