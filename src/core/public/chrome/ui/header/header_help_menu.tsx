@@ -50,6 +50,7 @@ import { ExclusiveUnion } from '@elastic/eui';
 import { combineLatest } from 'rxjs';
 import { HeaderExtension } from './header_extension';
 import { ChromeHelpExtension } from '../../chrome_service';
+import { WAZUH_DOCUMENTATION_URL } from '../../constants';
 
 /** @public */
 export type ChromeHelpExtensionMenuGitHubLink = EuiButtonEmptyProps & {
@@ -206,7 +207,7 @@ class HeaderHelpMenuUI extends Component<Props, State> {
     const defaultContent = useDefaultContent ? (
       <Fragment>
         <EuiButtonEmpty
-          href="https://documentation.wazuh.com/4.9/"
+          href={WAZUH_DOCUMENTATION_URL}
           target="_blank"
           size="xs"
           flush="left"
