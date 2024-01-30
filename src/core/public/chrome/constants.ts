@@ -29,8 +29,10 @@
  */
 import wazuh from '../../../../package.json';
 
-export const WAZUH_VERSION = wazuh.wazuh.version;
+export const WAZUH_MAJOR = wazuh.wazuh.version.split('.')[0];
+export const WAZUH_MINOR = wazuh.wazuh.version.split('.')[1];
+
 export const OPENSEARCH_DASHBOARDS_FEEDBACK_LINK = 'https://wazuh.com/community/join-us-on-slack';
 export const OPENSEARCH_DASHBOARDS_ASK_OPENSEARCH_LINK = OPENSEARCH_DASHBOARDS_FEEDBACK_LINK;
 export const GITHUB_CREATE_ISSUE_LINK = 'https://github.com/wazuh/wazuh/issues/new/choose';
-export const WAZUH_DOCUMENTATION_URL = `https://documentation.wazuh.com/${WAZUH_VERSION}/`;
+export const WAZUH_DOCUMENTATION_URL = `https://documentation.wazuh.com/${WAZUH_MAJOR}.${WAZUH_MINOR}/`;
