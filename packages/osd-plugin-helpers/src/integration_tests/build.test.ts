@@ -78,7 +78,9 @@ it('builds a generated plugin into a viable archive', async () => {
   expect(generateProc.all).toMatchInlineSnapshot(`
     " succ 🎉
 
-          Your plugin has been created in `);
+          Your plugin has been created in ${standardize('plugins/foo_test_plugin', false, true)}
+    "
+  `);
 
   const buildProc = await execa(
     process.execPath,
@@ -170,7 +172,9 @@ it('builds a non-semver generated plugin into a viable archive', async () => {
   expect(generateProc.all).toMatchInlineSnapshot(`
     " succ 🎉
 
-          Your plugin has been created in `);
+          Your plugin has been created in ${standardize('plugins/foo_test_plugin', false, true)}
+    "
+  `);
 
   const buildProc = await execa(
     process.execPath,
