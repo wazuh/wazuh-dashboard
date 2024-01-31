@@ -358,6 +358,7 @@ exports[`Header handles visibility and lock changes 1`] = `
       "thrownError": null,
     }
   }
+  darkmode={false}
   forceAppSwitcherNavigation$={
     BehaviorSubject {
       "_isScalar": false,
@@ -4249,6 +4250,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                   className="euiHeaderSectionItem euiHeaderSectionItem--borderLeft"
                 >
                   <InjectIntl(HeaderHelpMenuUI)
+                    darkmode={false}
                     helpExtension$={
                       BehaviorSubject {
                         "_isScalar": false,
@@ -4953,6 +4955,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                     useDefaultContent={true}
                   >
                     <HeaderHelpMenuUI
+                      darkmode={false}
                       helpExtension$={
                         BehaviorSubject {
                           "_isScalar": false,
@@ -7121,6 +7124,7 @@ exports[`Header renders condensed header 1`] = `
       "thrownError": null,
     }
   }
+  darkmode={false}
   forceAppSwitcherNavigation$={
     BehaviorSubject {
       "_isScalar": false,
@@ -9788,6 +9792,7 @@ exports[`Header renders condensed header 1`] = `
                   className="euiHeaderSectionItem euiHeaderSectionItem--borderLeft"
                 >
                   <InjectIntl(HeaderHelpMenuUI)
+                    darkmode={false}
                     helpExtension$={
                       BehaviorSubject {
                         "_isScalar": false,
@@ -10492,6 +10497,7 @@ exports[`Header renders condensed header 1`] = `
                     useDefaultContent={true}
                   >
                     <HeaderHelpMenuUI
+                      darkmode={false}
                       helpExtension$={
                         BehaviorSubject {
                           "_isScalar": false,

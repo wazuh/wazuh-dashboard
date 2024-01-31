@@ -94,6 +94,7 @@ export interface HeaderProps {
   branding: ChromeBranding;
   logos: Logos;
   survey: string | undefined;
+  darkmode: boolean;
   sidecarConfig$: Observable<ISidecarConfig | undefined>;
 }
 
@@ -247,6 +248,7 @@ export function Header({
                   opensearchDashboardsDocLink={opensearchDashboardsDocLink}
                   opensearchDashboardsVersion={opensearchDashboardsVersion}
                   surveyLink={survey}
+                  darkmode={observables.darkmode}
                 />
               </EuiHeaderSectionItem>
             </EuiHeaderSection>
