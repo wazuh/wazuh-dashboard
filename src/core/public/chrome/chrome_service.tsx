@@ -263,6 +263,7 @@ export class ChromeService {
           branding={injectedMetadata.getBranding()}
           logos={logos}
           survey={injectedMetadata.getSurvey()}
+          darkmode={uiSettings.get('theme:darkMode')}
         />
       ),
 

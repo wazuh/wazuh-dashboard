@@ -72,6 +72,7 @@ function mockProps() {
     branding: {},
     survey: '/',
     logos: chromeServiceMock.createStartContract().logos,
+    darkmode: false,
   };
 }
 
