@@ -74,7 +74,7 @@ export const DEFAULT_APP_CATEGORIES: Record<string, AppCategory> = Object.freeze
     euiIconType: 'logoSecurity',
   },
   dashboardManagement: {
-    id: 'wzCategoryDashboardManagement',
+    id: 'wz-category-dashboard-management',
     label: i18n.translate('core.ui.dashboardManagementNavList.label', {
       defaultMessage: 'Dashboard management',
     }),
