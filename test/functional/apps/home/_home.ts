@@ -44,7 +44,7 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
       await globalNav.clickLogo();
       await PageObjects.header.waitUntilLoadingHasFinished();
       const url = await browser.getCurrentUrl();
-      expect(url.includes('/app/home')).to.be(true);
+      expect(url.includes('/app/wz-home')).to.be(true);
     });
 
     it('clicking on home button should take you to home page', async () => {
@@ -52,7 +52,7 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
       await globalNav.clickHomeButton();
       await PageObjects.header.waitUntilLoadingHasFinished();
       const url = await browser.getCurrentUrl();
-      expect(url.includes('/app/home')).to.be(true);
+      expect(url.includes('/app/wz-home')).to.be(true);
     });
 
     it('clicking on console on homepage should take you to console app', async () => {

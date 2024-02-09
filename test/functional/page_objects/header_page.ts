@@ -85,8 +85,10 @@ export function HeaderPageProvider({ getService, getPageObjects }: FtrProviderCo
     public async clickStackManagement() {
       // Wazuh: Set a local storage item to show the nav group
       // because the nav group is hidden by default in our fork
-      await browser.setLocalStorageItem('core.navGroup.management', 'true');
-      await appsMenu.clickLink('Dashboards Management', { category: 'management' });
+      await browser.setLocalStorageItem('core.navGroup.wz-category-dashboard-management', 'true');
+      await appsMenu.clickLink('Dashboards Management', {
+        category: 'wz-category-dashboard-management',
+      });
       await this.awaitGlobalLoadingIndicatorHidden();
     }
 
