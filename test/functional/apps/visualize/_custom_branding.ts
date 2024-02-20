@@ -143,7 +143,7 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
           await globalNav.clickLogo();
           await PageObjects.header.waitUntilLoadingHasFinished();
           const url = await browser.getCurrentUrl();
-          expect(url.includes('/app/home')).to.be(true);
+          expect(url.includes('/app/wz-home')).to.be(true);
         });
 
         it('with customized mark logo button that navigates to home page', async () => {
@@ -151,10 +151,11 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
           await globalNav.clickHomeButton();
           await PageObjects.header.waitUntilLoadingHasFinished();
           const url = await browser.getCurrentUrl();
-          expect(url.includes('/app/home')).to.be(true);
+          expect(url.includes('/app/wz-home')).to.be(true);
         });
 
-        it('with customized mark logo in home dashboard card', async () => {
+        // Wazuh: This test is omitted because OpenSearch Dashboards does not have a home dashboard card.
+        it.skip('with customized mark logo in home dashboard card', async () => {
           await testSubjects.existOrFail('dashboardCustomLogo');
           const actualLabel = await testSubjects.getAttribute(
             'dashboardCustomLogo',
@@ -163,7 +164,8 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
           expect(actualLabel.toUpperCase()).to.equal(expectedMarkLogo.toUpperCase());
         });
 
-        it('with customized title in home dashboard card', async () => {
+        // Wazuh: This test is omitted because OpenSearch Dashboards does not have a home dashboard card.
+        it.skip('with customized title in home dashboard card', async () => {
           await testSubjects.existOrFail('dashboardCustomTitle');
           const actualLabel = await testSubjects.getAttribute(
             'dashboardCustomTitle',
@@ -172,7 +174,8 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
           expect(actualLabel.toUpperCase()).to.equal(applicationTitle.toUpperCase());
         });
 
-        it('with customized mark logo for opensearch in side menu', async () => {
+        // Wazuh: This test is omitted because OpenSearch Dashboards does not appear in the side menu.
+        it.skip('with customized mark logo for opensearch in side menu', async () => {
           await appsMenu.openCollapsibleNav();
           await testSubjects.existOrFail('collapsibleNavGroup-opensearchDashboards');
           const actualLabel = await testSubjects.getAttribute(
@@ -208,7 +211,7 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
           await globalNav.clickLogo();
           await PageObjects.header.waitUntilLoadingHasFinished();
           const url = await browser.getCurrentUrl();
-          expect(url.includes('/app/home')).to.be(true);
+          expect(url.includes('/app/wz-home')).to.be(true);
         });
 
         it('with customized mark logo button that navigates to home page', async () => {
@@ -216,10 +219,11 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
           await globalNav.clickHomeButton();
           await PageObjects.header.waitUntilLoadingHasFinished();
           const url = await browser.getCurrentUrl();
-          expect(url.includes('/app/home')).to.be(true);
+          expect(url.includes('/app/wz-home')).to.be(true);
         });
 
-        it('with customized mark logo in home dashboard card', async () => {
+        // Wazuh: This test is omitted because OpenSearch Dashboards does not have a home dashboard card.
+        it.skip('with customized mark logo in home dashboard card', async () => {
           await testSubjects.existOrFail('dashboardCustomLogo');
           const actualLabel = await testSubjects.getAttribute(
             'dashboardCustomLogo',
@@ -228,7 +232,8 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
           expect(actualLabel.toUpperCase()).to.equal(expectedMarkLogoDarkMode.toUpperCase());
         });
 
-        it('with customized mark logo for opensearch in side menu', async () => {
+        // Wazuh: This test is omitted because OpenSearch Dashboards does not appear in the side menu.
+        it.skip('with customized mark logo for opensearch in side menu', async () => {
           await appsMenu.openCollapsibleNav();
           await testSubjects.existOrFail('collapsibleNavGroup-opensearchDashboards');
           const actualLabel = await testSubjects.getAttribute(

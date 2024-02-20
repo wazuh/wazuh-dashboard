@@ -22,7 +22,7 @@ describe('Home icon,', () => {
       const component = shallow(<HomeIcon {...props} />);
       const icon = component.find('EuiIcon');
       expect(icon.prop('data-test-subj')).toEqual('homeIcon');
-      expect(icon.prop('type')).toEqual('home');
+      expect(icon.prop('type')).toEqual(props.logos.Mark.url);
       expect(icon.prop('size')).toEqual('m');
       expect(icon.prop('title')).toEqual('Wazuh dashboards home');
     });
@@ -37,7 +37,7 @@ describe('Home icon,', () => {
       const component = shallow(<HomeIcon {...props} />);
       const icon = component.find('EuiIcon');
       expect(icon.prop('data-test-subj')).toEqual('homeIcon');
-      expect(icon.prop('type')).toEqual('home');
+      expect(icon.prop('type')).toEqual(props.logos.Mark.url);
       expect(icon.prop('size')).toEqual('m');
       expect(icon.prop('title')).toEqual('Wazuh dashboards home');
 
@@ -54,7 +54,7 @@ describe('Home icon,', () => {
       const component = shallow(<HomeIcon {...props} />);
       const icon = component.find('EuiIcon');
       expect(icon.prop('data-test-subj')).toEqual('homeIcon');
-      expect(icon.prop('type')).toEqual('home');
+      expect(icon.prop('type')).toEqual(props.logos.Mark.url);
       expect(icon.prop('size')).toEqual('m');
       expect(icon.prop('title')).toEqual('Wazuh dashboards home');
 
