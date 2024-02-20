@@ -75,9 +75,9 @@ export class ManagementPlugin implements Plugin<ManagementSetup, ManagementStart
     core.application.register({
       id: MANAGEMENT_APP_ID,
       title: this.title,
-      order: 9030,
+      order: 700,
       icon: '/ui/logos/opensearch_mark.svg',
-      category: DEFAULT_APP_CATEGORIES.management,
+      category: DEFAULT_APP_CATEGORIES.dashboardManagement,
       updater$: this.appUpdater,
       async mount(params: AppMountParameters) {
         const { renderApp } = await import('./application');
