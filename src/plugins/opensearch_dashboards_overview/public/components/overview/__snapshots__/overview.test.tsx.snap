@@ -982,50 +982,50 @@ exports[`Overview renders with news, solutions, and features 1`] = `
         "Application": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "CenterMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "Mark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_dark.svg",
+            "url": "/ui/logos/wazuh_mark_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "OpenSearch": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_on_dark.svg",
+            "url": "/ui/logos/wazuh_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "colorScheme": "light",
       }
@@ -1467,50 +1467,50 @@ exports[`Overview renders with news, with solutions, and without features 1`] = 
         "Application": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "CenterMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "Mark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_dark.svg",
+            "url": "/ui/logos/wazuh_mark_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "OpenSearch": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_on_dark.svg",
+            "url": "/ui/logos/wazuh_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "colorScheme": "light",
       }
@@ -1952,50 +1952,50 @@ exports[`Overview renders with news, without solutions, and with features 1`] = 
         "Application": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "CenterMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "Mark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_dark.svg",
+            "url": "/ui/logos/wazuh_mark_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "OpenSearch": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_on_dark.svg",
+            "url": "/ui/logos/wazuh_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "colorScheme": "light",
       }

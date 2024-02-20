@@ -22,14 +22,12 @@ export const HomeIcon = ({ branding, logos }: Props) => {
 
   const { url: markURL, type: markType } = logos.Mark;
 
-  let markIcon = markURL;
   let testSubj = `${markType}Mark`;
   // Marks look better at the large size
   let markIconSize: IconSize = 'l';
 
   // If no custom branded mark was set, use `home` icon Wazuh dashboards
   if (markType !== 'custom') {
-    markIcon = 'home';
     testSubj = 'homeIcon';
     // Home icon should be medium to fit in with other icons
     markIconSize = 'm';
@@ -40,8 +38,8 @@ export const HomeIcon = ({ branding, logos }: Props) => {
   return (
     <EuiIcon
       data-test-subj={testSubj}
-      data-test-image-url={markIcon}
-      type={markIcon}
+      data-test-image-url={markURL}
+      type={markURL}
       title={alt}
       size={markIconSize}
       className="logoImage"

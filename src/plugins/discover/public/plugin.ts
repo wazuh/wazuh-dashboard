@@ -247,10 +247,10 @@ export class DiscoverPlugin
       id: PLUGIN_ID,
       title: 'Discover',
       updater$: this.appStateUpdater.asObservable(),
-      order: 1000,
+      order: 100,
       euiIconType: 'inputOutput',
       defaultPath: '#/',
-      category: DEFAULT_APP_CATEGORIES.opensearchDashboards,
+      category: DEFAULT_APP_CATEGORIES.explore,
       mount: async (params: AppMountParameters) => {
         if (!this.initializeServices) {
           throw Error('Discover plugin method initializeServices is undefined');
