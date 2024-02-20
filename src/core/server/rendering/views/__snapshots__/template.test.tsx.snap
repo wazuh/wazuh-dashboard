@@ -630,9 +630,9 @@ Array [
     <img
       alt="OpenSearch Dashboards logo"
       class="legacyBrowserErrorLogo"
-      data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+      data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
-      src="/ui/logos/opensearch_mark_on_light.svg"
+      src="/ui/logos/wazuh_mark_on_light.svg"
     />
     <h2
       class="osdWelcomeTitle"
@@ -1023,9 +1023,9 @@ Array [
     <img
       alt="custom title logo"
       class="legacyBrowserErrorLogo"
-      data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+      data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
-      src="/ui/logos/opensearch_mark_on_light.svg"
+      src="/ui/logos/wazuh_mark_on_light.svg"
     />
     <h2
       class="osdWelcomeTitle"
@@ -1153,9 +1153,9 @@ Array [
     <img
       alt="OpenSearch Dashboards logo"
       class="legacyBrowserErrorLogo"
-      data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+      data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
-      src="/ui/logos/opensearch_mark_on_light.svg"
+      src="/ui/logos/wazuh_mark_on_light.svg"
     />
     <h2
       class="osdWelcomeTitle"
@@ -1283,9 +1283,9 @@ Array [
     <img
       alt="OpenSearch Dashboards logo"
       class="legacyBrowserErrorLogo"
-      data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+      data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
-      src="/ui/logos/opensearch_mark_on_light.svg"
+      src="/ui/logos/wazuh_mark_on_light.svg"
     />
     <h2
       class="osdWelcomeTitle"

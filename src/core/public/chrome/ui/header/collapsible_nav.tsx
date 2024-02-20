@@ -77,7 +77,7 @@ function getCategoryLocalStorageKey(id: string) {
 }
 
 function getIsCategoryOpen(id: string, storage: Storage) {
-  const value = storage.getItem(getCategoryLocalStorageKey(id)) ?? 'true';
+  const value = storage.getItem(getCategoryLocalStorageKey(id)) ?? 'false';
 
   return value === 'true';
 }
