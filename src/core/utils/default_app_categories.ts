@@ -33,6 +33,14 @@ import { AppCategory } from '../types';
 
 /** @internal */
 export const DEFAULT_APP_CATEGORIES: Record<string, AppCategory> = Object.freeze({
+  explore: {
+    id: 'explore',
+    label: i18n.translate('core.ui.exploreNavList.label', {
+      defaultMessage: 'Explore',
+    }),
+    order: 100,
+    euiIconType: 'search',
+  },
   opensearchDashboards: {
     id: 'opensearchDashboards',
     label: i18n.translate('core.ui.opensearchDashboardsNavList.label', {
@@ -65,10 +73,18 @@ export const DEFAULT_APP_CATEGORIES: Record<string, AppCategory> = Object.freeze
     order: 4000,
     euiIconType: 'logoSecurity',
   },
+  dashboardManagement: {
+    id: 'wz-category-dashboard-management',
+    label: i18n.translate('core.ui.dashboardManagementNavList.label', {
+      defaultMessage: 'Dashboard management',
+    }),
+    order: 700,
+    euiIconType: 'dashboardApp',
+  },
   management: {
     id: 'management',
     label: i18n.translate('core.ui.managementNavList.label', {
-      defaultMessage: 'Management',
+      defaultMessage: 'Index management',
     }),
     order: 5000,
     euiIconType: 'managementApp',

@@ -142,50 +142,50 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_light.svg",
+          "url": "/test/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_on_light.svg",
+        "url": "/test/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -241,7 +241,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
           "category": Object {
             "euiIconType": "managementApp",
             "id": "management",
-            "label": "Management",
+            "label": "Index management",
             "order": 5000,
           },
           "data-test-subj": "monitoring",
@@ -569,7 +569,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
         <EuiCollapsibleNavGroup
           background="light"
           data-test-subj="collapsibleNavGroup-recentlyViewed"
-          initialIsOpen={true}
+          initialIsOpen={false}
           isCollapsible={true}
           key="recentlyViewed"
           onToggle={[Function]}
@@ -601,14 +601,14 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
             className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
             data-test-subj="collapsibleNavGroup-recentlyViewed"
             id="mockId"
-            initialIsOpen={true}
+            initialIsOpen={false}
             isLoading={false}
             isLoadingMessage={false}
             onToggle={[Function]}
             paddingSize="none"
           >
             <div
-              className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+              className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
               onToggle={[Function]}
             >
@@ -617,7 +617,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
               >
                 <button
                   aria-controls="mockId"
-                  aria-expanded={true}
+                  aria-expanded={false}
                   className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                   id="mockId"
                   onClick={[Function]}
@@ -627,12 +627,12 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                     className="euiAccordion__iconWrapper"
                   >
                     <EuiIcon
-                      className="euiAccordion__icon euiAccordion__icon-isOpen"
+                      className="euiAccordion__icon"
                       size="m"
                       type="arrowRight"
                     >
                       <span
-                        className="euiAccordion__icon euiAccordion__icon-isOpen"
+                        className="euiAccordion__icon"
                         data-euiicon-type="arrowRight"
                         size="m"
                       />
@@ -816,10 +816,10 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
             className="euiFlexItem eui-yScroll"
           >
             <EuiCollapsibleNavGroup
-              data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_light.svg"
+              data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_light.svg"
               data-test-subj="collapsibleNavGroup-opensearchDashboards"
-              iconType="/test/ui/logos/opensearch_mark_on_light.svg"
-              initialIsOpen={true}
+              iconType="/test/ui/logos/wazuh_mark_on_light.svg"
+              initialIsOpen={false}
               isCollapsible={true}
               key="opensearchDashboards"
               onToggle={[Function]}
@@ -839,7 +839,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                     >
                       <EuiIcon
                         size="l"
-                        type="/test/ui/logos/opensearch_mark_on_light.svg"
+                        type="/test/ui/logos/wazuh_mark_on_light.svg"
                       />
                     </EuiFlexItem>
                     <EuiFlexItem>
@@ -857,18 +857,18 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                   </EuiFlexGroup>
                 }
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
-                data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_light.svg"
+                data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_light.svg"
                 data-test-subj="collapsibleNavGroup-opensearchDashboards"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
-                  data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_light.svg"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_light.svg"
                   data-test-subj="collapsibleNavGroup-opensearchDashboards"
                   onToggle={[Function]}
                 >
@@ -877,7 +877,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -887,12 +887,12 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -917,10 +917,10 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                               >
                                 <EuiIcon
                                   size="l"
-                                  type="/test/ui/logos/opensearch_mark_on_light.svg"
+                                  type="/test/ui/logos/wazuh_mark_on_light.svg"
                                 >
                                   <span
-                                    data-euiicon-type="/test/ui/logos/opensearch_mark_on_light.svg"
+                                    data-euiicon-type="/test/ui/logos/wazuh_mark_on_light.svg"
                                     size="l"
                                   />
                                 </EuiIcon>
@@ -1115,7 +1115,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
               data-test-opensearch-logo="logoObservability"
               data-test-subj="collapsibleNavGroup-observability"
               iconType="logoObservability"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="observability"
               onToggle={[Function]}
@@ -1156,14 +1156,14 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                 data-test-opensearch-logo="logoObservability"
                 data-test-subj="collapsibleNavGroup-observability"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="logoObservability"
                   data-test-subj="collapsibleNavGroup-observability"
                   onToggle={[Function]}
@@ -1173,7 +1173,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -1183,12 +1183,12 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -1372,7 +1372,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
               data-test-opensearch-logo="logoSecurity"
               data-test-subj="collapsibleNavGroup-securitySolution"
               iconType="logoSecurity"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="securitySolution"
               onToggle={[Function]}
@@ -1413,14 +1413,14 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                 data-test-opensearch-logo="logoSecurity"
                 data-test-subj="collapsibleNavGroup-securitySolution"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="logoSecurity"
                   data-test-subj="collapsibleNavGroup-securitySolution"
                   onToggle={[Function]}
@@ -1430,7 +1430,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -1440,12 +1440,12 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -1590,11 +1590,11 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
               data-test-opensearch-logo="managementApp"
               data-test-subj="collapsibleNavGroup-management"
               iconType="managementApp"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="management"
               onToggle={[Function]}
-              title="Management"
+              title="Index management"
             >
               <EuiAccordion
                 arrowDisplay="right"
@@ -1621,7 +1621,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                           className="euiCollapsibleNavGroup__title"
                           id="mockId__title"
                         >
-                          Management
+                          Index management
                         </h3>
                       </EuiTitle>
                     </EuiFlexItem>
@@ -1631,14 +1631,14 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                 data-test-opensearch-logo="managementApp"
                 data-test-subj="collapsibleNavGroup-management"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="managementApp"
                   data-test-subj="collapsibleNavGroup-management"
                   onToggle={[Function]}
@@ -1648,7 +1648,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -1658,12 +1658,12 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -1708,7 +1708,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                                     className="euiTitle euiTitle--xxsmall euiCollapsibleNavGroup__title"
                                     id="mockId__title"
                                   >
-                                    Management
+                                    Index management
                                   </h3>
                                 </EuiTitle>
                               </div>
@@ -1736,7 +1736,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                             className="euiCollapsibleNavGroup__children"
                           >
                             <EuiListGroup
-                              aria-label="Primary navigation links, Management"
+                              aria-label="Primary navigation links, Index management"
                               color="subdued"
                               gutterSize="none"
                               listItems={
@@ -1755,7 +1755,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                               size="s"
                             >
                               <ul
-                                aria-label="Primary navigation links, Management"
+                                aria-label="Primary navigation links, Index management"
                                 className="euiListGroup"
                                 style={
                                   Object {
@@ -2087,50 +2087,50 @@ exports[`CollapsibleNav renders the default nav 1`] = `
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_light.svg",
+          "url": "/test/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_on_light.svg",
+        "url": "/test/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -2392,50 +2392,50 @@ exports[`CollapsibleNav renders the default nav 2`] = `
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_light.svg",
+          "url": "/test/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_on_light.svg",
+        "url": "/test/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -2697,50 +2697,50 @@ exports[`CollapsibleNav renders the default nav 3`] = `
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_light.svg",
+          "url": "/test/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_on_light.svg",
+        "url": "/test/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -2890,7 +2890,7 @@ exports[`CollapsibleNav renders the default nav 3`] = `
         <EuiCollapsibleNavGroup
           background="light"
           data-test-subj="collapsibleNavGroup-recentlyViewed"
-          initialIsOpen={true}
+          initialIsOpen={false}
           isCollapsible={true}
           key="recentlyViewed"
           onToggle={[Function]}
@@ -2922,14 +2922,14 @@ exports[`CollapsibleNav renders the default nav 3`] = `
             className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
             data-test-subj="collapsibleNavGroup-recentlyViewed"
             id="mockId"
-            initialIsOpen={true}
+            initialIsOpen={false}
             isLoading={false}
             isLoadingMessage={false}
             onToggle={[Function]}
             paddingSize="none"
           >
             <div
-              className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+              className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
               onToggle={[Function]}
             >
@@ -2938,7 +2938,7 @@ exports[`CollapsibleNav renders the default nav 3`] = `
               >
                 <button
                   aria-controls="mockId"
-                  aria-expanded={true}
+                  aria-expanded={false}
                   className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                   id="mockId"
                   onClick={[Function]}
@@ -2948,12 +2948,12 @@ exports[`CollapsibleNav renders the default nav 3`] = `
                     className="euiAccordion__iconWrapper"
                   >
                     <EuiIcon
-                      className="euiAccordion__icon euiAccordion__icon-isOpen"
+                      className="euiAccordion__icon"
                       size="m"
                       type="arrowRight"
                     >
                       <span
-                        className="euiAccordion__icon euiAccordion__icon-isOpen"
+                        className="euiAccordion__icon"
                         data-euiicon-type="arrowRight"
                         size="m"
                       />
@@ -3537,7 +3537,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
         <EuiCollapsibleNavGroup
           background="light"
           data-test-subj="collapsibleNavGroup-recentlyViewed"
-          initialIsOpen={true}
+          initialIsOpen={false}
           isCollapsible={true}
           key="recentlyViewed"
           onToggle={[Function]}
@@ -3569,14 +3569,14 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
             className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
             data-test-subj="collapsibleNavGroup-recentlyViewed"
             id="mockId"
-            initialIsOpen={true}
+            initialIsOpen={false}
             isLoading={false}
             isLoadingMessage={false}
             onToggle={[Function]}
             paddingSize="none"
           >
             <div
-              className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+              className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
               onToggle={[Function]}
             >
@@ -3585,7 +3585,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
               >
                 <button
                   aria-controls="mockId"
-                  aria-expanded={true}
+                  aria-expanded={false}
                   className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                   id="mockId"
                   onClick={[Function]}
@@ -3595,12 +3595,12 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
                     className="euiAccordion__iconWrapper"
                   >
                     <EuiIcon
-                      className="euiAccordion__icon euiAccordion__icon-isOpen"
+                      className="euiAccordion__icon"
                       size="m"
                       type="arrowRight"
                     >
                       <span
-                        className="euiAccordion__icon euiAccordion__icon-isOpen"
+                        className="euiAccordion__icon"
                         data-euiicon-type="arrowRight"
                         size="m"
                       />
@@ -3745,7 +3745,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
               data-test-opensearch-logo="/custom/branded/mark-darkmode.svg"
               data-test-subj="collapsibleNavGroup-opensearchDashboards"
               iconType="/custom/branded/mark-darkmode.svg"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="opensearchDashboards"
               onToggle={[Function]}
@@ -3786,14 +3786,14 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
                 data-test-opensearch-logo="/custom/branded/mark-darkmode.svg"
                 data-test-subj="collapsibleNavGroup-opensearchDashboards"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="/custom/branded/mark-darkmode.svg"
                   data-test-subj="collapsibleNavGroup-opensearchDashboards"
                   onToggle={[Function]}
@@ -3803,7 +3803,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -3813,12 +3813,12 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -3963,7 +3963,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
               data-test-opensearch-logo="logoObservability"
               data-test-subj="collapsibleNavGroup-observability"
               iconType="logoObservability"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="observability"
               onToggle={[Function]}
@@ -4004,14 +4004,14 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
                 data-test-opensearch-logo="logoObservability"
                 data-test-subj="collapsibleNavGroup-observability"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="logoObservability"
                   data-test-subj="collapsibleNavGroup-observability"
                   onToggle={[Function]}
@@ -4021,7 +4021,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -4031,12 +4031,12 @@ exports[`CollapsibleNav with custom branding renders the nav bar in dark mode 1`
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -4653,7 +4653,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
         <EuiCollapsibleNavGroup
           background="light"
           data-test-subj="collapsibleNavGroup-recentlyViewed"
-          initialIsOpen={true}
+          initialIsOpen={false}
           isCollapsible={true}
           key="recentlyViewed"
           onToggle={[Function]}
@@ -4685,14 +4685,14 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
             className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
             data-test-subj="collapsibleNavGroup-recentlyViewed"
             id="mockId"
-            initialIsOpen={true}
+            initialIsOpen={false}
             isLoading={false}
             isLoadingMessage={false}
             onToggle={[Function]}
             paddingSize="none"
           >
             <div
-              className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+              className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
               onToggle={[Function]}
             >
@@ -4701,7 +4701,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
               >
                 <button
                   aria-controls="mockId"
-                  aria-expanded={true}
+                  aria-expanded={false}
                   className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                   id="mockId"
                   onClick={[Function]}
@@ -4711,12 +4711,12 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
                     className="euiAccordion__iconWrapper"
                   >
                     <EuiIcon
-                      className="euiAccordion__icon euiAccordion__icon-isOpen"
+                      className="euiAccordion__icon"
                       size="m"
                       type="arrowRight"
                     >
                       <span
-                        className="euiAccordion__icon euiAccordion__icon-isOpen"
+                        className="euiAccordion__icon"
                         data-euiicon-type="arrowRight"
                         size="m"
                       />
@@ -4861,7 +4861,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
               data-test-opensearch-logo="/custom/branded/mark.svg"
               data-test-subj="collapsibleNavGroup-opensearchDashboards"
               iconType="/custom/branded/mark.svg"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="opensearchDashboards"
               onToggle={[Function]}
@@ -4902,14 +4902,14 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
                 data-test-opensearch-logo="/custom/branded/mark.svg"
                 data-test-subj="collapsibleNavGroup-opensearchDashboards"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="/custom/branded/mark.svg"
                   data-test-subj="collapsibleNavGroup-opensearchDashboards"
                   onToggle={[Function]}
@@ -4919,7 +4919,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -4929,12 +4929,12 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -5079,7 +5079,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
               data-test-opensearch-logo="logoObservability"
               data-test-subj="collapsibleNavGroup-observability"
               iconType="logoObservability"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="observability"
               onToggle={[Function]}
@@ -5120,14 +5120,14 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
                 data-test-opensearch-logo="logoObservability"
                 data-test-subj="collapsibleNavGroup-observability"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="logoObservability"
                   data-test-subj="collapsibleNavGroup-observability"
                   onToggle={[Function]}
@@ -5137,7 +5137,7 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -5147,12 +5147,12 @@ exports[`CollapsibleNav with custom branding renders the nav bar in default mode
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -5529,50 +5529,50 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_dashboards_on_dark.svg",
+        "url": "/test/ui/logos/wazuh_dashboards_on_dark.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_center_mark_on_dark.svg",
+        "url": "/test/ui/logos/wazuh_center_mark_on_dark.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_mark_on_dark.svg",
+        "url": "/test/ui/logos/wazuh_mark_on_dark.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_light.svg",
+          "url": "/test/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_on_dark.svg",
+        "url": "/test/ui/logos/wazuh_on_dark.svg",
       },
       "colorScheme": "dark",
     }
@@ -5762,7 +5762,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
         <EuiCollapsibleNavGroup
           background="light"
           data-test-subj="collapsibleNavGroup-recentlyViewed"
-          initialIsOpen={true}
+          initialIsOpen={false}
           isCollapsible={true}
           key="recentlyViewed"
           onToggle={[Function]}
@@ -5794,14 +5794,14 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
             className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
             data-test-subj="collapsibleNavGroup-recentlyViewed"
             id="mockId"
-            initialIsOpen={true}
+            initialIsOpen={false}
             isLoading={false}
             isLoadingMessage={false}
             onToggle={[Function]}
             paddingSize="none"
           >
             <div
-              className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+              className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
               onToggle={[Function]}
             >
@@ -5810,7 +5810,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
               >
                 <button
                   aria-controls="mockId"
-                  aria-expanded={true}
+                  aria-expanded={false}
                   className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                   id="mockId"
                   onClick={[Function]}
@@ -5820,12 +5820,12 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                     className="euiAccordion__iconWrapper"
                   >
                     <EuiIcon
-                      className="euiAccordion__icon euiAccordion__icon-isOpen"
+                      className="euiAccordion__icon"
                       size="m"
                       type="arrowRight"
                     >
                       <span
-                        className="euiAccordion__icon euiAccordion__icon-isOpen"
+                        className="euiAccordion__icon"
                         data-euiicon-type="arrowRight"
                         size="m"
                       />
@@ -5967,10 +5967,10 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
             className="euiFlexItem eui-yScroll"
           >
             <EuiCollapsibleNavGroup
-              data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_dark.svg"
+              data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_dark.svg"
               data-test-subj="collapsibleNavGroup-opensearchDashboards"
-              iconType="/test/ui/logos/opensearch_mark_on_dark.svg"
-              initialIsOpen={true}
+              iconType="/test/ui/logos/wazuh_mark_on_dark.svg"
+              initialIsOpen={false}
               isCollapsible={true}
               key="opensearchDashboards"
               onToggle={[Function]}
@@ -5990,7 +5990,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                     >
                       <EuiIcon
                         size="l"
-                        type="/test/ui/logos/opensearch_mark_on_dark.svg"
+                        type="/test/ui/logos/wazuh_mark_on_dark.svg"
                       />
                     </EuiFlexItem>
                     <EuiFlexItem>
@@ -6008,18 +6008,18 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                   </EuiFlexGroup>
                 }
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
-                data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_dark.svg"
+                data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_dark.svg"
                 data-test-subj="collapsibleNavGroup-opensearchDashboards"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
-                  data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_dark.svg"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_dark.svg"
                   data-test-subj="collapsibleNavGroup-opensearchDashboards"
                   onToggle={[Function]}
                 >
@@ -6028,7 +6028,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -6038,12 +6038,12 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -6068,10 +6068,10 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                               >
                                 <EuiIcon
                                   size="l"
-                                  type="/test/ui/logos/opensearch_mark_on_dark.svg"
+                                  type="/test/ui/logos/wazuh_mark_on_dark.svg"
                                 >
                                   <span
-                                    data-euiicon-type="/test/ui/logos/opensearch_mark_on_dark.svg"
+                                    data-euiicon-type="/test/ui/logos/wazuh_mark_on_dark.svg"
                                     size="l"
                                   />
                                 </EuiIcon>
@@ -6188,7 +6188,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
               data-test-opensearch-logo="logoObservability"
               data-test-subj="collapsibleNavGroup-observability"
               iconType="logoObservability"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="observability"
               onToggle={[Function]}
@@ -6229,14 +6229,14 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                 data-test-opensearch-logo="logoObservability"
                 data-test-subj="collapsibleNavGroup-observability"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="logoObservability"
                   data-test-subj="collapsibleNavGroup-observability"
                   onToggle={[Function]}
@@ -6246,7 +6246,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -6256,12 +6256,12 @@ exports[`CollapsibleNav without custom branding renders the nav bar in dark mode
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -6634,50 +6634,50 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/test/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/test/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/test/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_dark.svg",
+          "url": "/test/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/test/ui/logos/opensearch_on_light.svg",
+          "url": "/test/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/test/ui/logos/opensearch_on_light.svg",
+        "url": "/test/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -6867,7 +6867,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
         <EuiCollapsibleNavGroup
           background="light"
           data-test-subj="collapsibleNavGroup-recentlyViewed"
-          initialIsOpen={true}
+          initialIsOpen={false}
           isCollapsible={true}
           key="recentlyViewed"
           onToggle={[Function]}
@@ -6899,14 +6899,14 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
             className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
             data-test-subj="collapsibleNavGroup-recentlyViewed"
             id="mockId"
-            initialIsOpen={true}
+            initialIsOpen={false}
             isLoading={false}
             isLoadingMessage={false}
             onToggle={[Function]}
             paddingSize="none"
           >
             <div
-              className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+              className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
               onToggle={[Function]}
             >
@@ -6915,7 +6915,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
               >
                 <button
                   aria-controls="mockId"
-                  aria-expanded={true}
+                  aria-expanded={false}
                   className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                   id="mockId"
                   onClick={[Function]}
@@ -6925,12 +6925,12 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                     className="euiAccordion__iconWrapper"
                   >
                     <EuiIcon
-                      className="euiAccordion__icon euiAccordion__icon-isOpen"
+                      className="euiAccordion__icon"
                       size="m"
                       type="arrowRight"
                     >
                       <span
-                        className="euiAccordion__icon euiAccordion__icon-isOpen"
+                        className="euiAccordion__icon"
                         data-euiicon-type="arrowRight"
                         size="m"
                       />
@@ -7072,10 +7072,10 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
             className="euiFlexItem eui-yScroll"
           >
             <EuiCollapsibleNavGroup
-              data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_light.svg"
+              data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_light.svg"
               data-test-subj="collapsibleNavGroup-opensearchDashboards"
-              iconType="/test/ui/logos/opensearch_mark_on_light.svg"
-              initialIsOpen={true}
+              iconType="/test/ui/logos/wazuh_mark_on_light.svg"
+              initialIsOpen={false}
               isCollapsible={true}
               key="opensearchDashboards"
               onToggle={[Function]}
@@ -7095,7 +7095,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                     >
                       <EuiIcon
                         size="l"
-                        type="/test/ui/logos/opensearch_mark_on_light.svg"
+                        type="/test/ui/logos/wazuh_mark_on_light.svg"
                       />
                     </EuiFlexItem>
                     <EuiFlexItem>
@@ -7113,18 +7113,18 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                   </EuiFlexGroup>
                 }
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
-                data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_light.svg"
+                data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_light.svg"
                 data-test-subj="collapsibleNavGroup-opensearchDashboards"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
-                  data-test-opensearch-logo="/test/ui/logos/opensearch_mark_on_light.svg"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  data-test-opensearch-logo="/test/ui/logos/wazuh_mark_on_light.svg"
                   data-test-subj="collapsibleNavGroup-opensearchDashboards"
                   onToggle={[Function]}
                 >
@@ -7133,7 +7133,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -7143,12 +7143,12 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -7173,10 +7173,10 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                               >
                                 <EuiIcon
                                   size="l"
-                                  type="/test/ui/logos/opensearch_mark_on_light.svg"
+                                  type="/test/ui/logos/wazuh_mark_on_light.svg"
                                 >
                                   <span
-                                    data-euiicon-type="/test/ui/logos/opensearch_mark_on_light.svg"
+                                    data-euiicon-type="/test/ui/logos/wazuh_mark_on_light.svg"
                                     size="l"
                                   />
                                 </EuiIcon>
@@ -7293,7 +7293,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
               data-test-opensearch-logo="logoObservability"
               data-test-subj="collapsibleNavGroup-observability"
               iconType="logoObservability"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="observability"
               onToggle={[Function]}
@@ -7334,14 +7334,14 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                 data-test-opensearch-logo="logoObservability"
                 data-test-subj="collapsibleNavGroup-observability"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--withHeading"
                   data-test-opensearch-logo="logoObservability"
                   data-test-subj="collapsibleNavGroup-observability"
                   onToggle={[Function]}
@@ -7351,7 +7351,7 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -7361,12 +7361,12 @@ exports[`CollapsibleNav without custom branding renders the nav bar in default m
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
