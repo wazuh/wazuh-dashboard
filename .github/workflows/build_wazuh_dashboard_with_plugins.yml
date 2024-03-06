@@ -16,7 +16,7 @@ on:
         required: true
         default: ''
       DISTRIBUTION:
-        description: 'Distribution to build (deb | rpm | tar | all-platforms)'
+        description: 'Distribution to build (deb | rpm | all-platforms)'
         required: true
         default: ''
 
@@ -163,6 +163,20 @@ jobs:
           path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
           retention-days: 30
 
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        if: success()
+        with:
+          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: Upload deb to S3
+        if: success()
+        run: |
+          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+
+
 
   build-rpm-package:
     needs: [Build-base-package]
@@ -210,6 +224,19 @@ jobs:
           name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
           path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
           retention-days: 30
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        if: success()
+        with:
+          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: Upload rpm to S3
+        if: success()
+        run: |
+          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
 
 
   test-package-deb:
