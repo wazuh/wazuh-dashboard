@@ -5,6 +5,8 @@
 
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { EuiPageSideBar, EuiSplitPanel } from '@elastic/eui';
+import React, { FC, useCallback, useEffect, useState } from 'react';
+import { EuiPageSideBar, EuiSplitPanel } from '@elastic/eui';
 import { i18n } from '@osd/i18n';
 import { DataSourceGroup, DataSourceSelectable, DataSourceType } from '../../../../data/public';
 import { DataSourceOption } from '../../../../data/public/';
@@ -19,11 +21,16 @@ export const Sidebar: FC = ({ children }) => {
   const [selectedSources, setSelectedSources] = useState<DataSourceOption[]>([]);
   const [dataSourceOptionList, setDataSourceOptionList] = useState<DataSourceGroup[]>([]);
   const [activeDataSources, setActiveDataSources] = useState<DataSourceType[]>([]);
+  const [selectedSources, setSelectedSources] = useState<DataSourceOption[]>([]);
+  const [dataSourceOptionList, setDataSourceOptionList] = useState<DataSourceGroup[]>([]);
+  const [activeDataSources, setActiveDataSources] = useState<DataSourceType[]>([]);
 
   const {
     services: {
       data: { indexPatterns, dataSources },
+      data: { indexPatterns, dataSources },
       notifications: { toasts },
+      application,
       application,
     },
   } = useOpenSearchDashboards<DataExplorerServices>();

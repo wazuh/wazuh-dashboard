@@ -20,7 +20,7 @@
     "sha": "6cb7fec4e154faa0a4a3fee4b33dfef91b9870d9"
   },
   "wazuh": {
-    "version": "4.9.0",
+    "version": "5.0.0",
     "revision": "00"
   },
   "homepage": "https://opensearch.org",

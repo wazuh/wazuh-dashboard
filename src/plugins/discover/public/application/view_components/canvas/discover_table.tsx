@@ -24,6 +24,7 @@ import { SortOrder } from '../../../saved_searches/types';
 import { DOC_HIDE_TIME_COLUMN_SETTING } from '../../../../common';
 import { OpenSearchSearchHit } from '../../doc_views/doc_views_types';
 import { popularizeField } from '../../helpers/popularize_field';
+import { popularizeField } from '../../helpers/popularize_field';
 
 interface Props {
   rows?: OpenSearchSearchHit[];

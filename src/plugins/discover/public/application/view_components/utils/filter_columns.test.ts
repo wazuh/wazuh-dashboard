@@ -37,6 +37,7 @@ describe('filterColumns', () => {
   });
 
   it('should return defaultColumns if no columns and indexPattern is undefined', () => {
+  it('should return defaultColumns if no columns and indexPattern is undefined', () => {
     const columns = ['b', 'e'];
     const result = filterColumns(columns, undefined, ['a'], true);
     expect(result).toEqual(['_source']);

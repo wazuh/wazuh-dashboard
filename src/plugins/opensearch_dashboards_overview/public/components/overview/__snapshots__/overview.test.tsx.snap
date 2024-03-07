@@ -188,14 +188,14 @@ exports[`Overview renders with news without solutions and without features 1`] =
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.gif",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.gif",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.gif",
         },
         "Application": Object {
           "dark": Object {
@@ -1317,6 +1317,7 @@ exports[`Overview renders with news, solutions, and features 1`] = `
           ],
         }
       }
+      path="/app/home/"
       path="/app/home/"
     />
   </div>
@@ -5485,7 +5486,7 @@ exports[`Overview renders without news, with solutions and features 1`] = `
           ],
         }
       }
-      path="/app/opensearch_dashboards_overview"
+      path="/app/home/"
     />
   </div>
 </main>

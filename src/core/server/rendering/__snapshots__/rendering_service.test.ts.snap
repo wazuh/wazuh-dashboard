@@ -7,6 +7,7 @@ Object {
   "branch": Any<String>,
   "branding": Object {
     "applicationTitle": "Wazuh",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "darkMode": false,
     "loadingLogo": Object {},
@@ -51,7 +52,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.9.0",
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -106,7 +107,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.9.0",
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -161,7 +162,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.9.0",
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -220,7 +221,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.9.0",
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -275,7 +276,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.9.0",
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -330,7 +331,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.9.0",
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -385,6 +386,6 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.9.0",
+  "wazuhVersion": "5.0.0",
 }
 `;

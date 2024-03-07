@@ -3,6 +3,7 @@
 exports[`Header help menu hides survey link 1`] = `
 <InjectIntl(HeaderHelpMenuUI)
   darkmode={false}
+  darkmode={false}
   helpExtension$={
     BehaviorSubject {
       "_isScalar": false,
@@ -1836,7 +1837,7 @@ exports[`Header help menu hides survey link 1`] = `
                         <div
                           class="euiSpacer euiSpacer--xs"
                         />
-                        
+
                         <div
                           class="euiSpacer euiSpacer--xs"
                         />
@@ -2021,6 +2022,7 @@ exports[`Header help menu hides survey link 1`] = `
                                 className="euiButtonEmpty__content"
                                 iconSide="left"
                                 iconSize="s"
+                                iconType="/ui/logos/icon_light.svg"
                                 iconType="/ui/logos/icon_light.svg"
                                 textProps={
                                   Object {
@@ -4008,6 +4010,11 @@ exports[`Header help menu renders survey link 1`] = `
                               data-euiicon-type="/ui/logos/icon_light.svg"
                             />
                             <span
+                              class="euiButtonContent__icon"
+                              color="inherit"
+                              data-euiicon-type="/ui/logos/icon_light.svg"
+                            />
+                            <span
                               class="euiButtonEmpty__text"
                             >
                               Documentation
@@ -4251,6 +4258,7 @@ exports[`Header help menu renders survey link 1`] = `
                                 className="euiButtonEmpty__content"
                                 iconSide="left"
                                 iconSize="s"
+                                iconType="/ui/logos/icon_light.svg"
                                 iconType="/ui/logos/icon_light.svg"
                                 textProps={
                                   Object {

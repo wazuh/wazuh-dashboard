@@ -357,6 +357,7 @@ exports[`Header handles visibility and lock changes 1`] = `
     }
   }
   darkmode={false}
+  darkmode={false}
   forceAppSwitcherNavigation$={
     BehaviorSubject {
       "_isScalar": false,
@@ -3641,6 +3642,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                           data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                           data-test-subj="homeIcon"
                                           size="m"
+                                          title="Wazuh dashboards home"
                                           title="Wazuh dashboards home"
                                         />
                                       </EuiIcon>
