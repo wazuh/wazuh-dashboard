@@ -19,6 +19,10 @@ on:
         description: 'Distribution to build (deb | rpm | all-platforms)'
         required: true
         default: ''
+      S3UPLOAD:
+        description: 'Upload to S3'
+        type: boolean
+        required: true
 
 jobs:
   build-plugins:
@@ -163,21 +167,6 @@ jobs:
           path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
           retention-days: 30
 
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        if: success()
-        with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: us-east-1
-
-      - name: Upload deb to S3
-        if: success()
-        run: |
-          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-
-
-
   build-rpm-package:
     needs: [Build-base-package]
     if: ( contains(inputs.DISTRIBUTION, 'rpm') || contains(inputs.DISTRIBUTION, 'all-platforms') )
@@ -224,20 +213,6 @@ jobs:
           name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
           path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
           retention-days: 30
-
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        if: success()
-        with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: us-east-1
-
-      - name: Upload rpm to S3
-        if: success()
-        run: |
-          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-
 
   test-package-deb:
     needs: [build-deb-package]
@@ -307,3 +282,27 @@ jobs:
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh \
             -p wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
+
+  upload-to-s3:
+    needs: [test-package-rpm, test-package-deb]
+    if: inputs.S3UPLOAD
+    runs-on: ubuntu-latest
+    name: Upload to S3
+    steps:
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
+          aws-region: us-east-1
+
+
+      - name: Upload deb to S3
+        if: ( contains(inputs.DISTRIBUTION, 'deb') || contains(inputs.DISTRIBUTION, 'all-platforms') ) && needs.test-package-deb.result == 'success'
+        run: |
+          echo "Uploading deb package"
+
+      - name: Upload rpm to S3
+        if: ( contains(inputs.DISTRIBUTION, 'rpm') || contains(inputs.DISTRIBUTION, 'all-platforms') ) && needs.test-package-rpm.result == 'success'
+        run: |
+          echo "Uploading rpm package"
