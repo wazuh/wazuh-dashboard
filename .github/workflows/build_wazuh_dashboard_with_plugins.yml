@@ -285,7 +285,8 @@ jobs:
 
   upload-to-s3:
     needs: [test-package-rpm, test-package-deb]
-    if: inputs.S3UPLOAD
+    if: |
+      always() && inputs.S3UPLOAD && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
     name: Upload to S3
     steps:
@@ -300,9 +301,10 @@ jobs:
       - name: Upload deb to S3
         if: ( contains(inputs.DISTRIBUTION, 'deb') || contains(inputs.DISTRIBUTION, 'all-platforms') ) && needs.test-package-deb.result == 'success'
         run: |
-          echo "Uploading deb ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb package"
+          echo "Uploading deb package"
 
       - name: Upload rpm to S3
         if: ( contains(inputs.DISTRIBUTION, 'rpm') || contains(inputs.DISTRIBUTION, 'all-platforms') ) && needs.test-package-rpm.result == 'success'
         run: |
-          echo "Uploading deb package"
+          echo "Uploading rpm ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb package"
+
