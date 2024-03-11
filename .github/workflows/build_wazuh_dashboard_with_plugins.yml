@@ -316,22 +316,23 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
 
       - name: Upload deb to S3
         if: needs.test-package-deb.result == 'success'
         run: |
           echo "Uploading deb package"
-          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb
+          aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb
 
       - name: Download rpm package
+        if: needs.test-package-rpm.result == 'success'
         uses: actions/download-artifact@v3
         with:
           name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
           path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm
 
       - name: Upload rpm to S3
-        if: ( contains(inputs.DISTRIBUTION, 'rpm') || contains(inputs.DISTRIBUTION, 'all-platforms') ) && needs.test-package-rpm.result == 'success'
+        if: needs.test-package-rpm.result == 'success'
         run: |
-          echo "Uploading rpm ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb package"
+          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm
 
