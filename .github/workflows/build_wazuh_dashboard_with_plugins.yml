@@ -315,7 +315,7 @@ jobs:
       - name: Download deb package
         uses: actions/download-artifact@v3
         with:
-          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}_amd64.rpm
+          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
           path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb
 
       - name: Upload deb to S3
