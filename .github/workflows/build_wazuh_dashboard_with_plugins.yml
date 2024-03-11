@@ -290,6 +290,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Upload to S3
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Setup variables
         run: |
           echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
@@ -303,7 +312,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
           aws-region: us-east-1
 
-      - name: Download rpm package
+      - name: Download deb package
         uses: actions/download-artifact@v3
         with:
           name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
