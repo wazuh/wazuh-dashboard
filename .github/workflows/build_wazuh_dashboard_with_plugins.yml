@@ -248,6 +248,8 @@ jobs:
       - name: Run test
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
+          ls -lah ${{ env.CURRENT_DIR }}/dev-tools/test-packages/deb
+          ls -lah
           bash ./test-packages.sh \
             -p wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{needs.commit_sha.outputs.commit_sha}}.deb
 
@@ -283,6 +285,8 @@ jobs:
       - name: Run test
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
+          ls -lah ${{ env.CURRENT_DIR }}/dev-tools/test-packages/rpm
+          ls -lah
           bash ./test-packages.sh \
             -p wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{needs.commit_sha.outputs.commit_sha}}.rpm
 
