@@ -19,6 +19,7 @@ build_docker="yes"
 # Constants
 rpm_x86_builder="rpm_dashboard_builder_x86"
 rpm_builder_dockerfile="${current_path}/docker"
+commit_sha=$(git rev-parse --short HEAD)
 
 # Paths
 current_path="$( cd $(dirname $0) ; pwd -P )"
@@ -106,7 +107,8 @@ build_rpm() {
     docker run -t --rm ${volumes} \
         -v ${current_path}/../..:/root:Z \
         ${container_name} ${architecture} \
-        ${revision} ${version} || return 1
+        ${revision} ${version} ${commit_sha} \
+        || return 1
 
     echo "Package $(ls -Art ${out_dir} | tail -n 1) added to ${out_dir}."
 

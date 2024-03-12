@@ -15,6 +15,7 @@ target="wazuh-dashboard"
 architecture=$1
 revision=$2
 version=$3
+commit_sha=$4
 directory_base="/usr/share/wazuh-dashboard"
 
 # Build directories
@@ -22,8 +23,8 @@ build_dir=/build
 rpm_build_dir=${build_dir}/rpmbuild
 pkg_name=${target}-${version}
 pkg_path="${rpm_build_dir}/RPMS/${architecture}"
-file_name="${target}-${version}-${revision}"
-rpm_file="${file_name}.${architecture}.rpm"
+file_name="${target}_${version}-${revision}"
+rpm_file="${file_name}_${architecture}_${commit_sha}.rpm"
 
 mkdir -p ${rpm_build_dir}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 

@@ -15,6 +15,7 @@ target="wazuh-dashboard"
 architecture=$1
 revision=$2
 version=$3
+commit_sha=$4
 directory_base="/usr/share/wazuh-dashboard"
 
 # Build directories
@@ -22,7 +23,7 @@ build_dir=/build
 pkg_name="${target}-${version}"
 pkg_path="${build_dir}/${target}"
 source_dir="${pkg_path}/${pkg_name}"
-deb_file="${target}_${version}-${revision}_${architecture}.deb"
+deb_file="${target}_${version}-${revision}_${architecture}_${commit_sha}.deb"
 
 mkdir -p ${source_dir}/debian
 
