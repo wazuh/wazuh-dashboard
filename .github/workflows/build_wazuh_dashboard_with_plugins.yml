@@ -16,9 +16,13 @@ on:
         required: true
         default: ''
       DISTRIBUTION:
-        description: 'Distribution to build (deb | rpm | all-platforms)'
+        type: choice
+        description: 'Distribution to build'
         required: true
-        default: ''
+        options:
+          - deb
+          - rpm
+          - all-platforms
       S3UPLOAD:
         description: 'Upload to S3'
         type: boolean
@@ -324,7 +328,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
 
       - name: Upload deb to S3
         if: contains(needs.test-package-deb.result, 'success')
