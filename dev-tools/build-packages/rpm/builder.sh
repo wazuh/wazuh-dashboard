@@ -25,7 +25,7 @@ pkg_name=${target}-${version}
 pkg_path="${rpm_build_dir}/RPMS/${architecture}"
 file_name="${target}-${version}-${revision}"
 rpm_file="${file_name}.${architecture}.rpm"
-final_name="{target}_${version}-${revision}_${architecture}_${commit_sha}.rpm"
+final_name="${target}_${version}-${revision}_${architecture}_${commit_sha}.rpm"
 
 mkdir -p ${rpm_build_dir}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 
