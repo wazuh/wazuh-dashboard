@@ -328,7 +328,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/
 
       - name: Upload deb to S3
         if: contains(needs.test-package-deb.result, 'success')
