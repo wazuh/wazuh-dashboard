@@ -165,7 +165,7 @@ jobs:
         if: success()
         with:
           name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{ env.COMMIT_SHA}}.deb
           retention-days: 30
 
   build-rpm-package:
@@ -213,7 +213,7 @@ jobs:
         if: success()
         with:
           name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{ env.COMMIT_SHA}}.rpm
           retention-days: 30
 
   test-package-deb:
@@ -343,4 +343,3 @@ jobs:
         if: contains(needs.test-package-rpm.result, 'success')
         run: |
           aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-

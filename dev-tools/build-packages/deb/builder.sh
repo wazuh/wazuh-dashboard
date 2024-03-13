@@ -23,7 +23,8 @@ build_dir=/build
 pkg_name="${target}-${version}"
 pkg_path="${build_dir}/${target}"
 source_dir="${pkg_path}/${pkg_name}"
-deb_file="${target}_${version}-${revision}_${architecture}_${commit_sha}.deb"
+deb_file="${target}_${version}-${revision}_${architecture}.deb"
+final_name="${target}_${version}-${revision}_${architecture}_${commit_sha}.deb"
 
 mkdir -p ${source_dir}/debian
 
@@ -49,4 +50,4 @@ debuild --no-lintian -b -uc -us \
     -eREVISION="${revision}"
 
 cd ${pkg_path} && sha512sum ${deb_file} >/tmp/${deb_file}.sha512
-mv ${pkg_path}/${deb_file} /tmp/
+mv ${pkg_path}/${deb_file} /tmp/${final_name}

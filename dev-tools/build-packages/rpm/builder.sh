@@ -23,8 +23,9 @@ build_dir=/build
 rpm_build_dir=${build_dir}/rpmbuild
 pkg_name=${target}-${version}
 pkg_path="${rpm_build_dir}/RPMS/${architecture}"
-file_name="${target}_${version}-${revision}"
-rpm_file="${file_name}_${architecture}_${commit_sha}.rpm"
+file_name="${target}-${version}-${revision}"
+rpm_file="${file_name}.${architecture}.rpm"
+final_name="{target}_${version}-${revision}_${architecture}_${commit_sha}.rpm"
 
 mkdir -p ${rpm_build_dir}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 
@@ -49,3 +50,4 @@ cd ${build_dir} && tar czf "${rpm_build_dir}/SOURCES/${pkg_name}.tar.gz" "${pkg_
 cd ${pkg_path} && sha512sum ${rpm_file} >/tmp/${rpm_file}.sha512
 
 find ${pkg_path}/ -maxdepth 3 -type f -name "${file_name}*" -exec mv {} /tmp/ \;
+mv /tmp/${rpm_file} /tmp/${final_name}

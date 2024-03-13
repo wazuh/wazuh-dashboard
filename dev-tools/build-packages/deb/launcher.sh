@@ -119,7 +119,7 @@ build_deb() {
 build() {
     build_name="${deb_amd64_builder}"
     file_path="../${deb_builder_dockerfile}/${architecture}"
-    build_deb ${build_name} ${file_path} || return 1
+    build_deb ${build_name} ${file_path} ${commit_sha}|| return 1
     return 0
 }
 

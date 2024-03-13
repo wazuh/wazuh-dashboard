@@ -122,7 +122,7 @@ build_rpm() {
 build() {
     build_name="${rpm_x86_builder}"
     file_path="../${rpm_builder_dockerfile}/${architecture}"
-    build_rpm ${build_name} ${file_path} || return 1
+    build_rpm ${build_name} ${file_path} ${commit_sha}|| return 1
     return 0
 }
 
