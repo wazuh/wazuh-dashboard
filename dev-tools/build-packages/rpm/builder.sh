@@ -56,3 +56,6 @@ if [ "${is_production}" = "yes" ]; then
 else
   mv /tmp/${rpm_file} /tmp/
 fi
+
+ls /tmp
+ls ${pkg_path}

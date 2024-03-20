@@ -57,3 +57,6 @@ if [ "${is_production}" = "yes" ]; then
 else
   mv ${pkg_path}/${deb_file} /tmp/
 fi
+
+ls /tmp
+ls ${pkg_path}
