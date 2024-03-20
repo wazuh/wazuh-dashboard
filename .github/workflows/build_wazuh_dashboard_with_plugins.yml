@@ -16,9 +16,17 @@ on:
         required: true
         default: ''
       DISTRIBUTION:
-        description: 'Distribution to build (deb | rpm | tar | all-platforms)'
+        type: choice
+        description: 'Distribution to build'
         required: true
-        default: ''
+        options:
+          - deb
+          - rpm
+          - all-platforms
+      S3UPLOAD:
+        description: 'Upload to S3'
+        type: boolean
+        required: true
 
 jobs:
   build-plugins:
@@ -140,6 +148,7 @@ jobs:
           echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
           echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Download dashboard artifact
         uses: actions/download-artifact@v3
@@ -159,13 +168,12 @@ jobs:
         uses: actions/upload-artifact@v3
         if: success()
         with:
-          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
+          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{ env.COMMIT_SHA}}.deb
           retention-days: 30
 
-
   build-rpm-package:
-    needs: [Build-base-package]
+    needs: [Build-base-package ]
     if: ( contains(inputs.DISTRIBUTION, 'rpm') || contains(inputs.DISTRIBUTION, 'all-platforms') )
     runs-on: ubuntu-latest
     name: Build rpm package
@@ -188,6 +196,7 @@ jobs:
           echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
           echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Download dashboard artifact
         uses: actions/download-artifact@v3
@@ -207,10 +216,9 @@ jobs:
         uses: actions/upload-artifact@v3
         if: success()
         with:
-          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
+          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{ env.COMMIT_SHA}}.rpm
           retention-days: 30
-
 
   test-package-deb:
     needs: [build-deb-package]
@@ -233,18 +241,19 @@ jobs:
           echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
           echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Download deb package
         uses: actions/download-artifact@v3
         with:
-          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
+          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
           path: ${{ env.CURRENT_DIR }}/dev-tools/test-packages/deb
 
       - name: Run test
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh \
-            -p wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64.deb
+            -p wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
 
 
   test-package-rpm:
@@ -268,15 +277,73 @@ jobs:
           echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
           echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Download rpm package
         uses: actions/download-artifact@v3
         with:
-          name: wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
+          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm
           path: ${{ env.CURRENT_DIR }}/dev-tools/test-packages/rpm
 
       - name: Run test
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
+          ls -lah ${{ env.CURRENT_DIR }}/dev-tools/test-packages/rpm
+          ls -lah
           bash ./test-packages.sh \
-            -p wazuh-dashboard-${{ env.VERSION }}-${{ env.REVISION }}.x86_64.rpm
+            -p wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm
+
+  upload-to-s3:
+    needs: [test-package-rpm, test-package-deb]
+    if: |
+      always() && inputs.S3UPLOAD && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure')
+    runs-on: ubuntu-latest
+    name: Upload to S3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup variables
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: Download deb package
+        if: contains(needs.test-package-deb.result, 'success')
+        uses: actions/download-artifact@v3
+        with:
+          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/
+
+      - name: Upload deb to S3
+        if: contains(needs.test-package-deb.result, 'success')
+        run: |
+          echo "Uploading deb package"
+          aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+
+      - name: Download rpm package
+        if: contains(needs.test-package-rpm.result, 'success')
+        uses: actions/download-artifact@v3
+        with:
+          name: wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm
+
+      - name: Upload rpm to S3
+        if: contains(needs.test-package-rpm.result, 'success')
+        run: |
+          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
