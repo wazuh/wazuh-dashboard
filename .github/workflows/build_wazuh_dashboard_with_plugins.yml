@@ -160,9 +160,9 @@ jobs:
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
           echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
           else
-            echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64_$(git rev-parse --short HEAD).deb" >> $GITHUB_ENV
           fi
 
       - name: Download dashboard artifact
@@ -221,9 +221,9 @@ jobs:
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
           echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME=wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=wazuh-dashboard-$(yarn --silent wzd-version)-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
           else
-            echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_x86_64_$(git rev-parse --short HEAD).rpm" >> $GITHUB_ENV
           fi
       - name: Download dashboard artifact
         uses: actions/download-artifact@v3
@@ -277,9 +277,9 @@ jobs:
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
           echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
           else
-            echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64_$(git rev-parse --short HEAD).deb" >> $GITHUB_ENV
           fi
 
       - name: Download deb package
@@ -318,9 +318,9 @@ jobs:
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
           echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME=wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=wazuh-dashboard-$(yarn --silent wzd-version)-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
           else
-            echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_x86_64_$(git rev-parse --short HEAD).rpm" >> $GITHUB_ENV
           fi
 
       - name: Download rpm package
@@ -360,14 +360,14 @@ jobs:
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
           echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME_RPM=wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_RPM=wazuh-dashboard-$(yarn --silent wzd-version)-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
           else
-            echo "PACKAGE_NAME_RPM=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_x86_64_${{env.COMMIT_SHA}}.rpm" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_RPM=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_x86_64_$(git rev-parse --short HEAD).rpm" >> $GITHUB_ENV
           fi
           if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME_DEB=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_DEB=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
           else
-            echo "PACKAGE_NAME_DEB=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_amd64_${{env.COMMIT_SHA}}.deb" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_DEB=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64_$(git rev-parse --short HEAD).deb" >> $GITHUB_ENV
           fi
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
