@@ -11,7 +11,7 @@
 # Inputs
 package=""
 version=""
-revision="1"
+revision="0"
 architecture="x86_64"
 build_base="yes"
 build_docker="yes"
@@ -86,6 +86,7 @@ build_rpm() {
     tar -zxf wazuh-dashboard.tar.gz
     rm wazuh-dashboard.tar.gz
     mv $directory_name wazuh-dashboard-base
+    jq '.wazuh.revision="'${revision}'"' wazuh-dashboard-base/package.json > pkgtmp.json && mv pkgtmp.json wazuh-dashboard-base/package.json
     mkdir -p wazuh-dashboard-base/etc/services
     cp $config_path/* wazuh-dashboard-base/etc/services
     echo ${version} >wazuh-dashboard-base/VERSION

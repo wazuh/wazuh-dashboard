@@ -81,12 +81,13 @@ jobs:
           echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
           echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
           echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
 
       - name: Setup packages names
         run: |
-          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.REVISION }}_${{ matrix.ARCHITECTURE }}_${{ inputs.REFERENCE_WAZUH_DASHBOARD }}.tar.gz" >> $GITHUB_ENV
-          echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ inputs.REVISION }}_${{ inputs.REFERENCE_SECURITY_PLUGIN }}.zip" >> $GITHUB_ENV
-          echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ inputs.REVISION }}_${{ inputs.REFERENCE_WAZUH_PLUGINS }}.zip" >> $GITHUB_ENV
+          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_${{ matrix.ARCHITECTURE }}_${{ inputs.REFERENCE_WAZUH_DASHBOARD }}.tar.gz" >> $GITHUB_ENV
+          echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_SECURITY_PLUGIN }}.zip" >> $GITHUB_ENV
+          echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_WAZUH_PLUGINS }}.zip" >> $GITHUB_ENV
 
       - name: Download dashboard artifact
         uses: actions/download-artifact@v3
