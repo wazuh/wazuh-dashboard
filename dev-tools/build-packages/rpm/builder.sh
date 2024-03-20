@@ -51,11 +51,8 @@ cd ${build_dir} && tar czf "${rpm_build_dir}/SOURCES/${pkg_name}.tar.gz" "${pkg_
 cd ${pkg_path} && sha512sum ${rpm_file} >/tmp/${rpm_file}.sha512
 
 find ${pkg_path}/ -maxdepth 3 -type f -name "${file_name}*" -exec mv {} /tmp/ \;
-if [ "${is_production}" = "yes" ]; then
+if [ "${is_production}" = "no" ]; then
   mv /tmp/${rpm_file} /tmp/${final_name}
 else
   mv /tmp/${rpm_file} /tmp/
 fi
-
-ls /tmp
-ls ${pkg_path}
