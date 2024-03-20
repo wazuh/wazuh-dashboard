@@ -19,6 +19,7 @@ build_docker="yes"
 # Constants
 deb_amd64_builder="deb_dashboard_builder_amd64"
 deb_builder_dockerfile="${current_path}/docker"
+commit_sha=$(git rev-parse --short HEAD)
 
 # Paths
 current_path="$( cd $(dirname $0) ; pwd -P )"
@@ -103,7 +104,8 @@ build_deb() {
     docker run -t --rm ${volumes} \
         -v ${current_path}/../..:/root:Z \
         ${container_name} ${architecture} \
-        ${revision} ${version} || return 1
+        ${revision} ${version} ${commit_sha}\
+        || return 1
 
     echo "Package $(ls -Art ${out_dir} | tail -n 1) added to ${out_dir}."
 
@@ -117,7 +119,7 @@ build_deb() {
 build() {
     build_name="${deb_amd64_builder}"
     file_path="../${deb_builder_dockerfile}/${architecture}"
-    build_deb ${build_name} ${file_path} || return 1
+    build_deb ${build_name} ${file_path} ${commit_sha}|| return 1
     return 0
 }
 
