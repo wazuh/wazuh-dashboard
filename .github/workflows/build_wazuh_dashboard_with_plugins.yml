@@ -399,4 +399,4 @@ jobs:
       - name: Upload rpm to S3
         if: contains(needs.test-package-rpm.result, 'success')
         run: |
-          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/${{ env.PACKAGE_NAME_DEB}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/${{ env.PACKAGE_NAME_RPM}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
