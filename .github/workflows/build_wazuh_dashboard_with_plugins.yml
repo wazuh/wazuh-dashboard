@@ -31,10 +31,7 @@ on:
         description: 'Production package'
         type: boolean
         required: true
-      S3UPLOAD:
-        description: 'Upload to S3'
-        type: boolean
-        required: true
+
 
 
 jobs:
@@ -340,7 +337,7 @@ jobs:
   upload-to-s3:
     needs: [test-package-rpm, test-package-deb]
     if: |
-      always() && inputs.S3UPLOAD && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure')
+      always() && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
     name: Upload to S3
     steps:
