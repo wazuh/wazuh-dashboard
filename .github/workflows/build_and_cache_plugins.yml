@@ -1,0 +1,69 @@
+name: Build and cache plugins
+
+on:
+  workflow_call:
+    inputs:
+      reference_security_plugins:
+        description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
+        required: true
+        default: 'master'
+        type: string
+      reference_wazuh_plugins:
+        description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
+        required: true
+        default: 'master'
+        type: string
+
+
+jobs:
+  build-plugins:
+    name: Build main plugins
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
+    with:
+      reference: ${{ inputs.reference_wazuh_plugins }}
+
+  build-security-plugin:
+    name: Build security plugin
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.9.0
+    with:
+      reference: ${{ inputs.reference_security_plugins }}
+
+  download-and-cache-plugins:
+    name: Download and cache plugins
+    runs-on: ubuntu-latest
+    needs: [build-plugins, build-security-plugin]
+    steps:
+      - name: Setup variables
+        run: |
+          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
+          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+
+      - name: Setup packages names
+        run: |
+            echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_SECURITY_PLUGIN }}.zip" >> $GITHUB_ENV
+            echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_WAZUH_PLUGINS }}.zip" >> $GITHUB_ENV
+
+      - name: Download security plugin artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.WAZUH_SECURITY_PLUGIN }}
+          path: ${{ env.CURRENT_DIR }}/artifacts/security-plugin
+
+      - name: Download plugins artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.WAZUH_PLUGINS }}
+          path: ${{ env.CURRENT_DIR }}/artifacts/plugins
+
+      - name: Cache security plugin
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CURRENT_DIR }}/artifacts/security-plugin/${{ env.WAZUH_SECURITY_PLUGIN }}
+          key: ${{ env.WAZUH_SECURITY_PLUGIN }}
+
+      - name: Cache plugins
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CURRENT_DIR }}/artifacts/plugins/${{ env.WAZUH_PLUGINS }}
+          key: ${{ env.WAZUH_PLUGINS }}
