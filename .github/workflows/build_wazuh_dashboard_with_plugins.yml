@@ -3,35 +3,44 @@ name: Build final packages
 on:
   workflow_dispatch:
     inputs:
-      REFERENCE_SECURITY_PLUGIN:
-        description: 'Reference Wazuh security packages (branch/tag/commit)'
-        required: true
-        default: ''
-      REFERENCE_WAZUH_PLUGINS:
-        description: 'Reference Wazuh plugins (branch/tag/commit)'
-        required: true
-        default: ''
-      REFERENCE_WAZUH_DASHBOARD:
-        description: 'Reference Wazuh dashboard (branch/tag/commit)'
-        required: true
-        default: ''
-      REVISION:
-        description: 'Package revision'
-        required: true
-        default: '0'
-      DISTRIBUTION:
+      system:
         type: choice
-        description: 'Distribution to build'
+        description: 'Package OS'
         required: true
         options:
           - deb
           - rpm
-          - all-platforms
-      PRODUCTION:
-        description: 'Production package'
+        default: 'deb'
+      architecture:
+        type: choice
+        description: 'Package architecture'
+        required: true
+        options:
+          - amd64
+          - x86_64
+        default: amd64
+      revision:
+        description: 'Package revision (name and metadata)'
+        required: true
+        default: '0'
+      reference_security_plugins:
+        description: 'branch/tag of wazuh-security-dashboards-plugin repository used to build the security plugins'
+        required: true
+        default: 'master'
+      reference_wazuh_plugins:
+        description: 'branch/tag of wazuh-dashboard-plugins repository used to build the main plugins'
+        required: true
+        default: 'master'
+      is_stage:
+        description: 'Should set development/production nomenclature'
         type: boolean
         required: true
-
+        default: false
+      checksum:
+        description: 'Generate package checksum'
+        type: boolean
+        required: true
+        default: false
 
 
 jobs:
