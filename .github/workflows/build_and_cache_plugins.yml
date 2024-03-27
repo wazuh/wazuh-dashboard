@@ -50,8 +50,8 @@ jobs:
 
       - name: Setup packages names
         run: |
-            echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_SECURITY_PLUGIN }}.zip" >> $GITHUB_ENV
-            echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_WAZUH_PLUGINS }}.zip" >> $GITHUB_ENV
+            echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_security_plugins }}.zip" >> $GITHUB_ENV
+            echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_wazuh_plugins }}.zip" >> $GITHUB_ENV
 
       - name: Download security plugin artifact
         uses: actions/download-artifact@v3
