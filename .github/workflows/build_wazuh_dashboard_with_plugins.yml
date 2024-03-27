@@ -20,389 +20,61 @@ on:
           - x86_64
         default: amd64
       revision:
-        description: 'Package revision (name and metadata)'
+        type: string
+        description: 'Package revision'
         required: true
         default: '0'
       reference_security_plugins:
-        description: 'branch/tag of wazuh-security-dashboards-plugin repository used to build the security plugins'
+        type: string
+        description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
         required: true
         default: 'master'
       reference_wazuh_plugins:
-        description: 'branch/tag of wazuh-dashboard-plugins repository used to build the main plugins'
+        type: string
+        description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
         default: 'master'
       is_stage:
-        description: 'Should set development/production nomenclature'
         type: boolean
+        description: 'Set production nomenclature'
         required: true
         default: false
       checksum:
-        description: 'Generate package checksum'
         type: boolean
+        description: 'Generate package checksum'
         required: true
         default: false
 
 
 jobs:
-  build-plugins:
-    name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
-    with:
-      reference: ${{ inputs.REFERENCE_WAZUH_PLUGINS }}
+  validate-inputs:
+    runs-on: ubuntu-latest
+    name: Validate inputs
+    steps:
+      - name: Validate inputs
+        run: |
+          if [ "${{ inputs.architecture }}" = "amd64" ] && [ "${{ inputs.system }}" = "rpm" ]; then
+            echo "Invalid combination of architecture and system"
+            exit 1
+          fi
+          if [ "${{ inputs.architecture }}" = "x86_64" ] && [ "${{ inputs.system }}" = "deb" ]; then
+            echo "Invalid combination of architecture and system"
+            exit 1
+          fi
 
   build-dashboard:
+    needs: [validate-inputs]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build.yml@4.9.0
+    uses: wazuh/wazuh-dashboard/.github/workflows/build.yml@modify-package-generation-actions
     with:
-      CHECKOUT_TO: ${{ inputs.REFERENCE_WAZUH_DASHBOARD }}
+      CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
+      CACHE: 'true'
 
-  build-security-plugin:
-    name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.9.0
+  build-plugins:
+    needs: [validate-inputs]
+    name: Build plugins
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_and_cacheplugins.yml@modify-package-generation-actions
     with:
-      reference: ${{ inputs.REFERENCE_SECURITY_PLUGIN }}
+      reference_wazuh_plugins: ${{ inputs.reference_wazuh_plugins }}
+      reference_security_plugins: ${{ inputs.reference_security_plugins }}
 
-
-  Build-base-package:
-    needs: [build-plugins, build-dashboard, build-security-plugin]
-    runs-on: ubuntu-latest
-    name: Generate final packages
-    strategy:
-      fail-fast: false
-      matrix:
-        # TODO: Add arm64 support
-        ARCHITECTURE: [ x64 ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup variables
-        run: |
-          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
-          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
-          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
-
-      - name: Setup packages names
-        run: |
-          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_${{ matrix.ARCHITECTURE }}_${{ inputs.REFERENCE_WAZUH_DASHBOARD }}.tar.gz" >> $GITHUB_ENV
-          echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_SECURITY_PLUGIN }}.zip" >> $GITHUB_ENV
-          echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_WAZUH_PLUGINS }}.zip" >> $GITHUB_ENV
-
-      - name: Download dashboard artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.WAZUH_DASHBOARD_SLIM }}
-          path: ${{ env.CURRENT_DIR }}/artifacts/dashboard
-
-      - name: Download security plugin artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.WAZUH_SECURITY_PLUGIN }}
-          path: ${{ env.CURRENT_DIR }}/artifacts/security-plugin
-
-      - name: Download plugins artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.WAZUH_PLUGINS }}
-          path: ${{ env.CURRENT_DIR }}/artifacts/plugins
-
-      - name: Zip plugins
-        run: |
-          zip -r -j ${{ env.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ env.CURRENT_DIR }}/artifacts/plugins
-          zip -r -j ${{ env.CURRENT_DIR }}/artifacts/security-package.zip ${{ env.CURRENT_DIR }}/artifacts/security-plugin
-          zip -r -j ${{ env.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ env.CURRENT_DIR }}/artifacts/dashboard/${{ env.WAZUH_DASHBOARD_SLIM }}
-
-
-      - name: Build packages
-        run: |
-          cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages
-          bash ./build-packages.sh \
-            -v ${{ env.VERSION }} \
-            -r ${{ inputs.REVISION }} \
-            -a file://${{env.CURRENT_DIR}}/artifacts/wazuh-package.zip \
-            -s file://${{env.CURRENT_DIR}}/artifacts/security-package.zip \
-            -b file://${{env.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            --tar
-
-
-      - name: Upload tar packages
-        uses: actions/upload-artifact@v3
-        with:
-          name: wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
-          retention-days: 30
-
-  build-deb-package:
-    needs: [Build-base-package]
-    if: ( contains(inputs.DISTRIBUTION, 'deb') || contains(inputs.DISTRIBUTION, 'all-platforms') )
-    runs-on: ubuntu-latest
-    name: Build deb package
-    strategy:
-      fail-fast: false
-      matrix:
-        # TODO: Add arm64 support
-        ARCHITECTURE: [ x64 ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup variables
-        run: |
-          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
-          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
-          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
-          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
-          else
-            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64_$(git rev-parse --short HEAD).deb" >> $GITHUB_ENV
-          fi
-
-      - name: Download dashboard artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
-          path: ${{ env.CURRENT_DIR }}/artifacts/dashboard-tar
-
-      - name: Build packages
-        run: |
-          cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/
-          if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            bash ./launcher.sh \
-              -v ${{ env.VERSION }} \
-              -r ${{ inputs.REVISION }} \
-              -p file://${{env.CURRENT_DIR}}/artifacts/dashboard-tar/wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz \
-              --production
-          else
-            bash ./launcher.sh \
-              -v ${{ env.VERSION }} \
-              -r ${{ inputs.REVISION }} \
-              -p file://${{env.CURRENT_DIR}}/artifacts/dashboard-tar/wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
-          fi
-
-      - name: Upload deb packages
-        uses: actions/upload-artifact@v3
-        if: success()
-        with:
-          name: ${{ env.PACKAGE_NAME}}
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/output/${{ env.PACKAGE_NAME }}
-          retention-days: 30
-
-  build-rpm-package:
-    needs: [Build-base-package ]
-    if: ( contains(inputs.DISTRIBUTION, 'rpm') || contains(inputs.DISTRIBUTION, 'all-platforms') )
-    runs-on: ubuntu-latest
-    name: Build rpm package
-    strategy:
-      fail-fast: false
-      matrix:
-        ARCHITECTURE: [ x64 ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup variables
-        run: |
-          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
-          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
-          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
-          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME=wazuh-dashboard-$(yarn --silent wzd-version)-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
-          else
-            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_x86_64_$(git rev-parse --short HEAD).rpm" >> $GITHUB_ENV
-          fi
-      - name: Download dashboard artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
-          path: ${{ env.CURRENT_DIR }}/artifacts/dashboard-tar
-
-      - name: Build packages
-        run: |
-          cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/
-          if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            bash ./launcher.sh \
-              -v ${{ env.VERSION }} \
-              -r ${{ inputs.REVISION }} \
-              -p file://${{env.CURRENT_DIR}}/artifacts/dashboard-tar/wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz \
-              --production
-          else
-            bash ./launcher.sh \
-              -v ${{ env.VERSION }} \
-              -r ${{ inputs.REVISION }} \
-              -p file://${{env.CURRENT_DIR}}/artifacts/dashboard-tar/wazuh-dashboard-${{ env.VERSION }}-${{ inputs.REVISION }}-linux-${{ matrix.ARCHITECTURE }}.tar.gz
-          fi
-      - name: Upload rpm packages
-        uses: actions/upload-artifact@v3
-        if: success()
-        with:
-          name: ${{ env.PACKAGE_NAME}}
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/output/${{ env.PACKAGE_NAME}}
-          retention-days: 30
-
-  test-package-deb:
-    needs: [build-deb-package]
-    runs-on: ubuntu-latest
-    name: Test packages
-    strategy:
-      fail-fast: false
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup variables
-        run: |
-          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
-          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
-          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
-          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
-          else
-            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64_$(git rev-parse --short HEAD).deb" >> $GITHUB_ENV
-          fi
-
-      - name: Download deb package
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.PACKAGE_NAME}}
-          path: ${{ env.CURRENT_DIR }}/dev-tools/test-packages/deb
-
-      - name: Run test
-        run: |
-          cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
-          bash ./test-packages.sh \
-            -p ${{ env.PACKAGE_NAME }}
-
-
-  test-package-rpm:
-    needs: [build-rpm-package]
-    runs-on: ubuntu-latest
-    name: Test packages
-    strategy:
-      fail-fast: false
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup variables
-        run: |
-          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
-          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
-          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
-          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME=wazuh-dashboard-$(yarn --silent wzd-version)-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
-          else
-            echo "PACKAGE_NAME=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_x86_64_$(git rev-parse --short HEAD).rpm" >> $GITHUB_ENV
-          fi
-
-      - name: Download rpm package
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.PACKAGE_NAME}}
-          path: ${{ env.CURRENT_DIR }}/dev-tools/test-packages/rpm
-
-      - name: Run test
-        run: |
-          cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
-          ls -lah ${{ env.CURRENT_DIR }}/dev-tools/test-packages/rpm
-          ls -lah
-          bash ./test-packages.sh \
-            -p ${{ env.PACKAGE_NAME}}
-
-  upload-to-s3:
-    needs: [test-package-rpm, test-package-deb]
-    if: |
-      always() && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure')
-    runs-on: ubuntu-latest
-    name: Upload to S3
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup variables
-        run: |
-          echo "CURRENT_DIR=$(pwd -P)" >> $GITHUB_ENV
-          echo "VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
-          echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
-          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME_RPM=wazuh-dashboard-$(yarn --silent wzd-version)-${{ inputs.REVISION }}.x86_64.rpm" >> $GITHUB_ENV
-          else
-            echo "PACKAGE_NAME_RPM=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_x86_64_$(git rev-parse --short HEAD).rpm" >> $GITHUB_ENV
-          fi
-          if [ "${{ inputs.PRODUCTION }}" = "true" ]; then
-            echo "PACKAGE_NAME_DEB=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64.deb" >> $GITHUB_ENV
-          else
-            echo "PACKAGE_NAME_DEB=wazuh-dashboard_$(yarn --silent wzd-version)-${{ inputs.REVISION }}_amd64_$(git rev-parse --short HEAD).deb" >> $GITHUB_ENV
-          fi
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: us-east-1
-
-      - name: Download deb package
-        if: contains(needs.test-package-deb.result, 'success')
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.PACKAGE_NAME_DEB}}
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/
-
-      - name: Upload deb to S3
-        if: contains(needs.test-package-deb.result, 'success')
-        run: |
-          echo "Uploading deb package"
-          aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/deb/${{ env.PACKAGE_NAME_DEB}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-
-      - name: Download rpm package
-        if: contains(needs.test-package-rpm.result, 'success')
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.PACKAGE_NAME_RPM}}
-          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm
-
-      - name: Upload rpm to S3
-        if: contains(needs.test-package-rpm.result, 'success')
-        run: |
-          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/rpm/${{ env.PACKAGE_NAME_RPM}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
