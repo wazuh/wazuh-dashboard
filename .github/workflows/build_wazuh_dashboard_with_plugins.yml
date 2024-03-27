@@ -73,7 +73,7 @@ jobs:
   build-plugins:
     needs: [validate-inputs]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_and_cacheplugins.yml@modify-package-generation-actions
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_and_cache_plugins.yml@modify-package-generation-actions
     with:
       reference_wazuh_plugins: ${{ inputs.reference_wazuh_plugins }}
       reference_security_plugins: ${{ inputs.reference_security_plugins }}
