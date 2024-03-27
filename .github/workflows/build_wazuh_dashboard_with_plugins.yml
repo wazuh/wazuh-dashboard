@@ -68,7 +68,7 @@ jobs:
     uses: wazuh/wazuh-dashboard/.github/workflows/build.yml@modify-package-generation-actions
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
-      CACHE: 'true'
+      CACHE: true
 
   build-plugins:
     needs: [validate-inputs]
