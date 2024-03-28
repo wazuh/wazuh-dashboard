@@ -54,6 +54,7 @@ cd ${pkg_path} && sha512sum ${deb_file} >/tmp/${deb_file}.sha512
 
 if [ "${is_production}" = "no" ]; then
   mv ${pkg_path}/${deb_file} /tmp/${final_name}
+  mv /tmp/${deb_file}.sha512 /tmp/${final_name}.sha512
 else
   mv ${pkg_path}/${deb_file} /tmp/
 fi
