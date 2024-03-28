@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Build
+name: Build base
 
 on:
   workflow_call:
@@ -10,22 +10,14 @@ on:
         required: true
         default: ''
         type: string
-      CACHE:
-        description: 'Cache the artifacts instead of uploading'
-        required: false
-        default: false
-        type: boolean
+
   workflow_dispatch:
     inputs:
       CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'master'
         description: 'The branch/tag/commit to checkout to'
         required: true
         default: ''
-      CACHE:
-        description: 'Cache the artifacts instead of uploading'
-        required: false
-        default: false
-        type: boolean
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -94,13 +86,8 @@ jobs:
         run: mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ matrix.ARCHITECTURE }}.${{ matrix.DISTRIBUTION }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
 
       - uses: actions/upload-artifact@v3
-        if: success() && !inputs.CACHE
+        if: success()
         with:
           name: ${{ env.ARTIFACT_BUILD_NAME }}
           path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
           retention-days: 30
-      - uses: actions/cache/save@v4
-        if: success() && inputs.CACHE
-        with:
-          path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
-          key: ${{ env.ARTIFACT_BUILD_NAME }}
