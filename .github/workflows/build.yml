@@ -99,7 +99,7 @@ jobs:
           name: ${{ env.ARTIFACT_BUILD_NAME }}
           path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
           retention-days: 30
-      - uses: actions/cache@v4
+      - uses: actions/cache/save@v4
         if: success() && inputs.CACHE
         with:
           path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}

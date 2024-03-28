@@ -110,22 +110,22 @@ jobs:
           echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.REFERENCE_WAZUH_PLUGINS }}.zip" >> $GITHUB_ENV
 
       - name: Cache security plugin
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.CURRENT_DIR }}/artifacts/security-plugin
           key: ${{ env.WAZUH_SECURITY_PLUGIN }}
 
       - name: Cache plugins
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.CURRENT_DIR }}/artifacts/plugins
           key: ${{ env.WAZUH_PLUGINS }}
 
       - name: Cache dashboard artifact
-        uses: actions/download-artifact@v3
+        uses: actions/cache/restore@v4
         with:
-          name: ${{ env.WAZUH_DASHBOARD_SLIM }}
           path: ${{ env.CURRENT_DIR }}/artifacts/dashboard
+          key: ${{ env.WAZUH_DASHBOARD_SLIM }}
 
       - name: Zip plugins
         run: |
