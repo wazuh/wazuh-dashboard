@@ -124,7 +124,7 @@ jobs:
       - name: Cache dashboard artifact
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.CURRENT_DIR }}/artifacts/dashboard
+          path: ${{ env.CURRENT_DIR }}/artifacts/target
           key: ${{ env.WAZUH_DASHBOARD_SLIM }}
 
       - name: Zip plugins
