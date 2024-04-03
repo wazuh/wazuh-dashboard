@@ -162,6 +162,7 @@ jobs:
       - name: Test package
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
+          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}
           cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}  ${{ env.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{env.PACKAGE_NAME}}
