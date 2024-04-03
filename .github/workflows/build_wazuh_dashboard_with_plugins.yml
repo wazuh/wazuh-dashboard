@@ -163,7 +163,7 @@ jobs:
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh \
-            -p ${{ env.package_name }}
+            -p ${{ env.PACKAGE_NAME }}
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
