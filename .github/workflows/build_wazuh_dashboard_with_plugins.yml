@@ -162,14 +162,9 @@ jobs:
       - name: Test package
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
-          ls -la ${{ env.CURRENT_DIR }}/
-          ls -la ${{ env.CURRENT_DIR }}/dev-tools/
-          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/
-          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/${{ inputs.system }}/
-          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/
-          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}
+          cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}  ${{ env.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
-            -p ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}
+            -p ${{env.PACKAGE_NAME}}
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
