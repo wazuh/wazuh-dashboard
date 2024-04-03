@@ -152,7 +152,7 @@ jobs:
           cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages
           bash ./build-packages.sh \
             -v ${{ env.VERSION }} \
-            -r ${{ env.REVISION }} \
+            -r ${{ inputs.revision }} \
             -a file://${{env.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{env.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{env.CURRENT_DIR}}/artifacts/dashboard-package.zip \
