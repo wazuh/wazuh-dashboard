@@ -103,6 +103,9 @@ jobs:
           echo "VERSION=$(tail -c +2 VERSION)" >> $GITHUB_ENV
           echo "REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
           echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          if [ "${{ inputs.is_stage }}" = "true" ]; then
+            echo "PRODUCTION=--production" >> $GITHUB_ENV
+          fi
 
       - name: Setup packages names
         run: |
@@ -156,7 +159,7 @@ jobs:
             -a file://${{env.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{env.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{env.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            --${{ inputs.system }}
+            --${{ inputs.system }} ${{ env.PRODUCTION }}
 
 
       - name: Test package
