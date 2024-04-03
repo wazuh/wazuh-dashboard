@@ -166,7 +166,6 @@ jobs:
           ls -la ${{ env.CURRENT_DIR }}/dev-tools/
           ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/
           ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/${{ inputs.system }}/
-          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/${{ inputs.system }}/output/
           ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/
           ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}
           bash ./test-packages.sh \
