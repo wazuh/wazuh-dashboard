@@ -147,7 +147,7 @@ jobs:
           zip -r -j ${{ env.CURRENT_DIR }}/artifacts/security-package.zip ${{ env.CURRENT_DIR }}/artifacts/security-plugin
           zip -r -j ${{ env.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ env.CURRENT_DIR }}/artifacts/dashboard/${{ env.WAZUH_DASHBOARD_SLIM }}
 
-      - name: Build packages
+      - name: Build package
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages
           bash ./build-packages.sh \
@@ -162,6 +162,7 @@ jobs:
       - name: Test package
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
+          cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/${{ inputs.system }}/${{env.package_name}} .
           bash ./test-packages.sh \
             -p ${{ env.PACKAGE_NAME }}
 
