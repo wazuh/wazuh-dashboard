@@ -106,20 +106,20 @@ jobs:
 
       - name: Setup packages names
         run: |
-          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_${{ env.architecture }}_${{ github.head_ref || github.ref_name }}.tar.gz" >> $GITHUB_ENV
+          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.architecture }}_${{ github.head_ref || github.ref_name }}.tar.gz" >> $GITHUB_ENV
           echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_security_plugins }}.zip" >> $GITHUB_ENV
           echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_wazuh_plugins }}.zip" >> $GITHUB_ENV
           if [ "${{ inputs.system }}" = "deb" ]; then
             if [ "${{ inputs.is_stage }}" = "true" ]; then
-              echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ env.architecture }}.deb" >> $GITHUB_ENV
+              echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ inputs.architecture }}.deb" >> $GITHUB_ENV
             else
-              echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ env.architecture }}_${{ env.COMMIT_SHA}}.deb" >> $GITHUB_ENV
+              echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ inputs.architecture }}_${{ env.COMMIT_SHA}}.deb" >> $GITHUB_ENV
             fi
           else
             if [ "${{ inputs.is_stage }}" = "true" ]; then
-              echo "PACKAGE_NAME=wazuh-dashboard-${{ env.VERSION }}-${{ inputs.revision }}.${{ env.architecture }}.rpm" >> $GITHUB_ENV
+              echo "PACKAGE_NAME=wazuh-dashboard-${{ env.VERSION }}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm" >> $GITHUB_ENV
             else
-              echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ env.architecture }}_${{ env.COMMIT_SHA}}.rpm" >> $GITHUB_ENV
+              echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ inputs.architecture }}_${{ env.COMMIT_SHA}}.rpm" >> $GITHUB_ENV
             fi
           fi
 
