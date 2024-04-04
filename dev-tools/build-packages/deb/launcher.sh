@@ -11,10 +11,11 @@
 # Inputs
 package=""
 version=""
-revision="1"
+revision="0"
 architecture="amd64"
 build_base="yes"
 build_docker="yes"
+is_production="no"
 
 # Constants
 deb_amd64_builder="deb_dashboard_builder_amd64"
@@ -84,6 +85,7 @@ build_deb() {
     tar -zxf wazuh-dashboard.tar.gz
     rm wazuh-dashboard.tar.gz
     mv $directory_name wazuh-dashboard-base
+    jq '.wazuh.revision="'${revision}'"' wazuh-dashboard-base/package.json > pkgtmp.json && mv pkgtmp.json wazuh-dashboard-base/package.json
     cp $config_path/* wazuh-dashboard-base
     echo ${version} >wazuh-dashboard-base/VERSION
     tar -czf ./wazuh-dashboard.tar.gz wazuh-dashboard-base
@@ -104,7 +106,7 @@ build_deb() {
     docker run -t --rm ${volumes} \
         -v ${current_path}/../..:/root:Z \
         ${container_name} ${architecture} \
-        ${revision} ${version} ${commit_sha}\
+        ${revision} ${version} ${commit_sha} ${is_production}\
         || return 1
 
     echo "Package $(ls -Art ${out_dir} | tail -n 1) added to ${out_dir}."
@@ -119,7 +121,7 @@ build_deb() {
 build() {
     build_name="${deb_amd64_builder}"
     file_path="../${deb_builder_dockerfile}/${architecture}"
-    build_deb ${build_name} ${file_path} ${commit_sha}|| return 1
+    build_deb ${build_name} ${file_path} ${commit_sha} ${is_production}|| return 1
     return 0
 }
 
@@ -132,6 +134,7 @@ help() {
     echo "    -r, --revision <rev>       [Optional] Package revision. By default: 1."
     echo "    -o, --output <path>        [Optional] Set the destination path of package. By default, an output folder will be created."
     echo "    --dont-build-docker        [Optional] Locally built Docker image will be used instead of generating a new one."
+    echo "    --production               [Optional] The naming of the package will be ready for production."
     echo "    -h, --help                 Show this help."
     echo
     exit $1
@@ -169,6 +172,10 @@ main() {
             ;;
         "--dont-build-docker")
             build_docker="no"
+            shift 1
+            ;;
+        "--production")
+            is_production="yes"
             shift 1
             ;;
         "-o" | "--output")

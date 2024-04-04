@@ -16,6 +16,7 @@ architecture=$1
 revision=$2
 version=$3
 commit_sha=$4
+is_production=$5
 directory_base="/usr/share/wazuh-dashboard"
 
 # Build directories
@@ -50,4 +51,7 @@ cd ${build_dir} && tar czf "${rpm_build_dir}/SOURCES/${pkg_name}.tar.gz" "${pkg_
 cd ${pkg_path} && sha512sum ${rpm_file} >/tmp/${rpm_file}.sha512
 
 find ${pkg_path}/ -maxdepth 3 -type f -name "${file_name}*" -exec mv {} /tmp/ \;
-mv /tmp/${rpm_file} /tmp/${final_name}
+if [ "${is_production}" = "no" ]; then
+  mv /tmp/${rpm_file} /tmp/${final_name}
+  mv /tmp/${rpm_file}.sha512 /tmp/${final_name}.sha512
+fi

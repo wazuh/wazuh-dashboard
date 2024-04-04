@@ -10,7 +10,7 @@ deb="no"
 rpm="no"
 tar="no"
 output="$( cd $(dirname $0) ; pwd -P )/output"
-
+production=""
 current_path="$( cd $(dirname $0) ; pwd -P )"
 
 build_tar() {
@@ -29,7 +29,7 @@ build_deb() {
   echo "Building deb package..."
   name_package_tar=$(find $output -name "*.tar.gz")
   cd ./deb
-  bash ./launcher.sh -v $version -r $revision -p file://$name_package_tar
+  bash ./launcher.sh -v $version -r $revision -p file://$name_package_tar $production
   name_package_tar=$(ls ./output)
   echo "Moving deb package to $output/deb"
   mv $current_path/deb/output $output/deb
@@ -40,7 +40,7 @@ build_rpm() {
   echo "Building rpm package..."
   name_package_tar=$(find $output -name "*.tar.gz")
   cd ./rpm
-  bash ./launcher.sh -v $version -r $revision -p file://$name_package_tar
+  bash ./launcher.sh -v $version -r $revision -p file://$name_package_tar $production
   echo "Moving rpm package to $output/rpm"
   mv $current_path/rpm/output $output/rpm
   cd ../
@@ -90,7 +90,8 @@ help() {
     echo "        --deb                     Build for deb."
     echo "        --rpm                     Build for rpm."
     echo "        --tar                     Build for tar."
-    echo "    -r, --revision <revision>      [Optional] Set the revision of this build. By default, it is set to 1."
+    echo "    --production                  [Optional] The naming of the package will be ready for production."
+    echo "    -r, --revision <revision>     [Optional] Set the revision of this build. By default, it is set to 1."
     echo "    -o, --output <path>           [Optional] Set the destination path of package. By default, an output folder will be created."
     echo "    -h, --help                    Show this help."
     echo
@@ -142,6 +143,10 @@ main() {
                 revision="${2}"
                 shift 2
             fi
+            ;;
+        "--production")
+            production="--production"
+            shift 1
             ;;
         "--all-platforms")
             all_platforms="yes"

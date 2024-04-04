@@ -16,6 +16,7 @@ architecture=$1
 revision=$2
 version=$3
 commit_sha=$4
+is_production=$5
 directory_base="/usr/share/wazuh-dashboard"
 
 # Build directories
@@ -50,4 +51,10 @@ debuild --no-lintian -b -uc -us \
     -eREVISION="${revision}"
 
 cd ${pkg_path} && sha512sum ${deb_file} >/tmp/${deb_file}.sha512
-mv ${pkg_path}/${deb_file} /tmp/${final_name}
+
+if [ "${is_production}" = "no" ]; then
+  mv ${pkg_path}/${deb_file} /tmp/${final_name}
+  mv /tmp/${deb_file}.sha512 /tmp/${final_name}.sha512
+else
+  mv ${pkg_path}/${deb_file} /tmp/
+fi
