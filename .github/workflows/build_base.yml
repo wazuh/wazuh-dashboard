@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Build
+name: Build base
 
 on:
   workflow_call:
@@ -10,6 +10,7 @@ on:
         required: true
         default: ''
         type: string
+
   workflow_dispatch:
     inputs:
       CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'master'
