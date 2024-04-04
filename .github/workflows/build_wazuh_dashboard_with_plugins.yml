@@ -65,7 +65,7 @@ jobs:
   build-base:
     needs: [validate-inputs]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@modify-package-generation-actions
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.9.0
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
 
