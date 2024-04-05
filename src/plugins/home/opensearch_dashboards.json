@@ -14,7 +14,6 @@
     "dataSource"
   ],
   "requiredBundles": [
-    "opensearchDashboardsReact",
-    "dataSourceManagement"
+    "opensearchDashboardsReact"
   ]
 }
