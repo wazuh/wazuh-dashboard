@@ -40,7 +40,7 @@ import {
 import { HOME_APP_BASE_PATH } from '../../../../common/constants';
 import { FeatureCatalogueCategory } from '../../../services';
 import { getServices } from '../../opensearch_dashboards_services';
-import { AddData } from './add_data';
+// import { AddData } from './add_data';
 import { ManageData } from './manage_data';
 import { NewThemeModal } from '../new_theme_modal';
 import { SolutionsSection } from './solutions_section';
@@ -192,10 +192,11 @@ export class Home extends Component {
           ) : null}
 
           <EuiFlexGroup
-            className={`homData ${addDataFeatures.length === 1 && manageDataFeatures.length === 1
+            className={`homData ${
+              addDataFeatures.length === 1 && manageDataFeatures.length === 1
                 ? 'homData--compressed'
                 : 'homData--expanded'
-              }`}
+            }`}
           >
             <EuiFlexItem>
               <ManageData addBasePath={addBasePath} features={manageDataFeatures} />

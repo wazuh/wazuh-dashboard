@@ -52,35 +52,35 @@ export function HomeApp({ directories, solutions }) {
     savedObjectsClient,
     getBasePath,
     addBasePath,
-    environmentService,
+    // environmentService,
     telemetry,
     uiSettings,
   } = getServices();
-  const environment = environmentService.getEnvironment();
-  const isCloudEnabled = environment.cloud;
+  // const environment = environmentService.getEnvironment();
+  // const isCloudEnabled = environment.cloud;
 
-  const renderTutorialDirectory = (props) => {
-    return (
-      <TutorialDirectory
-        addBasePath={addBasePath}
-        openTab={props.match.params.tab}
-        isCloudEnabled={isCloudEnabled}
-      />
-    );
-  };
-
-  const renderTutorial = (props) => {
-    return (
-      <Tutorial
-        addBasePath={addBasePath}
-        isCloudEnabled={isCloudEnabled}
-        getTutorial={getTutorial}
-        replaceTemplateStrings={replaceTemplateStrings}
-        tutorialId={props.match.params.id}
-        bulkCreate={savedObjectsClient.bulkCreate}
-      />
-    );
-  };
+  /*   const renderTutorialDirectory = (props) => {
+      return (
+        <TutorialDirectory
+          addBasePath={addBasePath}
+          openTab={props.match.params.tab}
+          isCloudEnabled={isCloudEnabled}
+        />
+      );
+    };
+  
+    const renderTutorial = (props) => {
+      return (
+        <Tutorial
+          addBasePath={addBasePath}
+          isCloudEnabled={isCloudEnabled}
+          getTutorial={getTutorial}
+          replaceTemplateStrings={replaceTemplateStrings}
+          tutorialId={props.match.params.id}
+          bulkCreate={savedObjectsClient.bulkCreate}
+        />
+      );
+    }; */
 
   const legacyHome = (
     <Home
