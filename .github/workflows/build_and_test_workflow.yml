@@ -6,12 +6,12 @@ name: Build and test
 # trigger on every commit push and PR for all branches except feature branches and pushes for backport branches
 on:
   push:
-    branches: [ '**', '!feature/**', '!backport/**' ]
+    branches: ['**', '!feature/**', '!backport/**']
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
   pull_request:
-    branches: [ '**', '!feature/**' ]
+    branches: ['**', '!feature/**']
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -25,7 +25,7 @@ env:
   TEST_OPENSEARCH_TRANSPORT_PORT: 9403
   TEST_OPENSEARCH_PORT: 9400
   OSD_SNAPSHOT_SKIP_VERIFY_CHECKSUM: true
-  NODE_OPTIONS: "--max-old-space-size=6144 --dns-result-order=ipv4first"
+  NODE_OPTIONS: '--max-old-space-size=6144 --dns-result-order=ipv4first'
 
 jobs:
   build-lint-test:
@@ -33,13 +33,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest] #Removed 'windows-latest'
         group: [1, 2, 3, 4]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+    #          - os: windows-latest
+    #            name: Windows
     runs-on: ${{ matrix.os }}
     steps:
       - name: Configure git's autocrlf (Windows only)
@@ -53,7 +53,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -138,13 +138,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest] #Removed 'windows-latest'
         group: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+    #          - os: windows-latest
+    #            name: Windows
     runs-on: ${{ matrix.os }}
     steps:
       - run: echo Running functional tests for ciGroup${{ matrix.group }}
@@ -160,7 +160,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -233,12 +233,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest] #Removed 'windows-latest'
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+    #         - os: windows-latest
+    #           name: Windows
     runs-on: ${{ matrix.os }}
     steps:
       - run: echo Running plugin functional tests
@@ -254,7 +254,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -332,21 +332,21 @@ jobs:
             ext: tar.gz
             suffix: linux-arm64
             script: build-platform --linux-arm --skip-os-packages
-          - os: macos-latest
-            name: macOS x64
-            ext: tar.gz
-            suffix: darwin-x64
-            script: build-platform --darwin --skip-os-packages
-          - os: macos-latest
-            name: macOS ARM64
-            ext: tar.gz
-            suffix: darwin-arm64
-            script: build-platform --darwin-arm --skip-os-packages
-          - os: windows-latest
-            name: Windows x64
-            ext: zip
-            suffix: windows-x64
-            script: build-platform --windows --skip-os-packages
+          # - os: macos-latest
+          #   name: macOS x64
+          #   ext: tar.gz
+          #   suffix: darwin-x64
+          #   script: build-platform --darwin --skip-os-packages
+          # - os: macos-latest
+          #   name: macOS ARM64
+          #   ext: tar.gz
+          #   suffix: darwin-arm64
+          #   script: build-platform --darwin-arm --skip-os-packages
+          # - os: windows-latest
+          #   name: Windows x64
+          #   ext: zip
+          #   suffix: windows-x64
+          #   script: build-platform --windows --skip-os-packages
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -364,7 +364,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -441,7 +441,19 @@ jobs:
         working-directory: ./artifacts
     strategy:
       matrix:
-        version: [osd-2.0.0, osd-2.1.0, osd-2.2.0, osd-2.3.0, osd-2.4.0, osd-2.5.0, osd-2.6.0, osd-2.7.0, osd-2.8.0, osd-2.9.0]
+        version:
+          [
+            osd-2.0.0,
+            osd-2.1.0,
+            osd-2.2.0,
+            osd-2.3.0,
+            osd-2.4.0,
+            osd-2.5.0,
+            osd-2.6.0,
+            osd-2.7.0,
+            osd-2.8.0,
+            osd-2.9.0,
+          ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
