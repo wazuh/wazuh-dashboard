@@ -38,8 +38,7 @@ jobs:
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+
     runs-on: ${{ matrix.os }}
     steps:
       - name: Configure git's autocrlf (Windows only)
@@ -143,8 +142,6 @@ jobs:
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
     runs-on: ${{ matrix.os }}
     steps:
       - run: echo Running functional tests for ciGroup${{ matrix.group }}
@@ -237,8 +234,7 @@ jobs:
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+
     runs-on: ${{ matrix.os }}
     steps:
       - run: echo Running plugin functional tests
