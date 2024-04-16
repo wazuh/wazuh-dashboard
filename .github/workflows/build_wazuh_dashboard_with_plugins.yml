@@ -45,7 +45,6 @@ on:
         required: true
         default: false
 
-
 jobs:
   validate-inputs:
     runs-on: ubuntu-latest
@@ -72,7 +71,7 @@ jobs:
   build-main-plugins:
     needs: [validate-inputs]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@4.9.0
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
@@ -160,7 +159,6 @@ jobs:
             -s file://${{env.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{env.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             --${{ inputs.system }} ${{ env.PRODUCTION }}
-
 
       - name: Test package
         run: |
