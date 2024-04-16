@@ -125,8 +125,12 @@ build() {
 
     echo "c"
     ls -l
+    echo "Tar1"
+
     tar -zxf wazuh-dashboard.tar.gz
-    directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
+
+    echo "Tar2"
+    directory_name=$(tar -tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
     working_dir="wazuh-dashboard-$version-$revision-linux-x64"
     echo $directory_name $working_dir
     mv $directory_name $working_dir
