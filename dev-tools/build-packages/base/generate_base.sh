@@ -84,21 +84,15 @@ build() {
                 clean 1
             else
                 echo "Extracting Wazuh Dashboard base"
-                echo "a"
-                ls -l .
                 unzip -q wazuh-dashboard.zip -d ./dashboards/
                 rm wazuh-dashboard.zip
                 mv ./dashboards/$(ls ./dashboards) wazuh-dashboard.tar.gz
-                echo "B"
-                ls -l .
             fi
         else
             if ! curl --output wazuh-dashboard.tar.gz --silent --fail "${base}"; then
                 echo "The given URL or Path to the Wazuh Dashboard base is not working: ${base}"
                 clean 1
             fi
-            echo "D"
-            ls -l .
         fi
     else
         echo "The given URL or Path to the Wazuh Dashboard base is not valid: ${base}"
@@ -123,14 +117,10 @@ build() {
         clean 1
     fi
 
-    echo "c"
-    ls -l
-    echo "Tar1"
-
     tar -zxf wazuh-dashboard.tar.gz
-
-    echo "Tar2"
-    directory_name=$(tar -tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
+    echo "a" $(tar -tf wazuh-dashboard.tar.gz)
+    echo "b"
+    directory_name=$(tar -tvf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
     working_dir="wazuh-dashboard-$version-$revision-linux-x64"
     echo $directory_name $working_dir
     mv $directory_name $working_dir
