@@ -118,9 +118,8 @@ build() {
     fi
 
     tar -zxf wazuh-dashboard.tar.gz
-    a=$(tar -tzf wazuh-dashboard.tar.gz |head -1| sed 's#/.*##' | sort -u)
-    echo "A" $a
-    directory_name=$(tar -tzf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
+    tar -tzf wazuh-dashboard.tar.gz > gzContent
+    directory_name=$(head -1 gzContent | sed 's#/.*##' | sort -u)
     working_dir="wazuh-dashboard-$version-$revision-linux-x64"
     mv $directory_name $working_dir
     cd $working_dir
