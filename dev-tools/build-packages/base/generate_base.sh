@@ -118,7 +118,7 @@ build() {
     fi
 
     tar -zxf wazuh-dashboard.tar.gz
-    directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
+    directory_name=$(ls -t | head -1)
     working_dir="wazuh-dashboard-$version-$revision-linux-x64"
     mv $directory_name $working_dir
     cd $working_dir
@@ -127,23 +127,25 @@ build() {
     echo Building the package...
     echo
 
-    # Install plugins
-    bin/opensearch-dashboards-plugin install alertingDashboards
-    bin/opensearch-dashboards-plugin install customImportMapDashboards
-    bin/opensearch-dashboards-plugin install ganttChartDashboards
-    bin/opensearch-dashboards-plugin install indexManagementDashboards
-    bin/opensearch-dashboards-plugin install notificationsDashboards
-    bin/opensearch-dashboards-plugin install reportsDashboards
     # Install Wazuh apps and Security app
-    plugins=$(ls $tmp_dir/applications)
-    echo $plugins
+
+    plugins=$(ls $tmp_dir/applications)' '$(cat ../../plugins)
     for plugin in $plugins; do
-        echo $plugin
         if [[ $plugin =~ .*\.zip ]]; then
-            bin/opensearch-dashboards-plugin install file:../applications/$plugin
+            install='file:../applications/'$plugin
+        else
+            install=$plugin
+        fi
+        echo "Installing ${plugin%.*} plugin"
+        if ! bin/opensearch-dashboards-plugin install $install 2>&1 > /dev/null; then
+          echo "Plugin installation failed"
+          clean 1
         fi
     done
 
+    echo
+    echo Finished installing plugins
+    echo
 
     # Move installed plugins from categories after generating the package
     category_explore='{id:"explore",label:"Explore",order:100,euiIconType:"search"}'

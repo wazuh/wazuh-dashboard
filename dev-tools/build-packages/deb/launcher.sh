@@ -81,8 +81,8 @@ build_deb() {
     echo
 
     # Prepare the package
-    directory_name=$(tar tf wazuh-dashboard.tar.gz | head -1 | sed 's#/.*##' | sort -u)
     tar -zxf wazuh-dashboard.tar.gz
+    directory_name=$(ls -t | head -1)
     rm wazuh-dashboard.tar.gz
     mv $directory_name wazuh-dashboard-base
     jq '.wazuh.revision="'${revision}'"' wazuh-dashboard-base/package.json > pkgtmp.json && mv pkgtmp.json wazuh-dashboard-base/package.json
