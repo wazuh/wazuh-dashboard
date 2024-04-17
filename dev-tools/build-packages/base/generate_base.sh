@@ -118,8 +118,7 @@ build() {
     fi
 
     tar -zxf wazuh-dashboard.tar.gz
-    tar -tzf wazuh-dashboard.tar.gz > gzContent
-    directory_name=$(head -1 gzContent | sed 's#/.*##' | sort -u)
+    directory_name=$(ls -t | head -1)
     working_dir="wazuh-dashboard-$version-$revision-linux-x64"
     mv $directory_name $working_dir
     cd $working_dir
