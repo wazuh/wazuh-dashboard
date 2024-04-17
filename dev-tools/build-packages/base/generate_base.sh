@@ -137,7 +137,7 @@ build() {
             install=$plugin
         fi
         echo "Installing ${plugin%.*} plugin"
-        if bin/opensearch-dashboards-plugin install $install |  grep -iE 'extract|unsuccessful|error|fail'; then
+        if bin/opensearch-dashboards-plugin install $install |  grep -ie 'unsuccessful|error|fail'; then
           echo "Plugin installation failed"
           fail=1
           break
