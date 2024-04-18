@@ -104,7 +104,6 @@ build_deb() {
     fi
 
     volumes="-v ${out_dir}/:/tmp:Z -v ${tmp_dir}/wazuh-dashboard.tar.gz:/opt/wazuh-dashboard.tar.gz"
-    echo $volumes
     docker run -t --rm ${volumes} \
         -v ${current_path}/../..:/root:Z \
         ${container_name} ${architecture} \
