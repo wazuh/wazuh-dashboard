@@ -82,7 +82,7 @@ build_deb() {
 
     # Prepare the package
     tar -zxf wazuh-dashboard.tar.gz
-    directory_name=$(ls -t | head -1)
+    directory_name=$(ls -td */ | head -1)
     rm wazuh-dashboard.tar.gz
     mv $directory_name wazuh-dashboard-base
     jq '.wazuh.revision="'${revision}'"' wazuh-dashboard-base/package.json > pkgtmp.json && mv pkgtmp.json wazuh-dashboard-base/package.json
@@ -90,6 +90,7 @@ build_deb() {
     echo ${version} >wazuh-dashboard-base/VERSION
     tar -czf ./wazuh-dashboard.tar.gz wazuh-dashboard-base
 
+    ls ${current_path}
     # Copy the necessary files
     cp ${current_path}/builder.sh ${dockerfile_path}
 
@@ -97,12 +98,13 @@ build_deb() {
     if [[ ${build_docker} == "yes" ]]; then
         docker build -t ${container_name} ${dockerfile_path} || return 1
     fi
-
     # Build the Debian package with a Docker container
     if [ ! -d "$out_dir" ]; then
       mkdir -p $out_dir
     fi
+
     volumes="-v ${out_dir}/:/tmp:Z -v ${tmp_dir}/wazuh-dashboard.tar.gz:/opt/wazuh-dashboard.tar.gz"
+    echo $volumes
     docker run -t --rm ${volumes} \
         -v ${current_path}/../..:/root:Z \
         ${container_name} ${architecture} \
