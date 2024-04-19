@@ -76,7 +76,6 @@ build() {
     echo
     echo "Downloading dashboards..."
     echo
-
     if [[ $base =~ $valid_url ]]; then
         if [[ $base =~ .*\.zip ]]; then
             if ! curl --output wazuh-dashboard.zip --silent --fail "${base}"; then
@@ -118,7 +117,7 @@ build() {
     fi
 
     tar -zxf wazuh-dashboard.tar.gz
-    directory_name=$(ls -t | head -1)
+    directory_name=$(ls -td */ | head -1)
     working_dir="wazuh-dashboard-$version-$revision-linux-x64"
     mv $directory_name $working_dir
     cd $working_dir
@@ -129,7 +128,7 @@ build() {
 
     # Install Wazuh apps and Security app
 
-    plugins=$(ls $tmp_dir/applications)' '$(cat ../../plugins)
+    plugins=$(ls $tmp_dir/applications)' '$(cat $current_path/plugins)
     for plugin in $plugins; do
         if [[ $plugin =~ .*\.zip ]]; then
             install='file:../applications/'$plugin
