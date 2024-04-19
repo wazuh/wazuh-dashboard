@@ -83,7 +83,7 @@ build_rpm() {
 
     # Prepare the package
     tar -zxf wazuh-dashboard.tar.gz
-    directory_name=$(ls -t | head -1)
+    directory_name=$(ls -td */ | head -1)
     rm wazuh-dashboard.tar.gz
     mv $directory_name wazuh-dashboard-base
     jq '.wazuh.revision="'${revision}'"' wazuh-dashboard-base/package.json > pkgtmp.json && mv pkgtmp.json wazuh-dashboard-base/package.json
