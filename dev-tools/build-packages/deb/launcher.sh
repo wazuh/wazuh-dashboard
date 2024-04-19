@@ -90,7 +90,6 @@ build_deb() {
     echo ${version} >wazuh-dashboard-base/VERSION
     tar -czf ./wazuh-dashboard.tar.gz wazuh-dashboard-base
 
-    ls ${current_path}
     # Copy the necessary files
     cp ${current_path}/builder.sh ${dockerfile_path}
 
