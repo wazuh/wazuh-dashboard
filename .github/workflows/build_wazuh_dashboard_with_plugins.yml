@@ -169,11 +169,11 @@ jobs:
             -p ${{env.PACKAGE_NAME}}
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ secrets.CI_AWS_REGION }}
 
       - name: Upload package
         run: |
