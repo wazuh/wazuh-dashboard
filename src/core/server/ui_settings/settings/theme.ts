@@ -60,7 +60,7 @@ export const getThemeSettings = (): Record<string, UiSettingsParams> => {
         defaultMessage: 'Theme version',
       }),
       value:
-        DEFAULT_THEME_VERSION === 'v8'
+        DEFAULT_THEME_VERSION === 'v7'
           ? themeVersionLabelMap[DEFAULT_THEME_VERSION]
           : DEFAULT_THEME_VERSION,
       type: 'select',
