@@ -1,4 +1,4 @@
-name: Build packages
+name: Build packages ${{ inputs.id }}
 
 on:
   workflow_dispatch:
@@ -44,6 +44,10 @@ on:
         description: 'Generate package checksum'
         required: true
         default: false
+      id:
+        description: "ID used to identify the workflow uniquely."
+        type: string
+        required: false
 
 jobs:
   validate-inputs:
