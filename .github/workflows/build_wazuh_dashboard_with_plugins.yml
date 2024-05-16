@@ -1,4 +1,4 @@
-name: Build packages ${{ inputs.id }}
+run-name: Build packages ${{ inputs.id }}
 
 on:
   workflow_dispatch:
