@@ -1,4 +1,4 @@
-name: Build packages
+run-name: Build packages ${{ inputs.id }}
 
 on:
   workflow_dispatch:
@@ -44,6 +44,44 @@ on:
         description: 'Generate package checksum'
         required: true
         default: false
+      id:
+        description: "ID used to identify the workflow uniquely."
+        type: string
+        required: false
+
+  workflow_call:
+    inputs:
+      system:
+        type: string
+        required: true
+        default: 'deb'
+      architecture:
+        type: string
+        required: true
+        default: amd64
+      revision:
+        type: string
+        required: true
+        default: '0'
+      reference_security_plugins:
+        type: string
+        required: true
+        default: 'master'
+      reference_wazuh_plugins:
+        type: string
+        required: true
+        default: 'master'
+      is_stage:
+        type: boolean
+        required: true
+        default: false
+      checksum:
+        type: boolean
+        required: true
+        default: false
+      id:
+        type: string
+        required: false
 
 jobs:
   validate-inputs:
