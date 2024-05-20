@@ -102,7 +102,8 @@ jobs:
   build-base:
     needs: [validate-inputs]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.9.0
+    # uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.9.0
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@bug/package-generation-branch-with-slash-test
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
 
