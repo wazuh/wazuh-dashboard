@@ -1,8 +1,10 @@
-# Usage: docker build --build-arg NODE_VERSION=18.19.0 --build-arg WAZUH_DASHBOARD_VERSION=4.9.0 -t wzd:4.9.0 -f wzd-dev.Dockerfile .
+# Usage: docker build --build-arg NODE_VERSION=18.19.0 --build-arg OPENSEARCH_DASHBOARDS_VERSION=2.13.0 --build-arg WAZUH_DASHBOARD_VERSION=4.9.0 -t wzd:4.9.0 -f wzd-dev.Dockerfile .
 
 ARG NODE_VERSION
 FROM node:${NODE_VERSION} AS base
 ARG WAZUH_DASHBOARD_VERSION
+ARG OPENSEARCH_DASHBOARDS_VERSION
+ENV OPENSEARCH_DASHBOARDS_VERSION=${OPENSEARCH_DASHBOARDS_VERSION}
 USER node
 RUN git clone --depth 1 --branch ${WAZUH_DASHBOARD_VERSION} https://github.com/wazuh/wazuh-dashboard.git /home/node/kbn
 RUN chown node.node /home/node/kbn
