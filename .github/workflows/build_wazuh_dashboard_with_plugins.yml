@@ -45,7 +45,7 @@ on:
         required: true
         default: false
       id:
-        description: "ID used to identify the workflow uniquely."
+        description: 'ID used to identify the workflow uniquely.'
         type: string
         required: false
 
@@ -146,7 +146,7 @@ jobs:
 
       - name: Setup packages names
         run: |
-          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x64_${{ github.head_ref || github.ref_name }}.tar.gz" >> $GITHUB_ENV
+          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x64.tar.gz" >> $GITHUB_ENV
           echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_security_plugins }}.zip" >> $GITHUB_ENV
           echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_wazuh_plugins }}.zip" >> $GITHUB_ENV
           if [ "${{ inputs.system }}" = "deb" ]; then
