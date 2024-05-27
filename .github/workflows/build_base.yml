@@ -27,8 +27,8 @@ jobs:
         working-directory: ./artifacts
     strategy:
       matrix:
-        DISTRIBUTION: [ tar.gz ]
-        ARCHITECTURE: [ x64 ]
+        DISTRIBUTION: [tar.gz]
+        ARCHITECTURE: [x64]
 
     steps:
       - name: Checkout code
@@ -69,7 +69,7 @@ jobs:
 
       - name: Get artifact build name
         run: |
-          echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${{ matrix.ARCHITECTURE }}_${{ inputs.CHECKOUT_TO }}.${{ matrix.DISTRIBUTION }}" >> $GITHUB_ENV
+          echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${{ matrix.ARCHITECTURE }}.${{ matrix.DISTRIBUTION }}" >> $GITHUB_ENV
 
       - name: Run bootstrap
         run: yarn osd bootstrap
