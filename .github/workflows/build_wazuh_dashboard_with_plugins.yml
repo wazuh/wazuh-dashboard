@@ -1,4 +1,4 @@
-run-name: Build packages ${{ inputs.id }}
+run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.debug && '- debug' || '' }} ${{ inputs.id }}
 
 on:
   workflow_dispatch:
