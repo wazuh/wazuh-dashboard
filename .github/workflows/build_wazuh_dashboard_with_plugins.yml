@@ -217,7 +217,14 @@ jobs:
         run: |
           echo "Uploading package"
           aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-          if [ "${{ inputs.checksum }}" = "true" ]; then
-            echo "Uploading checksum"
-            aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-          fi
+          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{env.PACKAGE_NAME}}"
+          echo "S3 URI: ${s3uri}"
+
+
+      - name: Upload SHA512
+        if: ${{ inputs.checksum }}
+        run: |
+          echo "Uploading checksum"
+          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{env.PACKAGE_NAME}}.sha512"
+          echo "S3 sha512 URI: ${s3uri}"
