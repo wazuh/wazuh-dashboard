@@ -20,7 +20,7 @@
     "sha": "6cb7fec4e154faa0a4a3fee4b33dfef91b9870d9"
   },
   "wazuh": {
-    "version": "4.9.0",
+    "version": "4.10.0",
     "revision": "00"
   },
   "homepage": "https://opensearch.org",
@@ -118,7 +118,6 @@
     "**/eslint-plugin-mocha-next/mocha": "npm:mocha@^10.1.0",
     "**/xml2js": "^0.5.0",
     "**/yaml": "^2.2.2"
-
   },
   "workspaces": {
     "packages": [
@@ -240,7 +239,6 @@
     "uuid": "3.3.2",
     "whatwg-fetch": "^3.0.0",
     "yauzl": "^2.10.0"
-    
   },
   "devDependencies": {
     "@babel/core": "^7.22.9",

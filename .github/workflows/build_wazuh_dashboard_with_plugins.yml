@@ -103,21 +103,21 @@ jobs:
   build-base:
     needs: [validate-inputs]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.9.0
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.10.0
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
 
   build-main-plugins:
     needs: [validate-inputs]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@4.9.0
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@4.10.0
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-inputs]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.9.0
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.10.0
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
@@ -220,7 +220,6 @@ jobs:
           aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
           s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{env.PACKAGE_NAME}}"
           echo "S3 URI: ${s3uri}"
-
 
       - name: Upload SHA512
         if: ${{ inputs.checksum }}
