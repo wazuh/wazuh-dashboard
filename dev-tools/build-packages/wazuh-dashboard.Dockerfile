@@ -1,4 +1,4 @@
-# Usage: docker build --build-arg NODE_VERSION=18.19.0 --build-arg WAZUH_DASHBOARDS_BRANCH=4.9.0 --build-arg WAZUH_DASHBOARDS_PLUGINS=4.9.0 --build-arg WAZUH_SECURITY_DASHBOARDS_PLUGIN_BRANCH=4.9.0 --build-arg OPENSEARCH_DASHBOARDS_VERSION=2.13.0 -t wzd:4.9.0 -f wazuh-dashboard.Dockerfile .
+# Usage: docker build --build-arg NODE_VERSION=18.19.0 --build-arg WAZUH_DASHBOARDS_BRANCH=4.10.0 --build-arg WAZUH_DASHBOARDS_PLUGINS=4.10.0 --build-arg WAZUH_SECURITY_DASHBOARDS_PLUGIN_BRANCH=4.10.0 --build-arg OPENSEARCH_DASHBOARDS_VERSION=2.13.0 -t wzd:4.10.0 -f wazuh-dashboard.Dockerfile .
 
 ARG NODE_VERSION
 FROM node:${NODE_VERSION} AS base
@@ -44,7 +44,7 @@ RUN zip -r -j ./dashboard-package.zip ../wzd/target/opensearch-dashboards-${OPEN
 RUN zip -r -j ./security-package.zip ../wzd/plugins/wazuh-security-dashboards-plugin/build/security-dashboards-${OPENSEARCH_DASHBOARDS_VERSION}.0.zip
 RUN zip -r -j ./wazuh-package.zip ../wzd/plugins/wazuh-check-updates/build/wazuhCheckUpdates-${OPENSEARCH_DASHBOARDS_VERSION}.zip ../wzd/plugins/wazuh/build/wazuh-${OPENSEARCH_DASHBOARDS_VERSION}.zip ../wzd/plugins/wazuh-core/build/wazuhCore-${OPENSEARCH_DASHBOARDS_VERSION}.zip
 WORKDIR /home/node/wzd/dev-tools/build-packages/base
-RUN ./generate_base.sh -v 4.9.0 -r 1 -a file:///home/node/packages/wazuh-package.zip -s file:///home/node/packages/security-package.zip -b file:///home/node/packages/dashboard-package.zip
+RUN ./generate_base.sh -v 4.10.0 -r 1 -a file:///home/node/packages/wazuh-package.zip -s file:///home/node/packages/security-package.zip -b file:///home/node/packages/dashboard-package.zip
 WORKDIR /home/node/wzd/dev-tools/build-packages/base/output
 RUN cp ./* /home/node/packages/
 
