@@ -81,6 +81,7 @@ export const DEFAULT_APP_CATEGORIES: Record<string, AppCategory> = Object.freeze
     order: 6000,
     euiIconType: 'dashboardApp',
   },
+  
   management: {
     id: 'management',
     label: i18n.translate('core.ui.managementNavList.label', {
