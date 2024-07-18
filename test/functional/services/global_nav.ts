@@ -44,7 +44,7 @@ export function GlobalNavProvider({ getService }: FtrProviderContext) {
     }
 
     public async clickLogo(): Promise<void> {
-      return await testSubjects.click('headerGlobalNav > homeIcon');
+      return await testSubjects.click('headerGlobalNav > logo');
     }
 
     public async clickHomeButton(): Promise<void> {
