@@ -18,7 +18,7 @@ interface Props {
  */
 export const HomeIcon = ({ branding, logos }: Props) => {
   // Removed prop unnecessary useExpandedHeader Wazuh dashboards
-  const { applicationTitle = 'Wazuh dashboards' } = branding;
+  const { applicationTitle = 'Wazuh dashboards', useExpandedHeader } = branding;
 
   const { url: markURL, type: markType } = logos.Mark;
 
@@ -27,7 +27,7 @@ export const HomeIcon = ({ branding, logos }: Props) => {
   let markIconSize: IconSize = 'l';
 
   // If no custom branded mark was set, use `home` icon Wazuh dashboards
-  if (markType !== 'custom') {
+  if (markType !== 'custom' && useExpandedHeader) {
     testSubj = 'homeIcon';
     // Home icon should be medium to fit in with other icons
     markIconSize = 'm';

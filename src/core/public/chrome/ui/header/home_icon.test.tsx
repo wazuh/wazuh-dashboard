@@ -18,7 +18,12 @@ describe('Home icon,', () => {
     });
 
     it('uses the home icon by default', () => {
-      const props = mockProps();
+      const props = {
+        ...mockProps(),
+        branding: {
+          useExpandedHeader: true,
+        },
+      };
       const component = shallow(<HomeIcon {...props} />);
       const icon = component.find('EuiIcon');
       expect(icon.prop('data-test-subj')).toEqual('homeIcon');
@@ -53,9 +58,9 @@ describe('Home icon,', () => {
       };
       const component = shallow(<HomeIcon {...props} />);
       const icon = component.find('EuiIcon');
-      expect(icon.prop('data-test-subj')).toEqual('homeIcon');
+      expect(icon.prop('data-test-subj')).toEqual('defaultMark');
       expect(icon.prop('type')).toEqual(props.logos.Mark.url);
-      expect(icon.prop('size')).toEqual('m');
+      expect(icon.prop('size')).toEqual('l');
       expect(icon.prop('title')).toEqual('Wazuh dashboards home');
 
       expect(component).toMatchSnapshot();

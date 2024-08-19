@@ -83,7 +83,7 @@ export const config = {
         defaultValue: 'Wazuh',
       }),
       useExpandedHeader: schema.boolean({
-        defaultValue: true,
+        defaultValue: false,
       }),
     }),
     survey: schema.object({
