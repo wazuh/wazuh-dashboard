@@ -241,7 +241,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
           "category": Object {
             "euiIconType": "managementApp",
             "id": "management",
-            "label": "Index management",
+            "label": "Indexer management",
             "order": 5000,
           },
           "data-test-subj": "monitoring",
@@ -1594,7 +1594,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
               isCollapsible={true}
               key="management"
               onToggle={[Function]}
-              title="Index management"
+              title="Indexer management"
             >
               <EuiAccordion
                 arrowDisplay="right"
@@ -1621,7 +1621,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                           className="euiCollapsibleNavGroup__title"
                           id="mockId__title"
                         >
-                          Index management
+                          Indexer management
                         </h3>
                       </EuiTitle>
                     </EuiFlexItem>
@@ -1708,7 +1708,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                                     className="euiTitle euiTitle--xxsmall euiCollapsibleNavGroup__title"
                                     id="mockId__title"
                                   >
-                                    Index management
+                                    Indexer management
                                   </h3>
                                 </EuiTitle>
                               </div>
@@ -1736,7 +1736,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                             className="euiCollapsibleNavGroup__children"
                           >
                             <EuiListGroup
-                              aria-label="Primary navigation links, Index management"
+                              aria-label="Primary navigation links, Indexer management"
                               color="subdued"
                               gutterSize="none"
                               listItems={
@@ -1755,7 +1755,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
                               size="s"
                             >
                               <ul
-                                aria-label="Primary navigation links, Index management"
+                                aria-label="Primary navigation links, Indexer management"
                                 className="euiListGroup"
                                 style={
                                   Object {

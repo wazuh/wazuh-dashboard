@@ -3899,7 +3899,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                         class="logoImage"
                                         data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
                                         data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
-                                        data-test-subj="homeIcon"
+                                        data-test-subj="defaultMark"
                                         title="Wazuh dashboards home"
                                       />
                                     </div>
@@ -4207,8 +4207,8 @@ exports[`Header handles visibility and lock changes 1`] = `
                                       <EuiIcon
                                         className="logoImage"
                                         data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
-                                        data-test-subj="homeIcon"
-                                        size="m"
+                                        data-test-subj="defaultMark"
+                                        size="l"
                                         title="Wazuh dashboards home"
                                         type="/ui/logos/wazuh_mark_on_light.svg"
                                       >
@@ -4216,8 +4216,8 @@ exports[`Header handles visibility and lock changes 1`] = `
                                           className="logoImage"
                                           data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
                                           data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
-                                          data-test-subj="homeIcon"
-                                          size="m"
+                                          data-test-subj="defaultMark"
+                                          size="l"
                                           title="Wazuh dashboards home"
                                         />
                                       </EuiIcon>
@@ -12676,7 +12676,7 @@ exports[`Header renders condensed header 1`] = `
                                         class="logoImage"
                                         data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
                                         data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
-                                        data-test-subj="homeIcon"
+                                        data-test-subj="defaultMark"
                                         title="Wazuh dashboards home"
                                       />
                                     </div>
@@ -12992,8 +12992,8 @@ exports[`Header renders condensed header 1`] = `
                                       <EuiIcon
                                         className="logoImage"
                                         data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
-                                        data-test-subj="homeIcon"
-                                        size="m"
+                                        data-test-subj="defaultMark"
+                                        size="l"
                                         title="Wazuh dashboards home"
                                         type="/ui/logos/wazuh_mark_on_light.svg"
                                       >
@@ -13001,8 +13001,8 @@ exports[`Header renders condensed header 1`] = `
                                           className="logoImage"
                                           data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
                                           data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
-                                          data-test-subj="homeIcon"
-                                          size="m"
+                                          data-test-subj="defaultMark"
+                                          size="l"
                                           title="Wazuh dashboards home"
                                         />
                                       </EuiIcon>
