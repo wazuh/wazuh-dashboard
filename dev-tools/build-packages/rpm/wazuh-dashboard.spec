@@ -20,7 +20,7 @@ Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
 Requires(preun):  /sbin/service
 Requires(postun): /sbin/service
 AutoReqProv: no
-Requires: libcap
+Requires: libcap2
 ExclusiveOS: linux
 
 # -----------------------------------------------------------------------------
