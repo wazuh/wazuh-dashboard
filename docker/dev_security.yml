@@ -18,6 +18,7 @@ services:
       - bootstrap.memory_lock=true
       # Set min and max JVM heap sizes to at least 50% of system RAM
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=yourStrongPassword123!
     ulimits:
       # Set memlock to unlimited (no soft or hard limit)
       memlock:
@@ -38,27 +39,27 @@ services:
       - opensearch-net
 
   # Runs the bootstrap and exits
-  installer:
-    image: node:${NODE_VERSION}
-    container_name: installer-security-${OPENSEARCH_VERSION}
-    volumes:
-      - ${REPO_PATH}:/home/node/app
-      - ${SECURITY_PLUGIN_REPO_PATH}:/home/node/app/plugins/security
-    user: "1000:1000"
-    working_dir: /home/node/app
-    command: >
-      /bin/bash -c "
-        yarn osd bootstrap
-        cd plugins/security
-        yarn
-      "
+  # installer:
+  #   image: node:${NODE_VERSION}
+  #   container_name: installer-security-${OPENSEARCH_VERSION}
+  #   volumes:
+  #     - ${REPO_PATH}:/home/node/app
+  #     - ${SECURITY_PLUGIN_REPO_PATH}:/home/node/app/plugins/security
+  #   user: "1000:1000"
+  #   working_dir: /home/node/app
+  #   command: >
+  #     /bin/bash -c "
+  #       yarn osd bootstrap
+  #       cd plugins/security
+  #       yarn
+  #     "
 
   wazuh-dashboard:
     image: node:${NODE_VERSION}
     container_name: wazuh-dashboard-security-${OPENSEARCH_VERSION}
-    depends_on:
-      installer:
-        condition: service_completed_successfully
+    # depends_on:
+    #   installer:
+    #     condition: service_completed_successfully
       # indexer:
       #   condition: service_healthy
     ports:
