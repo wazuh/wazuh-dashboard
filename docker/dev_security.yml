@@ -39,29 +39,29 @@ services:
       - opensearch-net
 
   # Runs the bootstrap and exits
-  # installer:
-  #   image: node:${NODE_VERSION}
-  #   container_name: installer-security-${OPENSEARCH_VERSION}
-  #   volumes:
-  #     - ${REPO_PATH}:/home/node/app
-  #     - ${SECURITY_PLUGIN_REPO_PATH}:/home/node/app/plugins/security
-  #   user: "1000:1000"
-  #   working_dir: /home/node/app
-  #   command: >
-  #     /bin/bash -c "
-  #       yarn osd bootstrap
-  #       cd plugins/security
-  #       yarn
-  #     "
+  installer:
+    image: node:${NODE_VERSION}
+    container_name: installer-security-${OPENSEARCH_VERSION}
+    volumes:
+      - ${REPO_PATH}:/home/node/app
+      - ${SECURITY_PLUGIN_REPO_PATH}:/home/node/app/plugins/security
+    user: "1000:1000"
+    working_dir: /home/node/app
+    command: >
+      /bin/bash -c "
+        yarn osd bootstrap
+        cd plugins/security
+        yarn
+      "
 
   wazuh-dashboard:
     image: node:${NODE_VERSION}
     container_name: wazuh-dashboard-security-${OPENSEARCH_VERSION}
-    # depends_on:
-    #   installer:
-    #     condition: service_completed_successfully
-      # indexer:
-      #   condition: service_healthy
+    depends_on:
+      installer:
+        condition: service_completed_successfully
+      indexer:
+        condition: service_healthy
     ports:
       - 5601:5601 # Map host port 5601 to container port 5601
     expose:
