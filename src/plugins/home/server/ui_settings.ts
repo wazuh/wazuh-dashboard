@@ -15,7 +15,10 @@ import { schema } from '@osd/config-schema';
 import { UiSettingsParams } from 'opensearch-dashboards/server';
 import { USE_NEW_HOME_PAGE } from '../common/constants';
 
-export const uiSettings: Record<string, UiSettingsParams> = {
+// Wazuh: Remove the new home page configuration for now because it is not ready yet.
+// To add it again it must be exported
+// export const uiSettings: Record<string, UiSettingsParams> = {
+const uiSettings: Record<string, UiSettingsParams> = {
   [USE_NEW_HOME_PAGE]: {
     name: i18n.translate('core.ui_settings.params.useNewHomePage', {
       defaultMessage: 'Use New Home Page',
