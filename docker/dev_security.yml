@@ -18,6 +18,7 @@ services:
       - bootstrap.memory_lock=true
       # Set min and max JVM heap sizes to at least 50% of system RAM
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=yourStrongPassword123!
     ulimits:
       # Set memlock to unlimited (no soft or hard limit)
       memlock:
