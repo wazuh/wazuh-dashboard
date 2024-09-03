@@ -36,8 +36,9 @@ import { FeatureDirectory } from './feature_directory';
 import { HashRouter as Router, Switch, Route } from 'react-router-dom';
 import { getServices } from '../opensearch_dashboards_services';
 import { useMount } from 'react-use';
-import { USE_NEW_HOME_PAGE } from '../../../common/constants';
-import { HOME_PAGE_ID } from '../../../../content_management/public';
+// import { USE_NEW_HOME_PAGE } from '../../../common/constants';
+// import { HOME_PAGE_ID } from '../../../../content_management/public';
+import { HOME_PAGE_ID } from '../../../common/constants';
 
 const RedirectToDefaultApp = () => {
   useMount(() => {
@@ -53,7 +54,7 @@ export function HomeApp({ directories, solutions }) {
     getBasePath,
     addBasePath,
     telemetry,
-    uiSettings,
+    // uiSettings,
     contentManagement,
   } = getServices();
 
@@ -78,7 +79,10 @@ export function HomeApp({ directories, solutions }) {
           <Route exact path="/feature_directory">
             <FeatureDirectory addBasePath={addBasePath} directories={directories} />
           </Route>
-          {uiSettings.get(USE_NEW_HOME_PAGE) ? (
+          {/*
+          Wazuh: The check whether the new activated menu is enabled or not is removed,
+          since we remove the option to activate it until it is working correctly.
+           {uiSettings.get(USE_NEW_HOME_PAGE) ? (
             <>
               <Route exact path="/legacy-home">
                 {legacyHome}
@@ -87,16 +91,16 @@ export function HomeApp({ directories, solutions }) {
                 {homepage}
               </Route>
             </>
-          ) : (
-            <>
-              <Route exact path="/next-home">
-                {homepage}
-              </Route>
-              <Route exact path="/">
-                {legacyHome}
-              </Route>
-            </>
-          )}
+          ) : ( */}
+          <>
+            <Route exact path="/next-home">
+              {homepage}
+            </Route>
+            <Route exact path="/">
+              {legacyHome}
+            </Route>
+          </>
+          {/* )} */}
           <Route path="*" exact={true} component={RedirectToDefaultApp} />
         </Switch>
       </Router>
