@@ -8,7 +8,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Removed the setting home:useNewHomePage from the advanced settings because the views are not finished. [#282](https://github.com/wazuh/wazuh-dashboard/pull/282)
 
-## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 06
+## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 07
 
 ### Changed
 
