@@ -188,14 +188,14 @@ exports[`Overview renders with news without solutions and without features 1`] =
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "Application": Object {
           "dark": Object {
@@ -970,14 +970,14 @@ exports[`Overview renders with news, solutions, and features 1`] = `
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/spinner_on_dark.gif",
+            "url": "/ui/logos/spinner_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/spinner_on_light.gif",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/spinner_on_light.gif",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "Application": Object {
           "dark": Object {
@@ -1455,14 +1455,14 @@ exports[`Overview renders with news, with solutions, and without features 1`] = 
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/spinner_on_dark.gif",
+            "url": "/ui/logos/spinner_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/spinner_on_light.gif",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/spinner_on_light.gif",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "Application": Object {
           "dark": Object {
@@ -1940,14 +1940,14 @@ exports[`Overview renders with news, without solutions, and with features 1`] = 
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/spinner_on_dark.gif",
+            "url": "/ui/logos/spinner_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/spinner_on_light.gif",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/spinner_on_light.gif",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "Application": Object {
           "dark": Object {
@@ -2485,14 +2485,14 @@ exports[`Overview renders without news and features, with solutions 1`] = `
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "Application": Object {
           "dark": Object {
@@ -3149,14 +3149,14 @@ exports[`Overview renders without news and solutions, with features 1`] = `
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "Application": Object {
           "dark": Object {
@@ -4054,14 +4054,14 @@ exports[`Overview renders without news, solutions, and features 1`] = `
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "Application": Object {
           "dark": Object {
@@ -5071,14 +5071,14 @@ exports[`Overview renders without news, with solutions and features 1`] = `
         "AnimatedMark": Object {
           "dark": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+            "url": "/ui/logos/spinner_on_dark.svg",
           },
           "light": Object {
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "Application": Object {
           "dark": Object {

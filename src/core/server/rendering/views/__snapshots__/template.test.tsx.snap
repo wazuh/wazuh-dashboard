@@ -610,10 +610,10 @@ Array [
         <img
           alt="OpenSearch Dashboards logo"
           class="loadingLogo"
-          data-test-image-url="/ui/logos/spinner_on_light.gif"
+          data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
           loading="eager"
-          src="/ui/logos/spinner_on_light.gif"
+          src="/ui/logos/spinner_on_light.svg"
         />
       </div>
       <div
@@ -1003,10 +1003,10 @@ Array [
         <img
           alt="custom title logo"
           class="loadingLogo"
-          data-test-image-url="/ui/logos/spinner_on_light.gif"
+          data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
           loading="eager"
-          src="/ui/logos/spinner_on_light.gif"
+          src="/ui/logos/spinner_on_light.svg"
         />
       </div>
       <div
@@ -1133,10 +1133,10 @@ Array [
         <img
           alt="OpenSearch Dashboards logo"
           class="loadingLogo"
-          data-test-image-url="/ui/logos/spinner_on_light.gif"
+          data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
           loading="eager"
-          src="/ui/logos/spinner_on_light.gif"
+          src="/ui/logos/spinner_on_light.svg"
         />
       </div>
       <div
@@ -1263,10 +1263,10 @@ Array [
         <img
           alt="OpenSearch Dashboards logo"
           class="loadingLogo"
-          data-test-image-url="/ui/logos/spinner_on_light.gif"
+          data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
           loading="eager"
-          src="/ui/logos/spinner_on_light.gif"
+          src="/ui/logos/spinner_on_light.svg"
         />
       </div>
       <div
