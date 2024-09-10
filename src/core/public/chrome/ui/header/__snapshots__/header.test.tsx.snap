@@ -1531,14 +1531,14 @@ exports[`Header handles visibility and lock changes 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/spinner_on_dark.gif",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/spinner_on_light.gif",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/spinner_on_light.gif",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
@@ -2223,14 +2223,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                       "AnimatedMark": Object {
                         "dark": Object {
                           "type": "default",
-                          "url": "/ui/logos/spinner_on_dark.gif",
+                          "url": "/ui/logos/spinner_on_dark.svg",
                         },
                         "light": Object {
                           "type": "default",
-                          "url": "/ui/logos/spinner_on_light.gif",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "type": "default",
-                        "url": "/ui/logos/spinner_on_light.gif",
+                        "url": "/ui/logos/spinner_on_light.svg",
                       },
                       "Application": Object {
                         "dark": Object {
@@ -2725,14 +2725,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/spinner_on_dark.gif",
+                            "url": "/ui/logos/spinner_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/spinner_on_light.gif",
+                            "url": "/ui/logos/spinner_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/spinner_on_light.gif",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -3478,14 +3478,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/spinner_on_dark.gif",
+                            "url": "/ui/logos/spinner_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/spinner_on_light.gif",
+                            "url": "/ui/logos/spinner_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/spinner_on_light.gif",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -3771,8 +3771,73 @@ exports[`Header handles visibility and lock changes 1`] = `
                                   <span
                                     className="euiButtonEmpty__text"
                                   >
-                                    <span
-                                      className="euiHeaderSectionItemButton__content"
+                                    <HomeIcon
+                                      branding={Object {}}
+                                      logos={
+                                        Object {
+                                          "AnimatedMark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/spinner_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/spinner_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/spinner_on_light.svg",
+                                          },
+                                          "Application": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
+                                          },
+                                          "CenterMark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
+                                          },
+                                          "Mark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_mark_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_mark_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/wazuh_mark_on_light.svg",
+                                          },
+                                          "OpenSearch": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/wazuh_on_light.svg",
+                                          },
+                                          "colorScheme": "light",
+                                        }
+                                      }
                                     >
                                       <div
                                         className="homeIconContainer"
@@ -6273,14 +6338,14 @@ exports[`Header handles visibility and lock changes 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/spinner_on_dark.gif",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/spinner_on_light.gif",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/spinner_on_light.gif",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
@@ -8511,14 +8576,14 @@ exports[`Header renders condensed header 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/spinner_on_dark.gif",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/spinner_on_light.gif",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/spinner_on_light.gif",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
@@ -9315,14 +9380,14 @@ exports[`Header renders condensed header 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/spinner_on_dark.gif",
+                            "url": "/ui/logos/spinner_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/spinner_on_light.gif",
+                            "url": "/ui/logos/spinner_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/spinner_on_light.gif",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "Application": Object {
                           "dark": Object {
@@ -9564,8 +9629,77 @@ exports[`Header renders condensed header 1`] = `
                                   <span
                                     className="euiButtonEmpty__text"
                                   >
-                                    <span
-                                      className="euiHeaderSectionItemButton__content"
+                                    <HomeIcon
+                                      branding={
+                                        Object {
+                                          "useExpandedHeader": false,
+                                        }
+                                      }
+                                      logos={
+                                        Object {
+                                          "AnimatedMark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/spinner_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/spinner_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/spinner_on_light.svg",
+                                          },
+                                          "Application": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
+                                          },
+                                          "CenterMark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
+                                          },
+                                          "Mark": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_mark_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_mark_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/wazuh_mark_on_light.svg",
+                                          },
+                                          "OpenSearch": Object {
+                                            "dark": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_on_dark.svg",
+                                            },
+                                            "light": Object {
+                                              "type": "default",
+                                              "url": "/ui/logos/wazuh_on_light.svg",
+                                            },
+                                            "type": "default",
+                                            "url": "/ui/logos/wazuh_on_light.svg",
+                                          },
+                                          "colorScheme": "light",
+                                        }
+                                      }
                                     >
                                       <div
                                         className="homeIconContainer"
@@ -12061,14 +12195,14 @@ exports[`Header renders condensed header 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/spinner_on_dark.gif",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/spinner_on_light.gif",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/spinner_on_light.gif",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
