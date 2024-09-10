@@ -140,14 +140,14 @@ exports[`Dashboard top nav render in embed mode 1`] = `
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_dark.gif",
+                    "url": "/ui/logos/spinner_on_dark.svg",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_light.gif",
+                    "url": "/ui/logos/spinner_on_light.svg",
                   },
                   "type": "default",
-                  "url": "/ui/logos/spinner_on_light.gif",
+                  "url": "/ui/logos/spinner_on_light.svg",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -1108,14 +1108,14 @@ exports[`Dashboard top nav render in embed mode, and force hide filter bar 1`] =
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_dark.gif",
+                    "url": "/ui/logos/spinner_on_dark.svg",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_light.gif",
+                    "url": "/ui/logos/spinner_on_light.svg",
                   },
                   "type": "default",
-                  "url": "/ui/logos/spinner_on_light.gif",
+                  "url": "/ui/logos/spinner_on_light.svg",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -2076,14 +2076,14 @@ exports[`Dashboard top nav render in embed mode, components can be forced show b
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_dark.gif",
+                    "url": "/ui/logos/spinner_on_dark.svg",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_light.gif",
+                    "url": "/ui/logos/spinner_on_light.svg",
                   },
                   "type": "default",
-                  "url": "/ui/logos/spinner_on_light.gif",
+                  "url": "/ui/logos/spinner_on_light.svg",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -3044,14 +3044,14 @@ exports[`Dashboard top nav render in full screen mode with appended URL param bu
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_dark.gif",
+                    "url": "/ui/logos/spinner_on_dark.svg",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_light.gif",
+                    "url": "/ui/logos/spinner_on_light.svg",
                   },
                   "type": "default",
-                  "url": "/ui/logos/spinner_on_light.gif",
+                  "url": "/ui/logos/spinner_on_light.svg",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -4012,14 +4012,14 @@ exports[`Dashboard top nav render in full screen mode, no componenets should be 
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_dark.gif",
+                    "url": "/ui/logos/spinner_on_dark.svg",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_light.gif",
+                    "url": "/ui/logos/spinner_on_light.svg",
                   },
                   "type": "default",
-                  "url": "/ui/logos/spinner_on_light.gif",
+                  "url": "/ui/logos/spinner_on_light.svg",
                 },
                 "Application": Object {
                   "dark": Object {
@@ -4980,14 +4980,14 @@ exports[`Dashboard top nav render with all components 1`] = `
                 "AnimatedMark": Object {
                   "dark": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_dark.gif",
+                    "url": "/ui/logos/spinner_on_dark.svg",
                   },
                   "light": Object {
                     "type": "default",
-                    "url": "/ui/logos/spinner_on_light.gif",
+                    "url": "/ui/logos/spinner_on_light.svg",
                   },
                   "type": "default",
-                  "url": "/ui/logos/spinner_on_light.gif",
+                  "url": "/ui/logos/spinner_on_light.svg",
                 },
                 "Application": Object {
                   "dark": Object {
