@@ -54,11 +54,7 @@ export const getNoItemsMessage = (
               defaultMessage="New to Wazuh Dashboards? {sampleDataInstallLink} to take a test drive."
               values={{
                 sampleDataInstallLink: (
-                  <EuiLink
-                    onClick={() =>
-                      application.navigateToApp('sample-data')
-                    }
-                  >
+                  <EuiLink onClick={() => application.navigateToApp('sample-data')}>
                     <FormattedMessage
                       id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
                       defaultMessage="Install some sample data"
