@@ -14,6 +14,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Changed default logos and main menu app categories [141](https://github.com/wazuh/wazuh-dashboard/pull/141)
 - Changed default value of useExpandedHeader to false [#247](https://github.com/wazuh/wazuh-dashboard/pull/247)
 - Changed build number to match the Wazuh standard [#284](https://github.com/wazuh/wazuh-dashboard/pull/284)
+- Changed link to sample data in the section dashboards and references to opensearch dashboards [#311](https://github.com/wazuh/wazuh-dashboard/pull/311)
 
 ### Removed
 
