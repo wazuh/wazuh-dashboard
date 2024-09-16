@@ -8,6 +8,7 @@ import { FormattedMessage } from '@osd/i18n/react';
 import { EuiButton, EuiEmptyPrompt, EuiLink } from '@elastic/eui';
 import { ApplicationStart } from 'opensearch-dashboards/public';
 
+const appName = 'Wazuh dashboard';
 export const getNoItemsMessage = (
   hideWriteControls: boolean,
   createItem: () => void,
@@ -45,14 +46,18 @@ export const getNoItemsMessage = (
           <p>
             <FormattedMessage
               id="dashboard.listing.createNewDashboard.combineDataViewFromOpenSearchDashboardsAppDescription"
-              defaultMessage="You can combine data views from any Wazuh Dashboards app into one dashboard and see everything in one place."
+              defaultMessage="You can combine data views from any {appName} app into one dashboard and see everything in one place."
+              values={{
+                appName,
+              }}
             />
           </p>
           <p>
             <FormattedMessage
               id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
-              defaultMessage="New to Wazuh Dashboards? {sampleDataInstallLink} to take a test drive."
+              defaultMessage="New to {appName}? {sampleDataInstallLink} to take a test drive."
               values={{
+                appName,
                 sampleDataInstallLink: (
                   <EuiLink onClick={() => application.navigateToApp('sample-data')}>
                     <FormattedMessage
