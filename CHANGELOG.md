@@ -2,6 +2,16 @@
 
 All notable changes to the Wazuh app project will be documented in this file.
 
+## Wazuh dashboard v4.9.1 - OpenSearch Dashboards 2.13.0 - Revision 00
+
+### Added
+
+- Support for Wazuh 4.9.1
+
+### Changed
+
+- Changed link to sample data in the section dashboards and references to Opensearch Dashboards [#311](https://github.com/wazuh/wazuh-dashboard/pull/311)
+
 ## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 07
 
 ### Added
@@ -14,7 +24,6 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Changed default logos and main menu app categories [141](https://github.com/wazuh/wazuh-dashboard/pull/141)
 - Changed default value of useExpandedHeader to false [#247](https://github.com/wazuh/wazuh-dashboard/pull/247)
 - Changed build number to match the Wazuh standard [#284](https://github.com/wazuh/wazuh-dashboard/pull/284)
-- Changed link to sample data in the section dashboards and references to opensearch dashboards [#311](https://github.com/wazuh/wazuh-dashboard/pull/311)
 
 ### Removed
 
