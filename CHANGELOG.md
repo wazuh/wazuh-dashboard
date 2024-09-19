@@ -12,6 +12,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Changed link to sample data in the dashboards section and references to Opensearch Dashboards [#311](https://github.com/wazuh/wazuh-dashboard/pull/311)
 
+### Fixed
+
+- Fixed bug that caused the terminal to freeze on deb upgrades [#301](https://github.com/wazuh/wazuh-dashboard/pull/301)
+
 ## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 07
 
 ### Added
