@@ -8,8 +8,29 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Removed the setting home:useNewHomePage from the advanced settings because the views are not finished. [#282](https://github.com/wazuh/wazuh-dashboard/pull/282)
 
-## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 07
+## Wazuh dashboard v4.9.1 - OpenSearch Dashboards 2.13.0 - Revision 01
+
+### Added
+
+- Support for Wazuh 4.9.1
 
 ### Changed
 
-- Changed default value of useExpandedHeader to false. [#247](https://github.com/wazuh/wazuh-dashboard/pull/247)
+- Changed link to sample data in the dashboards section and references to Opensearch Dashboards [#311](https://github.com/wazuh/wazuh-dashboard/pull/311)
+
+### Fixed
+
+- Fixed bug that caused the terminal to freeze on deb upgrades [#301](https://github.com/wazuh/wazuh-dashboard/pull/301)
+
+## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 07
+
+### Added
+
+- Support for Wazuh 4.9.0
+
+### Changed
+
+- Changed default theme [#174](https://github.com/wazuh/wazuh-dashboard/pull/174)
+- Changed default logos and main menu app categories [141](https://github.com/wazuh/wazuh-dashboard/pull/141)
+- Changed default value of useExpandedHeader to false [#247](https://github.com/wazuh/wazuh-dashboard/pull/247)
+- Changed build number to match the Wazuh standard [#284](https://github.com/wazuh/wazuh-dashboard/pull/284)
