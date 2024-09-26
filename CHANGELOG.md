@@ -21,6 +21,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Fixed
 
 - Fixed bug that caused the terminal to freeze on deb upgrades [#301](https://github.com/wazuh/wazuh-dashboard/pull/301)
+- Fixed the name of the "Index management" category to "Indexer management" [#330](https://github.com/wazuh/wazuh-dashboard/pull/330)
 
 ## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 07
 
