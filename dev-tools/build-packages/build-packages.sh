@@ -5,6 +5,7 @@ base=""
 revision="1"
 security=""
 version=""
+reportPlugin=""
 all_platforms="no"
 deb="no"
 rpm="no"
@@ -16,7 +17,7 @@ current_path="$( cd $(dirname $0) ; pwd -P )"
 build_tar() {
   echo "Building tar package..."
   cd ./base
-  bash ./generate_base.sh -a $app -b $base -s $security -v $version -r $revision
+  bash ./generate_base.sh -a $app -b $base -s $security -rp $reportPlugin -v $version -r $revision
 
   name_package_tar=$(ls ./output)
 
@@ -125,6 +126,14 @@ main() {
         "-b" | "--base")
             if [ -n "${2}" ]; then
                 base="${2}"
+                shift 2
+            else
+                help 0
+            fi
+            ;;
+        "-rp" | "--reportPlugin")
+            if [ -n "${2}" ]; then
+                reportPlugin="${2}"
                 shift 2
             else
                 help 0
