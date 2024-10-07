@@ -15,7 +15,7 @@ yarn build --linux --skip-os-packages --release
 cd /home/node/wzd/plugins
 git clone --depth 1 --branch ${WAZUH_SECURITY_DASHBOARDS_PLUGIN_BRANCH} https://github.com/wazuh/wazuh-security-dashboards-plugin.git
 git clone --depth 1 --branch ${WAZUH_DASHBOARDS_PLUGINS} https://github.com/wazuh/wazuh-dashboard-plugins.git
-git clone --depth 1 --branch ${WAZUH_DASHBOARDS_PLUGINS} https://github.com/wazuh/wazuh-dashboards-reporting.git
+git clone --depth 1 --branch ${WAZUH_DASHBOARDS_REPORTING_BRANCH} https://github.com/wazuh/wazuh-dashboards-reporting.git
 
 # Build wazuh-security-dashboards-plugin
 cd /home/node/wzd/plugins/wazuh-security-dashboards-plugin
