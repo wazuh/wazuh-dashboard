@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y git zip unzip curl brotli jq
 USER node
 
 COPY ./config-dockerfile/entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 
 RUN bash /entrypoint.sh
 
