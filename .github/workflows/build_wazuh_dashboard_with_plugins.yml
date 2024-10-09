@@ -35,6 +35,11 @@ on:
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
         default: 'master'
+      reference_report_plugins:
+        type: string
+        description: 'Branch/tag/commit of the wazuh-dashboard-reporting repository to build the report plugin'
+        required: true
+        default: 'master'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -72,6 +77,10 @@ on:
         type: string
         required: true
         default: 'master'
+      reference_report_plugins:
+        type: string
+        required: true
+        default: 'master'
       is_stage:
         type: boolean
         required: true
@@ -103,26 +112,33 @@ jobs:
   build-base:
     needs: [validate-inputs]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.10.0
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@master
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
 
   build-main-plugins:
     needs: [validate-inputs]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@4.10.0
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-inputs]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.10.0
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
+  build-report-plugin:
+    needs: [validate-inputs]
+    name: Build reporting plugin
+    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/manual-build.yml@master
+    with:
+      reference: ${{ inputs.reference_report_plugins }}
+
   build-and-test-package:
-    needs: [build-main-plugins, build-base, build-security-plugin]
+    needs: [build-main-plugins, build-base, build-security-plugin, build-report-plugin]
     runs-on: ubuntu-latest
     name: Generate packages
     steps:
@@ -150,6 +166,7 @@ jobs:
           echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x64.tar.gz" >> $GITHUB_ENV
           echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_security_plugins }}.zip" >> $GITHUB_ENV
           echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_wazuh_plugins }}.zip" >> $GITHUB_ENV
+          echo "WAZUH_REPORT_PLUGIN=reports-dashboards_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_report_plugins }}.zip" >> $GITHUB_ENV
           if [ "${{ inputs.system }}" = "deb" ]; then
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ inputs.architecture }}.deb" >> $GITHUB_ENV
@@ -182,11 +199,18 @@ jobs:
           name: ${{ env.WAZUH_PLUGINS }}
           path: ${{ env.CURRENT_DIR }}/artifacts/plugins
 
+      - name: Download report plugin artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.WAZUH_REPORT_PLUGIN }}
+          path: ${{ env.CURRENT_DIR }}/artifacts/report-plugin
+
       - name: Zip plugins
         run: |
           zip -r -j ${{ env.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ env.CURRENT_DIR }}/artifacts/plugins
           zip -r -j ${{ env.CURRENT_DIR }}/artifacts/security-package.zip ${{ env.CURRENT_DIR }}/artifacts/security-plugin
           zip -r -j ${{ env.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ env.CURRENT_DIR }}/artifacts/dashboard/${{ env.WAZUH_DASHBOARD_SLIM }}
+          zip -r -j ${{ env.CURRENT_DIR }}/artifacts/report-package.zip ${{ env.CURRENT_DIR }}/artifacts/report-plugin
 
       - name: Build package
         run: |
@@ -197,6 +221,7 @@ jobs:
             -a file://${{env.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{env.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{env.CURRENT_DIR}}/artifacts/dashboard-package.zip \
+            -rp file://${{env.CURRENT_DIR}}/artifacts/report-package.zip \
             --${{ inputs.system }} ${{ env.PRODUCTION }}
 
       - name: Test package
