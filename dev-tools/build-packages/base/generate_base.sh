@@ -16,6 +16,7 @@ base=""
 revision="1"
 security=""
 version=""
+reportPlugin=""
 
 # Paths
 current_path="$( cd $(dirname $0) ; pwd -P )"
@@ -116,6 +117,24 @@ build() {
         clean 1
     fi
 
+    echo
+    echo "Downloading report plugin.."
+    echo
+
+    if [[ $reportPlugin =~ $valid_url ]]; then
+        if ! curl --output applications/reporting.zip --silent --fail "${reportPlugin}"; then
+            echo "The given URL or Path to the Wazuh Reporting Plugin is not working: ${reportPlugin}"
+            clean 1
+        else
+            echo "Extracting Reporting application"
+            unzip -q applications/reporting.zip -d applications
+            rm applications/reporting.zip
+        fi
+    else
+        echo "The given URL or Path to the Wazuh Reporting Plugin is not valid: ${reportPlugin}"
+        clean 1
+    fi
+
     tar -zxf wazuh-dashboard.tar.gz
     directory_name=$(ls -td */ | head -1)
     working_dir="wazuh-dashboard-$version-$revision-linux-x64"
@@ -126,7 +145,7 @@ build() {
     echo Building the package...
     echo
 
-    # Install Wazuh apps and Security app
+    # Install Wazuh apps, Reporting app and Security app
 
     plugins=$(ls $tmp_dir/applications)' '$(cat $current_path/plugins)
     for plugin in $plugins; do
@@ -150,9 +169,6 @@ build() {
     category_explore='{id:"explore",label:"Explore",order:100,euiIconType:"search"}'
     category_dashboard_management='{id:"management",label:"Index management",order:5e3,euiIconType:"managementApp"}'
 
-    # Replace app category to Reporting app
-    sed -i -e "s|category:{id:\"opensearch\",label:_i18n.i18n.translate(\"opensearch.reports.categoryName\",{defaultMessage:\"OpenSearch Plugins\"}),order:2e3}|category:${category_explore}|" ./plugins/reportsDashboards/target/public/reportsDashboards.plugin.js
-
     # Replace app category to Alerting app
     sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/alertingDashboards/target/public/alertingDashboards.plugin.js
 
@@ -167,7 +183,6 @@ build() {
 
     # Generate compressed files
     files_to_recreate=(
-      ./plugins/reportsDashboards/target/public/reportsDashboards.plugin.js
       ./plugins/alertingDashboards/target/public/alertingDashboards.plugin.js
       ./plugins/customImportMapDashboards/target/public/customImportMapDashboards.plugin.js
       ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
@@ -248,6 +263,14 @@ main() {
         "-b" | "--base")
             if [ -n "${2}" ]; then
                 base="${2}"
+                shift 2
+            else
+                help 0
+            fi
+            ;;
+        "-rp" | "--reportPlugin")
+            if [ -n "${2}" ]; then
+                reportPlugin="${2}"
                 shift 2
             else
                 help 0
