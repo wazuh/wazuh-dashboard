@@ -14,13 +14,13 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.10.1
 
-## Wazuh dashboard v4.10.0 - OpenSearch Dashboards 2.16.0 - Revision 01
+## Wazuh dashboard v4.10.0 - OpenSearch Dashboards 2.16.0 - Revision 02
 
 ### Removed
 
 - Removed the setting home:useNewHomePage from the advanced settings because the views are not finished. [#282](https://github.com/wazuh/wazuh-dashboard/pull/282)
 
-## Wazuh dashboard v4.9.1 - OpenSearch Dashboards 2.13.0 - Revision 01
+## Wazuh dashboard v4.9.1 - OpenSearch Dashboards 2.13.0 - Revision 04
 
 ### Added
 
@@ -33,6 +33,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Fixed
 
 - Fixed bug that caused the terminal to freeze on deb upgrades [#301](https://github.com/wazuh/wazuh-dashboard/pull/301)
+- Fixed the name of the "Index management" category to "Indexer management" [#330](https://github.com/wazuh/wazuh-dashboard/pull/330)
 
 ## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 07
 
