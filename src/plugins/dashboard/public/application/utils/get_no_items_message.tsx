@@ -8,6 +8,7 @@ import { FormattedMessage } from '@osd/i18n/react';
 import { EuiSmallButton, EuiEmptyPrompt, EuiLink, EuiText } from '@elastic/eui';
 import { ApplicationStart } from 'opensearch-dashboards/public';
 
+const appName = 'Wazuh dashboard';
 export const getNoItemsMessage = (
   hideWriteControls: boolean,
   createItem: () => void,
@@ -46,36 +47,32 @@ export const getNoItemsMessage = (
       }
       body={
         <Fragment>
-          <EuiText size="s">
-            <p>
-              <FormattedMessage
-                id="dashboard.listing.createNewDashboard.combineDataViewFromOpenSearchDashboardsAppDescription"
-                defaultMessage="You can combine data views from any OpenSearch Dashboards app into one dashboard and see everything in one place."
-              />
-            </p>
-            <p>
-              <FormattedMessage
-                id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
-                defaultMessage="New to OpenSearch Dashboards? {sampleDataInstallLink} to take a test drive."
-                values={{
-                  sampleDataInstallLink: (
-                    <EuiLink
-                      onClick={() =>
-                        application.navigateToApp('home', {
-                          path: '#/tutorial_directory/sampleData',
-                        })
-                      }
-                    >
-                      <FormattedMessage
-                        id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
-                        defaultMessage="Install some sample data"
-                      />
-                    </EuiLink>
-                  ),
-                }}
-              />
-            </p>
-          </EuiText>
+          <p>
+            <FormattedMessage
+              id="dashboard.listing.createNewDashboard.combineDataViewFromOpenSearchDashboardsAppDescription"
+              defaultMessage="You can combine data views from any {appName} app into one dashboard and see everything in one place."
+              values={{
+                appName,
+              }}
+            />
+          </p>
+          <p>
+            <FormattedMessage
+              id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
+              defaultMessage="New to {appName}? {sampleDataInstallLink} to take a test drive."
+              values={{
+                appName,
+                sampleDataInstallLink: (
+                  <EuiLink onClick={() => application.navigateToApp('sample-data')}>
+                    <FormattedMessage
+                      id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
+                      defaultMessage="Install some sample data"
+                    />
+                  </EuiLink>
+                ),
+              }}
+            />
+          </p>
         </Fragment>
       }
       actions={
