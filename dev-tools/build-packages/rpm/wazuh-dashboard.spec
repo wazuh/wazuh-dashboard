@@ -130,7 +130,7 @@ fi
 setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
 setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/fallback/bin/node
 
-if [ ! -f %{INSTALLATION_DIR}/config/opensearch_dashboards.keystore ]; then
+if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
   runuser %{USER} --shell="/bin/bash" --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore create" > /dev/null 2>&1
   runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" > /dev/null 2>&1
   runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" > /dev/null 2>&1
@@ -381,6 +381,7 @@ rm -fr %{buildroot}
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/osd_bundles_loader_source.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/index.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/template.js.hbs"
+%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/startup.js.hbs"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/app_bootstrap.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/index.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/apm/index.js"
