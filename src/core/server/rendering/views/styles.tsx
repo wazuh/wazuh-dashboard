@@ -169,7 +169,7 @@ export const Styles: FunctionComponent<Props> = ({ theme, darkMode }) => {
           }
 
           .loadingLogoContainer {
-            height: 150px; /* Wazuh */
+            height: 100px; /* Wazuh */
             padding: 10px 10px 10px 10px;
           }
 
