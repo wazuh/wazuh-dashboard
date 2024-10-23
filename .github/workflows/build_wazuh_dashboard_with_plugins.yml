@@ -154,7 +154,6 @@ jobs:
           if [ "${{ inputs.is_stage }}" = "true" ]; then
             echo "PRODUCTION=--production" >> $GITHUB_ENV
           fi
-          if
 
       - name: Setup packages names
         run: |
