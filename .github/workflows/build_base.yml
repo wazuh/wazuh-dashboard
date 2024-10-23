@@ -10,6 +10,11 @@ on:
         required: true
         default: ''
         type: string
+      ARCHITECTURE:
+        description: 'The architecture to build the package for'
+        required: true
+        default: 'x64'
+        type: string
 
   workflow_dispatch:
     inputs:
@@ -17,10 +22,15 @@ on:
         description: 'The branch/tag/commit to checkout to'
         required: true
         default: ''
+      ARCHITECTURE:
+        description: 'The architecture to build the package for'
+        required: true
+        default: 'x64'
+        type: string
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.ARCHITECTURE == 'x64' && 'ubuntu-latest' || 'wz-linux-arm64' }}
     name: Build
     defaults:
       run:
@@ -28,7 +38,7 @@ jobs:
     strategy:
       matrix:
         DISTRIBUTION: [tar.gz]
-        ARCHITECTURE: [x64]
+        ARCHITECTURE: [x64, arm64]
 
     steps:
       - name: Checkout code
@@ -75,11 +85,11 @@ jobs:
         run: yarn osd bootstrap
 
       - name: Build linux-x64
-        if: matrix.ARCHITECTURE == 'x64'
+        if: matrix.ARCHITECTURE == 'x64' && inputs.ARCHITECTURE == 'x64'
         run: yarn build-platform --linux --skip-os-packages --release
 
       - name: Build linux-arm64
-        if: matrix.ARCHITECTURE == 'arm64'
+        if: matrix.ARCHITECTURE == 'arm64' && inputs.ARCHITECTURE == 'arm64'
         run: yarn build-platform --linux-arm --skip-os-packages --release
 
       - name: Rename artifact
