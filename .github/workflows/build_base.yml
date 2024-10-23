@@ -84,7 +84,6 @@ jobs:
         run: yarn osd bootstrap
 
       - name: Build
-        if: matrix.ARCHITECTURE == 'arm64' && inputs.ARCHITECTURE == 'arm64'
         run: yarn build-platform --${{inputs.ARCHITECTURE == 'arm64' && 'linux-arm' || 'linux'}} --skip-os-packages --release
 
       - name: Rename artifact
