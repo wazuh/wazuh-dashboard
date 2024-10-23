@@ -102,20 +102,6 @@ jobs:
             echo "Invalid combination of architecture and system"
             exit 1
           fi
-  set-architecture:
-    runs-on: ubuntu-latest
-    name: Set Architecture
-    outputs:
-      architecture: ${{ steps.set-arch.outputs.arch }}
-    steps:
-      - name: Determine Architecture
-        id: set-arch
-        run: |
-          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
-            echo "::set-output name=arch::x64"
-          else
-            echo "::set-output name=arch::arm64"
-          fi
 
   build-base:
     needs: [validate-inputs]
@@ -123,7 +109,7 @@ jobs:
     uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@change/337-support-arm-packages-generation
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
-      ARCHITECTURE: ${{ needs.set-architecture.outputs.architecture }}
+      ARCHITECTURE: ${{ inputs.architecture }}
 
   build-main-plugins:
     needs: [validate-inputs]

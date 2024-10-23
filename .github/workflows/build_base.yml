@@ -30,7 +30,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ inputs.ARCHITECTURE == 'x64' && 'ubuntu-latest' || 'wz-linux-arm64' }}
+    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'ubuntu-latest' || 'wz-linux-arm64' }}
     name: Build
     defaults:
       run:
@@ -78,16 +78,16 @@ jobs:
 
       - name: Get artifact build name
         run: |
-          echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${{ inputs.ARCHITECTURE }}.${{ matrix.DISTRIBUTION }}" >> $GITHUB_ENV
+          echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }}" >> $GITHUB_ENV
 
       - name: Run bootstrap
         run: yarn osd bootstrap
 
       - name: Build
-        run: yarn build-platform --${{inputs.ARCHITECTURE == 'arm64' && 'linux-arm' || 'linux'}} --skip-os-packages --release
+        run: yarn build-platform --${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'linux' || 'linux-arm'}} --skip-os-packages --release
 
       - name: Rename artifact
-        run: mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ matrix.ARCHITECTURE }}.${{ matrix.DISTRIBUTION }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
+        run: mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
 
       - uses: actions/upload-artifact@v3
         if: success()
