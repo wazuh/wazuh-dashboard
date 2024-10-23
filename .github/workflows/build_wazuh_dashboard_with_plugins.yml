@@ -93,12 +93,11 @@ jobs:
     steps:
       - name: Validate inputs
         run: |
-
           if { [ "${{ inputs.architecture }}" = "amd64" ] || [ "${{ inputs.architecture }}" = "arm64" ]; } && [ "${{ inputs.system }}" = "rpm" ]; then
             echo "Invalid combination of architecture and system"
             exit 1
           fi
-          if {[ "${{ inputs.architecture }}" = "x86_64" ] || [ "${{ inputs.architecture }}" = "aarch64" ]; }&& [ "${{ inputs.system }}" = "deb" ]; then
+          if {[ "${{ inputs.architecture }}" = "x86_64" ] || [ "${{ inputs.architecture }}" = "aarch64" ]; } && [ "${{ inputs.system }}" = "deb" ]; then
             echo "Invalid combination of architecture and system"
             exit 1
           fi
