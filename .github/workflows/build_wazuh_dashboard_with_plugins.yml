@@ -200,7 +200,7 @@ jobs:
             -a file://${{env.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{env.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{env.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            ${{ inputs.architecture == 'aarch64' || inputs.architecture == 'arm64' && '--arm' || '' }} \
+            ${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && '' || '--arm'}} \
             --${{ inputs.system }} --debug ${{ env.PRODUCTION }}
 
       - name: Test package
