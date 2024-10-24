@@ -153,7 +153,11 @@ jobs:
           echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64'}}.tar.gz" >> $GITHUB_ENV
           echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_security_plugins }}.zip" >> $GITHUB_ENV
           echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_wazuh_plugins }}.zip" >> $GITHUB_ENV
-          echo "ARCHITECTURE_FLAG"=${{ (inputs.architecture == 'x86_64' || inputs.architecture == 'amd64') && '' || '--arm' }} >> $GITHUB_ENV
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            echo "ARCHITECTURE_FLAG=" >> $GITHUB_ENV
+          else
+            echo "ARCHITECTURE_FLAG=--arm" >> $GITHUB_ENV
+          fi
           if [ "${{ inputs.system }}" = "deb" ]; then
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ inputs.architecture }}.deb" >> $GITHUB_ENV
