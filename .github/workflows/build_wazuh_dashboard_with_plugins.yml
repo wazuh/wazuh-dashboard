@@ -19,6 +19,8 @@ on:
         options:
           - amd64
           - x86_64
+          - aarch64
+          - arm64
         default: amd64
       revision:
         type: string
@@ -91,11 +93,11 @@ jobs:
     steps:
       - name: Validate inputs
         run: |
-          if [ "${{ inputs.architecture }}" = "amd64" ] && [ "${{ inputs.system }}" = "rpm" ]; then
+          if [[ "${{ inputs.architecture }}" == "amd64" || "${{ inputs.architecture }}" == "arm64" ]] && [[ "${{ inputs.system }}" == "rpm" ]]; then
             echo "Invalid combination of architecture and system"
             exit 1
           fi
-          if [ "${{ inputs.architecture }}" = "x86_64" ] && [ "${{ inputs.system }}" = "deb" ]; then
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "aarch64" ]] && [[ "${{ inputs.system }}" == "deb" ]]; then
             echo "Invalid combination of architecture and system"
             exit 1
           fi
@@ -106,6 +108,7 @@ jobs:
     uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.10.2
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
+      ARCHITECTURE: ${{ inputs.architecture }}
 
   build-main-plugins:
     needs: [validate-inputs]
@@ -123,7 +126,7 @@ jobs:
 
   build-and-test-package:
     needs: [build-main-plugins, build-base, build-security-plugin]
-    runs-on: ubuntu-latest
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
       - name: Checkout code
@@ -147,9 +150,14 @@ jobs:
 
       - name: Setup packages names
         run: |
-          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_x64.tar.gz" >> $GITHUB_ENV
+          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${{ env.VERSION }}-${{ env.REVISION }}_${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64'}}.tar.gz" >> $GITHUB_ENV
           echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_security_plugins }}.zip" >> $GITHUB_ENV
           echo "WAZUH_PLUGINS=wazuh-dashboard-plugins_${{ env.VERSION }}-${{ env.REVISION }}_${{ inputs.reference_wazuh_plugins }}.zip" >> $GITHUB_ENV
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            echo "ARCHITECTURE_FLAG=" >> $GITHUB_ENV
+          else
+            echo "ARCHITECTURE_FLAG=--arm" >> $GITHUB_ENV
+          fi
           if [ "${{ inputs.system }}" = "deb" ]; then
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               echo "PACKAGE_NAME=wazuh-dashboard_${{ env.VERSION }}-${{ inputs.revision }}_${{ inputs.architecture }}.deb" >> $GITHUB_ENV
@@ -193,17 +201,16 @@ jobs:
           cd ${{ env.CURRENT_DIR }}/dev-tools/build-packages
           bash ./build-packages.sh \
             -v ${{ env.VERSION }} \
-            -r ${{ inputs.revision }} \
+            -r ${{ inputs.revision }} ${{env.ARCHITECTURE_FLAG}}\
             -a file://${{env.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{env.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{env.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            --${{ inputs.system }} ${{ env.PRODUCTION }}
+            --${{ inputs.system }} --debug ${{ env.PRODUCTION }}
 
       - name: Test package
         run: |
           cd ${{ env.CURRENT_DIR }}/dev-tools/test-packages
-          ls -la ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}
-          cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}  ${{ env.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
+          cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{env.PACKAGE_NAME}}  ${{ env.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{env.PACKAGE_NAME}}
 
@@ -217,7 +224,7 @@ jobs:
       - name: Upload package
         run: |
           echo "Uploading package"
-          aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{env.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
           s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{env.PACKAGE_NAME}}"
           echo "S3 URI: ${s3uri}"
 
@@ -225,6 +232,6 @@ jobs:
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{env.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
           s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{env.PACKAGE_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
