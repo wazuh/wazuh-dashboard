@@ -4,6 +4,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 ## Wazuh dashboard v4.10.0 - OpenSearch Dashboards 2.16.0 - Revision 03
 
+### Changed
+
+- Reduced the size of the loading logo [#373](https://github.com/wazuh/wazuh-dashboard/pull/373)
+
 ### Removed
 
 - Removed the setting home:useNewHomePage from the advanced settings because the views are not finished. [#282](https://github.com/wazuh/wazuh-dashboard/pull/282)
