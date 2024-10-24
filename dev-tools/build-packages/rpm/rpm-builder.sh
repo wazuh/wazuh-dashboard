@@ -64,6 +64,8 @@ log "Setting up parameters"
 
 if [ "${architecture}" = "x64" ]; then
   architecture="x86_64"
+else
+  architecture="aarch64"
 fi
 
 build_dir=/build
@@ -108,63 +110,3 @@ if [ "${is_production}" = "no" ]; then
 fi
 
 
-
-asdf(){
-    rm wazuh-dashboard.tar.gz
-    mv $directory_name wazuh-dashboard-base
-    jq '.wazuh.revision="'${revision}'"' wazuh-dashboard-base/package.json > pkgtmp.json && mv pkgtmp.json wazuh-dashboard-base/package.json
-    mkdir -p wazuh-dashboard-base/etc/services
-    cp $config_path/* wazuh-dashboard-base/etc/services
-    echo ${version} >wazuh-dashboard-base/VERSION
-
-
-
-
-# Build directories
-
-build_dir=/build
-rpm_build_dir=${build_dir}/rpmbuild
-directory_base="/usr/share/wazuh-dashboard"
-
-
-pkg_name=${target}-${version}
-pkg_path="${rpm_build_dir}/RPMS/${architecture}"
-file_name="${target}-${version}-${revision}"
-rpm_file="${file_name}.${architecture}.rpm"
-
-if [ "$is_production" = "no" ]; then
-  final_name="${target}_${version}-${revision}_${architecture}_${commit_sha}.rpm"
-else
-  final_name="${target}_${version}-${revision}_${architecture}.rpm"
-fi
-
-mkdir -p ${rpm_build_dir}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-
-# Prepare the sources directory to build the source tar.gz
-mkdir ${build_dir}/${pkg_name}
-
-# Including spec file
-cp /usr/local/bin/${target}.spec ${rpm_build_dir}/SPECS/${pkg_name}.spec
-
-# Generating source tar.gz
-cd ${build_dir} && tar czf "${rpm_build_dir}/SOURCES/${pkg_name}.tar.gz" "${pkg_name}"
-
-ls -l ${rpm_build_dir}/SOURCES
-
-# Building RPM
-/usr/bin/rpmbuild -v \
-    --define "_topdir ${rpm_build_dir}" \
-    --define "_version ${version}" \
-    --define "_release ${revision}" \
-    --define "_localstatedir ${directory_base}" \
-    --target ${architecture} \
-    -ba ${rpm_build_dir}/SPECS/${pkg_name}.spec
-
-cd ${pkg_path} && sha512sum ${rpm_file} >/tmp/${rpm_file}.sha512
-
-find ${pkg_path}/ -maxdepth 3 -type f -name "${file_name}*" -exec mv {} /tmp/ \;
-if [ "${is_production}" = "no" ]; then
-  mv /tmp/${rpm_file} /tmp/${final_name}
-  mv /tmp/${rpm_file}.sha512 /tmp/${final_name}.sha512
-fi
-}
