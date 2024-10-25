@@ -153,7 +153,7 @@ build(){
 
   if [ "$tar" == "no" ]; then
     echo "Removing tar package..."
-    rm -r $(find $output -name "*.tar.gz")
+    rm -r $(find $output_dir -name "*.tar.gz")
   fi
 }
 
