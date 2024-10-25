@@ -13,7 +13,7 @@ on:
       ARCHITECTURE:
         description: 'The architecture to build the package for'
         required: true
-        default: 'x64'
+        default: 'amd64'
         type: string
 
   workflow_dispatch:
@@ -25,7 +25,7 @@ on:
       ARCHITECTURE:
         description: 'The architecture to build the package for'
         required: true
-        default: 'x64'
+        default: 'amd64'
         type: string
 
 jobs:
