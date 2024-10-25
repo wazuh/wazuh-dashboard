@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --allow-change-held-packages apt-utils 
 
 # Add the script to build the Debian package
 ADD deb-builder.sh /usr/local/bin/builder
-ADD debian /usr/local/bin/debian
+ADD debian /usr/local/src/debian
 RUN chmod +x /usr/local/bin/builder
 
 # Set the entrypoint

@@ -74,8 +74,8 @@ final_name="${target}_${version}-${revision}_${architecture}_${commit_sha}.deb"
 
 mkdir -p ${source_dir}/debian
 
-# Including spec file
-cp -r /usr/local/bin/debian/* ${source_dir}/debian/
+# Including spec files
+cp -r /usr/local/src/debian/* ${source_dir}/debian/
 
 # Generating directory structure to build the .deb package
 cd ${build_dir}/${target} && tar -czf ${pkg_name}.orig.tar.gz "${pkg_name}"

@@ -15,7 +15,7 @@ RUN ln -fs /usr/bin/python3.6 /usr/bin/python
 
 # Add the scripts to build the RPM package
 ADD rpm-builder.sh /usr/local/bin/builder
-ADD wazuh-dashboard.spec /usr/local/bin/wazuh-dashboard.spec
+ADD wazuh-dashboard.spec /usr/local/src/wazuh-dashboard.spec
 RUN chmod +x /usr/local/bin/builder
 
 # Set the entrypoint
