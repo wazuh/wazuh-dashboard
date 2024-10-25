@@ -78,7 +78,7 @@ export const DEFAULT_APP_CATEGORIES: Record<string, AppCategory> = Object.freeze
     label: i18n.translate('core.ui.dashboardManagementNavList.label', {
       defaultMessage: 'Dashboard management',
     }),
-    order: 6000,
+    order: 5000,
     euiIconType: 'dashboardApp',
   },
   management: {
@@ -86,7 +86,7 @@ export const DEFAULT_APP_CATEGORIES: Record<string, AppCategory> = Object.freeze
     label: i18n.translate('core.ui.managementNavList.label', {
       defaultMessage: 'Indexer management',
     }),
-    order: 5000,
+    order: 6000,
     euiIconType: 'managementApp',
   },
   investigate: {
