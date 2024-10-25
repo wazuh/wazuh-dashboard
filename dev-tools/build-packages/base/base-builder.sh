@@ -100,7 +100,7 @@ log "Replacing application categories"
 log
 
 category_explore='{id:"explore",label:"Explore",order:100,euiIconType:"search"}'
-category_dashboard_management='{id:"management",label:"Index management",order:5e3,euiIconType:"managementApp"}'
+category_dashboard_management='{id:"management",label:"Indexer management",order:6e3,euiIconType:"managementApp"}'
 
 # Replace app category to Reporting app
 sed -i -e "s|category:{id:\"opensearch\",label:_i18n.i18n.translate(\"opensearch.reports.categoryName\",{defaultMessage:\"OpenSearch Plugins\"}),order:2e3}|category:${category_explore}|" ./plugins/reportsDashboards/target/public/reportsDashboards.plugin.js
