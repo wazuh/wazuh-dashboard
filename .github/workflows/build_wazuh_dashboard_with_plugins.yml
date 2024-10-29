@@ -120,15 +120,15 @@ jobs:
               PACKAGE_NAME=wazuh-dashboard_$VERSION-${{ inputs.revision }}_${{ inputs.architecture }}_$COMMIT_SHA.rpm
             fi
           fi
-          echo "CURRENT_DIR: $CURRENT_DIR" >> $GITHUB_OUTPUT
-          echo "VERSION: $VERSION" >> $GITHUB_OUTPUT
-          echo "REVISION: $REVISION" >> $GITHUB_OUTPUT
-          echo "COMMIT_SHA: $COMMIT_SHA" >> $GITHUB_OUTPUT
-          echo "PRODUCTION: $PRODUCTION" >> $GITHUB_OUTPUT
-          echo "WAZUH_DASHBOARD_SLIM: $WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
-          echo "WAZUH_SECURITY_PLUGIN: $WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
-          echo "WAZUH_PLUGINS: $WAZUH_PLUGINS" >> $GITHUB_OUTPUT
-          echo "PACKAGE_NAME: $PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
+          echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
+          echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS=$WAZUH_PLUGINS" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
 
   validate-job:
     runs-on: ubuntu-latest
