@@ -99,6 +99,9 @@ jobs:
       WAZUH_PLUGINS: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS }}
       PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup variables
         id: setup-variables
         run: |
