@@ -1,0 +1,39 @@
+# Usage:
+#   docker build
+#         --build-arg NODE_VERSION=18.19.0
+#         --build-arg OPENSEARCH_DASHBOARD_VERSION=2.17.1.0
+#         --build-arg WAZUH_DASHBOARD_BRANCH=master
+#         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=master
+#         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=master
+#         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=master
+#         -t quay.io/wazuh/osd-dev:2.17.1
+#         -f wzd-dev.Dockerfile .
+
+ARG NODE_VERSION=18.19.0
+FROM node:${NODE_VERSION} AS base
+ARG OPENSEARCH_DASHBOARD_VERSION
+ARG WAZUH_DASHBOARD_BRANCH
+ARG WAZUH_DASHBOARD_SECURITY_BRANCH
+ARG WAZUH_DASHBOARD_REPORTING_BRANCH
+ARG WAZUH_DASHBOARD_PLUGINS_BRANCH
+USER node
+RUN git clone --depth 1 --branch ${WAZUH_DASHBOARD_BRANCH} https://github.com/wazuh/wazuh-dashboard.git /home/node/kbn
+RUN chown node.node /home/node/kbn
+
+WORKDIR /home/node/kbn
+RUN yarn osd bootstrap --production
+
+WORKDIR /home/node/kbn/plugins
+
+COPY entrypoint.sh /home/node/entrypoint.sh
+COPY plugins /home/node/plugins
+COPY wazuh-dashboard-plugins /home/node/wazuh-dashboard-plugins
+RUN chmod +x /home/node/entrypoint.sh
+ENTRYPOINT ["/home/node/entrypoint.sh"]
+
+RUN mkdir -p /home/node/kbn/data/wazuh/config
+
+FROM node:${NODE_VERSION}
+USER node
+COPY --chown=node:node --from=base /home/node/kbn /home/node/kbn
+WORKDIR /home/node/kbn
