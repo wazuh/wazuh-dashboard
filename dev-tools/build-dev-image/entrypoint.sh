@@ -15,11 +15,13 @@ for plugin in $plugins; do
 
     if [[ $plugin == "wazuh-dashboard-plugins" ]]; then
       git clone --depth 1 --branch ${WAZUH_DASHBOARD_PLUGINS_BRANCH} https://github.com/wazuh/$plugin.git
-      mv $plugin/plugins .
+      mv $plugin/plugins/* ./
       for wazuh_dashboard_plugin in $wazuh_dashboard_plugins; do
         cd /home/node/kbn/plugins/$wazuh_dashboard_plugin
         yarn install
       done
+      cd /home/node/kbn/plugins
+      rm -rf $plugin
     fi
 
   else
