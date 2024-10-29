@@ -130,15 +130,15 @@ jobs:
               PACKAGE_NAME=wazuh-dashboard_$VERSION-${{ inputs.revision }}_${{ inputs.architecture }}_$COMMIT_SHA.rpm
             fi
           fi
-          echo "::set-output name=CURRENT_DIR::$CURRENT_DIR"
-          echo "::set-output name=VERSION::$VERSION"
-          echo "::set-output name=REVISION::$REVISION"
-          echo "::set-output name=COMMIT_SHA::$COMMIT_SHA"
-          echo "::set-output name=PRODUCTION::$PRODUCTION"
-          echo "::set-output name=WAZUH_DASHBOARD_SLIM::$WAZUH_DASHBOARD_SLIM"
-          echo "::set-output name=WAZUH_SECURITY_PLUGIN::$WAZUH_SECURITY_PLUGIN"
-          echo "::set-output name=WAZUH_PLUGINS::$WAZUH_PLUGINS"
-          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"
+          echo "CURRENT_DIR: $CURRENT_DIR" >> $GITHUB_OUTPUT
+          echo "VERSION: $VERSION" >> $GITHUB_OUTPUT
+          echo "REVISION: $REVISION" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA: $COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "PRODUCTION: $PRODUCTION" >> $GITHUB_OUTPUT
+          echo "WAZUH_DASHBOARD_SLIM: $WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
+          echo "WAZUH_SECURITY_PLUGIN: $WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS: $WAZUH_PLUGINS" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME: $PACKAGE_NAME" >> $GITHUB_OUTPUT
 
   validate-job:
     runs-on: ubuntu-latest
@@ -168,14 +168,12 @@ jobs:
           set +e
           echo "Verifying package"
           PACKAGE_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}
-          noexists=$(aws s3 ls s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/$PACKAGE_NAME)
-          exists=$(aws s3 ls s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/wazuh-dashboard_4.10.0-1_amd64.deb)
-
-          echo "Exists output: $exists"
-          echo "No exists output: $noexists"
-
+          exists=$(aws s3 ls s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/$PACKAGE_NAME)
+          if [ -n "$exists" ]; then
+            echo "Package already exists"
+            exit 1
+          fi
           set -e
-          exit 1
 
   build-base:
     needs: [validate-job]
