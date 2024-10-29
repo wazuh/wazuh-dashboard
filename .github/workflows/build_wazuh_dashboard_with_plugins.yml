@@ -45,6 +45,10 @@ on:
         description: 'Set production nomenclature'
         required: true
         default: false
+      upload:
+        description: "Upload ?"
+        type: boolean
+        default: true
       checksum:
         type: boolean
         description: 'Generate package checksum'
@@ -85,6 +89,9 @@ on:
         type: boolean
         required: true
         default: false
+      upload:
+        type: boolean
+        default: true
       checksum:
         type: boolean
         required: true
@@ -232,7 +239,15 @@ jobs:
           bash ./test-packages.sh \
             -p ${{env.PACKAGE_NAME}}
 
+      - uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: ${{ env.PACKAGE_NAME }}
+          path: ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}
+          retention-days: 30
+
       - name: Set up AWS CLI
+        if: ${{ inputs.upload }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
@@ -240,6 +255,7 @@ jobs:
           aws-region: ${{ secrets.CI_AWS_REGION }}
 
       - name: Upload package
+        if: ${{ inputs.upload }}
         run: |
           echo "Uploading package"
           aws s3 cp  ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
@@ -247,7 +263,7 @@ jobs:
           echo "S3 URI: ${s3uri}"
 
       - name: Upload SHA512
-        if: ${{ inputs.checksum }}
+        if: ${{ inputs.upload && inputs.checksum }}
         run: |
           echo "Uploading checksum"
           aws s3 cp ${{ env.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{env.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
