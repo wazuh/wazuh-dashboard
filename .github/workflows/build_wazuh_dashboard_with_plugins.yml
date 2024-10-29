@@ -88,16 +88,6 @@ jobs:
   setup-variables:
     runs-on: ubuntu-latest
     name: Setup variables
-    outputs:
-      CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
-      VERSION: ${{ steps.setup-variables.outputs.VERSION }}
-      REVISION: ${{ steps.setup-variables.outputs.REVISION }}
-      COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
-      PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
-      WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-      WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-      WAZUH_PLUGINS: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS }}
-      PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
