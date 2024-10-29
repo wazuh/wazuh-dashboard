@@ -114,20 +114,20 @@ jobs:
           else
             PRODUCTION=""
           fi
-          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_$VERSION-$REVISION_x64.tar.gz
-          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_$VERSION-$REVISION_${{ inputs.reference_security_plugins }}.zip
-          WAZUH_PLUGINS=wazuh-dashboard-plugins_$VERSION-$REVISION_${{ inputs.reference_wazuh_plugins }}.zip
+          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_x64.tar.gz
+          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_${{ inputs.reference_security_plugins }}.zip
+          WAZUH_PLUGINS=wazuh-dashboard-plugins_${VERSION}-${REVISION}_${{ inputs.reference_wazuh_plugins }}.zip
           if [ "${{ inputs.system }}" = "deb" ]; then
             if [ "${{ inputs.is_stage }}" = "true" ]; then
-              PACKAGE_NAME=wazuh-dashboard_$VERSION-${{ inputs.revision }}_${{ inputs.architecture }}.deb
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
             else
-              PACKAGE_NAME=wazuh-dashboard_$VERSION-${{ inputs.revision }}_${{ inputs.architecture }}_$COMMIT_SHA.deb
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}.deb
             fi
           else
             if [ "${{ inputs.is_stage }}" = "true" ]; then
-              PACKAGE_NAME=wazuh-dashboard-$VERSION-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
+              PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
             else
-              PACKAGE_NAME=wazuh-dashboard_$VERSION-${{ inputs.revision }}_${{ inputs.architecture }}_$COMMIT_SHA.rpm
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}.rpm
             fi
           fi
           echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
