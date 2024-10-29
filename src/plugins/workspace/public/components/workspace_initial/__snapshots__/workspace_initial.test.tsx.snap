@@ -21,7 +21,7 @@ exports[`WorkspaceInitial render workspace initial page normally when theme is d
             <img
               alt="OpenSearch"
               class="euiImage__img"
-              src="/ui/logos/opensearch_on_light.svg"
+              src="/ui/logos/wazuh_on_light.svg"
             />
           </figure>
         </div>
@@ -365,7 +365,7 @@ exports[`WorkspaceInitial render workspace initial page normally when user is da
             <img
               alt="OpenSearch"
               class="euiImage__img"
-              src="/ui/logos/opensearch_on_light.svg"
+              src="/ui/logos/wazuh_on_light.svg"
             />
           </figure>
         </div>
@@ -709,7 +709,7 @@ exports[`WorkspaceInitial render workspace initial page normally when user is no
             <img
               alt="OpenSearch"
               class="euiImage__img"
-              src="/ui/logos/opensearch_on_light.svg"
+              src="/ui/logos/wazuh_on_light.svg"
             />
           </figure>
         </div>
