@@ -1,12 +1,11 @@
 # Usage:
-# docker buildx build \
-#         --platform linux/amd64,linux/arm64 \
+# docker build \
 #         --build-arg NODE_VERSION=18.19.0 \
 #         --build-arg OPENSEARCH_DASHBOARD_VERSION=2.17.1.0 \
-#         --build-arg WAZUH_DASHBOARD_BRANCH=change/346-compatibility-with-opensearch-2171 \
-#         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=change/112-compatibility-with-opensearch-2171 \
-#         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=change/3-compatibility-with-opensearch-2171 \
-#         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=change/7070-compatibility-with-opensearch-2171 \
+#         --build-arg WAZUH_DASHBOARD_BRANCH=master \
+#         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=master \
+#         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=master \
+#         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=master \
 #         -t quay.io/wazuh/osd-dev:2.17.1 \
 #         -f wzd.dockerfile .
 
