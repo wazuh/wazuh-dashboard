@@ -1,34 +1,12 @@
-plugins=$(cat /home/node/plugins)
-wazuh_dashboard_plugins=$(cat /home/node/wazuh-dashboard-plugins)
+#!/bin/bash
+base_path_plugins="/home/node/kbn/plugins"
+plugins=$(ls $base_path_plugins)
 for plugin in $plugins; do
-  echo "Cloning $plugin"
-  cd /home/node/kbn/plugins
-  if [[ $plugin =~ wazuh* ]]; then
-
-    if [[ $plugin == "wazuh-security-dashboards-plugin" ]]; then
-      git clone --depth 1 --branch ${WAZUH_DASHBOARD_SECURITY_BRANCH} https://github.com/wazuh/$plugin.git
-    fi
-
-    if [[ $plugin == "wazuh-dashboards-reporting" ]]; then
-      git clone --depth 1 --branch ${WAZUH_DASHBOARD_REPORTING_BRANCH} https://github.com/wazuh/$plugin.git
-    fi
-
-    if [[ $plugin == "wazuh-dashboard-plugins" ]]; then
-      git clone --depth 1 --branch ${WAZUH_DASHBOARD_PLUGINS_BRANCH} https://github.com/wazuh/$plugin.git
-      mv $plugin/plugins/* ./
-      for wazuh_dashboard_plugin in $wazuh_dashboard_plugins; do
-        cd /home/node/kbn/plugins/$wazuh_dashboard_plugin
-        yarn install
-      done
-      cd /home/node/kbn/plugins
-      rm -rf $plugin
-    fi
-
-  else
-    git clone --depth 1 --branch ${OPENSEARCH_DASHBOARD_VERSION} https://github.com/opensearch-project/$plugin.git
-  fi
-  if [[ $plugin != "wazuh-dashboard-plugins" ]]; then
-    cd $plugin
+  if [ ! -d "$base_path_plugins/$plugin/node_modules" ]; then
+    cd $base_path_plugins/$plugin
+    echo "Installing dependencies for $plugin"
     yarn install
   fi
 done
+
+tail -f /dev/null

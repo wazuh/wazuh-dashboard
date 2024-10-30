@@ -26,20 +26,17 @@ RUN yarn osd bootstrap --production
 
 WORKDIR /home/node/kbn/plugins
 
-ADD ./entrypoint.sh /home/node/entrypoint.sh
+ADD ./install-plugins.sh /home/node/install-plugins.sh
 ADD ./plugins /home/node/plugins
-ADD ./wazuh-dashboard-plugins /home/node/wazuh-dashboard-plugins
-
-USER root
-RUN chmod +x /home/node/entrypoint.sh
-USER node
-ENTRYPOINT ["/home/node/entrypoint.sh"]
-
-RUN bash /home/node/entrypoint.sh
-
+RUN bash /home/node/install-plugins.sh
 RUN mkdir -p /home/node/kbn/data/wazuh/config
 
 FROM node:${NODE_VERSION}
 USER node
 COPY --chown=node:node --from=base /home/node/kbn /home/node/kbn
 WORKDIR /home/node/kbn
+ADD ./entrypoint.sh /home/node/entrypoint.sh
+USER root
+RUN chmod +x /home/node/entrypoint.sh
+USER node
+ENTRYPOINT [ "/home/node/entrypoint.sh" ]
