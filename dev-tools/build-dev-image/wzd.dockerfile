@@ -34,8 +34,8 @@ FROM node:${NODE_VERSION}
 USER node
 COPY --chown=node:node --from=base /home/node/kbn /home/node/kbn
 WORKDIR /home/node/kbn
-ADD ./entrypoint.sh /home/node/entrypoint.sh
+ADD ./entrypoint.sh /usr/local/bin/entrypoint.sh
 USER root
-RUN chmod +x /home/node/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 USER node
-ENTRYPOINT [ "/home/node/entrypoint.sh" ]
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
