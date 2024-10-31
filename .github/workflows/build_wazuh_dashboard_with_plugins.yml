@@ -116,6 +116,52 @@ jobs:
             exit 1
           fi
 
+  get-shas:
+    runs-on: ubuntu-latest
+    needs: [validate-inputs]
+    steps:
+      - name: Get SHA of wazuh-dashboard-plugins
+        id: get-plugins-sha
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const response = await github.repos.getBranch({
+              owner: 'wazuh',
+              repo: 'wazuh-dashboard-plugins',
+              branch: '${{ inputs.reference_wazuh_plugins }}'
+            });
+            return response.data.commit.sha;
+      - name: Set SHA environment variable
+        run: echo "WAZUH_PLUGINS_SHA=${{ steps.get-sha.outputs.result }}" 
+      - name: Get SHA of wazuh-security-dashboards-plugin
+        id: get-security-sha
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const response = await github.repos.getBranch({
+              owner: 'wazuh',
+              repo: 'wazuh-security-dashboards-plugin',
+              branch: '${{ inputs.reference_security_plugins }}'
+            });
+            return response.data.commit.sha;
+      - name: Set SHA environment variable
+        run: echo "WAZUH_SECURITY_SHA=${{ steps.get-sha.outputs.result }}"
+      - name: Get SHA of wazuh-dashboards-reporting
+        id: get-sha
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const response = await github.repos.getBranch({
+              owner: 'wazuh',
+              repo: 'wazuh-dashboards-reporting',
+              branch: '${{ inputs.reference_report_plugins }}'
+            });
+            return response.data.commit.sha;
+      - name: Set SHA environment variable
+        run: echo "WAZUH_REPORTING_SHA=${{ steps.get-sha.outputs.result }}" 
+             
+
+        
   build-base:
     needs: [validate-inputs]
     name: Build dashboard
@@ -145,7 +191,7 @@ jobs:
       reference: ${{ inputs.reference_report_plugins }}
 
   build-and-test-package:
-    needs: [build-main-plugins, build-base, build-security-plugin, build-report-plugin]
+    needs: [build-main-plugins, build-base, build-security-plugin, build-report-plugin,get-shas]
     runs-on: ubuntu-latest
     name: Generate packages
     steps:
