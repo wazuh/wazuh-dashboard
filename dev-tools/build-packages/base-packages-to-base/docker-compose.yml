@@ -1,0 +1,19 @@
+
+services:
+  base:
+    image: base-packages-to-base
+    build:
+      context: .
+      dockerfile: base-packages.Dockerfile
+      args:
+        NODE_VERSION: 18.19.0
+        WAZUH_DASHBOARD_BRANCH: 4.10.2
+        WAZUH_DASHBOARD_SECURITY_BRANCH: 4.10.2
+        WAZUH_DASHBOARD_PLUGINS_BRANCH: 4.10.2
+        ARCHITECTURE: arm
+    container_name: base-packages-to-base
+    environment:
+      OPENSEARCH_DASHBOARDS_VERSION: 2.16.0
+    volumes:
+      - ./output:/home/node/output
+    command: tail -f /dev/null
