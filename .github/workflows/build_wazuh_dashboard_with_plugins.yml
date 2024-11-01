@@ -146,7 +146,7 @@ jobs:
       reference: ${{ inputs.reference_report_plugins }}
 
   build-and-test-package:
-    needs: [build-main-plugins, build-base, build-security-plugin, build-report-plugin,get-shas]
+    needs: [build-main-plugins, build-base, build-security-plugin, build-report-plugin]
     runs-on: ubuntu-latest
     name: Generate packages
     steps:
