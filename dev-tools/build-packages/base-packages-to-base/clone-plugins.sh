@@ -3,7 +3,7 @@ base_path_repositories_scripts="/home/node/repositories"
 base_path_repositories_plugins_scripts="/home/node/repositories/plugins"
 plugins=$(ls $base_path_repositories_plugins_scripts)
 
-mkdir /home/node/output
+mkdir /home/node/packages
 echo "Cloning Wazuh dashboards"
 source $base_path_repositories_scripts/wazuh-dashboard.sh
 

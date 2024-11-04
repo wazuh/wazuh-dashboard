@@ -7,7 +7,7 @@ if [ $ENV_ARCHITECTURE == "arm" ]; then
 else
   yarn build-platform --linux --skip-os-packages --release
 fi
-mkdir /home/node/output/wazuh-dashboard
+mkdir /home/node/packages/wazuh-dashboard
 echo "Copying Wazuh dashboards"
 ls -la /home/node/app/target
-cp -r /home/node/app/target /home/node/output/wazuh-dashboard
+cp -r /home/node/app/target/* /home/node/packages/wazuh-dashboard

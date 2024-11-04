@@ -6,5 +6,5 @@ yarn install
 echo "Building Wazuh security plugin"
 yarn build
 echo "Copying Wazuh security plugin"
-mkdir /home/node/output/wazuh-security-dashboards-plugin
-cp -r build /home/node/output/wazuh-security-dashboards-plugin
+mkdir /home/node/packages/wazuh-security-dashboards-plugin
+cp -r build/* /home/node/packages/wazuh-security-dashboards-plugin
