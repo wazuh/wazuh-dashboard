@@ -23,6 +23,7 @@ help() {
   echo "    -b, --base <url/path>         Set the wazuh-dashboard branch."
   echo "    -s, --security <url/path>     Set the wazuh-security-dashboards-plugin branch."
   echo "    --arm                         [Optional] Build for arm64 instead of x64."
+  echo "    --node-version <version>      [Optional] Set the node version."
   echo "    -h, --help                    Show this help."
   echo
   exit $1
@@ -64,7 +65,7 @@ main() {
       ARCHITECTURE="arm"
       shift 1
       ;;
-    "--base")
+    "--node-version")
       if [ -n "${2}" ]; then
         NODE_VERSION="${2}"
         shift 2
