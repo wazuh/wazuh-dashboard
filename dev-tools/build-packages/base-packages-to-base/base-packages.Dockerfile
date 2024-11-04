@@ -24,3 +24,8 @@ ADD ./repositories/wazuh-dashboard.sh /home/node/repositories/wazuh-dashboard.sh
 ADD ./repositories/plugins/wazuh-security-dashboards-plugin.sh /home/node/repositories/plugins/wazuh-security-dashboards-plugin.sh
 ADD ./repositories/plugins/wazuh-dashboard-plugins.sh /home/node/repositories/plugins/wazuh-dashboard-plugins.sh
 RUN bash /home/node/clone-plugins.sh
+
+FROM node:${NODE_VERSION}
+USER node
+COPY --chown=node:node --from=base /home/node/packages /home/node/packages
+WORKDIR /home/node/packages
