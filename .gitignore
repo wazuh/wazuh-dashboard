@@ -73,3 +73,6 @@ snapshots.js
 
 # Ignore the generated antlr files
 /src/plugins/data/public/antlr/opensearch_sql/grammar/.antlr
+
+# Ignore the generated packages
+/dev-tools/build-packages/base-packages-to-base/packages
