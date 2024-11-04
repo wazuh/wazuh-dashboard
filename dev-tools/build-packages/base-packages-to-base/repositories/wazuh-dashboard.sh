@@ -10,4 +10,4 @@ fi
 mkdir /home/node/packages/wazuh-dashboard
 echo "Copying Wazuh dashboards"
 ls -la /home/node/app/target
-cp -r /home/node/app/target/* /home/node/packages/wazuh-dashboard
+cp -r /home/node/app/target/*.tar.gz /home/node/packages/wazuh-dashboard
