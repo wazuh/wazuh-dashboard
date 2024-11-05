@@ -118,6 +118,7 @@ jobs:
       WAZUH_PLUGINS: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS }}
       PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
       FINAL_NAME: ${{ steps.setup-variables.outputs.FINAL_NAME }}
+      ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -175,8 +176,12 @@ jobs:
             else
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}.rpm
               FINAL_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}.rpm
-
             fi
+          fi
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            ARCHITECTURE_FLAG=""
+          else
+            ARCHITECTURE_FLAG=--arm"
           fi
           echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
@@ -189,6 +194,7 @@ jobs:
           echo "WAZUH_PLUGINS=$WAZUH_PLUGINS" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "FINAL_NAME=$FINAL_NAME" >> $GITHUB_OUTPUT
+          echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
 
   validate-job:
     runs-on: ubuntu-latest
@@ -255,7 +261,7 @@ jobs:
       reference: ${{ inputs.reference_report_plugins }}
   build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
-    runs-on: ubuntu-latest
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
       - name: Checkout code
@@ -302,12 +308,12 @@ jobs:
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
           bash ./build-packages.sh \
             -v ${{ needs.setup-variables.outputs.VERSION }} \
-            -r ${{ inputs.revision }} \
+            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }}  \
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             -rp file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/report-package.zip \
-            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }}
+            ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Test package
         run: |
@@ -316,6 +322,7 @@ jobs:
           cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
       - name: Set package final name
         run: |
           mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.FINAL_NAME}}
