@@ -313,7 +313,7 @@ jobs:
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             -rp file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/report-package.zip \
-            ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+            ${{ needs.setup-variables.outputs.PRODUCTION }} --${{ inputs.system }} --debug
 
       - name: Test package
         run: |
