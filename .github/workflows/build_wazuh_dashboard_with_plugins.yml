@@ -181,7 +181,7 @@ jobs:
           if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
             ARCHITECTURE_FLAG=""
           else
-            ARCHITECTURE_FLAG=--arm"
+            ARCHITECTURE_FLAG=--arm
           fi
           echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
