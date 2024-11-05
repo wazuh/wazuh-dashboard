@@ -318,7 +318,6 @@ jobs:
       - name: Test package
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
-          ls -la ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}
           cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
