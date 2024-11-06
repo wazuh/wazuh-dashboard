@@ -1,7 +1,8 @@
 .aws-config.json
 .signing-config.json
 .ackrc
-/dev-tools/build-packages/*/output
+/dev-tools/build-packages/output
+/dev-tools/build-packages/tmp
 /.opensearch
 /.chromium
 /package.json.bak
@@ -71,4 +72,7 @@ snapshots.js
 .yarn-local-mirror
 
 # Ignore the generated antlr files
-/src/plugins/data/public/antlr/**/grammar/.antlr/
+/src/plugins/data/public/antlr/opensearch_sql/grammar/.antlr
+
+# Ignore the generated packages
+/dev-tools/build-packages/base-packages-to-base/packages
