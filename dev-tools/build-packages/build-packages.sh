@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 app=""
 base=""
@@ -10,59 +11,136 @@ all_platforms="no"
 deb="no"
 rpm="no"
 tar="no"
-output="$( cd $(dirname $0) ; pwd -P )/output"
-production=""
+architecture="x64"
+production="no"
+commit_sha=$(git rev-parse --short HEAD)
 current_path="$( cd $(dirname $0) ; pwd -P )"
+output_dir="${current_path}/output"
+tmp_dir="${current_path}/tmp"
+config_dir="${current_path}/../../config"
+package_config_dir="${current_path}/config"
+verbose="info"
 
-build_tar() {
-  echo "Building tar package..."
-  cd ./base
-  bash ./generate_base.sh -a $app -b $base -s $security -rp $reportPlugin -v $version -r $revision
+trap clean INT
+trap clean EXIT
 
-  name_package_tar=$(ls ./output)
-
-  echo "Moving tar package to $output"
-  mv $current_path/base/output/$name_package_tar $output/$name_package_tar
-  cd ../
+log() {
+    if [ "$verbose" = "info" ] || [ "$verbose" = "debug" ]; then
+        echo "$@"
+    fi
 }
 
-build_deb() {
-  echo "Building deb package..."
-  name_package_tar=$(find $output -name "*.tar.gz")
-  cd ./deb
-  bash ./launcher.sh -v $version -r $revision -p file://$name_package_tar $production
-  name_package_tar=$(ls ./output)
-  echo "Moving deb package to $output/deb"
-  mv $current_path/deb/output $output/deb
-  cd ../
+clean() {
+    exit_code=$?
+    echo
+    echo "Cleaning temporary files..."
+    echo
+    # Clean the files
+    rm -rf ${tmp_dir}
+    rm -f ${current_path}/base/Docker/base-builder.sh
+    rm -f ${current_path}/base/Docker/plugins
+    rm -f ${current_path}/rpm/Docker/rpm-builder.sh
+    rm -f ${current_path}/rpm/Docker/wazuh-dashboard.spec
+    rm -f ${current_path}/deb/Docker/deb-builder.sh
+    rm -rf ${current_path}/deb/Docker/debian
+    trap '' EXIT
+    exit ${exit_code}
+}
+
+ctrl_c() {
+    clean 1
+}
+
+get_packages(){
+  packages_list=(app base security reportPlugin)
+  packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "Report plugin")
+  valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+  mkdir -p ${tmp_dir}
+  cd ${tmp_dir}
+  mkdir -p packages
+  for i in "${!packages_list[@]}"; do
+    package_var="${packages_list[$i]}"
+    package_name="${packages_names[$i]}"
+    package_url="${!package_var}"
+
+    log
+    log "Downloading ${package_name}"
+
+    if [[ $package_url =~ $valid_url ]]; then
+      if ! curl --output "packages/${package_var}.zip" --silent --fail "${package_url}"; then
+        echo "The given URL or Path to the ${package_name} is not working: ${package_url}"
+        clean 1
+      fi
+    else
+      echo "The given URL or Path to the ${package_name} is not valid: ${package_url}"
+      clean 1
+    fi
+    log "Done!"
+    log
+  done
+  cd ..
+}
+
+build_tar() {
+  log
+  log "Building base package..."
+  log
+  mkdir -p ${output_dir}
+  cp -r ${config_dir} ${tmp_dir}
+  cd ./base
+  dockerfile_path="${current_path}/base/Docker"
+  container_name="dashboard-base-builder"
+  cp ./base-builder.sh ${dockerfile_path}
+  cp ./plugins ${dockerfile_path}
+  docker build -t ${container_name} ${dockerfile_path} || return 1
+  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z\
+  ${container_name} ${version} ${revision} ${architecture} ${verbose}|| return 1
+  cd ..
 }
 
 build_rpm() {
-  echo "Building rpm package..."
-  name_package_tar=$(find $output -name "*.tar.gz")
+  log "Building rpm package..."
   cd ./rpm
-  bash ./launcher.sh -v $version -r $revision -p file://$name_package_tar $production
-  echo "Moving rpm package to $output/rpm"
-  mv $current_path/rpm/output $output/rpm
+  dockerfile_path="${current_path}/rpm/Docker"
+  container_name="dashboard-rpm-builder"
+  cp -r ${package_config_dir} ${tmp_dir}
+  cp ./rpm-builder.sh ${dockerfile_path}
+  cp ./wazuh-dashboard.spec ${dockerfile_path}
+  docker build -t ${container_name} ${dockerfile_path} || return 1
+  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z\
+  ${container_name} ${version} ${revision} ${architecture}\
+  ${commit_sha} ${production} ${verbose}|| return 1
   cd ../
 }
 
 
-build() {
-  name_package_tar="wazuh-dashboard-$version-$revision-linux-x64.tar.gz"
+build_deb() {
+  log "Building deb package..."
+  cd ./deb
+  dockerfile_path="${current_path}/deb/Docker"
+  container_name="dashboard-deb-builder"
+  cp -r ${package_config_dir} ${tmp_dir}
+  cp ./deb-builder.sh ${dockerfile_path}
+  cp -r ./debian ${dockerfile_path}
+  docker build -t ${container_name} ${dockerfile_path} || return 1
+  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z \
+  ${container_name} ${version} ${revision} ${architecture}\
+  ${commit_sha} ${production} ${verbose}|| return 1
+  cd ..
+}
 
-  if [ ! -d "$output" ]; then
-    mkdir $output
-  fi
 
+
+
+build(){
+  log "Building package..."
   if [ "$all_platforms" == "yes" ]; then
     deb="yes"
     rpm="yes"
     tar="yes"
   fi
-
+  get_packages
   build_tar
-  cd $current_path
 
   if [ $deb == "yes" ]; then
     echo "Building deb package..."
@@ -76,7 +154,7 @@ build() {
 
   if [ "$tar" == "no" ]; then
     echo "Removing tar package..."
-    rm -r $(find $output -name "*.tar.gz")
+    rm -r $(find $output_dir -name "*.tar.gz")
   fi
 }
 
@@ -86,14 +164,17 @@ help() {
     echo "    -a, --app <url/path>          Set the location of the .zip file containing the Wazuh plugin."
     echo "    -b, --base <url/path>         Set the location of the .tar.gz file containing the base wazuh-dashboard build."
     echo "    -s, --security <url/path>     Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
+    echo "    -rp, --reportPlugin <url/path> Set the location of the .zip file containing the wazuh-reporting-plugin."
     echo "    -v, --version <version>       Set the version of this build."
     echo "        --all-platforms           Build for all platforms."
     echo "        --deb                     Build for deb."
     echo "        --rpm                     Build for rpm."
     echo "        --tar                     Build for tar."
     echo "    --production                  [Optional] The naming of the package will be ready for production."
+    echo "    --arm                         [Optional] Build for arm64 instead of x64."
+    echo "    --debug                       [Optional] Debug mode."
+    echo "    --silent                      [Optional] Silent mode. Will not work if --debug is set."
     echo "    -r, --revision <revision>     [Optional] Set the revision of this build. By default, it is set to 1."
-    echo "    -o, --output <path>           [Optional] Set the destination path of package. By default, an output folder will be created."
     echo "    -h, --help                    Show this help."
     echo
     exit $1
@@ -154,7 +235,7 @@ main() {
             fi
             ;;
         "--production")
-            production="--production"
+            production="yes"
             shift 1
             ;;
         "--all-platforms")
@@ -173,6 +254,19 @@ main() {
             tar="yes"
             shift 1
             ;;
+        "--arm")
+            architecture="arm64"
+            shift 1
+            ;;
+        "--silent")
+            verbose="silent"
+            shift 1
+            ;;
+        "--debug")
+            verbose="debug"
+            shift 1
+            ;;
+
         "-o" | "--output")
             if [ -n "${2}" ]; then
                 output="${2}"
@@ -195,6 +289,10 @@ main() {
     if [ "$all_platforms" == "no" ] && [ "$deb" == "no" ] && [ "$rpm" == "no" ] && [ "$tar" == "no" ]; then
         echo "You must specify at least one package to build."
         help 1
+    fi
+
+    if [ "$verbose" = "debug" ]; then
+      set -x
     fi
 
     build || exit 1
