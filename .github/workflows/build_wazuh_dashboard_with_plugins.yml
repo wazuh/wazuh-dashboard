@@ -201,7 +201,7 @@ jobs:
 
   build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ubuntu-latest
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
       - name: Checkout code
