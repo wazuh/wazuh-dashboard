@@ -12,6 +12,7 @@ FILE_OWNER="wazuh-dashboard"
 # Remove container and image
 clean() {
   docker stop $CONTAINER_NAME
+  docker rm $CONTAINER_NAME
   docker rmi $CONTAINER_NAME
 }
 
