@@ -156,10 +156,10 @@ export class VisualizePlugin
     core.application.register({
       id: visualizeAppId,
       title: 'Visualize',
-      order: 8000,
+      order: 102,
       euiIconType: 'inputOutput',
       defaultPath: '#/',
-      category: DEFAULT_APP_CATEGORIES.opensearchDashboards,
+      category: DEFAULT_APP_CATEGORIES.explore,
       updater$: this.appStateUpdater.asObservable(),
       // remove all references to visualize
       mount: async (params: AppMountParameters) => {

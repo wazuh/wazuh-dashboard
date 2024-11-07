@@ -80,6 +80,7 @@ export default function () {
         `--opensearchDashboards.branding.mark.darkModeUrl=https://opensearch.org/assets/brand/SVG/Mark/opensearch_mark_darkmode.svg`,
         `--opensearchDashboards.branding.applicationTitle=OpenSearch`,
         `--uiSettings.overrides['query:enhancements:enabled']=false`,
+        `--opensearchDashboards.branding.useExpandedHeader=true`,
       ],
     },
     services,
