@@ -419,6 +419,9 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
           "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
         },
       },
+      "wazuh": Object {
+        "index": "https://documentation.wazuh.com/4.x/index.html",
+      },
     }
   }
   enableSaving={false}
@@ -1067,6 +1070,9 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
             "visualize": Object {
               "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
             },
+          },
+          "wazuh": Object {
+            "index": "https://documentation.wazuh.com/4.x/index.html",
           },
         }
       }
@@ -1982,6 +1988,9 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
                           "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
                         },
                       },
+                      "wazuh": Object {
+                        "index": "https://documentation.wazuh.com/4.x/index.html",
+                      },
                     }
                   }
                   enableSaving={false}
@@ -2392,6 +2401,9 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
                         "visualize": Object {
                           "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
                         },
+                      },
+                      "wazuh": Object {
+                        "index": "https://documentation.wazuh.com/4.x/index.html",
                       },
                     }
                   }
@@ -2804,6 +2816,9 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
                           "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
                         },
                       },
+                      "wazuh": Object {
+                        "index": "https://documentation.wazuh.com/4.x/index.html",
+                      },
                     }
                   }
                   enableSaving={false}
@@ -3214,6 +3229,9 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
                         "visualize": Object {
                           "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
                         },
+                      },
+                      "wazuh": Object {
+                        "index": "https://documentation.wazuh.com/4.x/index.html",
                       },
                     }
                   }
@@ -3681,6 +3699,9 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
                           "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
                         },
                       },
+                      "wazuh": Object {
+                        "index": "https://documentation.wazuh.com/4.x/index.html",
+                      },
                     }
                   }
                   enableSaving={false}
@@ -4093,6 +4114,9 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
                         "visualize": Object {
                           "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
                         },
+                      },
+                      "wazuh": Object {
+                        "index": "https://documentation.wazuh.com/4.x/index.html",
                       },
                     }
                   }
