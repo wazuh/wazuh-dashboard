@@ -107,37 +107,21 @@ check_metadata_rpm() {
   echo "metadata package is correct: $metadataPackage"
 }
 
+source ../utils/retry-operation.sh
+
 # Run test
 test() {
 
   if [[ $PACKAGE == *".deb" ]]; then
-    for i in {1..5}; do
-      if docker build --build-arg PACKAGE=$PACKAGE -t $CONTAINER_NAME ./deb/ && \
-        docker run -it --rm -d --name $CONTAINER_NAME $CONTAINER_NAME && \
-        check_metadata_deb; then
-        break
-      else
-        if [ $i -eq 5 ]; then
-          echo "Failed to test the deb package after 5 attempts"
-          exit 1
-        fi
-        sleep 15
-      fi
-    done
+    retry_operation "test deb package" 5 15 \
+            "docker build --build-arg PACKAGE=$PACKAGE -t $CONTAINER_NAME ./deb/ && \
+            docker run -it --rm -d --name $CONTAINER_NAME $CONTAINER_NAME && \
+            check_metadata_deb" || exit 1
   elif [[ $PACKAGE == *".rpm" ]]; then
-    for i in {1..5}; do
-      if docker build --build-arg PACKAGE=$PACKAGE -t $CONTAINER_NAME ./rpm/ && \
-        docker run -it --rm -d --name $CONTAINER_NAME $CONTAINER_NAME && \
-        check_metadata_rpm; then
-        break
-      else
-        if [ $i -eq 5 ]; then
-          echo "Failed to test the rpm package after 5 attempts"
-          exit 1
-        fi
-        sleep 15
-      fi
-    done
+    retry_operation "test rpm package" 5 15 \
+            "docker build --build-arg PACKAGE=$PACKAGE -t $CONTAINER_NAME ./rpm/ && \
+            docker run -it --rm -d --name $CONTAINER_NAME $CONTAINER_NAME && \
+            check_metadata_rpm" || exit 1
   else
     echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm ))"
     exit 1
