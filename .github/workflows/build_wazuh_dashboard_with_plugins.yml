@@ -193,25 +193,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download dashboard artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
 
       - name: Download security plugin artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
 
       - name: Download plugins artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
