@@ -363,7 +363,7 @@ export class ChromeService {
           forceAppSwitcherNavigation$={navLinks.getForceAppSwitcherNavigation$()}
           helpExtension$={helpExtension$.pipe(takeUntil(this.stop$))}
           helpSupportUrl$={helpSupportUrl$.pipe(takeUntil(this.stop$))}
-          homeHref={application.getUrlForApp('wz-home')}
+          homeHref={application.getUrlForApp('home')}
           isVisible$={this.isVisible$}
           headerVariant$={this.headerVariant$}
           opensearchDashboardsVersion={injectedMetadata.getWazuhVersion()}
