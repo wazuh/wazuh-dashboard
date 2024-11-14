@@ -15,7 +15,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 ### Fixed
 
-- Fixed section order [#413](https://github.com/wazuh/wazuh-dashboard/pull/413)
+- Fixed indexer management order [#413](https://github.com/wazuh/wazuh-dashboard/pull/413)
 
 ## Wazuh dashboard v4.9.2 - OpenSearch Dashboards 2.13.0 - Revision 01
 
