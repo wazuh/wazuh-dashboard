@@ -242,7 +242,7 @@ exports[`CollapsibleNav renders links grouped by category 1`] = `
             "euiIconType": "managementApp",
             "id": "management",
             "label": "Indexer management",
-            "order": 6000,
+            "order": 5000,
           },
           "data-test-subj": "monitoring",
           "href": "monitoring",
