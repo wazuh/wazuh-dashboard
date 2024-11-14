@@ -97,7 +97,7 @@ function onClick(
       event.stopPropagation();
     }
   } else {
-    navigateToApp('wz-home');
+    navigateToApp('home');
     event.preventDefault();
   }
 }

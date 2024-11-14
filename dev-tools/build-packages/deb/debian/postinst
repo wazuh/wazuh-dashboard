@@ -40,6 +40,7 @@ configure)
         runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" >/dev/null 2>&1
         runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" >/dev/null 2>&1
     fi
+    /usr/share/wazuh-dashboard/bin/opensearch-dashboards-plugin remove wazuh --allow-root >/dev/null 2>&1
     ;;
 
 abort-upgrade | abort-remove | abort-deconfigure) ;;

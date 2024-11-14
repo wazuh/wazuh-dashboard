@@ -48,7 +48,7 @@ on:
         required: true
         default: false
       upload:
-        description: "Upload ?"
+        description: 'Upload ?'
         type: boolean
         default: true
       checksum:
@@ -126,21 +126,21 @@ jobs:
       - name: Get SHA of wazuh-dashboard-plugins
         id: get-plugins-sha
         run: |
-            git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboard-plugins.git wzdp
-            cd wzdp
-            echo "WAZUH_PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboard-plugins.git wzdp
+          cd wzdp
+          echo "WAZUH_PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Get SHA of wazuh-security-dashboards-plugin
         id: get-security-sha
         run: |
-            git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/wazuh/wazuh-security-dashboards-plugin.git wzsp
-            cd wzsp
-            echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/wazuh/wazuh-security-dashboards-plugin.git wzsp
+          cd wzsp
+          echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Get SHA of wazuh-dashboards-reporting
         id: get-reporting-sha
         run: |
-            git clone -b ${{ inputs.reference_report_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboards-reporting.git wzrp
-            cd wzrp
-            echo "WAZUH_REPORTING_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          git clone -b ${{ inputs.reference_report_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboards-reporting.git wzrp
+          cd wzrp
+          echo "WAZUH_REPORTING_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Setup variables
         id: setup-variables
@@ -219,18 +219,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
           aws-region: ${{ secrets.CI_AWS_REGION }}
 
-      - name: Verify if package is already built
-        run: |
-          set +e
-          echo "Verifying package"
-          PACKAGE_NAME=${{ needs.setup-variables.outputs.FINAL_NAME }}
-          exists=$(aws s3 ls s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/$PACKAGE_NAME)
-          if [ -n "$exists" ]; then
-            echo "Package already exists"
-            exit 1
-          fi
-          set -e
-
   build-base:
     needs: [validate-job]
     name: Build dashboard
@@ -260,7 +248,8 @@ jobs:
     with:
       reference: ${{ inputs.reference_report_plugins }}
   build-and-test-package:
-    needs: [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
+    needs:
+      [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
