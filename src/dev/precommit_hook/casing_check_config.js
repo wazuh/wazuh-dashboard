@@ -70,7 +70,7 @@ export const IGNORE_FILE_GLOBS = [
   // packages for the ingest manager's api integration tests could be valid semver which has dashes
 
   // Wazuh: ignore file name validation
-  'VERSION'
+  'VERSION',
 ];
 
 /**
