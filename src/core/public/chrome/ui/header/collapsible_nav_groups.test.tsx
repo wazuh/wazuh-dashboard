@@ -64,15 +64,15 @@ describe('<NavGroups />', () => {
         onNavItemClick={onNavItemClick}
       />
     );
+    // Wazuh: Changes of the test because the menu starts collapsed
     expect(container).toMatchSnapshot();
+    // The accordion is collapsed by default
     expect(container.querySelectorAll('.nav-link-item-btn').length).toEqual(3);
+    expect(queryByTestId('collapsibleNavAppLink-subLink')).toBeNull();
     fireEvent.click(getByTestId('collapsibleNavAppLink-pure'));
     expect(navigateToApp).toBeCalledTimes(0);
-    // The accordion is collapsed by default
-    expect(queryByTestId('collapsibleNavAppLink-subLink')).toBeNull();
-
     // Expand the accordion
-    fireEvent.click(getByTestId('collapsibleNavAppLink-pure'));
+    expect(queryByTestId('collapsibleNavAppLink-subLink')).toBeInTheDocument();
     fireEvent.click(getByTestId('collapsibleNavAppLink-subLink'));
     expect(navigateToApp).toBeCalledWith('subLink');
   });
