@@ -65,7 +65,7 @@ describe('<NavGroups />', () => {
       />
     );
     expect(container).toMatchSnapshot();
-    expect(container.querySelectorAll('.nav-link-item-btn').length).toEqual(5);
+    expect(container.querySelectorAll('.nav-link-item-btn').length).toEqual(3);
     fireEvent.click(getByTestId('collapsibleNavAppLink-pure'));
     expect(navigateToApp).toBeCalledTimes(0);
     // The accordion is collapsed by default

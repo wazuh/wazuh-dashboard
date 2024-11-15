@@ -24,23 +24,7 @@ exports[`WorkspaceInitial render workspace initial page normally when user is OS
       >
         <div
           class="euiFlexItem euiFlexItem--flexGrowZero"
-        >
-          <figure
-            class="euiImage euiImage--large"
-          >
-            <img
-              alt="OpenSearch"
-              class="euiImage__img"
-              src="/ui/logos/wazuh_on_light.svg"
-            />
-          </figure>
-        </div>
-        <div
-          class="euiSpacer euiSpacer--l"
-        />
-        <div
-          class="euiFlexItem euiFlexItem--flexGrowZero eui-displayInline"
-          style="width: 1200px;"
+          style="max-width: 1264px; width: 100%;"
         >
           <div
             class="euiFlexGroup euiFlexGroup--gutterMedium euiFlexGroup--directionColumn euiFlexGroup--responsive"
@@ -82,7 +66,7 @@ exports[`WorkspaceInitial render workspace initial page normally when user is OS
                   <div
                     class="euiText euiText--small"
                   >
-                    Collaborate on use-case based projects with workspaces.
+                    Collaborate on use-case based projects with workspaces. 
                   </div>
                 </div>
                 <div
@@ -765,23 +749,7 @@ exports[`WorkspaceInitial render workspace initial page normally when user is no
       >
         <div
           class="euiFlexItem euiFlexItem--flexGrowZero"
-        >
-          <figure
-            class="euiImage euiImage--large"
-          >
-            <img
-              alt="OpenSearch"
-              class="euiImage__img"
-              src="/ui/logos/wazuh_on_light.svg"
-            />
-          </figure>
-        </div>
-        <div
-          class="euiSpacer euiSpacer--l"
-        />
-        <div
-          class="euiFlexItem euiFlexItem--flexGrowZero eui-displayInline"
-          style="width: 1200px;"
+          style="max-width: 1264px; width: 100%;"
         >
           <div
             class="euiFlexGroup euiFlexGroup--gutterMedium euiFlexGroup--directionColumn euiFlexGroup--responsive"
@@ -823,7 +791,7 @@ exports[`WorkspaceInitial render workspace initial page normally when user is no
                   <div
                     class="euiText euiText--small"
                   >
-                    Collaborate on use-case based projects with workspaces.
+                    Collaborate on use-case based projects with workspaces. 
                   </div>
                 </div>
                 <div
@@ -1340,20 +1308,7 @@ exports[`WorkspaceInitial render workspace initial page normally when user is no
       >
         <div />
         <div
-          class="euiFlexItem euiFlexItem--flexGrowZero"
-        >
-          <figure
-            class="euiImage euiImage--large"
-          >
-            <img
-              alt="OpenSearch"
-              class="euiImage__img"
-              src="/ui/logos/wazuh_on_light.svg"
-            />
-          </figure>
-        </div>
-        <div
-          class="euiSpacer euiSpacer--l"
+          class="euiSpacer euiSpacer--s"
         />
         <div />
         <div

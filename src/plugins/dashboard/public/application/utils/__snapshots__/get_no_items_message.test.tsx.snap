@@ -290,37 +290,41 @@ exports[`dashboard listing table with no item and with write controls 1`] = `
   }
   body={
     <React.Fragment>
-      <p>
-        <FormattedMessage
-          defaultMessage="You can combine data views from any {appName} app into one dashboard and see everything in one place."
-          id="dashboard.listing.createNewDashboard.combineDataViewFromOpenSearchDashboardsAppDescription"
-          values={
-            Object {
-              "appName": "Wazuh dashboard",
+      <EuiText
+        size="s"
+      >
+        <p>
+          <FormattedMessage
+            defaultMessage="You can combine data views from any {appName} app into one dashboard and see everything in one place."
+            id="dashboard.listing.createNewDashboard.combineDataViewFromOpenSearchDashboardsAppDescription"
+            values={
+              Object {
+                "appName": "Wazuh dashboard",
+              }
             }
-          }
-        />
-      </p>
-      <p>
-        <FormattedMessage
-          defaultMessage="New to {appName}? {sampleDataInstallLink} to take a test drive."
-          id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
-          values={
-            Object {
-              "appName": "Wazuh dashboard",
-              "sampleDataInstallLink": <EuiLink
-                onClick={[Function]}
-              >
-                <FormattedMessage
-                  defaultMessage="Install some sample data"
-                  id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
-                  values={Object {}}
-                />
-              </EuiLink>,
+          />
+        </p>
+        <p>
+          <FormattedMessage
+            defaultMessage="New to {appName}? {sampleDataInstallLink} to take a test drive."
+            id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
+            values={
+              Object {
+                "appName": "Wazuh dashboard",
+                "sampleDataInstallLink": <EuiLink
+                  onClick={[Function]}
+                >
+                  <FormattedMessage
+                    defaultMessage="Install some sample data"
+                    id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
+                    values={Object {}}
+                  />
+                </EuiLink>,
+              }
             }
-          }
-        />
-      </p>
+          />
+        </p>
+      </EuiText>
     </React.Fragment>
   }
   iconType="dashboardApp"
@@ -606,60 +610,68 @@ exports[`dashboard listing table with no item and with write controls 1`] = `
           <div
             className="euiText euiText--medium"
           >
-            <p>
-              <FormattedMessage
-                defaultMessage="You can combine data views from any {appName} app into one dashboard and see everything in one place."
-                id="dashboard.listing.createNewDashboard.combineDataViewFromOpenSearchDashboardsAppDescription"
-                values={
-                  Object {
-                    "appName": "Wazuh dashboard",
-                  }
-                }
+            <EuiText
+              size="s"
+            >
+              <div
+                className="euiText euiText--small"
               >
-                You can combine data views from any Wazuh dashboard app into one dashboard and see everything in one place.
-              </FormattedMessage>
-            </p>
-            <p>
-              <FormattedMessage
-                defaultMessage="New to {appName}? {sampleDataInstallLink} to take a test drive."
-                id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
-                values={
-                  Object {
-                    "appName": "Wazuh dashboard",
-                    "sampleDataInstallLink": <EuiLink
+                <p>
+                  <FormattedMessage
+                    defaultMessage="You can combine data views from any {appName} app into one dashboard and see everything in one place."
+                    id="dashboard.listing.createNewDashboard.combineDataViewFromOpenSearchDashboardsAppDescription"
+                    values={
+                      Object {
+                        "appName": "Wazuh dashboard",
+                      }
+                    }
+                  >
+                    You can combine data views from any Wazuh dashboard app into one dashboard and see everything in one place.
+                  </FormattedMessage>
+                </p>
+                <p>
+                  <FormattedMessage
+                    defaultMessage="New to {appName}? {sampleDataInstallLink} to take a test drive."
+                    id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
+                    values={
+                      Object {
+                        "appName": "Wazuh dashboard",
+                        "sampleDataInstallLink": <EuiLink
+                          onClick={[Function]}
+                        >
+                          <FormattedMessage
+                            defaultMessage="Install some sample data"
+                            id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
+                            values={Object {}}
+                          />
+                        </EuiLink>,
+                      }
+                    }
+                  >
+                    New to Wazuh dashboard? 
+                    <EuiLink
                       onClick={[Function]}
                     >
-                      <FormattedMessage
-                        defaultMessage="Install some sample data"
-                        id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
-                        values={Object {}}
-                      />
-                    </EuiLink>,
-                  }
-                }
-              >
-                New to Wazuh dashboard? 
-                <EuiLink
-                  onClick={[Function]}
-                >
-                  <button
-                    className="euiLink euiLink--primary"
-                    disabled={false}
-                    onClick={[Function]}
-                    type="button"
-                  >
-                    <FormattedMessage
-                      defaultMessage="Install some sample data"
-                      id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
-                      values={Object {}}
-                    >
-                      Install some sample data
-                    </FormattedMessage>
-                  </button>
-                </EuiLink>
-                 to take a test drive.
-              </FormattedMessage>
-            </p>
+                      <button
+                        className="euiLink euiLink--primary"
+                        disabled={false}
+                        onClick={[Function]}
+                        type="button"
+                      >
+                        <FormattedMessage
+                          defaultMessage="Install some sample data"
+                          id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
+                          values={Object {}}
+                        >
+                          Install some sample data
+                        </FormattedMessage>
+                      </button>
+                    </EuiLink>
+                     to take a test drive.
+                  </FormattedMessage>
+                </p>
+              </div>
+            </EuiText>
           </div>
         </EuiText>
       </span>

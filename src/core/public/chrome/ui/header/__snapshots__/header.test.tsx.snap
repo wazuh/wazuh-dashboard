@@ -4730,7 +4730,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                             data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
-                                            title="Wazuh dashboards home"
+                                            title="Wazuh dashboard home"
                                           />
                                         </div>
                                         <div
@@ -4863,7 +4863,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                             data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
                                             size="l"
-                                            title="Wazuh dashboards home"
+                                            title="Wazuh dashboard home"
                                             type="/ui/logos/wazuh_mark_on_light.svg"
                                           >
                                             <span
@@ -4872,7 +4872,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                                               data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                               data-test-subj="defaultMark"
                                               size="l"
-                                              title="Wazuh dashboards home"
+                                              title="Wazuh dashboard home"
                                             />
                                           </EuiIcon>
                                         </HomeIcon>
@@ -14430,7 +14430,7 @@ exports[`Header renders condensed header 1`] = `
                                             data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
-                                            title="Wazuh dashboards home"
+                                            title="Wazuh dashboard home"
                                           />
                                         </div>
                                         <div
@@ -14567,7 +14567,7 @@ exports[`Header renders condensed header 1`] = `
                                             data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
                                             size="l"
-                                            title="Wazuh dashboards home"
+                                            title="Wazuh dashboard home"
                                             type="/ui/logos/wazuh_mark_on_light.svg"
                                           >
                                             <span
@@ -14576,7 +14576,7 @@ exports[`Header renders condensed header 1`] = `
                                               data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                               data-test-subj="defaultMark"
                                               size="l"
-                                              title="Wazuh dashboards home"
+                                              title="Wazuh dashboard home"
                                             />
                                           </EuiIcon>
                                         </HomeIcon>
@@ -24358,7 +24358,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                                             data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
-                                            title="Wazuh dashboards home"
+                                            title="Wazuh dashboard home"
                                           />
                                         </div>
                                         <div
@@ -24495,7 +24495,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                                             data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
                                             size="l"
-                                            title="Wazuh dashboards home"
+                                            title="Wazuh dashboard home"
                                             type="/ui/logos/wazuh_mark_on_light.svg"
                                           >
                                             <span
@@ -24504,7 +24504,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                                               data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                               data-test-subj="defaultMark"
                                               size="l"
-                                              title="Wazuh dashboards home"
+                                              title="Wazuh dashboard home"
                                             />
                                           </EuiIcon>
                                         </HomeIcon>
