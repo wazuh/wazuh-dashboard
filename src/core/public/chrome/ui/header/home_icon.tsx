@@ -17,8 +17,8 @@ interface Props {
  * Use branding configurations to render the header mark on the nav bar.
  */
 export const HomeIcon = ({ branding, logos }: Props) => {
-  // Removed prop unnecessary useExpandedHeader Wazuh dashboards
-  const { applicationTitle = 'Wazuh dashboards', useExpandedHeader } = branding;
+  // Removed prop unnecessary useExpandedHeader Wazuh dashboard
+  const { applicationTitle = 'Wazuh dashboard', useExpandedHeader } = branding;
 
   const { url: markURL, type: markType } = logos.Mark;
 
@@ -26,7 +26,7 @@ export const HomeIcon = ({ branding, logos }: Props) => {
   // Marks look better at the large size
   let markIconSize: IconSize = 'l';
 
-  // If no custom branded mark was set, use `home` icon Wazuh dashboards
+  // If no custom branded mark was set, use `home` icon Wazuh dashboard
   if (markType !== 'custom' && useExpandedHeader) {
     testSubj = 'homeIcon';
     // Home icon should be medium to fit in with other icons
