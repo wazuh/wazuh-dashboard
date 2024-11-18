@@ -19,12 +19,12 @@ For example, to build the image for OpenSearch Dashboards `5.0.0`:
 # Usage:
 docker build \
   --build-arg NODE_VERSION=18.19.0 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=2.17.1.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=2.18.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=5.0.0 \
   --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=5.0.0 \
   --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=5.0.0 \
   --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=5.0.0 \
-  -t quay.io/wazuh/osd-dev:2.17.1 \
+  -t quay.io/wazuh/osd-dev:2.18.0 \
   -f wzd.dockerfile .
 ```
 
