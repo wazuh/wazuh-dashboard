@@ -81,6 +81,8 @@ get_packages(){
   cd ..
 }
 
+source ../utils/retry-operation.sh
+
 build_tar() {
   log
   log "Building base package..."
@@ -92,9 +94,12 @@ build_tar() {
   container_name="dashboard-base-builder"
   cp ./base-builder.sh ${dockerfile_path}
   cp ./plugins ${dockerfile_path}
-  docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z\
-  ${container_name} ${version} ${revision} ${architecture} ${verbose}|| return 1
+  retry_operation "build base package" 5 15 \
+        "docker build -t ${container_name} ${dockerfile_path} && \
+         docker run -t --rm \
+         -v ${tmp_dir}/:/tmp:Z \
+         -v ${output_dir}/:/output:Z \
+         ${container_name} ${version} ${revision} ${architecture} ${verbose}" || exit 1
   cd ..
 }
 
@@ -106,10 +111,13 @@ build_rpm() {
   cp -r ${package_config_dir} ${tmp_dir}
   cp ./rpm-builder.sh ${dockerfile_path}
   cp ./wazuh-dashboard.spec ${dockerfile_path}
-  docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z\
-  ${container_name} ${version} ${revision} ${architecture}\
-  ${commit_sha} ${production} ${verbose}|| return 1
+  retry_operation "build rpm package" 5 15 \
+      "docker build -t ${container_name} ${dockerfile_path} && \
+        docker run -t --rm \
+        -v ${tmp_dir}/:/tmp:Z \
+        -v ${output_dir}/:/output:Z \
+        ${container_name} ${version} ${revision} ${architecture} \
+        ${commit_sha} ${production} ${verbose}" || exit 1
   cd ../
 }
 
@@ -123,9 +131,13 @@ build_deb() {
   cp ./deb-builder.sh ${dockerfile_path}
   cp -r ./debian ${dockerfile_path}
   docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z \
-  ${container_name} ${version} ${revision} ${architecture}\
-  ${commit_sha} ${production} ${verbose}|| return 1
+  retry_operation "build deb package" 5 15 \
+        "docker build -t ${container_name} ${dockerfile_path} && \
+         docker run -t --rm \
+         -v ${tmp_dir}/:/tmp:Z \
+         -v ${output_dir}/:/output:Z \
+         ${container_name} ${version} ${revision} ${architecture} \
+         ${commit_sha} ${production} ${verbose}" || exit 1
   cd ..
 }
 
