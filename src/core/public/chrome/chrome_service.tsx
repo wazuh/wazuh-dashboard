@@ -320,6 +320,7 @@ export class ChromeService {
           navGroupsMap$={navGroup.getNavGroupsMap$()}
           setCurrentNavGroup={navGroup.setCurrentNavGroup}
           workspaceList$={workspaces.workspaceList$}
+          darkmode={uiSettings.get('theme:darkMode')}
         />
       ),
 
