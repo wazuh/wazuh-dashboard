@@ -196,6 +196,7 @@ exports[`LanguageSelector should select DQL if language is kuery 1`] = `
       "docLinks": Object {
         "DOC_LINK_VERSION": "mocked-test-branch",
         "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+        "WAZUH_DOC_VERSION": "4.x",
         "links": Object {
           "noDocumentation": Object {
             "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -561,6 +562,9 @@ exports[`LanguageSelector should select DQL if language is kuery 1`] = `
             "visualize": Object {
               "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
             },
+          },
+          "wazuh": Object {
+            "index": "https://documentation.wazuh.com/4.x/index.html",
           },
         },
       },
@@ -862,6 +866,7 @@ exports[`LanguageSelector should select lucene if language is lucene 1`] = `
       "docLinks": Object {
         "DOC_LINK_VERSION": "mocked-test-branch",
         "OPENSEARCH_WEBSITE_URL": "https://opensearch.org/",
+        "WAZUH_DOC_VERSION": "4.x",
         "links": Object {
           "noDocumentation": Object {
             "addData": "https://opensearch.org/docs/mocked-test-branch",
@@ -1227,6 +1232,9 @@ exports[`LanguageSelector should select lucene if language is lucene 1`] = `
             "visualize": Object {
               "guide": "https://opensearch.org/docs/mocked-test-branch/dashboards/visualize/viz-index/",
             },
+          },
+          "wazuh": Object {
+            "index": "https://documentation.wazuh.com/4.x/index.html",
           },
         },
       },
