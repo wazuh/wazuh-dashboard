@@ -2125,62 +2125,62 @@ exports[`Header handles visibility and lock changes 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_dark.svg",
+          "url": "/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_on_light.svg",
+        "url": "/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -3014,62 +3014,62 @@ exports[`Header handles visibility and lock changes 1`] = `
                       "AnimatedMark": Object {
                         "dark": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                          "url": "/ui/logos/spinner_on_dark.svg",
                         },
                         "light": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "type": "default",
-                        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                        "url": "/ui/logos/spinner_on_light.svg",
                       },
                       "Application": Object {
                         "dark": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                          "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
                         },
                         "light": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                         },
                         "type": "default",
-                        "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                        "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                       },
                       "CenterMark": Object {
                         "dark": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                          "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
                         },
                         "light": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                         },
                         "type": "default",
-                        "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                        "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                       },
                       "Mark": Object {
                         "dark": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                          "url": "/ui/logos/wazuh_mark_on_dark.svg",
                         },
                         "light": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_mark_on_light.svg",
                         },
                         "type": "default",
-                        "url": "/ui/logos/opensearch_mark_on_light.svg",
+                        "url": "/ui/logos/wazuh_mark_on_light.svg",
                       },
                       "OpenSearch": Object {
                         "dark": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_on_dark.svg",
+                          "url": "/ui/logos/wazuh_on_dark.svg",
                         },
                         "light": Object {
                           "type": "default",
-                          "url": "/ui/logos/opensearch_on_light.svg",
+                          "url": "/ui/logos/wazuh_on_light.svg",
                         },
                         "type": "default",
-                        "url": "/ui/logos/opensearch_on_light.svg",
+                        "url": "/ui/logos/wazuh_on_light.svg",
                       },
                       "colorScheme": "light",
                     }
@@ -3631,62 +3631,62 @@ exports[`Header handles visibility and lock changes 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "Application": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                            "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                         },
                         "CenterMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                            "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                         },
                         "Mark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                            "url": "/ui/logos/wazuh_mark_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_mark_on_light.svg",
+                            "url": "/ui/logos/wazuh_mark_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_mark_on_light.svg",
                         },
                         "OpenSearch": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_on_dark.svg",
+                            "url": "/ui/logos/wazuh_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_on_light.svg",
+                            "url": "/ui/logos/wazuh_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_on_light.svg",
+                          "url": "/ui/logos/wazuh_on_light.svg",
                         },
                         "colorScheme": "light",
                       }
@@ -3833,10 +3833,10 @@ exports[`Header handles visibility and lock changes 1`] = `
                       <img
                         alt="opensearch dashboards logo"
                         className="logoImage"
-                        data-test-image-url="/ui/logos/opensearch_dashboards_on_dark.svg"
+                        data-test-image-url="/ui/logos/wazuh_dashboards_on_dark.svg"
                         data-test-subj="defaultLogo"
                         loading="lazy"
-                        src="/ui/logos/opensearch_dashboards_on_dark.svg"
+                        src="/ui/logos/wazuh_dashboards_on_dark.svg"
                       />
                     </a>
                   </HeaderLogo>
@@ -4501,62 +4501,62 @@ exports[`Header handles visibility and lock changes 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "Application": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                            "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                         },
                         "CenterMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                            "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                         },
                         "Mark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                            "url": "/ui/logos/wazuh_mark_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_mark_on_light.svg",
+                            "url": "/ui/logos/wazuh_mark_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_mark_on_light.svg",
                         },
                         "OpenSearch": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_on_dark.svg",
+                            "url": "/ui/logos/wazuh_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_on_light.svg",
+                            "url": "/ui/logos/wazuh_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_on_light.svg",
+                          "url": "/ui/logos/wazuh_on_light.svg",
                         },
                         "colorScheme": "light",
                       }
@@ -4738,10 +4738,10 @@ exports[`Header handles visibility and lock changes 1`] = `
                                         >
                                           <span
                                             class="logoImage"
-                                            data-euiicon-type="home"
-                                            data-test-image-url="home"
-                                            data-test-subj="homeIcon"
-                                            title="opensearch dashboards home"
+                                            data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
+                                            data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
+                                            data-test-subj="defaultMark"
+                                            title="Wazuh dashboard home"
                                           />
                                         </div>
                                         <div
@@ -4808,62 +4808,62 @@ exports[`Header handles visibility and lock changes 1`] = `
                                               "AnimatedMark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                                                  "url": "/ui/logos/spinner_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                                  "url": "/ui/logos/spinner_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                                "url": "/ui/logos/spinner_on_light.svg",
                                               },
                                               "Application": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                                "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                                               },
                                               "CenterMark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                                "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                                               },
                                               "Mark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_mark_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_mark_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                                "url": "/ui/logos/wazuh_mark_on_light.svg",
                                               },
                                               "OpenSearch": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_on_light.svg",
+                                                "url": "/ui/logos/wazuh_on_light.svg",
                                               },
                                               "colorScheme": "light",
                                             }
@@ -4871,19 +4871,19 @@ exports[`Header handles visibility and lock changes 1`] = `
                                         >
                                           <EuiIcon
                                             className="logoImage"
-                                            data-test-image-url="home"
-                                            data-test-subj="homeIcon"
-                                            size="m"
-                                            title="opensearch dashboards home"
-                                            type="home"
+                                            data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
+                                            data-test-subj="defaultMark"
+                                            size="l"
+                                            title="Wazuh dashboard home"
+                                            type="/ui/logos/wazuh_mark_on_light.svg"
                                           >
                                             <span
                                               className="logoImage"
-                                              data-euiicon-type="home"
-                                              data-test-image-url="home"
-                                              data-test-subj="homeIcon"
-                                              size="m"
-                                              title="opensearch dashboards home"
+                                              data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
+                                              data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
+                                              data-test-subj="defaultMark"
+                                              size="l"
+                                              title="Wazuh dashboard home"
                                             />
                                           </EuiIcon>
                                         </HomeIcon>
@@ -7494,62 +7494,62 @@ exports[`Header handles visibility and lock changes 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "CenterMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "Mark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "OpenSearch": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_dark.svg",
+              "url": "/ui/logos/wazuh_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_light.svg",
+              "url": "/ui/logos/wazuh_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "colorScheme": "light",
         }
@@ -7888,7 +7888,7 @@ exports[`Header handles visibility and lock changes 1`] = `
             <EuiCollapsibleNavGroup
               background="light"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="recentlyViewed"
               onToggle={[Function]}
@@ -7920,14 +7920,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                 data-test-subj="collapsibleNavGroup-recentlyViewed"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                   data-test-subj="collapsibleNavGroup-recentlyViewed"
                   onToggle={[Function]}
                 >
@@ -7936,7 +7936,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -7946,12 +7946,12 @@ exports[`Header handles visibility and lock changes 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -9397,62 +9397,62 @@ exports[`Header renders application header without title and breadcrumbs 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_dark.svg",
+          "url": "/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_on_light.svg",
+        "url": "/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -10990,62 +10990,62 @@ exports[`Header renders application header without title and breadcrumbs 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "CenterMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "Mark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "OpenSearch": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_dark.svg",
+              "url": "/ui/logos/wazuh_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_light.svg",
+              "url": "/ui/logos/wazuh_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "colorScheme": "light",
         }
@@ -13323,62 +13323,62 @@ exports[`Header renders condensed header 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_dark.svg",
+          "url": "/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_on_light.svg",
+        "url": "/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -14365,62 +14365,62 @@ exports[`Header renders condensed header 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "Application": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                            "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                         },
                         "CenterMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                            "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                         },
                         "Mark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                            "url": "/ui/logos/wazuh_mark_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_mark_on_light.svg",
+                            "url": "/ui/logos/wazuh_mark_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_mark_on_light.svg",
                         },
                         "OpenSearch": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_on_dark.svg",
+                            "url": "/ui/logos/wazuh_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_on_light.svg",
+                            "url": "/ui/logos/wazuh_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_on_light.svg",
+                          "url": "/ui/logos/wazuh_on_light.svg",
                         },
                         "colorScheme": "light",
                       }
@@ -14558,10 +14558,10 @@ exports[`Header renders condensed header 1`] = `
                                         >
                                           <span
                                             class="logoImage"
-                                            data-euiicon-type="/ui/logos/opensearch_mark_on_light.svg"
-                                            data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+                                            data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
+                                            data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
-                                            title="opensearch dashboards home"
+                                            title="Wazuh dashboard home"
                                           />
                                         </div>
                                         <div
@@ -14632,62 +14632,62 @@ exports[`Header renders condensed header 1`] = `
                                               "AnimatedMark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                                                  "url": "/ui/logos/spinner_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                                  "url": "/ui/logos/spinner_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                                "url": "/ui/logos/spinner_on_light.svg",
                                               },
                                               "Application": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                                "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                                               },
                                               "CenterMark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                                "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                                               },
                                               "Mark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_mark_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_mark_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                                "url": "/ui/logos/wazuh_mark_on_light.svg",
                                               },
                                               "OpenSearch": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_on_light.svg",
+                                                "url": "/ui/logos/wazuh_on_light.svg",
                                               },
                                               "colorScheme": "light",
                                             }
@@ -14695,19 +14695,19 @@ exports[`Header renders condensed header 1`] = `
                                         >
                                           <EuiIcon
                                             className="logoImage"
-                                            data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+                                            data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
                                             size="l"
-                                            title="opensearch dashboards home"
-                                            type="/ui/logos/opensearch_mark_on_light.svg"
+                                            title="Wazuh dashboard home"
+                                            type="/ui/logos/wazuh_mark_on_light.svg"
                                           >
                                             <span
                                               className="logoImage"
-                                              data-euiicon-type="/ui/logos/opensearch_mark_on_light.svg"
-                                              data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+                                              data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
+                                              data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                               data-test-subj="defaultMark"
                                               size="l"
-                                              title="opensearch dashboards home"
+                                              title="Wazuh dashboard home"
                                             />
                                           </EuiIcon>
                                         </HomeIcon>
@@ -17309,62 +17309,62 @@ exports[`Header renders condensed header 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "CenterMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "Mark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "OpenSearch": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_dark.svg",
+              "url": "/ui/logos/wazuh_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_light.svg",
+              "url": "/ui/logos/wazuh_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "colorScheme": "light",
         }
@@ -18863,62 +18863,62 @@ exports[`Header renders page header with application title 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_dark.svg",
+          "url": "/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_on_light.svg",
+        "url": "/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -21033,62 +21033,62 @@ exports[`Header renders page header with application title 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "CenterMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "Mark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "OpenSearch": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_dark.svg",
+              "url": "/ui/logos/wazuh_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_light.svg",
+              "url": "/ui/logos/wazuh_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "colorScheme": "light",
         }
@@ -23366,62 +23366,62 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_dark.svg",
+          "url": "/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_on_light.svg",
+        "url": "/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -24408,62 +24408,62 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                         "AnimatedMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                            "url": "/ui/logos/spinner_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                            "url": "/ui/logos/spinner_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                          "url": "/ui/logos/spinner_on_light.svg",
                         },
                         "Application": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                            "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                         },
                         "CenterMark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                            "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                         },
                         "Mark": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                            "url": "/ui/logos/wazuh_mark_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_mark_on_light.svg",
+                            "url": "/ui/logos/wazuh_mark_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_mark_on_light.svg",
+                          "url": "/ui/logos/wazuh_mark_on_light.svg",
                         },
                         "OpenSearch": Object {
                           "dark": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_on_dark.svg",
+                            "url": "/ui/logos/wazuh_on_dark.svg",
                           },
                           "light": Object {
                             "type": "default",
-                            "url": "/ui/logos/opensearch_on_light.svg",
+                            "url": "/ui/logos/wazuh_on_light.svg",
                           },
                           "type": "default",
-                          "url": "/ui/logos/opensearch_on_light.svg",
+                          "url": "/ui/logos/wazuh_on_light.svg",
                         },
                         "colorScheme": "light",
                       }
@@ -24601,10 +24601,10 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                                         >
                                           <span
                                             class="logoImage"
-                                            data-euiicon-type="/ui/logos/opensearch_mark_on_light.svg"
-                                            data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+                                            data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
+                                            data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
-                                            title="opensearch dashboards home"
+                                            title="Wazuh dashboard home"
                                           />
                                         </div>
                                         <div
@@ -24675,62 +24675,62 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                                               "AnimatedMark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+                                                  "url": "/ui/logos/spinner_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                                  "url": "/ui/logos/spinner_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_spinner_on_light.svg",
+                                                "url": "/ui/logos/spinner_on_light.svg",
                                               },
                                               "Application": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+                                                "url": "/ui/logos/wazuh_dashboards_on_light.svg",
                                               },
                                               "CenterMark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+                                                "url": "/ui/logos/wazuh_center_mark_on_light.svg",
                                               },
                                               "Mark": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_mark_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_mark_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_mark_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_mark_on_light.svg",
+                                                "url": "/ui/logos/wazuh_mark_on_light.svg",
                                               },
                                               "OpenSearch": Object {
                                                 "dark": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_on_dark.svg",
+                                                  "url": "/ui/logos/wazuh_on_dark.svg",
                                                 },
                                                 "light": Object {
                                                   "type": "default",
-                                                  "url": "/ui/logos/opensearch_on_light.svg",
+                                                  "url": "/ui/logos/wazuh_on_light.svg",
                                                 },
                                                 "type": "default",
-                                                "url": "/ui/logos/opensearch_on_light.svg",
+                                                "url": "/ui/logos/wazuh_on_light.svg",
                                               },
                                               "colorScheme": "light",
                                             }
@@ -24738,19 +24738,19 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                                         >
                                           <EuiIcon
                                             className="logoImage"
-                                            data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+                                            data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                             data-test-subj="defaultMark"
                                             size="l"
-                                            title="opensearch dashboards home"
-                                            type="/ui/logos/opensearch_mark_on_light.svg"
+                                            title="Wazuh dashboard home"
+                                            type="/ui/logos/wazuh_mark_on_light.svg"
                                           >
                                             <span
                                               className="logoImage"
-                                              data-euiicon-type="/ui/logos/opensearch_mark_on_light.svg"
-                                              data-test-image-url="/ui/logos/opensearch_mark_on_light.svg"
+                                              data-euiicon-type="/ui/logos/wazuh_mark_on_light.svg"
+                                              data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
                                               data-test-subj="defaultMark"
                                               size="l"
-                                              title="opensearch dashboards home"
+                                              title="Wazuh dashboard home"
                                             />
                                           </EuiIcon>
                                         </HomeIcon>
@@ -27352,62 +27352,62 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "CenterMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "Mark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "OpenSearch": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_dark.svg",
+              "url": "/ui/logos/wazuh_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_light.svg",
+              "url": "/ui/logos/wazuh_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "colorScheme": "light",
         }
@@ -27591,7 +27591,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
             <EuiCollapsibleNavGroup
               background="light"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="recentlyViewed"
               onToggle={[Function]}
@@ -27623,14 +27623,14 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                 data-test-subj="collapsibleNavGroup-recentlyViewed"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                   data-test-subj="collapsibleNavGroup-recentlyViewed"
                   onToggle={[Function]}
                 >
@@ -27639,7 +27639,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -27649,12 +27649,12 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
