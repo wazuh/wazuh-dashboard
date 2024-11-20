@@ -408,6 +408,7 @@ export class ChromeService {
           currentWorkspace$={workspaces.currentWorkspace$}
           useUpdatedHeader={this.useUpdatedHeader}
           globalSearchCommands={globalSearch.getAllSearchCommands()}
+          darkmode={uiSettings.get('theme:darkMode')}
         />
       ),
 
