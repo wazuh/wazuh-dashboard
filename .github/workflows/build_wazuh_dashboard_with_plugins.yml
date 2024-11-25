@@ -184,7 +184,7 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@bug/427-fix-github-action-artifactory-plugins-name
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@bug-427-fix-github-action-artifactory-plugins-name
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
