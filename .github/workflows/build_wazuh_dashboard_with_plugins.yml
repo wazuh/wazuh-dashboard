@@ -172,21 +172,21 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@bug/430-unzip-command-not-found-in-package-generation-action
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@v4.10.0-beta1
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
 
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@bug/430-unzip-command-not-found-in-package-generation-action
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@v4.10.0-beta1
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@bug/430-unzip-command-not-found-in-package-generation-action
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@v4.10.0-beta1
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
@@ -257,31 +257,24 @@ jobs:
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
-      - uses: actions/upload-artifact@v3
-        if: success()
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: ${{ needs.setup-variables.outputs.PACKAGE_NAME }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
-          retention-days: 30
+          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
+          aws-region: ${{ secrets.CI_AWS_REGION }}
 
-      # - name: Set up AWS CLI
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-      #     aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-      #     aws-region: ${{ secrets.CI_AWS_REGION }}
+      - name: Upload package
+        run: |
+          echo "Uploading package"
+          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+          echo "S3 URI: ${s3uri}"
 
-      # - name: Upload package
-      #   run: |
-      #     echo "Uploading package"
-      #     aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-      #     s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
-      #     echo "S3 URI: ${s3uri}"
-
-      # - name: Upload SHA512
-      #   if: ${{ inputs.checksum }}
-      #   run: |
-      #     echo "Uploading checksum"
-      #     aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-      #     s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
-      #     echo "S3 sha512 URI: ${s3uri}"
+      - name: Upload SHA512
+        if: ${{ inputs.checksum }}
+        run: |
+          echo "Uploading checksum"
+          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
+          echo "S3 sha512 URI: ${s3uri}"
