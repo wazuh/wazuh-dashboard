@@ -117,10 +117,10 @@ jobs:
             PRODUCTION=""
           fi
           WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_x64.tar.gz
-          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_${{ inputs.reference_security_plugins }}.zip
-          WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_${{ inputs.reference_wazuh_plugins }}.zip
-          WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_${{ inputs.reference_wazuh_plugins }}.zip
-          WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_${{ inputs.reference_wazuh_plugins }}.zip
+          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           if [ "${{ inputs.system }}" = "deb" ]; then
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
@@ -216,17 +216,17 @@ jobs:
           name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
 
-      - name: Download plugins artifacts
+      - name: Download main plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-      - name: Download plugins artifacts
+      - name: Download core plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-      - name: Download plugins artifacts
+      - name: Download check update plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
