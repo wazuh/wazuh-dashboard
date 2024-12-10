@@ -170,6 +170,7 @@ help() {
     echo "        --tar                     Build for tar."
     echo "    --production                  [Optional] The naming of the package will be ready for production."
     echo "    --arm                         [Optional] Build for arm64 instead of x64."
+    echo "    --aarch64                     [Optional] Build for aarch64 instead of x86_64."
     echo "    --debug                       [Optional] Debug mode."
     echo "    --silent                      [Optional] Silent mode. Will not work if --debug is set."
     echo "    -r, --revision <revision>     [Optional] Set the revision of this build. By default, it is set to 1."
@@ -246,6 +247,10 @@ main() {
             ;;
         "--arm")
             architecture="arm64"
+            shift 1
+            ;;
+        "--aarch64")
+            architecture="aarch64"
             shift 1
             ;;
         "--silent")
