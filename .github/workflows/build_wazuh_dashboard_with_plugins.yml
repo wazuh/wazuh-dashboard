@@ -263,6 +263,13 @@ jobs:
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
+      - uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: ${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          retention-days: 30
+
       # - name: Set up AWS CLI
       #   uses: aws-actions/configure-aws-credentials@v4
       #   with:
