@@ -253,7 +253,7 @@ jobs:
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            --${{ inputs.system }} --${{ inputs.architecture }} ${{ needs.setup-variables.outputs.PRODUCTION }}
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }}
 
       - name: Test package
         run: |
