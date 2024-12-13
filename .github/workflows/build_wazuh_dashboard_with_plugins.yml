@@ -142,6 +142,12 @@ jobs:
           cd wzrp
           echo "WAZUH_REPORTING_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Setup variables
         id: setup-variables
         run: |
