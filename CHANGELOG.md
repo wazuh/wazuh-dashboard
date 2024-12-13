@@ -2,11 +2,18 @@
 
 All notable changes to the Wazuh app project will be documented in this file.
 
+## Wazuh dashboard v4.10.1 - OpenSearch Dashboards 2.16.0 - Revision 00
+
+### Added
+
+- Support for Wazuh 4.10.1
+
 ## Wazuh dashboard v4.10.0 - OpenSearch Dashboards 2.16.0 - Revision 06
 
 ### Changed
 
 - Reduced the size of the loading logo [#373](https://github.com/wazuh/wazuh-dashboard/pull/373)
+- Changed the order of the “Dashboard management” and “Indexer management” sections.
 
 ### Removed
 
