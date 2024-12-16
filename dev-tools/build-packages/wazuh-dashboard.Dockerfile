@@ -1,4 +1,4 @@
-# Usage: docker build --build-arg NODE_VERSION=18.19.0 --build-arg WAZUH_DASHBOARDS_BRANCH=4.10.0 --build-arg WAZUH_DASHBOARDS_PLUGINS=4.10.0 --build-arg WAZUH_SECURITY_DASHBOARDS_PLUGIN_BRANCH=4.10.0 --build-arg OPENSEARCH_DASHBOARDS_VERSION=2.13.0 -t wzd:4.10.0 -f wazuh-dashboard.Dockerfile .
+# Usage: docker build --build-arg NODE_VERSION=18.19.0 --build-arg WAZUH_DASHBOARDS_BRANCH=4.10.0 --build-arg WAZUH_DASHBOARDS_PLUGINS=4.10.0 --build-arg WAZUH_SECURITY_DASHBOARDS_PLUGIN_BRANCH=4.10.0 --build-arg OPENSEARCH_DASHBOARDS_VERSION=2.16.0 -t wzd:4.10.0 -f wazuh-dashboard.Dockerfile .
 
 ARG NODE_VERSION
 FROM node:${NODE_VERSION} AS base

@@ -111,6 +111,7 @@ export interface HeaderProps {
   navGroupsMap$: Observable<Record<string, NavGroupItemInMap>>;
   setCurrentNavGroup: ChromeNavGroupServiceStartContract['setCurrentNavGroup'];
   workspaceList$: Observable<WorkspaceObject[]>;
+  darkmode: boolean;
 }
 
 export function Header({
@@ -288,6 +289,7 @@ export function Header({
                   opensearchDashboardsDocLink={opensearchDashboardsDocLink}
                   opensearchDashboardsVersion={opensearchDashboardsVersion}
                   surveyLink={survey}
+                  darkmode={observables.darkmode}
                 />
               </EuiHeaderSectionItem>
             </EuiHeaderSection>

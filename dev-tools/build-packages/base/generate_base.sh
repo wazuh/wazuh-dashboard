@@ -148,7 +148,7 @@ build() {
 
     # Move installed plugins from categories after generating the package
     category_explore='{id:"explore",label:"Explore",order:100,euiIconType:"search"}'
-    category_dashboard_management='{id:"management",label:"Indexer management",order:6e3,euiIconType:"managementApp"}'
+    category_dashboard_management='{id:"management",label:"Indexer management",order:5e3,euiIconType:"managementApp"}'
 
     # Replace app category to Reporting app
     sed -i -e "s|category:{id:\"opensearch\",label:_i18n.i18n.translate(\"opensearch.reports.categoryName\",{defaultMessage:\"OpenSearch Plugins\"}),order:2e3}|category:${category_explore}|" ./plugins/reportsDashboards/target/public/reportsDashboards.plugin.js
@@ -160,7 +160,7 @@ build() {
     sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/customImportMapDashboards/target/public/customImportMapDashboards.plugin.js
 
     # Replace app category to Notifications app
-    sed -i -e "s|category:DEFAULT_APP_CATEGORIES.management|category:${category_explore}|" ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
+    sed -i -e "s|category:(_core\$chrome=core.chrome)!==null&&_core\$chrome!==void 0&&(_core\$chrome=_core\$chrome.navGroup)!==null&&_core\$chrome!==void 0&&_core\$chrome.getNavGroupEnabled()?undefined:DEFAULT_APP_CATEGORIES.management|category:${category_explore}|" ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
 
     # Replace app category to Indexer Management app
     sed -i -e "s|category:DEFAULT_APP_CATEGORIES.management|category:${category_dashboard_management}|g" ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
