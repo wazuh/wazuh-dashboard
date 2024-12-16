@@ -222,7 +222,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@master
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@merge-4.10.2-into-master
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
@@ -230,21 +230,21 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@merge-4.10.2-into-master
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@master
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@merge-4.10.2-into-master
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
   build-report-plugin:
     needs: [validate-job]
     name: Build reporting plugin
-    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/manual-build.yml@master
+    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/manual-build.yml@change/10-upgrade-actions-version
     with:
       reference: ${{ inputs.reference_report_plugins }}
   build-and-test-package:
