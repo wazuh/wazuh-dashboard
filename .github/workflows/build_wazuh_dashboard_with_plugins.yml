@@ -102,6 +102,7 @@ jobs:
       WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
       WAZUH_PLUGINS_CHECK_UPDATES: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
       PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
+      ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -142,6 +143,11 @@ jobs:
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}.rpm
             fi
           fi
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            ARCHITECTURE_FLAG=""
+          else
+            ARCHITECTURE_FLAG=--arm
+          fi
           echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
@@ -153,6 +159,7 @@ jobs:
           echo "WAZUH_PLUGINS_CORE=$WAZUH_PLUGINS_CORE" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_CHECK_UPDATES=$WAZUH_PLUGINS_CHECK_UPDATES" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
 
   validate-job:
     runs-on: ubuntu-latest
@@ -252,7 +259,7 @@ jobs:
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
           bash ./build-packages.sh \
             -v ${{ needs.setup-variables.outputs.VERSION }} \
-            -r ${{ inputs.revision }} \
+            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
@@ -261,8 +268,8 @@ jobs:
       - name: Test package
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
-          ls -la ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}
-          cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
+          ls -laR ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output
+          cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
@@ -276,7 +283,7 @@ jobs:
       - name: Upload package
         run: |
           echo "Uploading package"
-          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
           s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
           echo "S3 URI: ${s3uri}"
 
@@ -284,6 +291,6 @@ jobs:
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
           s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
