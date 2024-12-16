@@ -62,7 +62,7 @@ jobs:
           disk-root: 'C:'
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK (Windows only)
         if: matrix.os == 'windows-latest'
@@ -72,7 +72,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -88,7 +88,7 @@ jobs:
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
       - name: Initialize Yarn Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: matrix.os != 'windows-latest'
         with:
           path: ${{ env.YARN_CACHE_LOCATION }}
@@ -203,7 +203,7 @@ jobs:
           disk-root: 'C:'
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK (Windows only)
         if: matrix.os == 'windows-latest'
@@ -213,7 +213,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -229,7 +229,7 @@ jobs:
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
       - name: Initialize Yarn Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: matrix.os != 'windows-latest'
         with:
           path: ${{ env.YARN_CACHE_LOCATION }}
@@ -289,6 +289,7 @@ jobs:
           path: |
             test/*/failure_debug/
             test/*/screenshots/
+          overwrite: true
 
   plugin-functional-tests:
     name: Run plugin functional tests on ${{ matrix.name }}
@@ -319,7 +320,7 @@ jobs:
           disk-root: 'C:'
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK (Windows only)
         if: matrix.os == 'windows-latest'
@@ -329,7 +330,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -345,7 +346,7 @@ jobs:
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
       - name: Initialize Yarn Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: matrix.os != 'windows-latest'
         with:
           path: ${{ env.YARN_CACHE_LOCATION }}
@@ -400,6 +401,7 @@ jobs:
           path: |
             test/*/failure_debug/
             test/*/screenshots/
+          overwrite: true
 
   build-min-artifact-tests:
     name: Build min release artifacts on ${{ matrix.name }}
@@ -451,12 +453,12 @@ jobs:
           disk-root: 'C:'
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ./artifacts
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: './artifacts/.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -472,7 +474,7 @@ jobs:
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
       - name: Initialize Yarn Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: matrix.os != 'windows-latest'
         with:
           path: ${{ env.YARN_CACHE_LOCATION }}
@@ -512,6 +514,7 @@ jobs:
           name: ${{ matrix.suffix }}-${{ env.VERSION }}
           path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
           retention-days: 1
+          overwrite: true
 
   bwc-tests:
     needs: [build-min-artifact-tests]
@@ -540,7 +543,7 @@ jobs:
           ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ./artifacts
 
@@ -548,7 +551,7 @@ jobs:
       - run: echo [NOTE] These tests will be ran using Linux x64 release builds without security
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: './artifacts/.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -583,7 +586,7 @@ jobs:
         run: echo "BWC_VERSIONS=${{ matrix.version }}" >> $GITHUB_ENV
 
       - name: Download OpenSearch Dashboards
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v4
         id: download
         with:
           name: linux-x64-${{ env.VERSION }}
@@ -604,3 +607,4 @@ jobs:
             ./artifacts/bwc_tmp/test/cypress/screenshots/*
             ./artifacts/bwc_tmp/test/cypress/results/*
           retention-days: 1
+          overwrite: true
