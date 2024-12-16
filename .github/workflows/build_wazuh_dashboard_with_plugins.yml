@@ -19,6 +19,8 @@ on:
         options:
           - amd64
           - x86_64
+          - aarch64
+          - arm64
         default: amd64
       revision:
         type: string
@@ -159,11 +161,11 @@ jobs:
     steps:
       - name: Validate inputs
         run: |
-          if [ "${{ inputs.architecture }}" = "amd64" ] && [ "${{ inputs.system }}" = "rpm" ]; then
+          if [[ "${{ inputs.architecture }}" == "amd64" || "${{ inputs.architecture }}" == "arm64" ]] && [[ "${{ inputs.system }}" == "rpm" ]]; then
             echo "Invalid combination of architecture and system"
             exit 1
           fi
-          if [ "${{ inputs.architecture }}" = "x86_64" ] && [ "${{ inputs.system }}" = "deb" ]; then
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "aarch64" ]] && [[ "${{ inputs.system }}" == "deb" ]]; then
             echo "Invalid combination of architecture and system"
             exit 1
           fi
@@ -178,21 +180,22 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.10.1
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.10.2
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
+      ARCHITECTURE: ${{ inputs.architecture }}
 
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@4.10.1
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@4.10.2
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.10.1
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.10.2
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
