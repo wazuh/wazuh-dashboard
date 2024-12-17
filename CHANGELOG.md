@@ -19,7 +19,6 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Changed
 
 - Reduced the size of the loading logo [#373](https://github.com/wazuh/wazuh-dashboard/pull/373)
-- Changed the order of the “Dashboard management” and “Indexer management” sections.
 
 ### Removed
 
