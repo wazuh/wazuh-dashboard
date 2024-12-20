@@ -330,7 +330,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "1",
+  "wazuhVersion": "4.10.1",
 }
 `;
 
