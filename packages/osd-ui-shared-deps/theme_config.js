@@ -16,6 +16,7 @@ const THEME_VERSION_LABEL_MAP = {
   v7: 'v7',
   v8: 'Next (preview)',
   v9: 'v9 (preview)',
+  wazuh: 'Wazuh',
 };
 const THEME_VERSION_VALUE_MAP = {
   // allow version lookup by label ...
@@ -56,4 +57,5 @@ exports.kuiCssDistFilenames = {
   v7: { dark: 'kui_dark.css', light: 'kui_light.css' },
   v8: { dark: 'kui_next_dark.css', light: 'kui_next_light.css' },
   v9: { dark: 'kui_v9_dark.css', light: 'kui_v9_light.css' },
+  wazuh: { dark: 'kui_wazuh_dark.css', light: 'kui_wazuh_light.css' },
 };
