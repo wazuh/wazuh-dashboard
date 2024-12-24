@@ -35,11 +35,11 @@ import type { Type } from '@osd/config-schema';
 import { UiSettingsParams } from '../../../types';
 import { DEFAULT_THEME_VERSION } from '../ui_settings_config';
 
-// Setup theme options to be backwards compatible with the fact that v8 was persisted with its
+// Setup theme options to be backwards compatible with the fact that `wazuh` was persisted with its
 // label rather than with the correct themeVersion value
 const THEME_VERSIONS = Object.keys(themeVersionLabelMap);
-const THEME_SCHEMA_VALUES = THEME_VERSIONS.concat(themeVersionLabelMap.v8);
-const THEME_OPTIONS = THEME_VERSIONS.map((v) => (v !== 'v8' ? v : themeVersionLabelMap.v8));
+const THEME_SCHEMA_VALUES = THEME_VERSIONS.concat(themeVersionLabelMap.wazuh);
+const THEME_OPTIONS = THEME_VERSIONS.map((v) => (v !== 'wazuh' ? v : themeVersionLabelMap.wazuh));
 
 export const getThemeSettings = (): Record<string, UiSettingsParams> => {
   return {
