@@ -22,9 +22,13 @@ export const THEME_SOURCES: {
     [ThemeColorSchemes.LIGHT]: '@elastic/eui/dist/eui_theme_v9_light.json',
     [ThemeColorSchemes.DARK]: '@elastic/eui/dist/eui_theme_v9_dark.json',
   },
-  default: {
+  v8: {
     [ThemeColorSchemes.LIGHT]: '@elastic/eui/dist/eui_theme_next_light.json',
     [ThemeColorSchemes.DARK]: '@elastic/eui/dist/eui_theme_next_dark.json',
+  },
+  default: {
+    [ThemeColorSchemes.LIGHT]: '@elastic/eui/dist/eui_theme_wazuh_light.json',
+    [ThemeColorSchemes.DARK]: '@elastic/eui/dist/eui_theme_wazuh_dark.json',
   },
 });
 
