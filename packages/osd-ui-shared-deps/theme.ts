@@ -35,10 +35,12 @@ const globals: any = typeof window === 'undefined' ? {} : window;
 
 export type Theme = typeof LightTheme;
 
+const DEFAULT_THEME = 'wazuh';
+
 // in the OpenSearch Dashboards app we can rely on this global being defined, but in
 // some cases (like jest) the global is undefined
 export const tag: string = globals.__osdThemeTag__;
-const themeVersion = tag?.replace(/(light|dark)$/, '') || 'v7';
+const themeVersion = tag?.replace(/(light|dark)$/, '') || DEFAULT_THEME;
 export const version = parseInt(themeVersion.replace(/[^\d]+/g, ''), 10) || 8;
 export const darkMode = tag?.endsWith?.('dark');
 
@@ -50,6 +52,9 @@ if (themeVersion === 'v7') {
 } else if (themeVersion === 'v9') {
   euiLightVars = require('@elastic/eui/dist/eui_theme_v9_light.json');
   euiDarkVars = require('@elastic/eui/dist/eui_theme_v9_dark.json');
+} else if (themeVersion === DEFAULT_THEME) {
+  euiLightVars = require('@elastic/eui/dist/eui_theme_wazuh_light.json');
+  euiDarkVars = require('@elastic/eui/dist/eui_theme_wazuh_light.json');
 } else {
   euiLightVars = require('@elastic/eui/dist/eui_theme_next_light.json');
   euiDarkVars = require('@elastic/eui/dist/eui_theme_next_dark.json');
