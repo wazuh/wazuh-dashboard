@@ -191,7 +191,6 @@ if [ -f %{INSTALL_DIR}/wazuh-dashboard.restart ]; then
   fi
 
 fi
-/usr/share/wazuh-dashboard/bin/opensearch-dashboards-plugin remove wazuh --allow-root
 
 # -----------------------------------------------------------------------------
 
