@@ -9024,6 +9024,7 @@ exports[`Header renders application header without title and breadcrumbs 1`] = `
       "thrownError": null,
     }
   }
+  darkmode={false}
   forceAppSwitcherNavigation$={
     BehaviorSubject {
       "_isScalar": false,
@@ -18373,6 +18374,7 @@ exports[`Header renders page header with application title 1`] = `
       "thrownError": null,
     }
   }
+  darkmode={false}
   forceAppSwitcherNavigation$={
     BehaviorSubject {
       "_isScalar": false,
