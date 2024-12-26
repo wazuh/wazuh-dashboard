@@ -239,7 +239,7 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@change/401-remove-legacy-plugins
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
