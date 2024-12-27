@@ -73,14 +73,6 @@ export const DEFAULT_APP_CATEGORIES: Record<string, AppCategory> = Object.freeze
     order: 4000,
     euiIconType: 'logoSecurity',
   },
-  dashboardManagement: {
-    id: 'wz-category-dashboard-management',
-    label: i18n.translate('core.ui.dashboardManagementNavList.label', {
-      defaultMessage: 'Dashboard management',
-    }),
-    order: 6000,
-    euiIconType: 'dashboardApp',
-  },
   management: {
     id: 'management',
     label: i18n.translate('core.ui.managementNavList.label', {
@@ -88,6 +80,14 @@ export const DEFAULT_APP_CATEGORIES: Record<string, AppCategory> = Object.freeze
     }),
     order: 5000,
     euiIconType: 'managementApp',
+  },
+  dashboardManagement: {
+    id: 'wz-category-dashboard-management',
+    label: i18n.translate('core.ui.dashboardManagementNavList.label', {
+      defaultMessage: 'Dashboard management',
+    }),
+    order: 6000,
+    euiIconType: 'dashboardApp',
   },
   investigate: {
     id: 'investigate',
