@@ -297,6 +297,7 @@ export class ChromeService {
                 opensearchDashboardsVersion={injectedMetadata.getOpenSearchDashboardsVersion()}
                 surveyLink={injectedMetadata.getSurvey()}
                 useUpdatedAppearance
+                darkmode={uiSettings.get('theme:darkMode')}
               />
             </I18nProvider>,
             element
@@ -401,6 +402,7 @@ export class ChromeService {
           currentWorkspace$={workspaces.currentWorkspace$}
           useUpdatedHeader={this.useUpdatedHeader}
           globalSearchCommands={globalSearch.getAllSearchCommands()}
+          darkmode={uiSettings.get('theme:darkMode')}
         />
       ),
 
