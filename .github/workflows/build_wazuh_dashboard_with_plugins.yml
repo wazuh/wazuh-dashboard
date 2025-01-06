@@ -208,7 +208,7 @@ jobs:
 
   build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ubuntu-latest
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
       - name: Checkout code
@@ -263,7 +263,7 @@ jobs:
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }}
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Test package
         run: |
