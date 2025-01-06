@@ -125,7 +125,7 @@ jobs:
           else
             PRODUCTION=""
           fi
-          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_x64.tar.gz
+          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
           WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
