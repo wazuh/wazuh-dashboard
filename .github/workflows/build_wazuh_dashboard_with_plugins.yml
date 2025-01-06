@@ -273,24 +273,31 @@ jobs:
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/upload-artifact@v4
+        if: success()
         with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: ${{ secrets.CI_AWS_REGION }}
+          name: ${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          retention-days: 30
 
-      - name: Upload package
-        run: |
-          echo "Uploading package"
-          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
-          echo "S3 URI: ${s3uri}"
+      # - name: Set up AWS CLI
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
+      #     aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
+      #     aws-region: ${{ secrets.CI_AWS_REGION }}
 
-      - name: Upload SHA512
-        if: ${{ inputs.checksum }}
-        run: |
-          echo "Uploading checksum"
-          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
-          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
-          echo "S3 sha512 URI: ${s3uri}"
+      # - name: Upload package
+      #   run: |
+      #     echo "Uploading package"
+      #     aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+      #     s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+      #     echo "S3 URI: ${s3uri}"
+
+      # - name: Upload SHA512
+      #   if: ${{ inputs.checksum }}
+      #   run: |
+      #     echo "Uploading checksum"
+      #     aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+      #     s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
+      #     echo "S3 sha512 URI: ${s3uri}"
