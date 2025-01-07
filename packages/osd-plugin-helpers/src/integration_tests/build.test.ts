@@ -79,8 +79,8 @@ it('builds a generated plugin into a viable archive', async () => {
     " succ 🎉
 
           Your plugin has been created in ${standardize('plugins/foo_test_plugin', false, true)}
-    "
-  `);
+      "
+    `);
 
   const buildProc = await execa(
     process.execPath,
@@ -108,8 +108,8 @@ it('builds a generated plugin into a viable archive', async () => {
      info copying assets from \`public/assets\` to build
      info copying server source into the build and converting with babel
     Browserslist: caniuse-lite is outdated. Please run:
-     npx update-browserslist-db@latest
-     Why you should do it regularly: https://github.com/browserslist/update-db#readme
+      npx update-browserslist-db@latest
+      Why you should do it regularly: https://github.com/browserslist/update-db#readme
      info running yarn to install dependencies
      info compressing plugin into [fooTestPlugin-1.0.0.zip]
      info cleaning up compression temporary artifacts"
@@ -202,8 +202,8 @@ it('builds a non-semver generated plugin into a viable archive', async () => {
      info copying assets from \`public/assets\` to build
      info copying server source into the build and converting with babel
     Browserslist: caniuse-lite is outdated. Please run:
-     npx update-browserslist-db@latest
-     Why you should do it regularly: https://github.com/browserslist/update-db#readme
+      npx update-browserslist-db@latest
+      Why you should do it regularly: https://github.com/browserslist/update-db#readme
      info running yarn to install dependencies
      info compressing plugin into [fooTestPlugin-1.0.0.x.zip]
      info cleaning up compression temporary artifacts"
