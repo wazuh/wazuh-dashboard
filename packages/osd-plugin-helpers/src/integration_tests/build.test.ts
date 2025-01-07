@@ -107,7 +107,7 @@ it('builds a generated plugin into a viable archive', async () => {
      │ succ 1 bundles compiled successfully after <time>
      info copying assets from \`public/assets\` to build
      info copying server source into the build and converting with babel
-     Browserslist: caniuse-lite is outdated. Please run:
+    Browserslist: caniuse-lite is outdated. Please run:
      npx update-browserslist-db@latest
      Why you should do it regularly: https://github.com/browserslist/update-db#readme
      info running yarn to install dependencies
@@ -201,7 +201,7 @@ it('builds a non-semver generated plugin into a viable archive', async () => {
      │ succ 1 bundles compiled successfully after <time>
      info copying assets from \`public/assets\` to build
      info copying server source into the build and converting with babel
-     Browserslist: caniuse-lite is outdated. Please run:
+    Browserslist: caniuse-lite is outdated. Please run:
      npx update-browserslist-db@latest
      Why you should do it regularly: https://github.com/browserslist/update-db#readme
      info running yarn to install dependencies
