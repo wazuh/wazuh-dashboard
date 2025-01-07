@@ -79,8 +79,8 @@ it('builds a generated plugin into a viable archive', async () => {
     " succ 🎉
 
           Your plugin has been created in ${standardize('plugins/foo_test_plugin', false, true)}
-      "
-    `);
+    "
+  `);
 
   const buildProc = await execa(
     process.execPath,
