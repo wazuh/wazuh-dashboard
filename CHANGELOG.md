@@ -14,11 +14,15 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.11.0
 
-## Wazuh dashboard v4.10.0 - OpenSearch Dashboards 2.16.0 - Revision 06
+## Wazuh dashboard v4.10.0 - OpenSearch Dashboards 2.16.0 - Revision 08
 
 ### Changed
 
 - Reduced the size of the loading logo [#373](https://github.com/wazuh/wazuh-dashboard/pull/373)
+
+### Fixed
+
+- Apply the NodeJS options defined at node.options file to the node exec command [#471](https://github.com/wazuh/wazuh-dashboard/pull/471)
 
 ### Removed
 
