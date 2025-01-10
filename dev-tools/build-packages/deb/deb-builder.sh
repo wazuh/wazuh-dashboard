@@ -12,13 +12,58 @@ set -e
 
 # Script parameters to build the package
 target="wazuh-dashboard"
-architecture=$1
+version=$1
 revision=$2
-version=$3
+architecture=$3
 commit_sha=$4
 is_production=$5
+verbose=$6
+
 directory_base="/usr/share/wazuh-dashboard"
 
+# Paths
+current_path="$( cd $(dirname $0) ; pwd -P )"
+
+# Folders
+tmp_dir="/tmp"
+out_dir="/output"
+config_path=$tmp_dir/config
+
+if [ "$verbose" = "debug" ]; then
+      set -x
+fi
+trap clean INT
+trap clean EXIT
+
+log() {
+    if [ "$verbose" = "info" ] || [ "$verbose" = "debug" ]; then
+        echo "$@"
+    fi
+}
+
+clean() {
+    exit_code=$?
+    # Clean the files
+    rm -rf ${tmp_dir}/*
+    trap '' EXIT
+    exit ${exit_code}
+}
+
+mkdir -p ${tmp_dir}/wazuh-dashboard-base
+cd ${tmp_dir}/wazuh-dashboard-base
+log "Extracting base tar.gz..."
+tar -zxf ${out_dir}/wazuh-dashboard-$version-$revision-linux-$architecture.tar.gz
+log "Preparing the package..."
+jq '.wazuh.revision="'${revision}'"' package.json > pkgtmp.json && mv pkgtmp.json package.json
+cp $config_path/* .
+echo ${version} > VERSION
+cd ..
+tar -czf wazuh-dashboard.tar.gz wazuh-dashboard-base
+
+log "Setting up parameters"
+if [ "${architecture}" = "x64" ]; then
+  architecture="amd64"
+fi
 # Build directories
 build_dir=/build
 pkg_name="${target}-${version}"
@@ -29,8 +74,8 @@ final_name="${target}_${version}-${revision}_${architecture}_${commit_sha}.deb"
 
 mkdir -p ${source_dir}/debian
 
-# Including spec file
-cp -r /root/build-packages/deb/debian/* ${source_dir}/debian/
+# Including spec files
+cp -r /usr/local/src/debian/* ${source_dir}/debian/
 
 # Generating directory structure to build the .deb package
 cd ${build_dir}/${target} && tar -czf ${pkg_name}.orig.tar.gz "${pkg_name}"
@@ -44,17 +89,18 @@ sed -i "s:export INSTALLATION_DIR=.*:export INSTALLATION_DIR=${directory_base}:g
 cd ${source_dir}
 mk-build-deps -ir -t "apt-get -o Debug::pkgProblemResolver=yes -y"
 
+log "Building the package..."
 # Build package
 debuild --no-lintian -b -uc -us \
     -eINSTALLATION_DIR="${directory_base}" \
     -eVERSION="${version}" \
     -eREVISION="${revision}"
 
-cd ${pkg_path} && sha512sum ${deb_file} >/tmp/${deb_file}.sha512
+cd ${pkg_path} && sha512sum ${deb_file} >/${out_dir}/${deb_file}.sha512
 
 if [ "${is_production}" = "no" ]; then
-  mv ${pkg_path}/${deb_file} /tmp/${final_name}
-  mv /tmp/${deb_file}.sha512 /tmp/${final_name}.sha512
+  mv ${pkg_path}/${deb_file} /${out_dir}/${final_name}
+  mv /${out_dir}/${deb_file}.sha512 /${out_dir}/${final_name}.sha512
 else
-  mv ${pkg_path}/${deb_file} /tmp/
+  mv ${pkg_path}/${deb_file} /${out_dir}/
 fi
