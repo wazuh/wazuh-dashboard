@@ -64,6 +64,7 @@ $euiCollapsibleNavWidth: $euiSize * 20;
   width: auto;
 }
 
+// THIS WAS FIXED IN OPENSEARCH DASHBOARDS 2.17.1. THIS IS A TEMPORARY FIX FOR OSD 2.16.0
 // Temporary fix for a bug with Chrome 129 when handling mask-image
 // OUI provides the mask-image used in these which Chrome 129 fails to render correctly.
 // It is not known if or when Chrome will fix this. Since almost all of these classes
