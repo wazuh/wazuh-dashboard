@@ -90,5 +90,6 @@ $euiCollapsibleNavWidth: $euiSize * 20;
 .dscCanvas,
 .vbConfig,
 .vbSidenav__style {
-  contain: paint;
+  -webkit-mask-image:unset;
+  mask-image:unset;
 }
