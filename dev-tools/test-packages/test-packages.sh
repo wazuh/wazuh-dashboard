@@ -12,6 +12,10 @@ FILE_OWNER="wazuh-dashboard"
 # Remove container and image
 clean() {
   docker stop $CONTAINER_NAME
+  # This is done because in the construction of packages arm sometimes fails because it is not finished destroying the container and when trying to delete the image fails because it is in use.
+  while docker ps --format "{{.Names}}" | grep $CONTAINER_NAME; do
+    sleep 2
+  done
   docker rmi $CONTAINER_NAME
 }
 
