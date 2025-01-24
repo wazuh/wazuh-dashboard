@@ -20,7 +20,6 @@ clean() {
       echo "WARNING: Maximum retries reached while waiting for container to stop"
       break
     fi
-    echo 'test'
     sleep 2
     RETRY_COUNT=$((RETRY_COUNT + 1))
   done
