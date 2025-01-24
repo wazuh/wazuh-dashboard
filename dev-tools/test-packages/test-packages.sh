@@ -13,8 +13,16 @@ FILE_OWNER="wazuh-dashboard"
 clean() {
   docker stop $CONTAINER_NAME
   # This is done because in the construction of packages arm sometimes fails because it is not finished destroying the container and when trying to delete the image fails because it is in use.
+  MAX_RETRIES=30
+  RETRY_COUNT=0
   while docker ps --format "{{.Names}}" | grep $CONTAINER_NAME; do
+    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+      echo "WARNING: Maximum retries reached while waiting for container to stop"
+      break
+    fi
+    echo 'test'
     sleep 2
+    RETRY_COUNT=$((RETRY_COUNT + 1))
   done
   docker rmi $CONTAINER_NAME
 }
