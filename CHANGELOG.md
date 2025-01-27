@@ -6,7 +6,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 ### Added
 
-- Added default value to the ocnfiguration for `wazuh_core.hosts` setting [#505](https://github.com/wazuh/wazuh-dashboard/pull/505)
+- Added default value to the configuration for `wazuh_core.hosts` setting [#505](https://github.com/wazuh/wazuh-dashboard/pull/505)
 
 ### Changed
 
