@@ -4,6 +4,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 ## Wazuh dashboard v5.0.0 - OpenSearch Dashboards 2.18.0 - Revision 00
 
+### Added
+
+- Added default value to the configuration for `wazuh_core.hosts` setting [#505](https://github.com/wazuh/wazuh-dashboard/pull/505)
+
 ### Changed
 
 - Changed the reportingDashboards platform plugin to a customized one and adapt the build tools [#340](https://github.com/wazuh/wazuh-dashboard/pull/340)
