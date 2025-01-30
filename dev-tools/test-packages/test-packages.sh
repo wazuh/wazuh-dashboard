@@ -15,7 +15,9 @@ clean() {
   # This is done because in the construction of packages arm sometimes fails because it is not finished destroying the container and when trying to delete the image fails because it is in use.
   MAX_RETRIES=30
   RETRY_COUNT=0
-  while docker ps --format "{{.Names}}" | grep $CONTAINER_NAME; do
+  echo "Waiting for the container ($CONTAINER_NAME) to be removed"
+  while docker ps -a --format "{{.Names}}" | grep $CONTAINER_NAME; do
+    echo "The $(docker ps -a --format "{{.Names}}" | grep $CONTAINER_NAME) container has not been removed yet. Retry number $RETRY_COUNT."
     if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
       echo "WARNING: Maximum retries reached while waiting for container to stop"
       break
@@ -23,6 +25,7 @@ clean() {
     sleep 2
     RETRY_COUNT=$((RETRY_COUNT + 1))
   done
+  echo "Container removed. Removing the image"
   docker rmi $CONTAINER_NAME
 }
 
