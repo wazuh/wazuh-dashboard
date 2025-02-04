@@ -44,7 +44,7 @@ Wazuh dashboard is a user interface and visualization tool for security-related 
 
 %prep
 
-cp /opt/%{DASHBOARD_FILE} ./
+cp /tmp/%{DASHBOARD_FILE} ./
 
 groupadd %{GROUP}
 useradd -g %{GROUP} %{USER}
