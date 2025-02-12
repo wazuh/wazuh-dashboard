@@ -31,17 +31,17 @@ on:
         type: string
         description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
         required: true
-        default: 'master'
+        default: 'main'
       reference_wazuh_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
-        default: 'master'
+        default: 'main'
       reference_report_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-reporting repository to build the report plugin'
         required: true
-        default: 'master'
+        default: 'main'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -78,15 +78,15 @@ on:
       reference_security_plugins:
         type: string
         required: true
-        default: 'master'
+        default: 'main'
       reference_wazuh_plugins:
         type: string
         required: true
-        default: 'master'
+        default: 'main'
       reference_report_plugins:
         type: string
         required: true
-        default: 'master'
+        default: 'main'
       is_stage:
         type: boolean
         required: true
@@ -231,7 +231,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@master
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@main
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
@@ -239,21 +239,21 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@main
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@master
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@main
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
   build-report-plugin:
     needs: [validate-job]
     name: Build reporting plugin
-    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/manual-build.yml@master
+    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/manual-build.yml@main
     with:
       reference: ${{ inputs.reference_report_plugins }}
   build-and-test-package:
