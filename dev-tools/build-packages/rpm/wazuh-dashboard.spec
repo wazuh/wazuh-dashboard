@@ -70,7 +70,7 @@ mkdir -p %{buildroot}/etc/default
 
 cp wazuh-dashboard-base/config/node.options %{buildroot}%{CONFIG_DIR}
 cp wazuh-dashboard-base/config/opensearch_dashboards.yml %{buildroot}%{CONFIG_DIR}
-cp wazuh-dashboard-base/VERSION %{buildroot}%{INSTALL_DIR}
+cp wazuh-dashboard-base/VERSION.json %{buildroot}%{INSTALL_DIR}
 
 mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
 
@@ -209,7 +209,7 @@ rm -fr %{buildroot}
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config/opensearch_dashboards.yml"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config/node.options"
 
-%attr(440, %{USER}, %{GROUP}) %{INSTALL_DIR}/VERSION
+%attr(440, %{USER}, %{GROUP}) %{INSTALL_DIR}/VERSION.json
 %dir %attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/core"

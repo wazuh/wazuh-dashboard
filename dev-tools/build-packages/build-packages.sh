@@ -16,7 +16,8 @@ commit_sha=$(git rev-parse --short HEAD)
 current_path="$( cd $(dirname $0) ; pwd -P )"
 output_dir="${current_path}/output"
 tmp_dir="${current_path}/tmp"
-config_dir="${current_path}/../../config"
+root_dir="${current_path}/../.."
+config_dir="${root_dir}/config"
 package_config_dir="${current_path}/config"
 verbose="info"
 
@@ -212,7 +213,7 @@ main() {
             ;;
         "-v" | "--version")
             if [ -n "${2}" ]; then
-                version="${2}"
+                version="$(jq -r '.version' ${root_dir}/VERSION.json)"
                 shift 2
             else
                 help 0
