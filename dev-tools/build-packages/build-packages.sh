@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+current_path="$( cd $(dirname $0) ; pwd -P )"
 root_dir="${current_path}/../.."
 app=""
 base=""
@@ -14,7 +15,6 @@ tar="no"
 architecture="x64"
 production="no"
 commit_sha=$(git rev-parse --short HEAD)
-current_path="$( cd $(dirname $0) ; pwd -P )"
 output_dir="${current_path}/output"
 tmp_dir="${current_path}/tmp"
 config_dir="${root_dir}/config"
