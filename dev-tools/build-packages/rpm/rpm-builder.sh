@@ -57,6 +57,7 @@ jq '.wazuh.revision="'${revision}'"' package.json > pkgtmp.json && mv pkgtmp.jso
 mkdir -p etc/services
 cp $config_path/* etc/services
 jq '.version="'${version}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
+jq '.commit="'${commit_sha}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
 cd ..
 tar -czf wazuh-dashboard.tar.gz wazuh-dashboard-base
 

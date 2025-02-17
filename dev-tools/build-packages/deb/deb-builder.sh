@@ -57,6 +57,7 @@ log "Preparing the package..."
 jq '.wazuh.revision="'${revision}'"' package.json > pkgtmp.json && mv pkgtmp.json package.json
 cp $config_path/* .
 jq '.version="'${version}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
+jq '.commit="'${commit_sha}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
 cd ..
 tar -czf wazuh-dashboard.tar.gz wazuh-dashboard-base
 
