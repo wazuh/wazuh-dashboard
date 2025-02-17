@@ -211,14 +211,6 @@ main() {
                 help 0
             fi
             ;;
-        "-v" | "--version")
-            if [ -n "${2}" ]; then
-                version="$(jq -r '.version' ${root_dir}/VERSION.json)"
-                shift 2
-            else
-                help 0
-            fi
-            ;;
         "-r" | "--revision")
             if [ -n "${2}" ]; then
                 revision="${2}"
