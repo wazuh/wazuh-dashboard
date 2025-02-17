@@ -23,6 +23,49 @@ directory_base="/usr/share/wazuh-dashboard"
 
 # Paths
 current_path="$( cd $(dirname $0) ; pwd -P )"
+root_dir="$(git rev-parse --show-toplevel)"
+parent_root_dir="$(dirname ${root_dir})"
+wazuh_dashboard_plugins_path="${parent_root_dir}/wazuh-dashboard-plugins"
+wazuh_security_plugin_path="${parent_root_dir}/wazuh-security-dashboards-plugin"
+
+check_repo_branch() {
+  local current_branch="$1"
+  local repo_path="$2"
+
+  pushd ${repo_path}
+  repo_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [ "${current_branch}" != "${repo_branch}" ]; then
+    echo "Error: $(basename ${repo_path}) is not on the same branch as the wazuh-dashboard repository."
+    exit 1
+  fi
+  popd
+}
+
+check_branch_consistency() {
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  for repo_path in "$@"; do
+    check_repo_branch "${current_branch}" "${repo_path}"
+  done
+}
+
+# Check if the plugin paths exist
+check_path_exists() {
+  local path="$1"
+  if [ ! -d "$path" ]; then
+    echo "Error: $path path does not exist: $path"
+    exit 1
+  fi
+}
+
+check_paths_exists() {
+  for path in "$@"; do
+    check_path_exists "$path"
+  done
+}
+
+check_paths_exists "${wazuh_dashboard_plugins_path}" "${wazuh_security_plugin_path}"
+check_branch_consistency "${wazuh_dashboard_plugins_path}" "${wazuh_security_plugin_path}"
 
 # Folders
 tmp_dir="/tmp"
@@ -57,7 +100,9 @@ log "Preparing the package..."
 jq '.wazuh.revision="'${revision}'"' package.json > pkgtmp.json && mv pkgtmp.json package.json
 cp $config_path/* .
 jq '.version="'${version}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
-jq '.commit="'${commit_sha}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
+pushd ${wazuh_dashboard_plugins_path} && git rev-parse --short HEAD > commit_sha && popd
+pushd ${wazuh_security_plugin_path} && git rev-parse --short HEAD > commit_sha && popd
+jq '.commit="'${commit_sha}-$(cat ${wazuh_dashboard_plugins_path}/commit_sha)-$(cat ${wazuh_security_plugin_path}/commit_sha)'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
 cd ..
 tar -czf wazuh-dashboard.tar.gz wazuh-dashboard-base
 
