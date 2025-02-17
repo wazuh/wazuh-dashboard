@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+root_dir="${current_path}/../.."
 app=""
 base=""
 revision="1"
@@ -16,7 +17,6 @@ commit_sha=$(git rev-parse --short HEAD)
 current_path="$( cd $(dirname $0) ; pwd -P )"
 output_dir="${current_path}/output"
 tmp_dir="${current_path}/tmp"
-root_dir="${current_path}/../.."
 config_dir="${root_dir}/config"
 package_config_dir="${current_path}/config"
 verbose="info"
