@@ -179,14 +179,14 @@ describe('CollapsibleNav', () => {
         recentlyAccessed$={new BehaviorSubject(recentNavLinks)}
       />
     );
-    expectShownNavLinksCount(component, 0);
+    expectShownNavLinksCount(component, 3);
     clickGroup(component, 'explore');
     clickGroup(component, 'recentlyViewed');
-    expectShownNavLinksCount(component, 2);
+    expectShownNavLinksCount(component, 1);
     component.setProps({ isNavOpen: false });
     expectNavIsClosed(component);
     component.setProps({ isNavOpen: true });
-    expectShownNavLinksCount(component, 2);
+    expectShownNavLinksCount(component, 1);
   });
 
   it('closes the nav after clicking a link', () => {

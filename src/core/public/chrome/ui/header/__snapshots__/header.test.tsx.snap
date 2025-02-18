@@ -7891,7 +7891,7 @@ exports[`Header handles visibility and lock changes 1`] = `
             <EuiCollapsibleNavGroup
               background="light"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
-              initialIsOpen={false}
+              initialIsOpen={true}
               isCollapsible={true}
               key="recentlyViewed"
               onToggle={[Function]}
@@ -7923,14 +7923,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                 data-test-subj="collapsibleNavGroup-recentlyViewed"
                 id="mockId"
-                initialIsOpen={false}
+                initialIsOpen={true}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                   data-test-subj="collapsibleNavGroup-recentlyViewed"
                   onToggle={[Function]}
                 >
@@ -7939,7 +7939,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={false}
+                      aria-expanded={true}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -7949,12 +7949,12 @@ exports[`Header handles visibility and lock changes 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon"
+                          className="euiAccordion__icon euiAccordion__icon-isOpen"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon"
+                            className="euiAccordion__icon euiAccordion__icon-isOpen"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -9035,6 +9035,7 @@ exports[`Header renders application header without title and breadcrumbs 1`] = `
       "thrownError": null,
     }
   }
+  darkmode={false}
   forceAppSwitcherNavigation$={
     BehaviorSubject {
       "_isScalar": false,
@@ -9400,62 +9401,62 @@ exports[`Header renders application header without title and breadcrumbs 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_dark.svg",
+          "url": "/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_on_light.svg",
+        "url": "/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -10993,62 +10994,62 @@ exports[`Header renders application header without title and breadcrumbs 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "CenterMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "Mark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "OpenSearch": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_dark.svg",
+              "url": "/ui/logos/wazuh_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_light.svg",
+              "url": "/ui/logos/wazuh_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "colorScheme": "light",
         }
@@ -18504,6 +18505,7 @@ exports[`Header renders page header with application title 1`] = `
       "thrownError": null,
     }
   }
+  darkmode={false}
   forceAppSwitcherNavigation$={
     BehaviorSubject {
       "_isScalar": false,
@@ -18869,62 +18871,62 @@ exports[`Header renders page header with application title 1`] = `
       "AnimatedMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+          "url": "/ui/logos/spinner_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_spinner_on_light.svg",
+          "url": "/ui/logos/spinner_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_spinner_on_light.svg",
+        "url": "/ui/logos/spinner_on_light.svg",
       },
       "Application": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+          "url": "/ui/logos/wazuh_dashboards_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+        "url": "/ui/logos/wazuh_dashboards_on_light.svg",
       },
       "CenterMark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_center_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_center_mark_on_light.svg",
       },
       "Mark": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_dark.svg",
+          "url": "/ui/logos/wazuh_mark_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_mark_on_light.svg",
+          "url": "/ui/logos/wazuh_mark_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_mark_on_light.svg",
+        "url": "/ui/logos/wazuh_mark_on_light.svg",
       },
       "OpenSearch": Object {
         "dark": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_dark.svg",
+          "url": "/ui/logos/wazuh_on_dark.svg",
         },
         "light": Object {
           "type": "default",
-          "url": "/ui/logos/opensearch_on_light.svg",
+          "url": "/ui/logos/wazuh_on_light.svg",
         },
         "type": "default",
-        "url": "/ui/logos/opensearch_on_light.svg",
+        "url": "/ui/logos/wazuh_on_light.svg",
       },
       "colorScheme": "light",
     }
@@ -21039,62 +21041,62 @@ exports[`Header renders page header with application title 1`] = `
           "AnimatedMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_dark.svg",
+              "url": "/ui/logos/spinner_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_spinner_on_light.svg",
+              "url": "/ui/logos/spinner_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_spinner_on_light.svg",
+            "url": "/ui/logos/spinner_on_light.svg",
           },
           "Application": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_dark.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+              "url": "/ui/logos/wazuh_dashboards_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_dashboards_on_light.svg",
+            "url": "/ui/logos/wazuh_dashboards_on_light.svg",
           },
           "CenterMark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_center_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_center_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_center_mark_on_light.svg",
           },
           "Mark": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_dark.svg",
+              "url": "/ui/logos/wazuh_mark_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_mark_on_light.svg",
+              "url": "/ui/logos/wazuh_mark_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_mark_on_light.svg",
+            "url": "/ui/logos/wazuh_mark_on_light.svg",
           },
           "OpenSearch": Object {
             "dark": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_dark.svg",
+              "url": "/ui/logos/wazuh_on_dark.svg",
             },
             "light": Object {
               "type": "default",
-              "url": "/ui/logos/opensearch_on_light.svg",
+              "url": "/ui/logos/wazuh_on_light.svg",
             },
             "type": "default",
-            "url": "/ui/logos/opensearch_on_light.svg",
+            "url": "/ui/logos/wazuh_on_light.svg",
           },
           "colorScheme": "light",
         }
@@ -27600,7 +27602,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
             <EuiCollapsibleNavGroup
               background="light"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
-              initialIsOpen={false}
+              initialIsOpen={true}
               isCollapsible={true}
               key="recentlyViewed"
               onToggle={[Function]}
@@ -27632,14 +27634,14 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                 data-test-subj="collapsibleNavGroup-recentlyViewed"
                 id="mockId"
-                initialIsOpen={false}
+                initialIsOpen={true}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                   data-test-subj="collapsibleNavGroup-recentlyViewed"
                   onToggle={[Function]}
                 >
@@ -27648,7 +27650,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={false}
+                      aria-expanded={true}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -27658,12 +27660,12 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon"
+                          className="euiAccordion__icon euiAccordion__icon-isOpen"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon"
+                            className="euiAccordion__icon euiAccordion__icon-isOpen"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
