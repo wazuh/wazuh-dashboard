@@ -19,7 +19,7 @@ import { SEARCH_WORKSPACE_DISMISS_GET_STARTED, USE_NEW_HOME_PAGE } from '../comm
 // Wazuh: Remove the new home page configuration for now because it is not ready yet.
 // To add it again it must be exported
 // export const uiSettings: Record<string, UiSettingsParams> = {
-const uiSettings: Record<string, UiSettingsParams> = {
+export const uiSettings: Record<string, UiSettingsParams> = {
   [USE_NEW_HOME_PAGE]: {
     name: i18n.translate('home.ui_settings.useNewHomePage.label', {
       defaultMessage: 'Use New Home Page',
