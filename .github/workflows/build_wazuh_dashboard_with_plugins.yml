@@ -133,7 +133,7 @@ jobs:
         id: setup-variables
         run: |
           CURRENT_DIR=$(pwd -P)
-          VERSION=$(tail -c +2 VERSION)
+          VERSION=$(jq -r '.version' VERSION.json)
           REVISION=$(yarn --silent wzd-revision)
           COMMIT_SHA=$(git rev-parse --short HEAD)
           PLUGINS_SHA=${{steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA}}
