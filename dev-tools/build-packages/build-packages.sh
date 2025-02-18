@@ -267,7 +267,6 @@ main() {
             ;;
         *)
             echo "Unknown option: ${1}"
-            echo
             help 1
             ;;
         esac
