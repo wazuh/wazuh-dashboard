@@ -185,6 +185,14 @@ help() {
 main() {
     while [ -n "${1}" ]; do
         case "${1}" in
+        "-c" | "--commit-sha")
+            if [ -n "${2}" ]; then
+                commit_sha="${2}"
+                shift 2
+            else
+                help 0
+            fi
+            ;;
         "-h" | "--help")
             help 0
             ;;
