@@ -162,6 +162,7 @@ build(){
 help() {
     echo
     echo "Usage: $0 [OPTIONS]"
+    echo "    -c, --commit-sha <sha>        Set the commit sha of this build."
     echo "    -a, --app <url/path>          Set the location of the .zip file containing the Wazuh plugin."
     echo "    -b, --base <url/path>         Set the location of the .tar.gz file containing the base wazuh-dashboard build."
     echo "    -s, --security <url/path>     Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
