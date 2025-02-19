@@ -111,6 +111,9 @@ jobs:
       VERSION: ${{ steps.setup-variables.outputs.VERSION }}
       REVISION: ${{ steps.setup-variables.outputs.REVISION }}
       COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
+      PLUGINS_SHA: ${{ steps.setup-variables.outputs.PLUGINS_SHA }}
+      SECURITY_SHA: ${{ steps.setup-variables.outputs.SECURITY_SHA }}
+      REPORTING_SHA: ${{ steps.setup-variables.outputs.REPORTING_SHA }}
       PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
       WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
       WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
@@ -153,7 +156,7 @@ jobs:
         id: setup-variables
         run: |
           CURRENT_DIR=$(pwd -P)
-          VERSION=$(tail -c +2 VERSION)
+          VERSION=$(jq -r '.version' VERSION.json)
           REVISION=$(yarn --silent wzd-revision)
           COMMIT_SHA=$(git rev-parse --short HEAD)
           PLUGINS_SHA=${{steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA}}
@@ -195,6 +198,9 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
           echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
+          echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
+          echo "REPORTING_SHA=$REPORTING_SHA" >> $GITHUB_OUTPUT
           echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
           echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
           echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
@@ -310,13 +316,12 @@ jobs:
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
           bash ./build-packages.sh \
-            -v ${{ needs.setup-variables.outputs.VERSION }} \
-            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }}  \
+            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            -rp file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/report-package.zip \
-            ${{ needs.setup-variables.outputs.PRODUCTION }} --${{ inputs.system }} --debug
+            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}}-${{needs.setup-variables.outputs.REPORTING_SHA}} \
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Test package
         run: |
