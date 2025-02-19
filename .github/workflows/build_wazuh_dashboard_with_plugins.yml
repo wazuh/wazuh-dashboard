@@ -95,8 +95,8 @@ jobs:
       VERSION: ${{ steps.setup-variables.outputs.VERSION }}
       REVISION: ${{ steps.setup-variables.outputs.REVISION }}
       COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
-      PLUGINS_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
-      SECURITY_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
+      PLUGINS_SHA: ${{ steps.setup-variables.outputs.PLUGINS_SHA }}
+      SECURITY_SHA: ${{ steps.setup-variables.outputs.SECURITY_SHA }}
       PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
       WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
       WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
