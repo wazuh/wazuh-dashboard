@@ -1591,7 +1591,7 @@ exports[`AdvancedSettings should render normally when use updated UX 1`] = `
                                   }
                                 }
                               >
-                                Search terms are hiding 8 settings
+                                Search terms are hiding 8 settings 
                                 <EuiLink
                                   onClick={[Function]}
                                 >
