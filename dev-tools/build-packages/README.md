@@ -54,6 +54,6 @@ bash build-packages.sh \
     --app file:///home/user/packages/wazuh-package.zip \
     --base file:///home/user/packages/dashboard-package.zip \
     --security file:///home/user/packages/security-package.zip \
-    --reportPlugin file:///home/user/packages/report-package.zip
-    --version 5.0.0 --revision 2 --deb --silent
+    --reportPlugin file:///home/user/packages/report-package.zip \
+    --revision 2 --deb --silent
 ```
