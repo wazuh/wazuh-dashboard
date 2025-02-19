@@ -52,5 +52,5 @@ bash build-packages.sh \
     --app file:///home/user/packages/wazuh-package.zip \
     --base file:///home/user/packages/dashboard-package.zip \
     --security file:///home/user/packages/security-package.zip \
-    --version 4.10.0 --revision 2 --deb --silent
+    --revision 2 --deb --silent
 ```

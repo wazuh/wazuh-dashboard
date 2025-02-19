@@ -94,8 +94,8 @@ override_dh_fixperms:
 	chown root:root $(TARGET_DIR)/etc/systemd/system/wazuh-dashboard.service
 	chown root:root $(TARGET_DIR)/etc/systemd/system/"$(NAME)"
 	chown $(USER):$(GROUP) $(TARGET_DIR)/etc/default/"$(NAME)"
-	chown $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION
-	chmod 440 $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION
+	chown $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION.json
+	chmod 440 $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION.json
 	chmod 750 $(TARGET_DIR)/etc/systemd/system/wazuh-dashboard
 	chmod 750 $(TARGET_DIR)/etc/default/wazuh-dashboard
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/opensearch_dashboards.yml

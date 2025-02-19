@@ -157,6 +157,7 @@ log "Compressing final package"
 log
 
 mkdir -p $out_dir
+cp ${current_path}/VERSION.json .
 tar -czf $out_dir/wazuh-dashboard-$version-$revision-linux-$architecture.tar.gz *
 
 log Done!
