@@ -316,13 +316,13 @@ jobs:
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
           bash ./build-packages.sh \
-            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
+            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }}  \
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             -rp file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/report-package.zip \
             --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}}-${{needs.setup-variables.outputs.REPORTING_SHA}} \
-            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+            ${{ needs.setup-variables.outputs.PRODUCTION }} --${{ inputs.system }} --debug
 
       - name: Test package
         run: |
