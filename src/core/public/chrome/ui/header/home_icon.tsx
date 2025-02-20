@@ -18,7 +18,7 @@ interface Props {
  */
 export const HomeIcon = ({ branding, logos }: Props) => {
   // Removed prop unnecessary useExpandedHeader Wazuh dashboards
-  const { applicationTitle = 'Wazuh dashboards', useExpandedHeader } = branding;
+  const { applicationTitle = 'Wazuh dashboard', useExpandedHeader } = branding;
 
   const { url: markURL, type: markType } = logos.Mark;
 
