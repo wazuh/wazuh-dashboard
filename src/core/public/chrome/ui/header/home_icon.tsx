@@ -26,7 +26,7 @@ export const HomeIcon = ({ branding, logos }: Props) => {
   // Marks look better at the large size
   let markIconSize: IconSize = 'l';
 
-  // If no custom branded mark was set, use `home` icon Wazuh dashboards
+  // If no custom branded mark was set, use `home` icon Wazuh dashboard
   if (markType !== 'custom' && useExpandedHeader) {
     testSubj = 'homeIcon';
     // Home icon should be medium to fit in with other icons
