@@ -282,13 +282,6 @@ main() {
             verbose="debug"
             shift 1
             ;;
-
-        "-o" | "--output")
-            if [ -n "${2}" ]; then
-                output="${2}"
-                shift 2
-            fi
-            ;;
         *)
             echo "Unknown option: ${1}"
 
