@@ -86,7 +86,7 @@ on:
 
 jobs:
   setup-variables:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Setup variables
     outputs:
       CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
@@ -153,7 +153,7 @@ jobs:
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
 
   validate-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: setup-variables
     name: Validate inputs
     steps:
@@ -198,7 +198,7 @@ jobs:
 
   build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Generate packages
     steps:
       - name: Checkout code
