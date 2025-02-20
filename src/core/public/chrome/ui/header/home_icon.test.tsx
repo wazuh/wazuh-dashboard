@@ -29,7 +29,7 @@ describe('Home icon,', () => {
       expect(icon.prop('data-test-subj')).toEqual('homeIcon');
       expect(icon.prop('type')).toEqual(props.logos.Mark.url);
       expect(icon.prop('size')).toEqual('m');
-      expect(icon.prop('title')).toEqual('Wazuh dashboards home');
+      expect(icon.prop('title')).toEqual('Wazuh dashboard home');
     });
 
     it('uses the home icon when header is expanded', () => {
