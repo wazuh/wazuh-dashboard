@@ -26,6 +26,7 @@ The script can build a `.tar.gz` (former base), and `rpm` and `deb` packages. Th
 
 The inputs are the following:
 
+- `-c`, `--commit-sha`: Set the commit sha of this build.
 - `-a`, `--app`: URL or path to the zip that contains the `wazuh-dashboard-plugins` plugins build.
 - `-b`, `--base`: URL or path to the zip that contains the `wazuh-dashboard build`.
 - `-s`, `--security`: URL or path to the zip that contains the `wazuh-security-dashboards-plugin` build.
@@ -39,6 +40,7 @@ The inputs are the following:
 - `--arm`: [Optional] Build for arm64 instead of x64.
 - `--debug`: [Optional] Enables debug mode, which will show detailed information during the script run.
 - `--silent`: [Optional] Enables silent mode, which will show the minimum possible information during the script run. `--debug` has priority over this.
+- `--help`: Show the help message.
 
 > [!IMPORTANT]
 > In the inputs where a local path is available, use `file://<absolute_path>` to indicate it.

@@ -180,6 +180,7 @@ help() {
     echo "    -b,  --base <url/path>          Set the location of the .tar.gz file containing the base wazuh-dashboard build."
     echo "    -s,  --security <url/path>      Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
     echo "    -rp, --reportPlugin <url/path>  Set the location of the .zip file containing the wazuh-reporting-plugin."
+    echo "    -r,  --revision <revision>      [Optional] Set the revision of this build. By default, it is set to 1."
     echo "         --all-platforms            Build for all platforms."
     echo "         --deb                      Build for deb."
     echo "         --rpm                      Build for rpm."
@@ -188,7 +189,6 @@ help() {
     echo "         --arm                      [Optional] Build for arm64 instead of x64."
     echo "         --debug                    [Optional] Debug mode."
     echo "         --silent                   [Optional] Silent mode. Will not work if --debug is set."
-    echo "    -r,  --revision <revision>      [Optional] Set the revision of this build. By default, it is set to 1."
     echo "    -h,  --help                     Show this help."
     echo
     exit $1
