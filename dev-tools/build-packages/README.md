@@ -30,7 +30,6 @@ The inputs are the following:
 - `-b`, `--base`: URL or path to the zip that contains the `wazuh-dashboard build`.
 - `-s`, `--security`: URL or path to the zip that contains the `wazuh-security-dashboards-plugin` build.
 - `-rp`, `--reportPlugin`: URL or path to the zip that contains the `wazuh-dashboards-reporting` build.
-- `-v`, `--version`: Set the version of this build.
 - `-r`, `--revision`: [Optional] Set the revision of this build. By default, it is set to 1.
 - `--all-platforms`: Build all platforms.
 - `--deb`: Build deb.
