@@ -234,6 +234,14 @@ main() {
                 help 0
             fi
             ;;
+        "-rp" | "--reportPlugin")
+            if [ -n "${2}" ]; then
+                reportPlugin="${2}"
+                shift 2
+            else
+                help 0
+            fi
+            ;;
         "-r" | "--revision")
             if [ -n "${2}" ]; then
                 revision="${2}"
@@ -271,6 +279,13 @@ main() {
         "--debug")
             verbose="debug"
             shift 1
+            ;;
+
+        "-o" | "--output")
+            if [ -n "${2}" ]; then
+                output="${2}"
+                shift 2
+            fi
             ;;
         *)
             echo "Unknown option: ${1}"
