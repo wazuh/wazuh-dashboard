@@ -6,7 +6,7 @@ The following instructions demonstrate how to set up a development environment f
 
 2. In the terminal, run the command below.
     * This should create a folder named `opensearch-dashboards-docker-dev` and it should contain two files: `docker-compose.yml` and `entrypoint.sh`.
-    * Here is the link to the installer script: `https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev_tools/install_docker_dev.sh` if needed.
+    * Here is the link to the installer script: `https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev-tools/install-docker-dev.sh` if needed.
 
 ```bash
 curl -o- https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev_tools/install_docker_dev.sh | bash
