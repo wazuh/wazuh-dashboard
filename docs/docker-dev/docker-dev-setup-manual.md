@@ -9,7 +9,7 @@ The following instructions demonstrate how to set up a development environment f
     * Here is the link to the installer script: `https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev-tools/install-docker-dev.sh` if needed.
 
 ```bash
-curl -o- https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev_tools/install_docker_dev.sh | bash
+curl -o- https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev-tools/install-docker-dev.sh | bash
 ```
 
 3. Open VS Code or [install it](https://code.visualstudio.com/download), if it's not already installed.
