@@ -328,14 +328,6 @@ jobs:
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.FINAL_NAME}}
 
-      - name: Set package final name
-        run: |
-          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}} ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}}
-      - name: Set SHA final name
-        if: ${{ inputs.checksum }}
-        run: |
-          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}}.sha512 ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}}.sha512
-
       - uses: actions/upload-artifact@v4
         if: success()
         with:
