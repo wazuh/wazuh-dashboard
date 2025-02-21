@@ -180,8 +180,8 @@ jobs:
             fi
             FINAL_NAME=${PACKAGE_NAME}
           else
-            PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}.deb
-            FINAL_NAME=${PACKAGE_NAME}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}.deb
+            PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}.${{ inputs.system }}
+            FINAL_NAME=${PACKAGE_NAME}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}.${{ inputs.system }}
           fi
           if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
             ARCHITECTURE_FLAG=""
