@@ -1,4 +1,20 @@
-name: Backport
+# This workflow automates backporting of _pull requests_ (PR) to other
+# branches when:
+#
+# 1. A PR is closed and has been merged (`closed` + `merged`).
+# 2. The `backport` label is added to a PR.
+#
+# ### 🔧 What does the workflow do?
+# - Generates an automatic backport of the closed or labeled PR.
+# - Skips the `CHANGELOG.md` file when backporting.
+# - Adds the `autocut` label to the backport PR.
+# - Adds the `failed backport` label if the process fails.
+#
+# ### ✨ What is it for?
+# This workflow is useful for keeping multiple branches synchronized with
+# relevant changes without manual intervention.
+
+name: Backport PRs
 on:
   pull_request_target:
     types:

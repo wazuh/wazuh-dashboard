@@ -1,9 +1,24 @@
+# This workflow automatically deletes the branch of a backport PR after it has
+# been merged.
+#
+# ### 🔧 What does the workflow do?
+# - Triggering event: It runs when a pull request is closed (`pull_request:
+#   closed`).
+#
+# - Condition (`if`): It only acts if the branch of the closed PR starts with
+#   `backport/`.
+#
+# ### ✨ What is it for?
+# This workflow helps keep the repository clean by automatically deleting
+# backport branches after they have already been merged and are no longer
+# needed.
+
 name: Delete merged branch of the backport PRs
-on: 
+on:
   pull_request:
     types:
       - closed
-  
+
 jobs:
   delete-branch:
     runs-on: ubuntu-latest
