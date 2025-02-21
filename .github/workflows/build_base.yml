@@ -5,10 +5,10 @@ name: Build base
 on:
   workflow_call:
     inputs:
-      CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'master'
+      CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'main'
         description: 'The branch/tag/commit to checkout to'
         required: true
-        default: ''
+        default: 'main'
         type: string
       ARCHITECTURE:
         description: 'The architecture to build the package for'
@@ -18,10 +18,10 @@ on:
 
   workflow_dispatch:
     inputs:
-      CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'master'
+      CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'main'
         description: 'The branch/tag/commit to checkout to'
         required: true
-        default: ''
+        default: 'main'
       ARCHITECTURE:
         description: 'The architecture to build the package for'
         required: true
