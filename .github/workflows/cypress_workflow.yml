@@ -1,4 +1,4 @@
-name: Integration tests
+name: Run cypress tests
 
 # trigger on every PR for all branches except feature branches
 on:
