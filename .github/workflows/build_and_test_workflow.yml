@@ -407,8 +407,6 @@ jobs:
     name: Build min release artifacts on ${{ matrix.name }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        suffix: [linux-x64, linux-arm64]
         include:
           - os: ubuntu-latest
             name: Linux x64
