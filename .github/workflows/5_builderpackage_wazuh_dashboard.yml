@@ -1,4 +1,12 @@
 # This is a basic workflow that is manually triggered
+#
+# This workflow automates the build of Wazuh Dashboard for different
+# architectures and distributions.
+#
+# This workflow:
+# - Clones, configures, builds and packages the Wazuh Dashboard.
+# - Is customizable in architecture and reference (`branch/tag/commit`).
+# - Uploads the final package with a structured name.
 
 name: Build Wazuh dashboard
 
