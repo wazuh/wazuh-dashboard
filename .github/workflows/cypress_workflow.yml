@@ -47,7 +47,6 @@ env:
 jobs:
   cypress-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -179,7 +178,6 @@ jobs:
           overwrite: true
   add-comment:
     needs: [cypress-tests]
-    timeout-minutes: 30
     if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.pr_number != '' }}
     permissions:
       pull-requests: write
