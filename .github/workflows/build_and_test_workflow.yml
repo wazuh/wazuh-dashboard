@@ -36,6 +36,7 @@ env:
 jobs:
   build-test:
     name: Build and Verify on ${{ matrix.name }} (ciGroup${{ matrix.group }})
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -130,6 +131,7 @@ jobs:
 
   lint-and-validate:
     name: Lint and validate
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -175,6 +177,7 @@ jobs:
 
   functional-tests:
     name: Run functional tests on ${{ matrix.name }} (ciGroup${{ matrix.group }})
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -293,6 +296,7 @@ jobs:
 
   plugin-functional-tests:
     name: Run plugin functional tests on ${{ matrix.name }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -405,6 +409,7 @@ jobs:
 
   build-min-artifact-tests:
     name: Build min release artifacts on ${{ matrix.name }}
+    timeout-minutes: 30
     strategy:
       matrix:
         include:
@@ -518,6 +523,7 @@ jobs:
 
   bwc-tests:
     needs: [build-min-artifact-tests]
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     container:
       image: docker://opensearchstaging/ci-runner:ci-runner-rockylinux8-opensearch-dashboards-integtest-v2
