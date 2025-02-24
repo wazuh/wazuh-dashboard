@@ -31,6 +31,7 @@ on:
 jobs:
   build:
     runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'ubuntu-latest' || 'wz-linux-arm64' }}
+    timeout-minutes: 30
     name: Build
     defaults:
       run:
