@@ -1,3 +1,21 @@
+# This workflow automates the build of the **Wazuh Dashboard** package along
+# with its plugins.
+#
+# This workflow:
+# - **Downloads**, **builds**, **packages**, **tests**, and **uploads** the **Wazuh
+#   Dashboard** along with its plugins.
+# - Is **customizable** through inputs to adapt to different environments
+#   (production, staging, various architectures).
+# - Ensures that each component is built with the **exact reference**
+#   provided and validated before the final packaging.
+#
+# - Allows customization of:
+#   - Operating system (`deb` or `rpm`)
+#   - Architecture (`amd64`, `x86_64`, `aarch64`, `arm64`)
+#   - Package revision
+#   - Plugin references (branches, tags, or commits)
+#   - Staging, upload, and checksum options.
+
 run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.id }}
 name: Build Wazuh dashboard with plugins
 
@@ -104,6 +122,11 @@ on:
 
 jobs:
   setup-variables:
+    # 1. Clone plugin repositories and get SHA for each one.
+    # 2. Configure key variables such as:
+    #   - Final package name based on system, architecture and stage.
+    #   - Architecture flags.
+    #   - Version, revision and commit SHA information.
     runs-on: ubuntu-latest
     name: Setup variables
     outputs:
@@ -206,6 +229,8 @@ jobs:
           echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
 
   validate-job:
+    # 1. Validates valid combinations of system and architecture.
+    # 2. Sets up AWS CLI for future uploads if needed.
     runs-on: ubuntu-latest
     needs: setup-variables
     name: Validate job
@@ -256,7 +281,15 @@ jobs:
     uses: wazuh/wazuh-dashboards-reporting/.github/workflows/5_builderpackage_manual-build.yml@main
     with:
       reference: ${{ inputs.reference_report_plugins }}
+
   build-and-test-package:
+    # 1. Downloads previously built artifacts.
+    # 2. Packages the plugins and dashboard into `.zip` files.
+    # 3. Executes the build script to generate the final package (`.deb` or `.rpm`).
+    # 4. Performs tests on the generated package.
+    # 5. Renames the package with the appropriate final name.
+    # 6. If requested, generates the `.sha512` checksum file.
+    # 7. Finally, uploads the resulting package as an artifact.
     needs:
       [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
