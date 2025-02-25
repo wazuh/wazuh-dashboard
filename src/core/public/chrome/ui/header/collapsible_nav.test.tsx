@@ -166,7 +166,7 @@ describe('CollapsibleNav', () => {
     expect(component).toMatchSnapshot();
   });
 
-  // Wazuh dashboards change: The menu is collapsed at the beginning,
+  // Wazuh dashboard change: The menu is collapsed at the beginning,
   // that's why it changes to 0 at the beginning and when pressing the buttons it changes to 2 because it would be displaying the submenu.
   it('remembers collapsible section state', () => {
     const navLinks = [mockLink({ category: explore }), mockLink({ category: observability })];
