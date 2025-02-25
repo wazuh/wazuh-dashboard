@@ -171,7 +171,9 @@ export function uiRenderMixin(osdServer, server, config) {
           `${basePath}/node_modules/@osd/ui-framework/dist/${UiSharedDeps.kuiCssDistFilenames[effectiveVersion][effectiveMode]}`,
           `${basePath}/ui/legacy_${mode}_theme.css`,
           // Wazuh: add a style files to overwrite some v7 theme styles
-          ...(['v7light', 'v7dark'].includes(themeTag) ? [`${basePath}/ui/wz_v7_theme_overwrite.css`] : [])
+          ...(['v7light', 'v7dark'].includes(themeTag)
+            ? [`${basePath}/ui/wz_v7_theme_overwrite.css`]
+            : []),
         ];
       }
 
