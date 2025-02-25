@@ -28,7 +28,7 @@ exports[`Home icon, unbranded, uses the home icon when header is expanded 1`] = 
   data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
   data-test-subj="homeIcon"
   size="m"
-  title="Wazuh dashboards home"
+  title="Wazuh dashboard home"
   type="/ui/logos/wazuh_mark_on_light.svg"
 />
 `;
@@ -39,7 +39,7 @@ exports[`Home icon, unbranded, uses the mark logo when header is not expanded 1`
   data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
   data-test-subj="defaultMark"
   size="l"
-  title="Wazuh dashboards home"
+  title="Wazuh dashboard home"
   type="/ui/logos/wazuh_mark_on_light.svg"
 />
 `;
