@@ -4,7 +4,7 @@ base_path_repositories_plugins_scripts="/home/node/repositories/plugins"
 plugins=$(ls $base_path_repositories_plugins_scripts)
 
 mkdir /home/node/packages
-echo "Cloning Wazuh dashboards"
+echo "Cloning Wazuh dashboard"
 source $base_path_repositories_scripts/wazuh-dashboard.sh
 
 for plugin in $plugins; do
