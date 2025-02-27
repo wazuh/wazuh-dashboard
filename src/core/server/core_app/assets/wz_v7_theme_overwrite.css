@@ -1,0 +1,11 @@
+/* Wazuh: overwrite some styles related to a empty button text is cut off in v7 OUI 1.19.0
+  See https://github.com/wazuh/wazuh-dashboard/issues/423#issuecomment-2674893230
+*/
+
+.euiButtonEmpty {
+  line-height: 1.5;
+}
+
+.euiButtonEmpty .euiButtonEmpty__text{
+  display: flex;
+}

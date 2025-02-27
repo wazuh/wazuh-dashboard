@@ -8,6 +8,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.12.0
 
+### Fixed
+
+- Fixed a style issue with the empty button texts are cut off in v7 theme of OpenSearch Dashboards 2.19.0 upgrade [#423](https://github.com/wazuh/wazuh-dashboard/issues/423)
+
 ## Wazuh dashboard v4.11.1 - OpenSearch Dashboards 2.16.0 - Revision 00
 
 ### Added
