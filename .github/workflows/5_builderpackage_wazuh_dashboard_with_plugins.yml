@@ -17,14 +17,14 @@
 #   - Staging, upload, and checksum options.
 
 run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.id }}
-name: Build Wazuh dashboard with plugins
+name: Build Wazuh dashboard package with plugins (on demand)
 
 on:
   workflow_dispatch:
     inputs:
       system:
         type: choice
-        description: 'Package OS'
+        description: 'Distribution format of the package [deb, rpm].'
         required: true
         options:
           - deb
@@ -32,7 +32,7 @@ on:
         default: 'deb'
       architecture:
         type: choice
-        description: 'Package architecture'
+        description: 'Architecture of the package [amd64, x86_64, aarch64, arm64].'
         required: true
         options:
           - amd64
@@ -42,36 +42,36 @@ on:
         default: amd64
       revision:
         type: string
-        description: 'Package revision'
+        description: 'Revision number of the package.'
         required: true
         default: '0'
       reference_security_plugins:
         type: string
-        description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
+        description: 'Branch/tag/commit from "wazuh-security-dashboards-plugin" repository.'
         required: true
         default: 'main'
       reference_wazuh_plugins:
         type: string
-        description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
+        description: 'Branch/tag/commit from "wazuh-dashboard-plugins" repository.'
         required: true
         default: 'main'
       reference_report_plugins:
         type: string
-        description: 'Branch/tag/commit of the wazuh-dashboard-reporting repository to build the report plugin'
+        description: 'Branch/tag/commit from "wazuh-dashboard-reporting" repository.'
         required: true
         default: 'main'
       is_stage:
         type: boolean
-        description: 'Set production nomenclature'
+        description: 'Enable to use the release naming nomenclature.'
         required: true
         default: false
       upload:
-        description: 'Upload ?'
+        description: 'Enable to upload the packages to the S3 bucket.'
         type: boolean
         default: true
       checksum:
         type: boolean
-        description: 'Generate package checksum'
+        description: 'Enable to generate the checksums of the packages. If the upload to the S3 bucket is enabled, these will be uploaded too.'
         required: true
         default: false
       id:
