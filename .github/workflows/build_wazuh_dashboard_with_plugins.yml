@@ -347,8 +347,15 @@ jobs:
         run: |
           echo "Uploading package"
           aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/
+          if [ ! -z "${{ needs.setup-variables.outputs.LATEST_NAME }}" ]; then
+            aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.LATEST_NAME}}
+          fi
           s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.FINAL_NAME}}"
           echo "S3 URI: ${s3uri}"
+          if [ ! -z "${{ needs.setup-variables.outputs.LATEST_NAME }}" ]; then
+            s3uri_latest="s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.LATEST_NAME}}"
+            echo "S3 Latest URI: ${s3uri_latest}"
+          fi
 
       - name: Upload SHA512
         if: ${{ inputs.checksum }}
