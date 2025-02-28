@@ -283,13 +283,13 @@ jobs:
       reference: ${{ inputs.reference_report_plugins }}
 
   build-and-test-package:
-    # 1. Downloads previously built artifacts.
-    # 2. Packages the plugins and dashboard into `.zip` files.
-    # 3. Executes the build script to generate the final package (`.deb` or `.rpm`).
-    # 4. Performs tests on the generated package.
-    # 5. Renames the package with the appropriate final name.
-    # 6. If requested, generates the `.sha512` checksum file.
-    # 7. Finally, uploads the resulting package as an artifact.
+    # 1. Download previously built artifacts.
+    # 2. Package the plugins and dashboard into `.zip` files.
+    # 3. Execute the build script to generate the final package (`.deb` or `.rpm`).
+    # 4. Perform tests on the generated package.
+    # 5. Rename the package with the appropriate final name.
+    # 6. If requested, generate the `.sha512` checksum file.
+    # 7. Finally, upload the resulting package as an artifact.
     needs:
       [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
