@@ -47,17 +47,17 @@ on:
         default: '0'
       reference_security_plugins:
         type: string
-        description: 'Branch/tag/commit from "wazuh-security-dashboards-plugin" repository.'
+        description: 'Git reference (branch, tag, or commit SHA) from "wazuh-security-dashboards-plugin" repository.'
         required: true
         default: 'main'
       reference_wazuh_plugins:
         type: string
-        description: 'Branch/tag/commit from "wazuh-dashboard-plugins" repository.'
+        description: 'Git reference (branch, tag, or commit SHA) from "wazuh-dashboard-plugins" repository.'
         required: true
         default: 'main'
       reference_report_plugins:
         type: string
-        description: 'Branch/tag/commit from "wazuh-dashboard-reporting" repository.'
+        description: 'Git reference (branch, tag, or commit SHA) from "wazuh-dashboard-reporting" repository.'
         required: true
         default: 'main'
       is_stage:
