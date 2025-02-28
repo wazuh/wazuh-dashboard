@@ -34,3 +34,5 @@ target
 # antlr overrides
 /src/plugins/data/public/antlr/opensearch_sql/.generated/*
 /src/plugins/data/public/antlr/opensearch_sql/grammar/**/*
+
+VERSION.json
