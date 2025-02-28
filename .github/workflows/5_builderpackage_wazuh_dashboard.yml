@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 #
-# This workflow automates the build of Wazuh Dashboard for different
+# This workflow automates the build of Wazuh dashboard core for different
 # architectures and distributions.
 #
 # This workflow:
