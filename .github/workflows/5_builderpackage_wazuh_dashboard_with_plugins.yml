@@ -2,11 +2,11 @@
 # its plugins.
 #
 # This workflow:
-# - Downloads, builds, packages, tests, and uploads the Wazuh Dashboard along
+# - Download, build, package, test, and upload the Wazuh dashboard along
 #   with its plugins.
-# - Is customizable through inputs to adapt to different environments
+# - Customizable through inputs to adapt to different environments
 #   (production, staging, various architectures).
-# - Ensures that each component is built with the exact reference provided and
+# - Ensure that each component is built with the exact reference provided and
 #   validated before the final packaging.
 #
 # - Allows customization of:
