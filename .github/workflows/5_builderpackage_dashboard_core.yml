@@ -8,7 +8,7 @@
 # - Customizable in architecture and reference (`branch/tag/commit`).
 # - Upload the final package with a structured name.
 
-name: Build Wazuh dashboard package (on demand)
+name: Build Wazuh dashboard core package (on demand)
 
 on:
   workflow_call:
