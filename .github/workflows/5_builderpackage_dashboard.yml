@@ -57,7 +57,7 @@ on:
         default: 'main'
       reference_report_plugins:
         type: string
-        description: 'Git reference (branch, tag, or commit SHA) from "wazuh-dashboard-reporting" repository.'
+        description: 'Git reference (branch, tag, or commit SHA) from "wazuh-dashboards-reporting" repository.'
         required: true
         default: 'main'
       is_stage:
