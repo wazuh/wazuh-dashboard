@@ -28,6 +28,7 @@ RUN cd brotli && chmod +x ./bootstrap && ./bootstrap && ./configure --prefix=/us
 
 # Add the scripts to build the RPM package
 ADD base-builder.sh /usr/local/bin/builder
+ADD VERSION.json /usr/local/bin/VERSION.json
 ADD plugins /usr/local/bin/plugins
 RUN chmod +x /usr/local/bin/builder
 

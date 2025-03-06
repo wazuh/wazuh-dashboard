@@ -26,11 +26,11 @@ The script can build a `.tar.gz` (former base), and `rpm` and `deb` packages. Th
 
 The inputs are the following:
 
+- `-c`, `--commit-sha`: Set the commit sha of this build.
 - `-a`, `--app`: URL or path to the zip that contains the `wazuh-dashboard-plugins` plugins build.
 - `-b`, `--base`: URL or path to the zip that contains the `wazuh-dashboard build`.
 - `-s`, `--security`: URL or path to the zip that contains the `wazuh-security-dashboards-plugin` build.
 - `-rp`, `--reportPlugin`: URL or path to the zip that contains the `wazuh-dashboards-reporting` build.
-- `-v`, `--version`: Set the version of this build.
 - `-r`, `--revision`: [Optional] Set the revision of this build. By default, it is set to 1.
 - `--all-platforms`: Build all platforms.
 - `--deb`: Build deb.
@@ -40,6 +40,7 @@ The inputs are the following:
 - `--arm`: [Optional] Build for arm64 instead of x64.
 - `--debug`: [Optional] Enables debug mode, which will show detailed information during the script run.
 - `--silent`: [Optional] Enables silent mode, which will show the minimum possible information during the script run. `--debug` has priority over this.
+- `--help`: Show the help message.
 
 > [!IMPORTANT]
 > In the inputs where a local path is available, use `file://<absolute_path>` to indicate it.
@@ -54,6 +55,6 @@ bash build-packages.sh \
     --app file:///home/user/packages/wazuh-package.zip \
     --base file:///home/user/packages/dashboard-package.zip \
     --security file:///home/user/packages/security-package.zip \
-    --reportPlugin file:///home/user/packages/report-package.zip
-    --version 5.0.0 --revision 2 --deb --silent
+    --reportPlugin file:///home/user/packages/report-package.zip \
+    --revision 2 --deb --silent
 ```
