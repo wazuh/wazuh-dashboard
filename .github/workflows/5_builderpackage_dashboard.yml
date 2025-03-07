@@ -1,12 +1,30 @@
+# This workflow automates the build of the Wazuh Dashboard package along with
+# its plugins.
+#
+# This workflow:
+# - Download, build, package, test, and upload the Wazuh dashboard along
+#   with its plugins.
+# - Customizable through inputs to adapt to different environments
+#   (production, staging, various architectures).
+# - Ensure that each component is built with the exact reference provided and
+#   validated before the final packaging.
+#
+# - Allows customization of:
+#   - Operating system (`deb` or `rpm`)
+#   - Architecture (`amd64`, `x86_64`, `aarch64`, `arm64`)
+#   - Package revision
+#   - Plugin references (branches, tags, or commits)
+#   - Staging, upload, and checksum options.
+
 run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.id }}
-name: Build Wazuh dashboard with plugins
+name: Build Wazuh dashboard package with plugins (on demand)
 
 on:
   workflow_dispatch:
     inputs:
       system:
         type: choice
-        description: 'Package OS'
+        description: 'Distribution format of the package [deb, rpm].'
         required: true
         options:
           - deb
@@ -14,7 +32,7 @@ on:
         default: 'deb'
       architecture:
         type: choice
-        description: 'Package architecture'
+        description: 'Architecture of the package [amd64, x86_64, aarch64, arm64].'
         required: true
         options:
           - amd64
@@ -24,36 +42,36 @@ on:
         default: amd64
       revision:
         type: string
-        description: 'Package revision'
+        description: 'Revision number of the package.'
         required: true
         default: '0'
       reference_security_plugins:
         type: string
-        description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
+        description: 'Git reference (branch, tag, or commit SHA) from "wazuh-security-dashboards-plugin" repository.'
         required: true
         default: 'main'
       reference_wazuh_plugins:
         type: string
-        description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
+        description: 'Git reference (branch, tag, or commit SHA) from "wazuh-dashboard-plugins" repository.'
         required: true
         default: 'main'
       reference_report_plugins:
         type: string
-        description: 'Branch/tag/commit of the wazuh-dashboard-reporting repository to build the report plugin'
+        description: 'Git reference (branch, tag, or commit SHA) from "wazuh-dashboards-reporting" repository.'
         required: true
         default: 'main'
       is_stage:
         type: boolean
-        description: 'Set production nomenclature'
+        description: 'Enable to use the release naming nomenclature.'
         required: true
         default: false
       upload:
-        description: 'Upload ?'
+        description: 'Enable to upload the packages to the S3 bucket.'
         type: boolean
         default: true
       checksum:
         type: boolean
-        description: 'Generate package checksum'
+        description: 'Enable to generate the checksums of the packages. If the upload to the S3 bucket is enabled, these will be uploaded too.'
         required: true
         default: false
       id:
@@ -104,6 +122,11 @@ on:
 
 jobs:
   setup-variables:
+    # 1. Clone plugin repositories and get SHA for each one.
+    # 2. Configure key variables such as:
+    #   - Final package name based on system, architecture and stage.
+    #   - Architecture flags.
+    #   - Version, revision and commit SHA information.
     runs-on: ubuntu-latest
     name: Setup variables
     outputs:
@@ -206,6 +229,8 @@ jobs:
           echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
 
   validate-job:
+    # 1. Validates valid combinations of system and architecture.
+    # 2. Sets up AWS CLI for future uploads if needed.
     runs-on: ubuntu-latest
     needs: setup-variables
     name: Validate job
@@ -231,7 +256,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@main
+    uses: wazuh/wazuh-dashboard/.github/workflows/5_builderpackage_dashboard_core.yml@main
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
@@ -239,24 +264,32 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@main
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/5_builderpackage_plugins.yml@main
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@main
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/5_builderpackage_security_plugin.yml@main
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
   build-report-plugin:
     needs: [validate-job]
     name: Build reporting plugin
-    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/manual-build.yml@main
+    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/5_builderpackage_reporting_plugin.yml@main
     with:
       reference: ${{ inputs.reference_report_plugins }}
+
   build-and-test-package:
+    # 1. Download previously built artifacts.
+    # 2. Package the plugins and dashboard into `.zip` files.
+    # 3. Execute the build script to generate the final package (`.deb` or `.rpm`).
+    # 4. Perform tests on the generated package.
+    # 5. Rename the package with the appropriate final name.
+    # 6. If requested, generate the `.sha512` checksum file.
+    # 7. Finally, upload the resulting package as an artifact.
     needs:
       [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
