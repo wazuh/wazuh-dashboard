@@ -43,7 +43,13 @@ jest.mock('@elastic/eui/lib/services/accessibility/html_id_generator', () => ({
   htmlIdGenerator: () => () => 'mockId',
 }));
 
-const { opensearchDashboards, observability, security, management } = DEFAULT_APP_CATEGORIES;
+const {
+  explore,
+  opensearchDashboards,
+  observability,
+  security,
+  management,
+} = DEFAULT_APP_CATEGORIES;
 
 function mockLink({ title = 'discover', category }: Partial<ChromeNavLink>) {
   return {
@@ -160,11 +166,10 @@ describe('CollapsibleNav', () => {
     expect(component).toMatchSnapshot();
   });
 
+  // Wazuh dashboard change: The menu is collapsed at the beginning,
+  // that's why it changes to 0 at the beginning and when pressing the buttons it changes to 2 because it would be displaying the submenu.
   it('remembers collapsible section state', () => {
-    const navLinks = [
-      mockLink({ category: opensearchDashboards }),
-      mockLink({ category: observability }),
-    ];
+    const navLinks = [mockLink({ category: explore }), mockLink({ category: observability })];
     const recentNavLinks = [mockRecentNavLink({})];
     const component = mount(
       <CollapsibleNav
@@ -175,7 +180,7 @@ describe('CollapsibleNav', () => {
       />
     );
     expectShownNavLinksCount(component, 3);
-    clickGroup(component, 'opensearchDashboards');
+    clickGroup(component, 'explore');
     clickGroup(component, 'recentlyViewed');
     expectShownNavLinksCount(component, 1);
     component.setProps({ isNavOpen: false });

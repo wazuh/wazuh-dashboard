@@ -25,6 +25,7 @@ function mockProps() {
       version: injectedMetadata.getOpenSearchDashboardsVersion(),
       buildNumber: 1,
       branch: injectedMetadata.getBasePath(),
+      wazuhVersion: injectedMetadata.getWazuhVersion(),
       basePath: '',
       serverBasePath: '',
       env: {
@@ -34,6 +35,7 @@ function mockProps() {
           buildNum: 1,
           buildSha: '',
           dist: true,
+          wazuhVersion: '',
         },
         mode: {
           name: 'production' as 'development' | 'production',
