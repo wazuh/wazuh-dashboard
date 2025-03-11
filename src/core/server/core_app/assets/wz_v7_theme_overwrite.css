@@ -9,3 +9,19 @@
 .euiButtonEmpty .euiButtonEmpty__text{
   display: flex;
 }
+
+.dscCanvas > .dscCanvas_results > div:nth-child(2) {
+  min-height: 267px;
+}
+
+@media (min-width: 992px) {
+  .dscCanvas > .dscCanvas_results > div:nth-child(2) {
+    max-height: calc(100vh - 462px);
+  }
+}
+
+@media (min-width: 1174px) {
+  .dscCanvas > .dscCanvas_results > div:nth-child(2) {
+    max-height: calc(100vh - 422px);
+  }
+}
