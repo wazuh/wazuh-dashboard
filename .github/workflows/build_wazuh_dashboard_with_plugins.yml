@@ -88,7 +88,7 @@ on:
 
 jobs:
   setup-variables:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Setup variables
     outputs:
       CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
@@ -182,7 +182,7 @@ jobs:
           echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
 
   validate-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: setup-variables
     name: Validate inputs
     steps:
