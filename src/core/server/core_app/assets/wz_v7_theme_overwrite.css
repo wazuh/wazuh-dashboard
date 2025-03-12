@@ -11,6 +11,8 @@
 }
 
 .dscCanvas > .dscCanvas_results > div:nth-child(2) {
+  // when the screen size is too narrow; you can't even view the table, so I added a minimum height.
+  // See https://github.com/wazuh/wazuh-dashboard-plugins/issues/7330#issuecomment-2715690125
   min-height: 267px;
 }
 
