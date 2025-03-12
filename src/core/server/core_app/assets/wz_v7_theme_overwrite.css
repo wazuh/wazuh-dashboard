@@ -10,16 +10,13 @@
   display: flex;
 }
 
-.dscCanvas > .dscCanvas_results > div:nth-child(2) {
-  // when the screen size is too narrow; you can't even view the table, so I added a minimum height.
-  // This number is arbitrary, but it's a good starting point.
-  // See https://github.com/wazuh/wazuh-dashboard-plugins/issues/7330#issuecomment-2715690125
-  min-height: 267px;
-}
-
 // See https://github.com/wazuh/wazuh-dashboard-plugins/issues/7330#issuecomment-2715160164
 @media (min-width: 992px) {
   .dscCanvas > .dscCanvas_results > div:nth-child(2) {
+    // when the screen size is too narrow; you can't even view the table, so I added a minimum height.
+    // This number is arbitrary, but it's a good starting point.
+    // See https://github.com/wazuh/wazuh-dashboard-plugins/issues/7330#issuecomment-2715690125
+    min-height: 267px;
     // Why is the max-height calculated this way?
     // This is to ensure that the table will fit well within the available viewport height.
     // The 462px accounts for the combined height of the wrapping search bar, bar chart, and header elements.
