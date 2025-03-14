@@ -143,6 +143,7 @@ log
 
 cp -f $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
 cp -f $config_path/node.options.prod config/node.options
+mkdir config/certs
 
 log
 log "Fixing shebangs"

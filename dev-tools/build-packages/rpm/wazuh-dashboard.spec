@@ -196,6 +196,7 @@ rm -fr %{buildroot}
 %files
 %defattr(-,%{USER},%{GROUP})
 %dir %attr(750, %{USER}, %{GROUP}) %{CONFIG_DIR}
+%dir %attr(500, %{USER}, %{GROUP}) %{CONFIG_DIR}/certs
 
 %attr(0750, %{USER}, %{GROUP}) "/etc/default/wazuh-dashboard"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
