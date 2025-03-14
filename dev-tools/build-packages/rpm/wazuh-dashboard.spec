@@ -70,6 +70,7 @@ mkdir -p %{buildroot}/etc/default
 
 cp wazuh-dashboard-base/config/node.options %{buildroot}%{CONFIG_DIR}
 cp wazuh-dashboard-base/config/opensearch_dashboards.yml %{buildroot}%{CONFIG_DIR}
+cp -r wazuh-dashboard-base/config/certs %{buildroot}%{CONFIG_DIR}
 cp wazuh-dashboard-base/VERSION.json %{buildroot}%{INSTALL_DIR}
 
 mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
