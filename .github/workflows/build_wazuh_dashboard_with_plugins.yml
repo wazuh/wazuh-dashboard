@@ -1,20 +1,4 @@
-# This workflow automates the build of the Wazuh Dashboard package along with
-# its plugins.
-#
-# This workflow:
-# - Download, build, package, test, and upload the Wazuh dashboard along
-#   with its plugins.
-# - Customizable through inputs to adapt to different environments
-#   (production, staging, various architectures).
-# - Ensure that each component is built with the exact reference provided and
-#   validated before the final packaging.
-#
-# - Allows customization of:
-#   - Operating system (`deb` or `rpm`)
-#   - Architecture (`amd64`, `x86_64`, `aarch64`, `arm64`)
-#   - Package revision
-#   - Plugin references (branches, tags, or commits)
-#   - Staging, upload, and checksum options.
+# This workflow is only for compatibility with previous branches. It is not used in the main branch.
 
 run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.id }}
 name: Build Wazuh dashboard package with plugins
