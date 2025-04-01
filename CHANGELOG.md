@@ -10,7 +10,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 ### Fixed
 
-- Fixed that `/etc/default/wazuh-dashboard` file was overwritten during an upgrade in RPM-based operating systems [#550](https://github.com/wazuh/wazuh-dashboard/pull/590)
+- Fixed that `/etc/default/wazuh-dashboard` file was overwritten during an upgrade in RPM-based operating systems [#590](https://github.com/wazuh/wazuh-dashboard/pull/590)
 
 ## Wazuh dashboard v4.11.1 - OpenSearch Dashboards 2.16.0 - Revision 02
 
