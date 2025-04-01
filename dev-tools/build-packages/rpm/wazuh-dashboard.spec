@@ -204,7 +204,7 @@ rm -fr %{buildroot}
 %defattr(-,%{USER},%{GROUP})
 %dir %attr(750, %{USER}, %{GROUP}) %{CONFIG_DIR}
 
-%attr(0750, %{USER}, %{GROUP}) "/etc/default/wazuh-dashboard"
+%config(noreplace) %attr(0750, %{USER}, %{GROUP}) "/etc/default/wazuh-dashboard"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config/opensearch_dashboards.yml"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config/node.options"
