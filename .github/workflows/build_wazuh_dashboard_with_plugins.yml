@@ -128,7 +128,6 @@ jobs:
           cd wzsp
           echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-
       - name: Setup variables
         id: setup-variables
         run: |
