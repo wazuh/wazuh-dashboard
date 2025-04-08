@@ -12,6 +12,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Fixed a style issue with the empty button texts are cut off in v7 theme of OpenSearch Dashboards 2.19.0 upgrade [#423](https://github.com/wazuh/wazuh-dashboard/issues/423)
 - Fixed horizontal scrolling in the v7 theme of the Discover plugin to improve accessibility when many columns exceed the viewport width, ensuring easier navigation [#7330](https://github.com/wazuh/wazuh-dashboard-plugins/issues/7330)
+- Fixed the menu items that appeared expanded [#611](https://github.com/wazuh/wazuh-dashboard/pull/611)
 
 ## Wazuh dashboard v4.11.2 - OpenSearch Dashboards 2.16.0 - Revision 02
 
