@@ -2,6 +2,12 @@
 
 All notable changes to the Wazuh app project will be documented in this file.
 
+## Wazuh dashboard v5.0.0 - OpenSearch Dashboards 2.19.1 - Revision 00
+
+### Changed
+
+- Changed the reportingDashboards platform plugin to a customized one and adapt the build tools [#340](https://github.com/wazuh/wazuh-dashboard/pull/340)
+
 ## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.1 - Revision 00
 
 ### Added

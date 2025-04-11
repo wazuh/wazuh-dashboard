@@ -69,6 +69,7 @@ override_dh_install:
 
 	cp wazuh-dashboard-base/config/node.options $(TARGET_DIR)$(CONFIG_DIR)
 	cp wazuh-dashboard-base/config/opensearch_dashboards.yml $(TARGET_DIR)$(CONFIG_DIR)
+	cp -r wazuh-dashboard-base/config/certs $(TARGET_DIR)$(CONFIG_DIR)
 	mv wazuh-dashboard-base/* $(TARGET_DIR)$(INSTALLATION_DIR)
 
 	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/config
@@ -81,8 +82,6 @@ override_dh_install:
 
 	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)
 	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(CONFIG_DIR)
-
-	find $(TARGET_DIR)$(INSTALLATION_DIR)/plugins/wazuh/ -exec chown $(USER):$(GROUP) {} \;
 
 # -----------------------------------------------------------------------------
 

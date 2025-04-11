@@ -13,9 +13,13 @@ exports[`EmptyState should render normally 1`] = `
         <EuiTitle>
           <h2>
             <FormattedMessage
-              defaultMessage="Ready to try OpenSearch Dashboards? First, you need data."
+              defaultMessage="Ready to try {appName}? First, you need data."
               id="indexPatternManagement.createIndexPattern.emptyState.noDataTitle"
-              values={Object {}}
+              values={
+                Object {
+                  "appName": "Wazuh dashboard",
+                }
+              }
             />
           </h2>
         </EuiTitle>

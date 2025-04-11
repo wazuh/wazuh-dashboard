@@ -55,6 +55,7 @@ export const IGNORE_FILE_GLOBS = [
   'Dockerfile*',
   'vars/*',
   '.ci/pipeline-library/**/*',
+  'VERSION.json',
 
   // filename must match language code which requires capital letters
   '**/translations/*.json',
@@ -68,6 +69,9 @@ export const IGNORE_FILE_GLOBS = [
   // TODO fix file names in APM to remove these
   'dev-tools/**/*',
   // packages for the ingest manager's api integration tests could be valid semver which has dashes
+
+  // Wazuh: ignore file name validation
+  'VERSION',
 ];
 
 /**

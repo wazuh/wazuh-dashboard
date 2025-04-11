@@ -7891,7 +7891,7 @@ exports[`Header handles visibility and lock changes 1`] = `
             <EuiCollapsibleNavGroup
               background="light"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="recentlyViewed"
               onToggle={[Function]}
@@ -7923,14 +7923,14 @@ exports[`Header handles visibility and lock changes 1`] = `
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                 data-test-subj="collapsibleNavGroup-recentlyViewed"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                   data-test-subj="collapsibleNavGroup-recentlyViewed"
                   onToggle={[Function]}
                 >
@@ -7939,7 +7939,7 @@ exports[`Header handles visibility and lock changes 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -7949,12 +7949,12 @@ exports[`Header handles visibility and lock changes 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />
@@ -27602,7 +27602,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
             <EuiCollapsibleNavGroup
               background="light"
               data-test-subj="collapsibleNavGroup-recentlyViewed"
-              initialIsOpen={true}
+              initialIsOpen={false}
               isCollapsible={true}
               key="recentlyViewed"
               onToggle={[Function]}
@@ -27634,14 +27634,14 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                 className="euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                 data-test-subj="collapsibleNavGroup-recentlyViewed"
                 id="mockId"
-                initialIsOpen={true}
+                initialIsOpen={false}
                 isLoading={false}
                 isLoadingMessage={false}
                 onToggle={[Function]}
                 paddingSize="none"
               >
                 <div
-                  className="euiAccordion euiAccordion-isOpen euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
+                  className="euiAccordion euiCollapsibleNavGroup euiCollapsibleNavGroup--light euiCollapsibleNavGroup--withHeading"
                   data-test-subj="collapsibleNavGroup-recentlyViewed"
                   onToggle={[Function]}
                 >
@@ -27650,7 +27650,7 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                   >
                     <button
                       aria-controls="mockId"
-                      aria-expanded={true}
+                      aria-expanded={false}
                       className="euiAccordion__button euiAccordion__buttonReverse euiCollapsibleNavGroup__heading"
                       id="mockId"
                       onClick={[Function]}
@@ -27660,12 +27660,12 @@ exports[`Header toggles primary navigation menu when clicked 1`] = `
                         className="euiAccordion__iconWrapper"
                       >
                         <EuiIcon
-                          className="euiAccordion__icon euiAccordion__icon-isOpen"
+                          className="euiAccordion__icon"
                           size="m"
                           type="arrowRight"
                         >
                           <span
-                            className="euiAccordion__icon euiAccordion__icon-isOpen"
+                            className="euiAccordion__icon"
                             data-euiicon-type="arrowRight"
                             size="m"
                           />

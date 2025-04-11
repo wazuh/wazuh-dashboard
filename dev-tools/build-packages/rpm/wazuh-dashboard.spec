@@ -70,6 +70,7 @@ mkdir -p %{buildroot}/etc/default
 
 cp wazuh-dashboard-base/config/node.options %{buildroot}%{CONFIG_DIR}
 cp wazuh-dashboard-base/config/opensearch_dashboards.yml %{buildroot}%{CONFIG_DIR}
+cp -r wazuh-dashboard-base/config/certs %{buildroot}%{CONFIG_DIR}
 cp wazuh-dashboard-base/VERSION.json %{buildroot}%{INSTALL_DIR}
 
 mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
@@ -90,12 +91,6 @@ find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
 find %{buildroot}%{CONFIG_DIR} -exec chown %{USER}:%{GROUP} {} \;
 
 chown root:root %{buildroot}/etc/systemd/system/wazuh-dashboard.service
-
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -exec chown %{USER}:%{GROUP} {} \;
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 644 -exec chmod 640 {} \;
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 755 -exec chmod 750 {} \;
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type d -exec chmod 750 {} \;
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 744 -exec chmod 740 {} \;
 
 # -----------------------------------------------------------------------------
 
@@ -203,7 +198,7 @@ rm -fr %{buildroot}
 %files
 %defattr(-,%{USER},%{GROUP})
 %dir %attr(750, %{USER}, %{GROUP}) %{CONFIG_DIR}
-
+%dir %attr(500, %{USER}, %{GROUP}) %{CONFIG_DIR}/certs
 %config(noreplace) %attr(0750, %{USER}, %{GROUP}) "/etc/default/wazuh-dashboard"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config/opensearch_dashboards.yml"

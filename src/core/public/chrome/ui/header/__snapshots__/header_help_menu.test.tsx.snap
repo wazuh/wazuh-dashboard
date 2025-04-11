@@ -1812,7 +1812,7 @@ exports[`Header help menu hides survey link 1`] = `
                       >
                         <a
                           class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                          href="https://documentation.wazuh.com/4.12/"
+                          href="https://documentation.wazuh.com/5.0/"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -1858,10 +1858,7 @@ exports[`Header help menu hides survey link 1`] = `
                         <div
                           class="euiSpacer euiSpacer--xs"
                         />
-                        
-                        <div
-                          class="euiSpacer euiSpacer--xs"
-                        />
+
                         <a
                           class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
                           href="https://groups.google.com/forum/#!forum/wazuh/"
@@ -2028,14 +2025,14 @@ exports[`Header help menu hides survey link 1`] = `
                         >
                           <EuiButtonEmpty
                             flush="left"
-                            href="https://documentation.wazuh.com/4.12/"
+                            href="https://documentation.wazuh.com/5.0/"
                             iconType="/ui/logos/icon_light.svg"
                             size="xs"
                             target="_blank"
                           >
                             <a
                               className="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                              href="https://documentation.wazuh.com/4.12/"
+                              href="https://documentation.wazuh.com/5.0/"
                               rel="noopener noreferrer"
                               target="_blank"
                             >
@@ -2145,13 +2142,6 @@ exports[`Header help menu hides survey link 1`] = `
                               </EuiButtonContent>
                             </a>
                           </EuiButtonEmpty>
-                          <EuiSpacer
-                            size="xs"
-                          >
-                            <div
-                              className="euiSpacer euiSpacer--xs"
-                            />
-                          </EuiSpacer>
                           <EuiSpacer
                             size="xs"
                           >
@@ -4042,7 +4032,7 @@ exports[`Header help menu renders survey link 1`] = `
                       >
                         <a
                           class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                          href="https://documentation.wazuh.com/4.12/"
+                          href="https://documentation.wazuh.com/5.0/"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -4114,9 +4104,6 @@ exports[`Header help menu renders survey link 1`] = `
                             class="euiSpacer euiSpacer--xs"
                           />
                         </div>
-                        <div
-                          class="euiSpacer euiSpacer--xs"
-                        />
                         <a
                           class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
                           href="https://groups.google.com/forum/#!forum/wazuh/"
@@ -4283,14 +4270,14 @@ exports[`Header help menu renders survey link 1`] = `
                         >
                           <EuiButtonEmpty
                             flush="left"
-                            href="https://documentation.wazuh.com/4.12/"
+                            href="https://documentation.wazuh.com/5.0/"
                             iconType="/ui/logos/icon_light.svg"
                             size="xs"
                             target="_blank"
                           >
                             <a
                               className="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                              href="https://documentation.wazuh.com/4.12/"
+                              href="https://documentation.wazuh.com/5.0/"
                               rel="noopener noreferrer"
                               target="_blank"
                             >
@@ -4472,13 +4459,6 @@ exports[`Header help menu renders survey link 1`] = `
                               />
                             </EuiSpacer>
                           </div>
-                          <EuiSpacer
-                            size="xs"
-                          >
-                            <div
-                              className="euiSpacer euiSpacer--xs"
-                            />
-                          </EuiSpacer>
                           <EuiButtonEmpty
                             flush="left"
                             href="https://groups.google.com/forum/#!forum/wazuh/"

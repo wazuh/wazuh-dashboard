@@ -37,8 +37,8 @@ import { HashRouter as Router, Switch, Route } from 'react-router-dom';
 import { getServices } from '../opensearch_dashboards_services';
 import { useMount } from 'react-use';
 // import { USE_NEW_HOME_PAGE } from '../../../common/constants';
-// import { HOME_PAGE_ID } from '../../../../content_management/public';
-import { HOME_PAGE_ID } from '../../../common/constants';
+import { HOME_PAGE_ID } from '../../../../content_management/public';
+
 const RedirectToDefaultApp = () => {
   useMount(() => {
     const { urlForwarding } = getServices();

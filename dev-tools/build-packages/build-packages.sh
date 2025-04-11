@@ -8,6 +8,7 @@ base=""
 revision="1"
 security=""
 version="$(jq -r '.version' ${root_dir}/VERSION.json)"
+reportPlugin=""
 all_platforms="no"
 deb="no"
 rpm="no"
@@ -52,8 +53,8 @@ ctrl_c() {
 }
 
 get_packages(){
-  packages_list=(app base security)
-  packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin")
+  packages_list=(app base security reportPlugin)
+  packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "Report plugin")
   valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
   mkdir -p ${tmp_dir}
   cd ${tmp_dir}
@@ -81,6 +82,8 @@ get_packages(){
   cd ..
 }
 
+source ../utils/retry-operation.sh
+
 build_tar() {
   log
   log "Building base package..."
@@ -93,9 +96,12 @@ build_tar() {
   cp ./base-builder.sh ${dockerfile_path}
   cp ./plugins ${dockerfile_path}
   cp ${root_dir}/VERSION.json ${dockerfile_path}
-  docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z\
-  ${container_name} ${version} ${revision} ${architecture} ${verbose}|| return 1
+  retry_operation "build base package" 5 15 \
+        "docker build -t ${container_name} ${dockerfile_path} && \
+         docker run -t --rm \
+         -v ${tmp_dir}/:/tmp:Z \
+         -v ${output_dir}/:/output:Z \
+         ${container_name} ${version} ${revision} ${architecture} ${verbose}" || exit 1
   cd ..
 }
 
@@ -107,10 +113,13 @@ build_rpm() {
   cp -r ${package_config_dir} ${tmp_dir}
   cp ./rpm-builder.sh ${dockerfile_path}
   cp ./wazuh-dashboard.spec ${dockerfile_path}
-  docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z\
-  ${container_name} ${version} ${revision} ${architecture}\
-  ${commit_sha} ${production} ${verbose}|| return 1
+  retry_operation "build rpm package" 5 15 \
+      "docker build -t ${container_name} ${dockerfile_path} && \
+        docker run -t --rm \
+        -v ${tmp_dir}/:/tmp:Z \
+        -v ${output_dir}/:/output:Z \
+        ${container_name} ${version} ${revision} ${architecture} \
+        ${commit_sha} ${production} ${verbose}" || exit 1
   cd ../
 }
 
@@ -124,9 +133,13 @@ build_deb() {
   cp ./deb-builder.sh ${dockerfile_path}
   cp -r ./debian ${dockerfile_path}
   docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z \
-  ${container_name} ${version} ${revision} ${architecture}\
-  ${commit_sha} ${production} ${verbose}|| return 1
+  retry_operation "build deb package" 5 15 \
+        "docker build -t ${container_name} ${dockerfile_path} && \
+         docker run -t --rm \
+         -v ${tmp_dir}/:/tmp:Z \
+         -v ${output_dir}/:/output:Z \
+         ${container_name} ${version} ${revision} ${architecture} \
+         ${commit_sha} ${production} ${verbose}" || exit 1
   cd ..
 }
 
@@ -162,20 +175,21 @@ build(){
 help() {
     echo
     echo "Usage: $0 [OPTIONS]"
-    echo "    -c, --commit-sha <sha>        Set the commit sha of this build."
-    echo "    -a, --app <url/path>          Set the location of the .zip file containing the Wazuh plugin."
-    echo "    -b, --base <url/path>         Set the location of the .tar.gz file containing the base wazuh-dashboard build."
-    echo "    -s, --security <url/path>     Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
-    echo "        --all-platforms           Build for all platforms."
-    echo "        --deb                     Build for deb."
-    echo "        --rpm                     Build for rpm."
-    echo "        --tar                     Build for tar."
-    echo "        --production              [Optional] The naming of the package will be ready for production."
-    echo "        --arm                     [Optional] Build for arm64 instead of x64."
-    echo "        --debug                   [Optional] Debug mode."
-    echo "        --silent                  [Optional] Silent mode. Will not work if --debug is set."
-    echo "    -r, --revision <revision>     [Optional] Set the revision of this build. By default, it is set to 1."
-    echo "    -h, --help                    Show this help."
+    echo "    -c,  --commit-sha <sha>         Set the commit sha of this build."
+    echo "    -a,  --app <url/path>           Set the location of the .zip file containing the Wazuh plugin."
+    echo "    -b,  --base <url/path>          Set the location of the .tar.gz file containing the base wazuh-dashboard build."
+    echo "    -s,  --security <url/path>      Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
+    echo "    -rp, --reportPlugin <url/path>  Set the location of the .zip file containing the wazuh-reporting-plugin."
+    echo "    -r,  --revision <revision>      [Optional] Set the revision of this build. By default, it is set to 1."
+    echo "         --all-platforms            Build for all platforms."
+    echo "         --deb                      Build for deb."
+    echo "         --rpm                      Build for rpm."
+    echo "         --tar                      Build for tar."
+    echo "         --production               [Optional] The naming of the package will be ready for production."
+    echo "         --arm                      [Optional] Build for arm64 instead of x64."
+    echo "         --debug                    [Optional] Debug mode."
+    echo "         --silent                   [Optional] Silent mode. Will not work if --debug is set."
+    echo "    -h,  --help                     Show this help."
     echo
     exit $1
 }
@@ -222,6 +236,14 @@ main() {
                 help 0
             fi
             ;;
+        "-rp" | "--reportPlugin")
+            if [ -n "${2}" ]; then
+                reportPlugin="${2}"
+                shift 2
+            else
+                help 0
+            fi
+            ;;
         "-r" | "--revision")
             if [ -n "${2}" ]; then
                 revision="${2}"
@@ -260,22 +282,16 @@ main() {
             verbose="debug"
             shift 1
             ;;
-
-        "-o" | "--output")
-            if [ -n "${2}" ]; then
-                output="${2}"
-                shift 2
-            fi
-            ;;
         *)
             echo "Unknown option: ${1}"
+
             help 1
             ;;
         esac
     done
 
     if [ -z "$app" ] || [ -z "$base" ] || [ -z "$security" ]; then
-        echo "You must specify the app, base and security."
+        echo "You must specify the app, base, and security."
         help 1
     fi
 

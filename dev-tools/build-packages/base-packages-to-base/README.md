@@ -20,6 +20,7 @@ The inputs are the following:
 - `-a`, `--app`: Set the `wazuh-dashboard-plugins` branch.
 - `-b`, `--base`: Set the `wazuh-dashboard` branch.
 - `-s`, `--security`: Set the `wazuh-security-dashboards-plugin` branch.
+- `-r`, `--reporting`: Set the `wazuh-dashboards-reporting` branch.
 - `--node-version`: [Optional] Set the node version.
 - `--arm`: [Optional] Build for arm64 instead of x64.
 
@@ -27,11 +28,12 @@ Example:
 
 ```bash
 bash run-docker-compose.sh \
-    --app 4.12.1 \
-    --base 4.12.1 \
-    --security 4.12.1 \
+    --app main \
+    --base main \
+    --security main \
+    --reporting main \
     --arm \
     --node-version 18.19.0
 ```
 
-This example will create a packages folder that inside will have the packages divided by repository of the 4.12.1 branch of each one.
+This example will create a packages folder that inside will have the packages divided by repository of the main branch of each one.

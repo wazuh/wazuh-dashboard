@@ -17,31 +17,28 @@ architecture="$3"
 verbose="$4"
 
 if [ "$verbose" = "debug" ]; then
-  set -x
+      set -x
 fi
 
 trap clean INT
 trap clean EXIT
 
 log() {
-  if [ "$verbose" = "info" ] || [ "$verbose" = "debug" ]; then
-    echo "$@"
-  fi
+    if [ "$verbose" = "info" ] || [ "$verbose" = "debug" ]; then
+        echo "$@"
+    fi
 }
 
 clean() {
-  exit_code=$?
-  # Clean the files
-  rm -rf ${tmp_dir}/*
-  trap '' EXIT
-  exit ${exit_code}
+    exit_code=$?
+    # Clean the files
+    rm -rf ${tmp_dir}/*
+    trap '' EXIT
+    exit ${exit_code}
 }
 
 # Paths
-current_path="$(
-  cd $(dirname $0)
-  pwd -P
-)"
+current_path="$( cd $(dirname $0) ; pwd -P )"
 
 # Folders
 tmp_dir="/tmp"
@@ -57,8 +54,9 @@ log
 
 mkdir -p applications
 mkdir -p base
-packages_list=(app base security)
-packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin")
+packages_list=(app base security reportPlugin)
+packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "Report plugin")
+
 
 for i in "${!packages_list[@]}"; do
   package_var="${packages_list[$i]}"
@@ -81,29 +79,28 @@ tar -zxf $wzd_package_name
 directory_name=$(ls -td */ | head -1)
 cd $directory_name
 plugins=$(ls $tmp_dir/applications)' '$(cat $current_path/plugins)
-for plugin in $plugins; do
-  if [[ $plugin =~ .*\.zip ]]; then
-    install="file://${tmp_dir}/applications/${plugin}"
-  else
-    install=$plugin
-  fi
-  log "Installing ${plugin} plugin"
-  if ! bin/opensearch-dashboards-plugin install $install --allow-root 2>&1 >/dev/null; then
-    echo "Plugin ${plugin} installation failed"
-    exit 1
-  fi
-  log "Plugin ${plugin} installed successfully"
-  log
-done
+  for plugin in $plugins; do
+    if [[ $plugin =~ .*\.zip ]]; then
+      install="file://${tmp_dir}/applications/${plugin}"
+    else
+      install=$plugin
+    fi
+    log "Installing ${plugin} plugin"
+    if ! bin/opensearch-dashboards-plugin install $install 2>&1 --allow-root> /dev/null; then
+      echo "Plugin ${plugin} installation failed"
+      exit 1
+    fi
+    log "Plugin ${plugin} installed successfully"
+    log
+  done
 
 log
 log "Replacing application categories"
 log
 
 category_explore='{id:"explore",label:"Explore",order:100,euiIconType:"search"}'
-category_label_indexer_management='defaultMessage:"Indexer management"'
+category_dashboard_management='{id:"management",label:"Indexer management",order:6e3,euiIconType:"managementApp"}'
 
-old_category_notifications='category:(_core$chrome=core.chrome)!==null&&_core$chrome!==void 0&&(_core$chrome=_core$chrome.navGroup)!==null&&_core$chrome!==void 0&&_core$chrome.getNavGroupEnabled()?undefined:_public.DEFAULT_APP_CATEGORIES.management'
 # Replace app category to Reporting app
 sed -i -e "s|category:{id:\"opensearch\",label:_i18n.i18n.translate(\"opensearch.reports.categoryName\",{defaultMessage:\"OpenSearch Plugins\"}),order:2e3}|category:${category_explore}|" ./plugins/reportsDashboards/target/public/reportsDashboards.plugin.js
 
@@ -114,10 +111,11 @@ sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/customImportMapDashboards/target/public/customImportMapDashboards.plugin.js
 
 # Replace app category to Notifications app
-sed -i -e "s|${old_category_notifications}|category:${category_explore}|" ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
+sed -i -e "s|category:(_core\$chrome=core.chrome)!==null&&_core\$chrome!==void 0&&(_core\$chrome=_core\$chrome.navGroup)!==null&&_core\$chrome!==void 0&&_core\$chrome.getNavGroupEnabled()?undefined:DEFAULT_APP_CATEGORIES.management|category:${category_explore}|" ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
 
 # Replace app category to Index Management app
-sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|g" ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
+sed -i -e "s|category:DEFAULT_APP_CATEGORIES.management|category:${category_dashboard_management}|g" ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
+
 
 log
 log "Recreating plugin files"
@@ -132,9 +130,10 @@ files_to_recreate=(
   ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
 )
 
-for value in "${files_to_recreate[@]}"; do
-  gzip -c "$value" >"$value.gz"
-  brotli -c "$value" >"$value.br"
+for value in "${files_to_recreate[@]}"
+do
+    gzip -c "$value" > "$value.gz"
+    brotli -c "$value" > "$value.br"
 done
 
 log
@@ -143,6 +142,7 @@ log
 
 cp -f $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.yml
 cp -f $config_path/node.options.prod config/node.options
+mkdir config/certs
 
 log
 log "Fixing shebangs"

@@ -258,8 +258,6 @@ class HeaderHelpMenuUI extends Component<Props, State> {
           </div>
         )}
 
-        <EuiSpacer size="xs" />
-
         <EuiButtonEmpty
           href="https://groups.google.com/forum/#!forum/wazuh/"
           target="_blank"

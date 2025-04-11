@@ -142,7 +142,10 @@ export const EmptyState = ({
               <h2>
                 <FormattedMessage
                   id="indexPatternManagement.createIndexPattern.emptyState.noDataTitle"
-                  defaultMessage="Ready to try OpenSearch Dashboards? First, you need data."
+                  defaultMessage="Ready to try {appName}? First, you need data."
+                  values={{
+                    appName: 'Wazuh dashboard',
+                  }}
                 />
               </h2>
             </EuiTitle>
