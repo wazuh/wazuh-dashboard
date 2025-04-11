@@ -1,10 +1,10 @@
 # Usage:
 # docker build \
 #         --build-arg NODE_VERSION=18.19.0 \
-#         --build-arg WAZUH_DASHBOARD_BRANCH=5.0.0 \
-#         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=5.0.0 \
-#         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=5.0.0 \
-#         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=5.0.0 \
+#         --build-arg WAZUH_DASHBOARD_BRANCH=main \
+#         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=main \
+#         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=main \
+#         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=main \
 #         --build-arg ARCHITECTURE=arm \
 #         -t wazuh-packages-to-base:5.0.0 \
 #         -f base-packages.Dockerfile .
