@@ -362,6 +362,7 @@ jobs:
             exit 1
           else
             echo "Package uninstalled"
+          fi
 
       - name: DEB - Test package upgrade
         if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
@@ -492,7 +493,7 @@ jobs:
   upload-package:
     needs: [setup-variables, test-package]
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    name: Test package
+    name: Upload package
     steps:
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v4
