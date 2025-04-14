@@ -307,6 +307,15 @@ jobs:
           retention-days: 30
           overwrite: true
 
+      - name: Upload checksum
+        if: success() && ${{ inputs.checksum }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
+          retention-days: 30
+          overwrite: true
+
   test-package:
     needs: [setup-variables, build-package]
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
@@ -328,7 +337,7 @@ jobs:
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
-      - name: Test package install/uninstall (DEB)
+      - name: DEB - Test package install/uninstall
         if: ${{ inputs.system == 'deb' }}
         run: |
           sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
@@ -354,7 +363,7 @@ jobs:
           else
             echo "Package uninstalled"
 
-      - name: Test package upgrade (DEB)
+      - name: DEB - Test package upgrade
         if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
         run: |
           sudo apt-get install debhelper tar curl libcap2-bin #debhelper version 9 or later
@@ -383,8 +392,105 @@ jobs:
             exit 1
           fi
 
+      - name: RPM - Clone automation repo
+        if: ${{ inputs.system == 'rpm' }}
+        run: |
+          git clone https://github.com/wazuh/wazuh-automation.git
+          cd wazuh-automation
+          sudo pip3 install -r deployability/deps/requirements.txt
+
+      - name: RPM - Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: ${{ inputs.system == 'rpm' }}
+        with:
+          aws-region: 'us-east-1'
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          role-session-name: 'Dashboard-smoke-test'
+
+      - name: RPM - Setup environment
+        if: ${{ inputs.system == 'rpm' }}
+        run: |
+          if [ "${{ inputs.architecture }}" = "x86_64" ]; then
+            python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name linux-centos-9-amd64 --instance-name "centos_9_amd_large_aws" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard
+          else
+            python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name  linux-centos-8-arm64 --instance-name "centos_8_arm_large_aws" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard
+          fi
+          ansible_host=$(grep 'ansible_host:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_port=$(grep 'ansible_port:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_user=$(grep 'ansible_user:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_ssh_private_key_file=$(grep 'ansible_ssh_private_key_file:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ssh_command="ssh -o StrictHostKeyChecking=no -i $ansible_ssh_private_key_file -p $ansible_port $ansible_user@$ansible_host"
+          scp_command="scp -o StrictHostKeyChecking=no -i $ansible_ssh_private_key_file -P $ansible_port"
+          echo "ansible_host=$ansible_host" >> $GITHUB_OUTPUT
+          echo "ansible_port=$ansible_port" >> $GITHUB_OUTPUT
+          echo "ansible_user=$ansible_user" >> $GITHUB_OUTPUT
+          echo "ansible_ssh_private_key_file=$ansible_ssh_private_key_file" >> $GITHUB_OUTPUT
+          echo "ssh_command=$ssh_command" >> $GITHUB_OUTPUT
+          echo "scp_command=$scp_command" >> $GITHUB_OUTPUT
+        id: setup_rpm_env
+
+      - name: RPM - Test package install/uninstall
+        if: ${{ inputs.system == 'rpm' }}
+        run: |
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} "echo 'hello'"
+          ${{ steps.setup_rpm_env.outputs.scp_command }} ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }} ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
+
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo rpm -i ./${{needs.setup-variables.outputs.PACKAGE_NAME}}; \
+              if rpm -q wazuh-dashboard &>/dev/null; then \
+                echo 'Package installed'; \
+              else \
+                echo 'Package not installed'; \
+                exit 1; \
+              fi; \
+              sudo  systemctl daemon-reload;\
+              sudo  systemctl enable wazuh-dashboard;\
+              sudo  systemctl start wazuh-dashboard;\
+              if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
+                echo 'Service running'; \
+              else \
+                echo 'Service not running' ;\
+                exit 1 ;\
+              fi; \
+              sudo yum remove wazuh-dashboard -y ;\
+              sudo rm -rf /var/lib/wazuh-dashboard/ ; \
+              sudo rm -rf /usr/share/wazuh-dashboard/ ; \
+              sudo rm -rf /etc/wazuh-dashboard/; \
+              if rpm -q wazuh-dashboard &>/dev/null; then \
+                echo 'Package not uninstalled'; \
+                exit 1; \
+              else \
+                echo 'Package uninstalled'; \
+              fi
+              "
+
+      - name: RPM - Test package upgrade
+        if: ${{ inputs.system == 'rpm' }}
+        run: |
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install libcap; \
+            sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
+            sudo echo -e '[wazuh]\ngpgcheck=1\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\nenabled=1\nname=EL-$releasever - Wazuh\nbaseurl=https://packages.wazuh.com/4.x/yum/\nprotect=1' | sudo tee /etc/yum.repos.d/wazuh.repo; \
+            sudo yum install -y wazuh-dashboard-${{needs.setup-variables.outputs.PREVIOUS}}; \
+            sudo  systemctl daemon-reload; \
+            sudo  systemctl enable wazuh-dashboard; \
+            sudo  systemctl start wazuh-dashboard; \
+            sudo yum install -y ${{needs.setup-variables.outputs.PACKAGE_NAME}}; \
+            sudo systemctl restart wazuh-dashboard; \
+            if rpm -q wazuh-dashboard | grep -q '${{needs.setup-variables.outputs.VERSION}}'; then \
+              echo 'Package upgraded'; \
+            else \
+              echo 'Package not upgraded'; \
+              exit 1; \
+            fi; \
+            if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
+              echo 'Service running'; \
+            else \
+              echo 'Service not running'; \
+              exit 1; \
+            fi
+            "
+
   upload-package:
-    needs: [test-package]
+    needs: [setup-variables, test-package]
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     name: Test package
     steps:
@@ -395,10 +501,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
           aws-region: ${{ secrets.CI_AWS_REGION }}
 
+      - name: Download  artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          path: ./
+
+      - name: Download  checksum
+        if: ${{ inputs.checksum }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
+          path: ./
+
       - name: Upload package
         run: |
           echo "Uploading package"
-          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
           s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
           echo "S3 URI: ${s3uri}"
 
@@ -406,6 +525,6 @@ jobs:
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
+          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/
           s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
