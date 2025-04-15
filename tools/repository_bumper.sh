@@ -15,7 +15,7 @@ PACKAGE_JSON="${REPO_PATH}/package.json"
 VERSION=""
 REVISION="00"
 CURRENT_VERSION=""
-BUILD_DASHBOARD_WITH_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
+WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
 
 # --- Helper Functions ---
 
@@ -335,15 +335,15 @@ update_changelog() {
 }
 
 update_build_workflow() {
-  log "Updating $(basename $BUILD_DASHBOARD_WITH_PLUGINS_WORKFLOW_FILE)..."
+  log "Updating $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE)..."
 
-  if [ -f "$BUILD_DASHBOARD_WITH_PLUGINS_WORKFLOW_FILE" ]; then
+  if [ -f "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" ]; then
     local modified=false
     # Update all occurrences of yml@x.y.z with yml@$VERSION-$STAGE
-    sed -i -E "s/(\.yml@)v?[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+[0-9]+)?/\1v${VERSION}-${STAGE}/g" "$BUILD_DASHBOARD_WITH_PLUGINS_WORKFLOW_FILE" && modified=true
+    sed -i -E "s/(\.yml@)v?[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+[0-9]+)?/\1v${VERSION}-${STAGE}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" && modified=true
 
     if [[ $modified == true ]]; then
-      log "Successfully updated yml@v${VERSION}-${STAGE} in $(basename $BUILD_DASHBOARD_WITH_PLUGINS_WORKFLOW_FILE)"
+      log "Successfully updated yml@v${VERSION}-${STAGE} in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE)"
     fi
   fi
 }
