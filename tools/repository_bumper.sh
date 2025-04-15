@@ -18,6 +18,7 @@ CURRENT_VERSION=""
 WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
 DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
 README_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/README.md"
+VERSION_PATTERN="[0-9]+\.[0-9]+\.[0-9]+"
 
 # --- Helper Functions ---
 
@@ -81,7 +82,7 @@ validate_input() {
     usage
     exit 1
   fi
-  if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  if ! [[ $VERSION =~ ^$VERSION_PATTERN$ ]]; then
     log "ERROR: Version must be in the format x.y.z (e.g., 4.6.0)"
     exit 1
   fi
@@ -342,7 +343,7 @@ update_build_workflow() {
   if [ -f "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" ]; then
     local modified=false
     # Update all occurrences of yml@x.y.z with yml@$VERSION-$STAGE
-    sed -i -E "s/(\.yml@)v?[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+[0-9]+)?/\1v${VERSION}-${STAGE}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" && modified=true
+    sed -i -E "s/(\.yml@)v?$VERSION_PATTERN(-[a-z]+[0-9]+)?/\1v${VERSION}-${STAGE}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" && modified=true
 
     if [[ $modified == true ]]; then
       log "Successfully updated yml@v${VERSION}-${STAGE} in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE)"
@@ -357,10 +358,10 @@ update_base_package_dockerfile() {
     local modified=false
 
     # Update all occurrences of _BRANCH=x.y.z with _BRANCH=$VERSION
-    sed -i -E "s/(_BRANCH=)[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
+    sed -i -E "s/(_BRANCH=)$VERSION_PATTERN/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
 
     # Update all occurrences of wazuh-packages-to-base:x.y.z with wazuh-packages-to-base:$VERSION
-    sed -i -E "s/(wazuh-packages-to-base:)[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
+    sed -i -E "s/(wazuh-packages-to-base:)$VERSION_PATTERN/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
 
     if [[ $modified == true ]]; then
       log "Successfully updated $(basename $DOCKERFILE_FOR_BASE_PACKAGES)"
@@ -375,16 +376,16 @@ update_readme_for_base_packages() {
     local modified=false
 
     # Update all occurrences of --app x.y.z with --app $VERSION
-    sed -i -E "s/(--app )[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+    sed -i -E "s/(--app )$VERSION_PATTERN/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
 
     # Update all occurrences of --base x.y.z with --base $VERSION
-    sed -i -E "s/(--base )[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+    sed -i -E "s/(--base )$VERSION_PATTERN/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
 
     # Update all occurrences of --security x.y.z with --security $VERSION
-    sed -i -E "s/(--security )[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+    sed -i -E "s/(--security )$VERSION_PATTERN/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
 
     # Update all occurrences of --security x.y.z with --security $VERSION
-    sed -i -E "s/(This example will create a packages folder that inside will have the packages divided by repository of the )[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+    sed -i -E "s/(This example will create a packages folder that inside will have the packages divided by repository of the )$VERSION_PATTERN/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
 
     if [[ $modified == true ]]; then
       log "Successfully updated $(basename $README_FOR_BASE_PACKAGES)"
