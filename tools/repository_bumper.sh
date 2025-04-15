@@ -16,6 +16,7 @@ VERSION=""
 REVISION="00"
 CURRENT_VERSION=""
 WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
+DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
 
 # --- Helper Functions ---
 
@@ -348,6 +349,24 @@ update_build_workflow() {
   fi
 }
 
+update_base_package_dockerfile() {
+  log "Updating $(basename $DOCKERFILE_FOR_BASE_PACKAGES)..."
+
+  if [ -f "$DOCKERFILE_FOR_BASE_PACKAGES" ]; then
+    local modified=false
+
+    # Update all occurrences of _BRANCH=x.y.z with _BRANCH=$VERSION
+    sed -i -E "s/(_BRANCH=)[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
+
+    # Update all occurrences of wazuh-packages-to-base:x.y.z with wazuh-packages-to-base:$VERSION
+    sed -i -E "s/(wazuh-packages-to-base:)[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
+
+    if [[ $modified == true ]]; then
+      log "Successfully updated $(basename $DOCKERFILE_FOR_BASE_PACKAGES)"
+    fi
+  fi
+}
+
 # --- Main Execution ---
 main() {
   # Initialize log file
@@ -381,6 +400,7 @@ main() {
   update_package_json
   update_changelog
   update_build_workflow
+  update_base_package_dockerfile
 
   log "File modifications completed."
   log "Repository bump completed successfully. Log file: $LOG_FILE"
