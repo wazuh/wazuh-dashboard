@@ -17,6 +17,7 @@ REVISION="00"
 CURRENT_VERSION=""
 WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
 DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
+README_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/README.md"
 
 # --- Helper Functions ---
 
@@ -367,6 +368,30 @@ update_base_package_dockerfile() {
   fi
 }
 
+update_readme_for_base_packages() {
+  log "Updating $(basename $README_FOR_BASE_PACKAGES)..."
+
+  if [ -f "$README_FOR_BASE_PACKAGES" ]; then
+    local modified=false
+
+    # Update all occurrences of --app x.y.z with --app $VERSION
+    sed -i -E "s/(--app )[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+
+    # Update all occurrences of --base x.y.z with --base $VERSION
+    sed -i -E "s/(--base )[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+
+    # Update all occurrences of --security x.y.z with --security $VERSION
+    sed -i -E "s/(--security )[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+
+    # Update all occurrences of --security x.y.z with --security $VERSION
+    sed -i -E "s/(This example will create a packages folder that inside will have the packages divided by repository of the )[0-9]+\.[0-9]+\.[0-9]+/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+
+    if [[ $modified == true ]]; then
+      log "Successfully updated $(basename $README_FOR_BASE_PACKAGES)"
+    fi
+  fi
+}
+
 # --- Main Execution ---
 main() {
   # Initialize log file
@@ -401,6 +426,7 @@ main() {
   update_changelog
   update_build_workflow
   update_base_package_dockerfile
+  update_readme_for_base_packages
 
   log "File modifications completed."
   log "Repository bump completed successfully. Log file: $LOG_FILE"
