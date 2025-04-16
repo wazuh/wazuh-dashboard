@@ -498,7 +498,9 @@ jobs:
             fi
             "
       - name: Destroy Allocator Machine
+        #DO NOT DELETE. This ensures that the generated instance is destroyed even if the job fails.
         if: ${{ always() }}
+        ########################################
         run: |
           if [ "${{ inputs.system }}" = "rpm" ]; then
             echo "Destroying Allocator Machine"
