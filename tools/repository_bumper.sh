@@ -367,7 +367,15 @@ update_base_package_dockerfile() {
     local modified=false
 
     # Update all occurrences of _BRANCH=x.y.z with _BRANCH=$VERSION
-    sed -i -E "s/(_BRANCH=)$VERSION_PATTERN/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
+    local branch_pattern_regex="(_BRANCH=)$VERSION_PATTERN"
+    if grep -qE "$branch_pattern_regex" "$DOCKERFILE_FOR_BASE_PACKAGES"; then
+      log "Pattern '$branch_pattern_regex' found in $(basename $DOCKERFILE_FOR_BASE_PACKAGES). Attempting update..."
+      # Perform the substitution
+      sed -i -E "s/${branch_pattern_regex}/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES"
+      modified=true
+    else
+      log "Pattern '$branch_pattern_regex' not found in $(basename $DOCKERFILE_FOR_BASE_PACKAGES). Skipping update for this pattern."
+    fi
 
     # Update all occurrences of wazuh-packages-to-base:x.y.z with wazuh-packages-to-base:$VERSION
     sed -i -E "s/(wazuh-packages-to-base:)$VERSION_PATTERN/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
