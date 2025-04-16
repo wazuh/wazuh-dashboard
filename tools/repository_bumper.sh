@@ -454,6 +454,30 @@ update_readme_for_base_packages() {
   fi
 }
 
+update_rendering_service_test_snap() {
+  local rendering_service_test_snap="${REPO_PATH}/src/core/server/rendering/__snapshots__/rendering_service.test.ts.snap"
+
+  if [ -f "$rendering_service_test_snap" ]; then
+    log "Updating rendering service test snapshot..."
+
+    # Update all occurrences of ("wazuhVersion": "x.y.z",) with ("wazuhVersion": "$VERSION",)
+    # Define the pattern regex
+    local pattern_regex="(\"wazuhVersion\": \")$VERSION_PATTERN"
+    # Check if the pattern exists in the file
+    if grep -qE "$pattern_regex" "$rendering_service_test_snap"; then
+      log "Pattern '$pattern_regex' found in $(basename $rendering_service_test_snap). Attempting update..."
+      # If the pattern exists, perform the substitution
+      sed -i -E "s/${pattern_regex}/\1${VERSION}/g" "$rendering_service_test_snap"
+      log "Successfully updated rendering service test snapshot."
+    else
+      log "Pattern '$pattern_regex' not found in $(basename $rendering_service_test_snap). Skipping update for this pattern."
+    fi
+
+  else
+    log "ERROR: Rendering service test snapshot not found at $rendering_service_test_snap" >&2
+  fi
+}
+
 # --- Main Execution ---
 main() {
   # Initialize log file
@@ -489,6 +513,7 @@ main() {
   update_build_workflow
   update_base_package_dockerfile
   update_readme_for_base_packages
+  update_rendering_service_test_snap
 
   log "File modifications completed."
   log "Repository bump completed successfully. Log file: $LOG_FILE"
