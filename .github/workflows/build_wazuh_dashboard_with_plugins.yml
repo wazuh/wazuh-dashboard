@@ -395,8 +395,10 @@ jobs:
 
       - name: RPM - Clone automation repo
         if: ${{ inputs.system == 'rpm' }}
+        env:
+          username: 'wazuh-devel-xdrsiem-dashboard'
         run: |
-          git clone https://github.com/wazuh/wazuh-automation.git
+          git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}github.com/wazuh/wazuh-automation.git
           cd wazuh-automation
           sudo pip3 install -r deployability/deps/requirements.txt
 
@@ -489,6 +491,11 @@ jobs:
               exit 1; \
             fi
             "
+      - name: Destroy Allocator Machine
+        if: ${{ inputs.system  == 'rpm' }}
+        run: |
+          cd wazuh-automation/deployability
+          python3 modules/allocation/main.py --action delete --track-output "/tmp/track.yaml"
 
   upload-package:
     needs: [setup-variables, test-package]
