@@ -393,16 +393,60 @@ update_readme_for_base_packages() {
     local modified=false
 
     # Update all occurrences of --app x.y.z with --app $VERSION
-    sed -i -E "s/(--app )$VERSION_PATTERN/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+    # Define the pattern regex
+    local app_pattern_regex="(--app )$VERSION_PATTERN"
+
+    # Check if the pattern exists in the file
+    if grep -qE "$app_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
+      log "Pattern '$app_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
+      # If the pattern exists, perform the substitution and set modified to true
+      sed -i -E "s/${app_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      modified=true
+    else
+      log "Pattern '$app_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
+    fi
 
     # Update all occurrences of --base x.y.z with --base $VERSION
-    sed -i -E "s/(--base )$VERSION_PATTERN/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+    # Define the pattern regex for --base
+    local base_pattern_regex="(--base )$VERSION_PATTERN"
+
+    # Check if the pattern exists in the file
+    if grep -qE "$base_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
+      log "Pattern '$base_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
+      # If the pattern exists, perform the substitution and set modified to true
+      sed -i -E "s/${base_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      modified=true
+    else
+      log "Pattern '$base_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
+    fi
 
     # Update all occurrences of --security x.y.z with --security $VERSION
-    sed -i -E "s/(--security )$VERSION_PATTERN/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+    # Define the pattern regex for --security
+    local security_pattern_regex="(--security )$VERSION_PATTERN"
+
+    # Check if the pattern exists in the file
+    if grep -qE "$security_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
+      log "Pattern '$security_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
+      # If the pattern exists, perform the substitution and set modified to true
+      sed -i -E "s/${security_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      modified=true
+    else
+      log "Pattern '$security_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
+    fi
 
     # Update all occurrences of --security x.y.z with --security $VERSION
-    sed -i -E "s/(This example will create a packages folder that inside will have the packages divided by repository of the )$VERSION_PATTERN/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES" && modified=true
+    # Define the pattern regex for the example text
+    local readme_example_pattern_regex="(This example will create a packages folder that inside will have the packages divided by repository of the )$VERSION_PATTERN"
+
+    # Check if the pattern exists in the file
+    if grep -qE "$readme_example_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
+      log "Pattern '$readme_example_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
+      # If the pattern exists, perform the substitution and set modified to true
+      sed -i -E "s/${readme_example_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      modified=true
+    else
+      log "Pattern '$readme_example_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
+    fi
 
     if [[ $modified == true ]]; then
       log "Successfully updated $(basename $README_FOR_BASE_PACKAGES)"
