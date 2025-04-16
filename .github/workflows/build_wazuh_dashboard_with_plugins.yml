@@ -86,6 +86,10 @@ on:
         type: string
         required: false
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   setup-variables:
     runs-on: ubuntu-24.04
