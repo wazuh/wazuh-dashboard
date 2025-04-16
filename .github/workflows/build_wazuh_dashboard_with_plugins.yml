@@ -323,6 +323,8 @@ jobs:
   test-package:
     needs: [setup-variables, build-package]
     runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    strategy:
+      fail-fast: false
     name: Test package
     steps:
       - name: Checkout code
@@ -496,10 +498,13 @@ jobs:
             fi
             "
       - name: Destroy Allocator Machine
-        if: ${{ inputs.system  == 'rpm' }}
+        if: ${{ always() }}
         run: |
-          cd wazuh-automation/deployability
-          python3 modules/allocation/main.py --action delete --track-output "/tmp/track.yaml"
+          if [ "${{ inputs.system }}" = "rpm" ]; then
+            echo "Destroying Allocator Machine"
+            cd wazuh-automation/deployability
+            python3 modules/allocation/main.py --action delete --track-output "/tmp/track.yaml"
+          fi
 
   upload-package:
     needs: [setup-variables, test-package]
