@@ -343,7 +343,15 @@ update_build_workflow() {
   if [ -f "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" ]; then
     local modified=false
     # Update all occurrences of yml@x.y.z with yml@$VERSION-$STAGE
-    sed -i -E "s/(\.yml@)v?$VERSION_PATTERN(-[a-z]+[0-9]+)?/\1v${VERSION}-${STAGE}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" && modified=true
+    # Check if the pattern exists in the file first
+    if grep -qE "(\.yml@)v?$VERSION_PATTERN(-[a-z]+[0-9]+)?" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
+      log "Pattern found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
+      # If the pattern exists, perform the substitution
+      sed -i -E "s/(\.yml@)v?$VERSION_PATTERN(-[a-z]+[0-9]+)?/\1v${VERSION}-${STAGE}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
+      modified=true
+    else
+      log "Pattern not found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Skipping update."
+    fi
 
     if [[ $modified == true ]]; then
       log "Successfully updated yml@v${VERSION}-${STAGE} in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE)"
