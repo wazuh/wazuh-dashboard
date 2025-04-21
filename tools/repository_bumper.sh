@@ -509,7 +509,6 @@ main() {
 
   update_root_version_json
   update_package_json
-  update_changelog
   update_build_workflow
   update_base_package_dockerfile
   update_readme_for_base_packages
