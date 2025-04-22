@@ -441,7 +441,7 @@ jobs:
       - name: RPM - Test package install/uninstall
         if: ${{ inputs.system == 'rpm' }}
         run: |
-        # echo 'Installing package...' is necessary to init the ssh connection prior to running scp
+          # echo 'Installing package...' is necessary to init the ssh connection prior to running scp
           ${{ steps.setup_rpm_env.outputs.ssh_command }} "echo 'Installing package...'"
           ${{ steps.setup_rpm_env.outputs.scp_command }} ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}} ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
 
