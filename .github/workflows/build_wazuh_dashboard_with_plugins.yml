@@ -322,7 +322,7 @@ jobs:
 
   test-package:
     needs: [setup-variables, build-package]
-    runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
     name: Test package
