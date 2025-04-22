@@ -473,7 +473,7 @@ jobs:
               "
 
       - name: RPM - Test package upgrade
-        if: ${{ inputs.system == 'rpm' }}
+        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'rpm' }}
         run: |
           ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install libcap; \
             sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
