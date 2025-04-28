@@ -513,6 +513,7 @@ main() {
   update_base_package_dockerfile
   update_readme_for_base_packages
   update_rendering_service_test_snap
+  update_changelog
 
   log "File modifications completed."
   log "Repository bump completed successfully. Log file: $LOG_FILE"
