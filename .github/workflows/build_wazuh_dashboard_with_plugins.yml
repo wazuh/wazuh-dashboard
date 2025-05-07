@@ -139,9 +139,9 @@ jobs:
           CURRENT_DIR=$(pwd -P)
           VERSION=$(jq -r '.version' VERSION.json)
           # Check the corresponding previous version to be used in the upgrade test
-          curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && chmod 644 /usr/share/keyrings/wazuh.gpg
-          echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
-          apt-get update
+          sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
+          sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
+          sudo apt-get update
           PREVIOUS=$(apt-cache madison wazuh-dashboard | grep -A 1 "$VERSION" | tail -1 | awk '{print $3}')
           if [ -z "$PREVIOUS" ]; then
             MAJOR_MINOR=$(echo "$VERSION" | cut -d '.' -f 1,2)
