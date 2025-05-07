@@ -47,6 +47,7 @@ jobs:
           - os: windows-latest
             name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - name: Configure git's autocrlf (Windows only)
         if: matrix.os == 'windows-latest'
@@ -131,6 +132,7 @@ jobs:
   lint-and-validate:
     name: Lint and validate
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -186,6 +188,7 @@ jobs:
           - os: windows-latest
             name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - run: echo Running functional tests for ciGroup${{ matrix.group }}
 
@@ -303,6 +306,7 @@ jobs:
           - os: windows-latest
             name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - run: echo Running plugin functional tests
 
@@ -434,6 +438,7 @@ jobs:
             suffix: windows-x64
             script: build-platform --windows --skip-os-packages
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     defaults:
       run:
         working-directory: ./artifacts
