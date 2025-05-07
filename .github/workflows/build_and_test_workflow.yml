@@ -5,16 +5,8 @@ name: Build and test
 
 # trigger on every commit push and PR for all branches except feature branches and pushes for backport branches
 on:
-  push:
-    branches: [ '**', '!feature/**', '!backport/**' ]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.lycheeignore'
-      - 'CODEOWNERS'
-      - 'changelogs/fragments/**'
   pull_request:
-    branches: [ '**', '!feature/**' ]
+    branches: ['**', '!feature/**']
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -31,7 +23,7 @@ env:
   TEST_OPENSEARCH_TRANSPORT_PORT: 9403
   TEST_OPENSEARCH_PORT: 9400
   OSD_SNAPSHOT_SKIP_VERIFY_CHECKSUM: true
-  NODE_OPTIONS: "--max-old-space-size=6144 --dns-result-order=ipv4first"
+  NODE_OPTIONS: '--max-old-space-size=6144 --dns-result-order=ipv4first'
 
 jobs:
   build-test:
@@ -60,7 +52,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -203,7 +195,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -321,7 +313,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -455,7 +447,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -533,7 +525,19 @@ jobs:
         working-directory: ./artifacts
     strategy:
       matrix:
-        version: [osd-2.0.0, osd-2.1.0, osd-2.2.0, osd-2.3.0, osd-2.4.0, osd-2.5.0, osd-2.6.0, osd-2.7.0, osd-2.8.0, osd-2.9.0]
+        version:
+          [
+            osd-2.0.0,
+            osd-2.1.0,
+            osd-2.2.0,
+            osd-2.3.0,
+            osd-2.4.0,
+            osd-2.5.0,
+            osd-2.6.0,
+            osd-2.7.0,
+            osd-2.8.0,
+            osd-2.9.0,
+          ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
