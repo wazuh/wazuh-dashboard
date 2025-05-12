@@ -4,6 +4,7 @@ name: Run cypress tests
 on:
   pull_request:
     branches: ['**', '!feature/**']
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - '**/*.md'
       - '.lycheeignore'
