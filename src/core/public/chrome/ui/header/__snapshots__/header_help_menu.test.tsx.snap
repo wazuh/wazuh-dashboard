@@ -1812,7 +1812,7 @@ exports[`Header help menu hides survey link 1`] = `
                       >
                         <a
                           class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                          href="https://documentation.wazuh.com/5.0/"
+                          href="https://documentation.wazuh.com/6.0/"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -2025,14 +2025,14 @@ exports[`Header help menu hides survey link 1`] = `
                         >
                           <EuiButtonEmpty
                             flush="left"
-                            href="https://documentation.wazuh.com/5.0/"
+                            href="https://documentation.wazuh.com/6.0/"
                             iconType="/ui/logos/icon_light.svg"
                             size="xs"
                             target="_blank"
                           >
                             <a
                               className="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                              href="https://documentation.wazuh.com/5.0/"
+                              href="https://documentation.wazuh.com/6.0/"
                               rel="noopener noreferrer"
                               target="_blank"
                             >
@@ -4032,7 +4032,7 @@ exports[`Header help menu renders survey link 1`] = `
                       >
                         <a
                           class="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                          href="https://documentation.wazuh.com/5.0/"
+                          href="https://documentation.wazuh.com/6.0/"
                           rel="noopener noreferrer"
                           target="_blank"
                         >
@@ -4270,14 +4270,14 @@ exports[`Header help menu renders survey link 1`] = `
                         >
                           <EuiButtonEmpty
                             flush="left"
-                            href="https://documentation.wazuh.com/5.0/"
+                            href="https://documentation.wazuh.com/6.0/"
                             iconType="/ui/logos/icon_light.svg"
                             size="xs"
                             target="_blank"
                           >
                             <a
                               className="euiButtonEmpty euiButtonEmpty--primary euiButtonEmpty--xSmall euiButtonEmpty--flushLeft"
-                              href="https://documentation.wazuh.com/5.0/"
+                              href="https://documentation.wazuh.com/6.0/"
                               rel="noopener noreferrer"
                               target="_blank"
                             >

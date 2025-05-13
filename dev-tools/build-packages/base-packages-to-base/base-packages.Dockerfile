@@ -6,7 +6,7 @@
 #         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=main \
 #         --build-arg ARCHITECTURE=arm \
-#         -t wazuh-packages-to-base:5.0.0 \
+#         -t wazuh-packages-to-base:6.0.0 \
 #         -f base-packages.Dockerfile .
 
 ARG NODE_VERSION=18.19.0
