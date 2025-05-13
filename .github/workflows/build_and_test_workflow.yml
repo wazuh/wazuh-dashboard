@@ -5,22 +5,15 @@ name: Build and test
 
 # trigger on every commit push and PR for all branches except feature branches and pushes for backport branches
 on:
-  push:
-    branches: [ '**', '!feature/**', '!backport/**' ]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.lycheeignore'
-      - 'CODEOWNERS'
-      - 'changelogs/fragments/**'
   pull_request:
-    branches: [ '**', '!feature/**' ]
+    branches: ['**', '!feature/**']
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
       - '.lycheeignore'
       - 'CODEOWNERS'
       - 'changelogs/fragments/**'
+    types: [opened, synchronize, reopened, ready_for_review]
 
 env:
   TEST_BROWSER_HEADLESS: 1
@@ -31,7 +24,7 @@ env:
   TEST_OPENSEARCH_TRANSPORT_PORT: 9403
   TEST_OPENSEARCH_PORT: 9400
   OSD_SNAPSHOT_SKIP_VERIFY_CHECKSUM: true
-  NODE_OPTIONS: "--max-old-space-size=6144 --dns-result-order=ipv4first"
+  NODE_OPTIONS: '--max-old-space-size=6144 --dns-result-order=ipv4first'
 
 jobs:
   build-test:
@@ -47,6 +40,7 @@ jobs:
           - os: windows-latest
             name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - name: Configure git's autocrlf (Windows only)
         if: matrix.os == 'windows-latest'
@@ -59,7 +53,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -131,6 +125,7 @@ jobs:
   lint-and-validate:
     name: Lint and validate
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -186,6 +181,7 @@ jobs:
           - os: windows-latest
             name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - run: echo Running functional tests for ciGroup${{ matrix.group }}
 
@@ -200,7 +196,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -303,6 +299,7 @@ jobs:
           - os: windows-latest
             name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - run: echo Running plugin functional tests
 
@@ -317,7 +314,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -434,6 +431,7 @@ jobs:
             suffix: windows-x64
             script: build-platform --windows --skip-os-packages
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     defaults:
       run:
         working-directory: ./artifacts
@@ -450,7 +448,7 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -528,7 +526,19 @@ jobs:
         working-directory: ./artifacts
     strategy:
       matrix:
-        version: [osd-2.0.0, osd-2.1.0, osd-2.2.0, osd-2.3.0, osd-2.4.0, osd-2.5.0, osd-2.6.0, osd-2.7.0, osd-2.8.0, osd-2.9.0]
+        version:
+          [
+            osd-2.0.0,
+            osd-2.1.0,
+            osd-2.2.0,
+            osd-2.3.0,
+            osd-2.4.0,
+            osd-2.5.0,
+            osd-2.6.0,
+            osd-2.7.0,
+            osd-2.8.0,
+            osd-2.9.0,
+          ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
