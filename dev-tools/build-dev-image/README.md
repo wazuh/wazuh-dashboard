@@ -24,7 +24,7 @@ docker build \
   --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=6.0.0 \
   --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=6.0.0 \
   --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=6.0.0 \
-  -t quay.io/wazuh/osd-dev:2.18.0 \
+  -t quay.io/wazuh/osd-dev:2.19.1 \
   -f wzd.dockerfile .
 ```
 
