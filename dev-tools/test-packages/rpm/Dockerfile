@@ -1,7 +1,5 @@
-FROM centos:latest
-
+FROM centos:8
 RUN mkdir -p /tmp
-FROM centos
 ARG PACKAGE
 RUN cd /etc/yum.repos.d/
 RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
