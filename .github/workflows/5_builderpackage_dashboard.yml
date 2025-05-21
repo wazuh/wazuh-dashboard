@@ -282,7 +282,7 @@ jobs:
   build-report-plugin:
     needs: [validate-job]
     name: Build reporting plugin
-    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/5_builderpackage_reporting_plugin.yml@main
+    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/5_builderpackage_reporting_plugin.yml@6.0.0
     with:
       reference: ${{ inputs.reference_report_plugins }}
 
@@ -389,14 +389,14 @@ jobs:
         if: ${{ inputs.upload }}
         run: |
           echo "Uploading package"
-          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/
-          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.FINAL_NAME}}"
+          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/6.x/main/packages/
+          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/6.x/main/packages/${{needs.setup-variables.outputs.FINAL_NAME}}"
           echo "S3 URI: ${s3uri}"
 
       - name: Upload SHA512
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/
-          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.FINAL_NAME}}.sha512"
+          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.FINAL_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/6.x/main/packages/
+          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/6.x/main/packages/${{needs.setup-variables.outputs.FINAL_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
