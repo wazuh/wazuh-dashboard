@@ -260,7 +260,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/5_builderpackage_dashboard_core.yml@main
+    uses: wazuh/wazuh-dashboard/.github/workflows/5_builderpackage_dashboard_core.yml@6.0.0
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
@@ -268,14 +268,14 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/5_builderpackage_plugins.yml@main
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/5_builderpackage_plugins.yml@6.0.0
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/5_builderpackage_security_plugin.yml@main
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/5_builderpackage_security_plugin.yml@6.0.0
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
