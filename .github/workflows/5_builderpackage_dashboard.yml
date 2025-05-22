@@ -282,7 +282,7 @@ jobs:
   build-report-plugin:
     needs: [validate-job]
     name: Build reporting plugin
-    uses: wazuh/wazuh-dashboards-reporting/.github/workflows/5_builderpackage_reporting_plugin.yml@6.0.0
+    uses: wazuh/wazuh-dashboard-reporting/.github/workflows/5_builderpackage_reporting_plugin.yml@6.0.0
     with:
       reference: ${{ inputs.reference_report_plugins }}
 
