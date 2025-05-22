@@ -129,6 +129,7 @@ export interface HeaderProps {
   currentWorkspace$: WorkspacesStart['currentWorkspace$'];
   useUpdatedHeader?: boolean;
   globalSearchCommands?: GlobalSearchCommand[];
+  darkmode: boolean;
 }
 
 const hasValue = (value: any) => {
@@ -496,6 +497,7 @@ export function Header({
         opensearchDashboardsDocLink={opensearchDashboardsDocLink}
         opensearchDashboardsVersion={opensearchDashboardsVersion}
         surveyLink={survey}
+        darkmode={observables.darkmode}
       />
     </EuiHeaderSectionItem>
   );

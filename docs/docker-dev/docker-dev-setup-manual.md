@@ -11,7 +11,7 @@ The following instructions demonstrate how to set up a development environment f
     - [Installer script](../../dev-tools/install-docker-dev.sh).
 
 ```bash
-curl -o- https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev-tools/install-docker-dev.sh | bash
+curl -o- https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev_tools/install_docker_dev.sh | bash
 ```
 3. Open VS Code or [install it](https://code.visualstudio.com/download), if it's not already installed.
 
@@ -78,7 +78,7 @@ This section explains how to run Selenium functional tests using Docker and debu
 2. Make sure you have completed steps 1-5 in the [Docker Development Environment Setup](#docker-development-environment-setup). Now, ensure you have 5 files, `docker-compose.yml`, `docker-compose.selenium.yml`, `Dockerfile.selenium`, `entrypoint.sh` and `start-vnc.sh`. You can also download them by running the installer script. This time you need to pass a parameter `--ftr`.
 
 ```bash
-curl -o- https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev-tools/install-docker-dev.sh | bash -s -- --ftr
+curl -o- https://raw.githubusercontent.com/opensearch-project/OpenSearch-Dashboards/main/dev_tools/install_docker_dev.sh | bash -s -- --ftr
 ```
 
 3. In the terminal, run the following commands to stop any running containers, build the new configuration, and start the containers:
