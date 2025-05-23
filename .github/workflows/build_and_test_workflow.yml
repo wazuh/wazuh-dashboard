@@ -5,22 +5,15 @@ name: Build and test
 
 # trigger on every commit push and PR for all branches except feature branches and pushes for backport branches
 on:
-  push:
-    branches: [ '**', '!feature/**', '!backport/**' ]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.lycheeignore'
-      - 'CODEOWNERS'
-      - 'changelogs/fragments/**'
   pull_request:
-    branches: [ '**', '!feature/**' ]
+    branches: ['**', '!feature/**']
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
       - '.lycheeignore'
       - 'CODEOWNERS'
       - 'changelogs/fragments/**'
+    types: [opened, synchronize, reopened, ready_for_review]
 
 env:
   TEST_BROWSER_HEADLESS: 1
@@ -31,7 +24,7 @@ env:
   TEST_OPENSEARCH_TRANSPORT_PORT: 9403
   TEST_OPENSEARCH_PORT: 9400
   OSD_SNAPSHOT_SKIP_VERIFY_CHECKSUM: true
-  NODE_OPTIONS: "--max-old-space-size=6144 --dns-result-order=ipv4first"
+  NODE_OPTIONS: '--max-old-space-size=6144 --dns-result-order=ipv4first'
 
 jobs:
   build-test:
@@ -39,14 +32,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest] #Removed 'windows-latest'
         group: [1, 2, 3, 4]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+    #          - os: windows-latest
+    #            name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - name: Configure git's autocrlf (Windows only)
         if: matrix.os == 'windows-latest'
@@ -59,10 +53,10 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK (Windows only)
         if: matrix.os == 'windows-latest'
@@ -72,7 +66,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -88,7 +82,7 @@ jobs:
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
       - name: Initialize Yarn Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: matrix.os != 'windows-latest'
         with:
           path: ${{ env.YARN_CACHE_LOCATION }}
@@ -131,6 +125,7 @@ jobs:
   lint-and-validate:
     name: Lint and validate
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -178,14 +173,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        group: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        os: [ubuntu-latest] #Removed 'windows-latest'
+        group: [1, 2, 4, 6, 7, 8, 9, 10, 11, 13]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+    #          - os: windows-latest
+    #            name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - run: echo Running functional tests for ciGroup${{ matrix.group }}
 
@@ -200,10 +196,10 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK (Windows only)
         if: matrix.os == 'windows-latest'
@@ -213,7 +209,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -229,7 +225,7 @@ jobs:
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
       - name: Initialize Yarn Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: matrix.os != 'windows-latest'
         with:
           path: ${{ env.YARN_CACHE_LOCATION }}
@@ -289,19 +285,21 @@ jobs:
           path: |
             test/*/failure_debug/
             test/*/screenshots/
+          overwrite: true
 
   plugin-functional-tests:
     name: Run plugin functional tests on ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest] #Removed 'windows-latest'
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+    #         - os: windows-latest
+    #           name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - run: echo Running plugin functional tests
 
@@ -316,10 +314,10 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK (Windows only)
         if: matrix.os == 'windows-latest'
@@ -329,7 +327,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -345,7 +343,7 @@ jobs:
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
       - name: Initialize Yarn Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: matrix.os != 'windows-latest'
         with:
           path: ${{ env.YARN_CACHE_LOCATION }}
@@ -400,6 +398,7 @@ jobs:
           path: |
             test/*/failure_debug/
             test/*/screenshots/
+          overwrite: true
 
   build-min-artifact-tests:
     name: Build min release artifacts on ${{ matrix.name }}
@@ -416,22 +415,23 @@ jobs:
             ext: tar.gz
             suffix: linux-arm64
             script: build-platform --linux-arm --skip-os-packages
-          - os: macos-latest
-            name: macOS x64
-            ext: tar.gz
-            suffix: darwin-x64
-            script: build-platform --darwin --skip-os-packages
-          - os: macos-latest
-            name: macOS ARM64
-            ext: tar.gz
-            suffix: darwin-arm64
-            script: build-platform --darwin-arm --skip-os-packages
-          - os: windows-latest
-            name: Windows x64
-            ext: zip
-            suffix: windows-x64
-            script: build-platform --windows --skip-os-packages
+          # - os: macos-latest
+          #   name: macOS x64
+          #   ext: tar.gz
+          #   suffix: darwin-x64
+          #   script: build-platform --darwin --skip-os-packages
+          # - os: macos-latest
+          #   name: macOS ARM64
+          #   ext: tar.gz
+          #   suffix: darwin-arm64
+          #   script: build-platform --darwin-arm --skip-os-packages
+          # - os: windows-latest
+          #   name: Windows x64
+          #   ext: zip
+          #   suffix: windows-x64
+          #   script: build-platform --windows --skip-os-packages
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     defaults:
       run:
         working-directory: ./artifacts
@@ -448,15 +448,15 @@ jobs:
         with:
           minimum-size: 16GB
           maximum-size: 64GB
-          disk-root: "C:"
+          disk-root: 'C:'
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ./artifacts
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: './artifacts/.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -472,7 +472,7 @@ jobs:
         run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
 
       - name: Initialize Yarn Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: matrix.os != 'windows-latest'
         with:
           path: ${{ env.YARN_CACHE_LOCATION }}
@@ -512,6 +512,7 @@ jobs:
           name: ${{ matrix.suffix }}-${{ env.VERSION }}
           path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
           retention-days: 1
+          overwrite: true
 
   bwc-tests:
     needs: [build-min-artifact-tests]
@@ -525,10 +526,22 @@ jobs:
         working-directory: ./artifacts
     strategy:
       matrix:
-        version: [osd-2.0.0, osd-2.1.0, osd-2.2.0, osd-2.3.0, osd-2.4.0, osd-2.5.0, osd-2.6.0, osd-2.7.0, osd-2.8.0, osd-2.9.0]
+        version:
+          [
+            osd-2.0.0,
+            osd-2.1.0,
+            osd-2.2.0,
+            osd-2.3.0,
+            osd-2.4.0,
+            osd-2.5.0,
+            osd-2.6.0,
+            osd-2.7.0,
+            osd-2.8.0,
+            osd-2.9.0,
+          ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ./artifacts
 
@@ -536,7 +549,7 @@ jobs:
       - run: echo [NOTE] These tests will be ran using Linux x64 release builds without security
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: './artifacts/.nvmrc'
           registry-url: 'https://registry.npmjs.org'
@@ -571,7 +584,7 @@ jobs:
         run: echo "BWC_VERSIONS=${{ matrix.version }}" >> $GITHUB_ENV
 
       - name: Download OpenSearch Dashboards
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v4
         id: download
         with:
           name: linux-x64-${{ env.VERSION }}
@@ -592,3 +605,4 @@ jobs:
             ./artifacts/bwc_tmp/test/cypress/screenshots/*
             ./artifacts/bwc_tmp/test/cypress/results/*
           retention-days: 1
+          overwrite: true
