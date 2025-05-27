@@ -276,6 +276,7 @@ Object {
   "vars": Object {},
   "version": Any<String>,
   "wazuhVersion": "5.0.0",
+
 }
 `;
 
