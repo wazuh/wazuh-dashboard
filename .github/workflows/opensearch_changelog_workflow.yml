@@ -12,6 +12,7 @@ permissions:
 jobs:
   update-changelog:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
