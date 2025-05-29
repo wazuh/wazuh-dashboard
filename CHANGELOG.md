@@ -8,6 +8,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.10.3
 
+### Changed
+
+- Added `noreplace` directive to `/etc/default/wazuh-dashboard` to prevent overwriting user-modified configurations during package upgrades. [#668](https://github.com/wazuh/wazuh-dashboard/pull/668)
+
 ## Wazuh dashboard v4.10.2 - OpenSearch Dashboards 2.16.0 - Revision 01
 
 ### Added
