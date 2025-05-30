@@ -248,8 +248,7 @@ jobs:
       # Screenshots are only captured on failure, will change this once we do visual regression tests
       - name: Download OpenSearch
         if: matrix.config == 'query_enhanced'
-        uses: actions/upload-artifact@v4
-        if: failure()
+        uses: suisei-cn/actions-download-file@v1.4.0
         with:
           url: https://artifacts.opensearch.org/releases/bundle/opensearch/${{ env.LATEST_VERSION }}/opensearch-${{ env.LATEST_VERSION }}-linux-x64.tar.gz
 
