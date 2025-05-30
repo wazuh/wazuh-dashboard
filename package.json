@@ -21,7 +21,7 @@
   },
   "wazuh": {
     "version": "4.12.1",
-    "revision": "00"
+    "revision": "01"
   },
   "homepage": "https://opensearch.org",
   "bugs": {
