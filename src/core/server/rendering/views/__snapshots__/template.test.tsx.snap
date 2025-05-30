@@ -685,7 +685,15 @@ Array [
       >
         <img
           alt="OpenSearch Dashboards logo"
-          class="loadingLogo"
+          class="loadingLogo darkOnly"
+          data-test-image-url="/ui/logos/spinner_on_dark.svg"
+          data-test-subj="defaultLogo"
+          loading="eager"
+          src="/ui/logos/spinner_on_dark.svg"
+        />
+        <img
+          alt="OpenSearch Dashboards logo"
+          class="loadingLogo lightOnly"
           data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
           loading="eager"
@@ -705,7 +713,14 @@ Array [
   >
     <img
       alt="OpenSearch Dashboards logo"
-      class="legacyBrowserErrorLogo"
+      class="legacyBrowserErrorLogo darkOnly"
+      data-test-image-url="/ui/logos/wazuh_mark_on_dark.svg"
+      data-test-subj="default logo"
+      src="/ui/logos/wazuh_mark_on_dark.svg"
+    />
+    <img
+      alt="OpenSearch Dashboards logo"
+      class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
       src="/ui/logos/wazuh_mark_on_light.svg"
@@ -1117,7 +1132,15 @@ Array [
       >
         <img
           alt="custom title logo"
-          class="loadingLogo"
+          class="loadingLogo darkOnly"
+          data-test-image-url="/ui/logos/spinner_on_dark.svg"
+          data-test-subj="defaultLogo"
+          loading="eager"
+          src="/ui/logos/spinner_on_dark.svg"
+        />
+        <img
+          alt="custom title logo"
+          class="loadingLogo lightOnly"
           data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
           loading="eager"
@@ -1137,7 +1160,14 @@ Array [
   >
     <img
       alt="custom title logo"
-      class="legacyBrowserErrorLogo"
+      class="legacyBrowserErrorLogo darkOnly"
+      data-test-image-url="/ui/logos/wazuh_mark_on_dark.svg"
+      data-test-subj="default logo"
+      src="/ui/logos/wazuh_mark_on_dark.svg"
+    />
+    <img
+      alt="custom title logo"
+      class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
       src="/ui/logos/wazuh_mark_on_light.svg"
@@ -1249,7 +1279,15 @@ Array [
       >
         <img
           alt="OpenSearch Dashboards logo"
-          class="loadingLogo"
+          class="loadingLogo darkOnly"
+          data-test-image-url="/ui/logos/spinner_on_dark.svg"
+          data-test-subj="defaultLogo"
+          loading="eager"
+          src="/ui/logos/spinner_on_dark.svg"
+        />
+        <img
+          alt="OpenSearch Dashboards logo"
+          class="loadingLogo lightOnly"
           data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
           loading="eager"
@@ -1269,7 +1307,14 @@ Array [
   >
     <img
       alt="OpenSearch Dashboards logo"
-      class="legacyBrowserErrorLogo"
+      class="legacyBrowserErrorLogo darkOnly"
+      data-test-image-url="/ui/logos/wazuh_mark_on_dark.svg"
+      data-test-subj="default logo"
+      src="/ui/logos/wazuh_mark_on_dark.svg"
+    />
+    <img
+      alt="OpenSearch Dashboards logo"
+      class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
       src="/ui/logos/wazuh_mark_on_light.svg"
@@ -1381,7 +1426,15 @@ Array [
       >
         <img
           alt="OpenSearch Dashboards logo"
-          class="loadingLogo"
+          class="loadingLogo darkOnly"
+          data-test-image-url="/ui/logos/spinner_on_dark.svg"
+          data-test-subj="defaultLogo"
+          loading="eager"
+          src="/ui/logos/spinner_on_dark.svg"
+        />
+        <img
+          alt="OpenSearch Dashboards logo"
+          class="loadingLogo lightOnly"
           data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
           loading="eager"
@@ -1401,7 +1454,14 @@ Array [
   >
     <img
       alt="OpenSearch Dashboards logo"
-      class="legacyBrowserErrorLogo"
+      class="legacyBrowserErrorLogo darkOnly"
+      data-test-image-url="/ui/logos/wazuh_mark_on_dark.svg"
+      data-test-subj="default logo"
+      src="/ui/logos/wazuh_mark_on_dark.svg"
+    />
+    <img
+      alt="OpenSearch Dashboards logo"
+      class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
       src="/ui/logos/wazuh_mark_on_light.svg"

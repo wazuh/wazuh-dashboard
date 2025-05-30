@@ -282,7 +282,6 @@ Object {
   "branding": Object {
     "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
-    "darkMode": false,
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
@@ -333,7 +332,6 @@ Object {
   "branding": Object {
     "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
-    "darkMode": false,
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
