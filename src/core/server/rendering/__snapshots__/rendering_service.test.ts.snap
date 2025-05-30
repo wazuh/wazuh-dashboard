@@ -311,7 +311,11 @@ Object {
   },
   "legacyMetadata": Object {
     "uiSettings": Object {
-      "defaults": Object {},
+      "defaults": Object {
+        "registered": Object {
+          "name": "title",
+        },
+      },
       "user": Object {},
     },
   },

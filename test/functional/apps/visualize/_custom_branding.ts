@@ -17,13 +17,13 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
   const testSubjects = getService('testSubjects');
 
   const expectedFullLogo =
-    'https://opensearch.org/assets/brand/SVG/Logo/opensearch_logo_default.svg';
+    'https://opensearch.org/wp-content/uploads/2025/01/opensearch_logo_default.svg';
   const expectedFullLogoDarkMode =
-    'https://opensearch.org/assets/brand/SVG/Logo/opensearch_logo_darkmode.svg';
+    'https://opensearch.org/wp-content/uploads/2025/01/opensearch_logo_darkmode.svg';
   const expectedMarkLogo =
-    'https://opensearch.org/assets/brand/SVG/Mark/opensearch_mark_default.svg';
+    'https://opensearch.org/wp-content/uploads/2025/01/opensearch_mark_default.svg';
   const expectedMarkLogoDarkMode =
-    'https://opensearch.org/assets/brand/SVG/Mark/opensearch_mark_darkmode.svg';
+    'https://opensearch.org/wp-content/uploads/2025/01/opensearch_mark_darkmode.svg';
   const applicationTitle = 'OpenSearch';
   const expectedWelcomeMessage = 'Welcome to OpenSearch';
 
@@ -124,7 +124,8 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
         expect(actualLabel.toUpperCase()).to.equal(expectedWelcomeMessage.toUpperCase());
       });
 
-      it('admin customized dark mode logo for home is applied', async () => {
+      // Wazuh: This test is omitted because OpenSearch Dashboards does not have a home dashboard card.
+      it.skip('admin customized dark mode logo for home is applied', async () => {
         await PageObjects.common.navigateToApp('management/opensearch-dashboards/settings');
         await PageObjects.settings.toggleAdvancedSettingCheckbox('theme:darkMode');
         await PageObjects.common.navigateToApp('home');
@@ -138,7 +139,8 @@ export default function ({ getService, getPageObjects }: FtrProviderContext) {
         await PageObjects.settings.clearAdvancedSettings('theme:darkMode');
       });
 
-      it('if enable user control, admin customized dark mode logo for home is not applied', async () => {
+      // Wazuh: This test is omitted because OpenSearch Dashboards does not have a home dashboard card.
+      it.skip('if enable user control, admin customized dark mode logo for home is not applied', async () => {
         await PageObjects.common.navigateToApp('management/opensearch-dashboards/settings');
         await PageObjects.settings.toggleAdvancedSettingCheckbox('theme:enableUserControl');
         const button = await testSubjects.find('advancedSetting-editField-theme:darkMode');
