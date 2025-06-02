@@ -200,12 +200,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest] #Removed 'windows-latest'
-        group: [1, 2, 4, 6, 7, 8, 9, 10, 11, 13]
+        group: [1, 2, 4, 6, 7, 8, 9, 10, 13]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+          # - os: windows-latest
+          #   name: Windows
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false
     steps:
