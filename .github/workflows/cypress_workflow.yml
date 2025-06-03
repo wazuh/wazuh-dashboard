@@ -4,6 +4,7 @@ name: Run cypress tests
 on:
   pull_request:
     branches: ['**']
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -32,7 +33,7 @@ on:
 
 env:
   TEST_REPO: ${{ inputs.test_repo != '' && inputs.test_repo || 'opensearch-project/opensearch-dashboards-functional-test' }}
-  TEST_BRANCH: "${{ inputs.test_branch != '' && inputs.test_branch || github.base_ref }}"
+  TEST_BRANCH: "${{ inputs.test_branch != '' && inputs.test_branch || vars.OPENSEARCH_VERSION }}"
   FTR_PATH: 'ftr'
   CYPRESS_BROWSER: 'chromium'
   CYPRESS_VISBUILDER_ENABLED: true
@@ -53,10 +54,12 @@ env:
   COMMENT_SUCCESS_MSG: ':white_check_mark: Cypress test run succeeded!'
   COMMENT_FAILURE_MSG: ':x: Cypress test run failed!'
   LATEST_VERSION: '2.17.0'
+  OPENSEARCH_VERSION: ${{ vars.OPENSEARCH_VERSION }}
 
 jobs:
   cypress-tests:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
@@ -65,9 +68,10 @@ jobs:
           - group: 1
             config: standard
             test_location: ftr
-          - group: 2
-            config: standard
-            test_location: ftr
+          # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
+          # - group: 2
+          #   config: standard
+          #   test_location: ftr
           - group: 3
             config: standard
             test_location: ftr
@@ -77,18 +81,19 @@ jobs:
           - group: 5
             config: standard
             test_location: ftr
-          - group: 6
-            config: standard
-            test_location: ftr
-          - group: 7
-            config: standard
-            test_location: ftr
-          - group: 8
-            config: standard
-            test_location: ftr
-          - group: 9
-            config: standard
-            test_location: ftr
+          # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
+          # - group: 6
+          #   config: standard
+          #   test_location: ftr
+          # - group: 7
+          #   config: standard
+          #   test_location: ftr
+          # - group: 8
+          #   config: standard
+          #   test_location: ftr
+          # - group: 9
+          #   config: standard
+          #   test_location: ftr
           # Dashboard tests with query enhanced - group 1
           - group: 10Fast
             config: query_enhanced
@@ -97,18 +102,20 @@ jobs:
           - group: 10Slow
             config: query_enhanced
             test_location: source
+          # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
           # Dashboard tests with no query enhanced
-          - group: 11
-            config: dashboard
-            test_location: source
+          # - group: 11
+          #   config: dashboard
+          #   test_location: source
           # Dashboard tests with query enhanced - group 2
           - group: 12
             config: query_enhanced
             test_location: source
+          # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
           # Dashboard tests with query enhanced - group 3
-          - group: 13
-            config: query_enhanced
-            test_location: source
+          # - group: 13
+          #   config: query_enhanced
+          #   test_location: source
           # Dashboard tests with query enhanced - group 4
           - group: 14
             config: query_enhanced
@@ -122,10 +129,10 @@ jobs:
       options: '--user 1001 --shm-size=2g'
     env:
       START_CMD: ${{ matrix.config == 'query_enhanced' &&
-        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true' ||
+        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         matrix.config == 'dashboard' &&
-        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true' ||
-        'node ../scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=false' }}
+        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --opensearchDashboards.branding.useExpandedHeader=true'||
+        'node ../scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=false --opensearchDashboards.branding.useExpandedHeader=true' }}
       OPENSEARCH_SNAPSHOT_CMD: ${{ matrix.config == 'query_enhanced' &&
         '/bin/bash -c "./opensearch-${{ env.LATEST_VERSION }}/opensearch-tar-install.sh &"' ||
         matrix.config == 'dashboard' &&
@@ -140,7 +147,7 @@ jobs:
       - name: Get source information from PR number
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number != '' }}
         id: get_pr_info
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const { data: result } = await github.rest.pulls.get({
@@ -185,7 +192,7 @@ jobs:
         with:
           path: ${{ env.FTR_PATH }}
           repository: ${{ env.TEST_REPO }}
-          ref: '${{ env.TEST_BRANCH }}'
+          ref: '${{ env.OPENSEARCH_VERSION }}'
           clean: true
 
       - name: Setup spec files by input
@@ -240,8 +247,9 @@ jobs:
           working-directory: ${{ env.FTR_PATH }}
           start: ${{ env.OPENSEARCH_SNAPSHOT_CMD }}, ${{ env.START_CMD }}
           wait-on: 'http://localhost:9200, http://localhost:5601'
-          command: yarn cypress:run-without-security --browser ${{ env.CYPRESS_BROWSER }} --spec ${{ env.SPEC }}
+          command: yarn cypress:run-without-security --browser ${{ env.CYPRESS_BROWSER }} --config ignoreTestFiles="dashboard_sanity_test_spec.js" --spec ${{ env.SPEC }}
 
+      # Screenshots are only captured on failure, will change this once we do visual regression tests
       - name: Download OpenSearch
         if: matrix.config == 'query_enhanced'
         uses: suisei-cn/actions-download-file@v1.4.0
