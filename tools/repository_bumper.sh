@@ -15,6 +15,7 @@ PACKAGE_JSON="${REPO_PATH}/package.json"
 VERSION=""
 REVISION="00"
 CURRENT_VERSION=""
+FINAL_TAG=false
 WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
 DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
 README_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/README.md"
@@ -31,16 +32,20 @@ log() {
 
 # Function to show usage
 usage() {
-  echo "Usage: $0 --version VERSION --stage STAGE [--help]"
+  echo "Usage: $0 [--version VERSION --stage STAGE | --tag] [--help]"
   echo ""
   echo "Parameters:"
   echo "  --version VERSION   Specify the version (e.g., 4.6.0)"
+  echo "                      Required if --tag is not used"
   echo "  --stage STAGE       Specify the stage (e.g., alpha0, beta1, rc2, etc.)"
+  echo "                      Required if --tag is not used"
+  echo "  --tag               Generate a stageless tag (e.g., v4.6.0)"
+  echo "                      If this is set, --version and --stage are not required and will be ignored."
   echo "  --help              Display this help message"
   echo ""
-  echo "Example:"
+  echo "Examples:"
   echo "  $0 --version 4.6.0 --stage alpha0"
-  echo "  $0 --version 4.6.0 --stage beta1"
+  echo "  $0 --tag"
 }
 
 # --- Core Logic Functions ---
@@ -61,6 +66,10 @@ parse_arguments() {
       usage
       exit 0
       ;;
+    --tag)
+      FINAL_TAG=true
+      shift
+  ;;
     *)
       log "ERROR: Unknown option: $1" # Log error instead of just echo
       usage
@@ -72,20 +81,27 @@ parse_arguments() {
 
 # Function to validate input parameters
 validate_input() {
+  if [ "$FINAL_TAG" = true ]; then
+    return 0
+  fi
+
   if [ -z "$VERSION" ]; then
-    log "ERROR: Version parameter is required"
+    log "ERROR: Version parameter is required unless --tag is used"
     usage
     exit 1
   fi
+
   if [ -z "$STAGE" ]; then
-    log "ERROR: Stage parameter is required"
+    log "ERROR: Stage parameter is required unless --tag is used"
     usage
     exit 1
   fi
+
   if ! [[ $VERSION =~ ^$VERSION_PATTERN$ ]]; then
     log "ERROR: Version must be in the format x.y.z (e.g., 4.6.0)"
     exit 1
   fi
+
   if ! [[ $STAGE =~ ^[a-zA-Z]+[0-9]+$ ]]; then
     log "ERROR: Stage must be alphanumeric (e.g., alpha0, beta1, rc2)"
     exit 1
@@ -342,20 +358,23 @@ update_build_workflow() {
 
   if [ -f "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" ]; then
     local modified=false
-    # Update all occurrences of yml@x.y.z with yml@$VERSION-$STAGE
-    # Check if the pattern exists in the file first
-    local workflow_version_pattern="(\.yml@)v?$VERSION_PATTERN(-[a-z]+[0-9]+)?"
-    if grep -qE "$workflow_version_pattern" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
+    local replacement="v${CURRENT_VERSION}"
+
+    if [ "$FINAL_TAG" = false ]; then
+      replacement+="-${STAGE}"
+    fi
+
+    if grep -qE '\.yml@[^"[:space:]]+' "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
       log "Pattern found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
       # If the pattern exists, perform the substitution
-      sed -i -E "s/${workflow_version_pattern}/\1v${VERSION}-${STAGE}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
+      sed -i -E "s/(\.yml@)[^\"[:space:]]+/\1${replacement}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
       modified=true
     else
       log "Pattern not found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Skipping update."
     fi
 
     if [[ $modified == true ]]; then
-      log "Successfully updated yml@v${VERSION}-${STAGE} in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE)"
+      log "Successfully updated references to @${replacement} in $(basename "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE")"
     fi
   fi
 }
@@ -495,6 +514,16 @@ main() {
   # Parse and validate arguments
   parse_arguments "$@"
   validate_input
+
+  if [ "$FINAL_TAG" = true ]; then
+    log "Tag mode enabled (--tag)"
+    pre_update_checks
+    log "Starting file modifications..."
+    update_build_workflow
+    log "Tag-only operations completed. Log file: $LOG_FILE"
+    exit 0
+  fi
+
   log "Version: $VERSION"
   log "Stage: $STAGE"
 
