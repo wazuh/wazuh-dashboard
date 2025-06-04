@@ -68,9 +68,10 @@ jobs:
           - group: 5
             config: standard
             test_location: ftr
-          - group: 6
-            config: standard
-            test_location: ftr
+            # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
+          # - group: 6
+          #   config: standard
+          #   test_location: ftr
           - group: 7
             config: standard
             test_location: ftr
@@ -81,17 +82,18 @@ jobs:
             config: standard
             test_location: ftr
           # Dashboard tests with query enhanced - group 1
-          - group: 10
-            config: query_enhanced
-            test_location: source
-          # Dashboard tests with no query enhanced
-          - group: 11
-            config: dashboard
-            test_location: source
-          # Dashboard tests with query enhanced - group 2
-          - group: 12
-            config: query_enhanced
-            test_location: source
+          # # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
+          # - group: 10
+          #   config: query_enhanced
+          #   test_location: source
+          # # Dashboard tests with no query enhanced
+          # - group: 11
+          #   config: dashboard
+          #   test_location: source
+          # # Dashboard tests with query enhanced - group 2
+          # - group: 12
+          #   config: query_enhanced
+          #   test_location: source
     container:
       image: docker://opensearchstaging/ci-runner:ci-runner-rockylinux8-opensearch-dashboards-integtest-v2
       options: --user 1001
