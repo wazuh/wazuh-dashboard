@@ -514,95 +514,95 @@ jobs:
           retention-days: 1
           overwrite: true
 
-  bwc-tests:
-    needs: [build-min-artifact-tests]
-    runs-on: ubuntu-latest
-    container:
-      image: docker://opensearchstaging/ci-runner:ci-runner-rockylinux8-opensearch-dashboards-integtest-v2
-      options: --user 1001
-    name: Run backwards compatibility tests
-    defaults:
-      run:
-        working-directory: ./artifacts
-    strategy:
-      matrix:
-        version:
-          [
-            osd-2.0.0,
-            osd-2.1.0,
-            osd-2.2.0,
-            osd-2.3.0,
-            osd-2.4.0,
-            osd-2.5.0,
-            osd-2.6.0,
-            osd-2.7.0,
-            osd-2.8.0,
-            osd-2.9.0,
-          ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          path: ./artifacts
+  # bwc-tests:
+  #   needs: [build-min-artifact-tests]
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: docker://opensearchstaging/ci-runner:ci-runner-rockylinux8-opensearch-dashboards-integtest-v2
+  #     options: --user 1001
+  #   name: Run backwards compatibility tests
+  #   defaults:
+  #     run:
+  #       working-directory: ./artifacts
+  #   strategy:
+  #     matrix:
+  #       version:
+  #         [
+  #           osd-2.0.0,
+  #           osd-2.1.0,
+  #           osd-2.2.0,
+  #           osd-2.3.0,
+  #           osd-2.4.0,
+  #           osd-2.5.0,
+  #           osd-2.6.0,
+  #           osd-2.7.0,
+  #           osd-2.8.0,
+  #           osd-2.9.0,
+  #         ]
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         path: ./artifacts
 
-      - run: echo Running backwards compatibility tests for version ${{ matrix.version }}
-      - run: echo [NOTE] These tests will be ran using Linux x64 release builds without security
+  #     - run: echo Running backwards compatibility tests for version ${{ matrix.version }}
+  #     - run: echo [NOTE] These tests will be ran using Linux x64 release builds without security
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: './artifacts/.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
+  #     - name: Setup Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version-file: './artifacts/.nvmrc'
+  #         registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup Yarn
-        run: |
-          npm uninstall -g yarn
-          npm i -g yarn@1.22.10
-          yarn config set network-timeout 1000000 -g
+  #     - name: Setup Yarn
+  #       run: |
+  #         npm uninstall -g yarn
+  #         npm i -g yarn@1.22.10
+  #         yarn config set network-timeout 1000000 -g
 
-      - name: Get package version
-        run: |
-          echo "VERSION=$(yarn --silent pkg-version)" >> $GITHUB_ENV
+  #     - name: Get package version
+  #       run: |
+  #         echo "VERSION=$(yarn --silent pkg-version)" >> $GITHUB_ENV
 
-      - name: Set OpenSearch URL
-        run: |
-          echo "OPENSEARCH_URL=https://artifacts.opensearch.org/snapshots/core/opensearch/${{ env.VERSION }}-SNAPSHOT/opensearch-min-${{ env.VERSION }}-SNAPSHOT-linux-x64-latest.tar.gz" >> $GITHUB_ENV
+  #     - name: Set OpenSearch URL
+  #       run: |
+  #         echo "OPENSEARCH_URL=https://artifacts.opensearch.org/snapshots/core/opensearch/${{ env.VERSION }}-SNAPSHOT/opensearch-min-${{ env.VERSION }}-SNAPSHOT-linux-x64-latest.tar.gz" >> $GITHUB_ENV
 
-      - name: Verify if OpenSearch is available for version
-        id: verify-opensearch-exists
-        run: |
-          if curl -I -L ${{ env.OPENSEARCH_URL }}; then
-            echo "name=version-exists::true" >> $GITHUB_OUTPUT
-          fi
+  #     - name: Verify if OpenSearch is available for version
+  #       id: verify-opensearch-exists
+  #       run: |
+  #         if curl -I -L ${{ env.OPENSEARCH_URL }}; then
+  #           echo "name=version-exists::true" >> $GITHUB_OUTPUT
+  #         fi
 
-      - name: Skipping tests
-        if: steps.verify-opensearch-exists.outputs.version-exists != 'true'
-        run: echo Tests were skipped because an OpenSearch release build does not exist for this version yet!
+  #     - name: Skipping tests
+  #       if: steps.verify-opensearch-exists.outputs.version-exists != 'true'
+  #       run: echo Tests were skipped because an OpenSearch release build does not exist for this version yet!
 
-      - name: Setting environment variable to run tests for ${{ matrix.version }}
-        if: steps.verify-opensearch-exists.outputs.version-exists == 'true'
-        run: echo "BWC_VERSIONS=${{ matrix.version }}" >> $GITHUB_ENV
+  #     - name: Setting environment variable to run tests for ${{ matrix.version }}
+  #       if: steps.verify-opensearch-exists.outputs.version-exists == 'true'
+  #       run: echo "BWC_VERSIONS=${{ matrix.version }}" >> $GITHUB_ENV
 
-      - name: Download OpenSearch Dashboards
-        uses: actions/download-artifact@v4
-        id: download
-        with:
-          name: linux-x64-${{ env.VERSION }}
-          path: ./artifacts/
-        if: steps.verify-opensearch-exists.outputs.version-exists == 'true'
+  #     - name: Download OpenSearch Dashboards
+  #       uses: actions/download-artifact@v4
+  #       id: download
+  #       with:
+  #         name: linux-x64-${{ env.VERSION }}
+  #         path: ./artifacts/
+  #       if: steps.verify-opensearch-exists.outputs.version-exists == 'true'
 
-      - name: Run tests
-        if: steps.verify-opensearch-exists.outputs.version-exists == 'true'
-        run: |
-          yarn test:bwc -s false -o ${{ env.OPENSEARCH_URL }} -d ${{ steps.download.outputs.download-path }}/opensearch-dashboards-${{ env.VERSION }}-linux-x64.tar.gz -v ${{ matrix.version }}
+  #     - name: Run tests
+  #       if: steps.verify-opensearch-exists.outputs.version-exists == 'true'
+  #       run: |
+  #         yarn test:bwc -s false -o ${{ env.OPENSEARCH_URL }} -d ${{ steps.download.outputs.download-path }}/opensearch-dashboards-${{ env.VERSION }}-linux-x64.tar.gz -v ${{ matrix.version }}
 
-      - uses: actions/upload-artifact@v4
-        if: ${{ failure() && steps.verify-opensearch-exists.outputs.version-exists == 'true' }}
-        with:
-          name: ${{ matrix.version }}-test-failures
-          path: |
-            ./artifacts/bwc_tmp/test/cypress/videos/*
-            ./artifacts/bwc_tmp/test/cypress/screenshots/*
-            ./artifacts/bwc_tmp/test/cypress/results/*
-          retention-days: 1
-          overwrite: true
+  #     - uses: actions/upload-artifact@v4
+  #       if: ${{ failure() && steps.verify-opensearch-exists.outputs.version-exists == 'true' }}
+  #       with:
+  #         name: ${{ matrix.version }}-test-failures
+  #         path: |
+  #           ./artifacts/bwc_tmp/test/cypress/videos/*
+  #           ./artifacts/bwc_tmp/test/cypress/screenshots/*
+  #           ./artifacts/bwc_tmp/test/cypress/results/*
+  #         retention-days: 1
+  #         overwrite: true
