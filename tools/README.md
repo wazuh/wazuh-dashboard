@@ -16,7 +16,7 @@ To run the script, navigate to the `tools` directory and execute it with the req
 
 **Parameters:**
 
-- `--tag`: Create a stageless tag.
+- `--tag`: Create a tag .If --stage is not set, it will be stageless(e.g., v4.6.0). Otherwise it will be with the provided stage (e.g., v4.6.0-alpha1)
 - `--version VERSION`: Specify the target version in `x.y.z` format (e.g., `4.9.0`). **Required if --tag is not set**.
 - `--stage STAGE`: Specify the build stage (e.g., `alpha0`, `beta1`, `rc2`, `stable`). **Required if --tag is not set**.
 - `--help`: Display the help message.
@@ -25,6 +25,7 @@ To run the script, navigate to the `tools` directory and execute it with the req
 
 ```bash
 ./repository_bumper.sh --version 4.9.0 --stage beta1
+./repository_bumper.sh --tag --stage alpha1
 ./repository_bumper.sh --tag
 ```
 
