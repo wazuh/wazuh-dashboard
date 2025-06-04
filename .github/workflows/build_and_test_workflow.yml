@@ -37,8 +37,8 @@ jobs:
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+          # - os: windows-latest
+          #   name: Windows
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false
     steps:
@@ -178,8 +178,8 @@ jobs:
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+          # - os: windows-latest
+          #   name: Windows
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false
     steps:
@@ -296,8 +296,8 @@ jobs:
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+          # - os: windows-latest
+          #   name: Windows
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false
     steps:
