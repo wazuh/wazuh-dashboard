@@ -2,6 +2,7 @@ name: Repository bumper
 run-name: Bump ${{ github.ref_name }} to ${{ inputs.version }} ${{ inputs.stage }} (${{ inputs.id }})
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       version:
