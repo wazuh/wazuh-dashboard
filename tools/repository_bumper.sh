@@ -15,7 +15,7 @@ PACKAGE_JSON="${REPO_PATH}/package.json"
 VERSION=""
 REVISION="00"
 CURRENT_VERSION=""
-FINAL_TAG=false
+TAG=false
 WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
 DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
 README_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/README.md"
@@ -40,11 +40,12 @@ usage() {
   echo "  --stage STAGE       Specify the stage (e.g., alpha0, beta1, rc2, etc.)"
   echo "                      Required if --tag is not used"
   echo "  --tag               Generate a stageless tag (e.g., v4.6.0)"
-  echo "                      If this is set, --version and --stage are not required and will be ignored."
+  echo "                      If this is set, --version and --stage are not required."
   echo "  --help              Display this help message"
   echo ""
   echo "Examples:"
   echo "  $0 --version 4.6.0 --stage alpha0"
+  echo "  $0 --tag --stage alpha1"
   echo "  $0 --tag"
 }
 
@@ -67,7 +68,7 @@ parse_arguments() {
       exit 0
       ;;
     --tag)
-      FINAL_TAG=true
+      TAG=true
       shift
   ;;
     *)
@@ -81,28 +82,24 @@ parse_arguments() {
 
 # Function to validate input parameters
 validate_input() {
-  if [ "$FINAL_TAG" = true ]; then
-    return 0
-  fi
-
-  if [ -z "$VERSION" ]; then
-    log "ERROR: Version parameter is required unless --tag is used"
+   if [ -z "$VERSION" ] && [ "$TAG" != true ]; then
+    log "ERROR: --version is required unless --tag is set"
     usage
     exit 1
   fi
 
-  if [ -z "$STAGE" ]; then
-    log "ERROR: Stage parameter is required unless --tag is used"
+  if [ -z "$STAGE" ] && [ "$TAG" != true ]; then
+    log "ERROR: --stage is required unless --tag is set"
     usage
     exit 1
   fi
 
-  if ! [[ $VERSION =~ ^$VERSION_PATTERN$ ]]; then
+  if [ -n "$VERSION" ] && ! [[ $VERSION =~ ^$VERSION_PATTERN$ ]]; then
     log "ERROR: Version must be in the format x.y.z (e.g., 4.6.0)"
     exit 1
   fi
 
-  if ! [[ $STAGE =~ ^[a-zA-Z]+[0-9]+$ ]]; then
+  if [ -n "$STAGE" ] && ! [[ $STAGE =~ ^[a-zA-Z]+[0-9]+$ ]]; then
     log "ERROR: Stage must be alphanumeric (e.g., alpha0, beta1, rc2)"
     exit 1
   fi
@@ -207,25 +204,27 @@ compare_versions_and_set_revision() {
         REVISION="00" # Reset revision on patch increase
       else
         # Versions are identical (Major, Minor, Patch are equal)
-        log "New version ($VERSION) is identical to current version ($CURRENT_VERSION). Incrementing revision."
-        log "Attempting to extract current revision from $PACKAGE_JSON using sed (Note: This is fragile)"
-        local current_revision_val=$(sed -n 's/^\s*"revision"\s*:\s*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
-        # Check if sed successfully extracted a revision
-        if [ -z "$current_revision_val" ]; then
-          log "ERROR: Failed to extract 'revision' from $PACKAGE_JSON using sed. Check file format or key presence."
-          exit 1 # Exit if sed fails
+        log "New version ($VERSION) is identical to current version ($CURRENT_VERSION)."
+        if [ -n "$STAGE" ]; then
+          log "Attempting to extract current revision from $PACKAGE_JSON using sed (Note: This is fragile)"
+          local current_revision_val=$(sed -n 's/^\s*"revision"\s*:\s*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
+          # Check if sed successfully extracted a revision
+          if [ -z "$current_revision_val" ]; then
+            log "ERROR: Failed to extract 'revision' from $PACKAGE_JSON using sed. Check file format or key presence."
+            exit 1 # Exit if sed fails
+          fi
+          log "Successfully extracted revision using sed: $current_revision_val"
+          if [ -z "$current_revision_val" ] || [ "$current_revision_val" == "null" ]; then
+            log "ERROR: Could not read current revision from $PACKAGE_JSON"
+            exit 1
+          fi
+          # Ensure CURRENT_REVISION is treated as a number (remove leading zeros for arithmetic if necessary, handle base 10)
+          local current_revision_int=$((10#$current_revision_val))
+          local new_revision_int=$((current_revision_int + 1))
+          # Format back to two digits with leading zero
+          REVISION=$(printf "%02d" "$new_revision_int")
+          log "Current revision: $current_revision_val. New revision set to: $REVISION"
         fi
-        log "Successfully extracted revision using sed: $current_revision_val"
-        if [ -z "$current_revision_val" ] || [ "$current_revision_val" == "null" ]; then
-          log "ERROR: Could not read current revision from $PACKAGE_JSON"
-          exit 1
-        fi
-        # Ensure CURRENT_REVISION is treated as a number (remove leading zeros for arithmetic if necessary, handle base 10)
-        local current_revision_int=$((10#$current_revision_val))
-        local new_revision_int=$((current_revision_int + 1))
-        # Format back to two digits with leading zero
-        REVISION=$(printf "%02d" "$new_revision_int")
-        log "Current revision: $current_revision_val. New revision set to: $REVISION"
       fi
     fi
   fi
@@ -240,13 +239,13 @@ update_root_version_json() {
     local modified=false
 
     # Update version in VERSION.json
-    if [[ "$CURRENT_VERSION" != "$VERSION" ]]; then
+    if [ -n "$VERSION" ] && [ "$CURRENT_VERSION" != "$VERSION" ]; then
       sed -i "s/^\s*\"version\"\s*:\s*\"[^\"]*\"/  \"version\": \"$VERSION\"/" "$VERSION_FILE"
       modified=true
     fi
 
     # Update stage in VERSION.json
-    if [[ "$CURRENT_STAGE" != "$STAGE" ]]; then
+    if [ -n "$STAGE" ] && [ "$CURRENT_STAGE" != "$STAGE" ]; then
       sed -i "s/^\s*\"stage\"\s*:\s*\"[^\"]*\"/  \"stage\": \"$STAGE\"/" "$VERSION_FILE"
       modified=true
     fi
@@ -325,13 +324,15 @@ update_changelog() {
 
   # Check if an entry for this version and OpenSearch version already exists
   if grep -qE "$changelog_header_regex" "$changelog_file"; then
-    log "Changelog entry for this version and OpenSearch Dashboards version exists. Updating revision only."
-    # Use sed to update only the revision number in the header
-    sed -i -E "s|(${changelog_header_regex})|${changelog_header}${REVISION}|" "$changelog_file" &&
-      log "CHANGELOG.md revision updated successfully." || {
-      log "ERROR: Failed to update revision in $changelog_file"
-      exit 1
-    }
+    if [ -n "$STAGE" ]; then
+      log "Changelog entry for this version and OpenSearch Dashboards version exists. Updating revision only."
+      # Use sed to update only the revision number in the header
+      sed -i -E "s|(${changelog_header_regex})|${changelog_header}${REVISION}|" "$changelog_file" &&
+        log "CHANGELOG.md revision updated successfully." || {
+        log "ERROR: Failed to update revision in $changelog_file"
+        exit 1
+      }
+    fi
   else
     log "No existing changelog entry for this version and OpenSearch Dashboards version. Inserting new entry."
     local new_entry
@@ -358,10 +359,14 @@ update_build_workflow() {
 
   if [ -f "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" ]; then
     local modified=false
-    local replacement="v${CURRENT_VERSION}"
 
-    if [ "$FINAL_TAG" = false ]; then
-      replacement+="-${STAGE}"
+    if [ "$TAG" = true ]; then
+      replacement="v${VERSION}"
+      if [ -n "$STAGE" ]; then
+        replacement+="-${STAGE}"
+      fi
+    else
+      replacement="${VERSION}"
     fi
 
     if grep -qE '\.yml@[^"[:space:]]+' "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
@@ -515,22 +520,16 @@ main() {
   parse_arguments "$@"
   validate_input
 
-  if [ "$FINAL_TAG" = true ]; then
-    log "Tag mode enabled (--tag)"
-    pre_update_checks
-    log "Starting file modifications..."
-    update_build_workflow
-    log "Tag-only operations completed. Log file: $LOG_FILE"
-    exit 0
-  fi
-
   log "Version: $VERSION"
   log "Stage: $STAGE"
 
   # Perform pre-update checks
   pre_update_checks
 
-  # Compare versions and determine revision
+  if [ -z "$VERSION" ]; then
+    VERSION=$CURRENT_VERSION # If no version provided, use current version
+  fi
+
   compare_versions_and_set_revision
 
   # Start file modifications
