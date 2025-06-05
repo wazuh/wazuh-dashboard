@@ -68,9 +68,10 @@ jobs:
           - group: 5
             config: standard
             test_location: ftr
-          - group: 6
-            config: standard
-            test_location: ftr
+            # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
+          # - group: 6
+          #   config: standard
+          #   test_location: ftr
           - group: 7
             config: standard
             test_location: ftr
@@ -81,26 +82,27 @@ jobs:
             config: standard
             test_location: ftr
           # Dashboard tests with query enhanced - group 1
-          - group: 10
-            config: query_enhanced
-            test_location: source
-          # Dashboard tests with no query enhanced
-          - group: 11
-            config: dashboard
-            test_location: source
-          # Dashboard tests with query enhanced - group 2
-          - group: 12
-            config: query_enhanced
-            test_location: source
+          # # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
+          # - group: 10
+          #   config: query_enhanced
+          #   test_location: source
+          # # Dashboard tests with no query enhanced
+          # - group: 11
+          #   config: dashboard
+          #   test_location: source
+          # # Dashboard tests with query enhanced - group 2
+          # - group: 12
+          #   config: query_enhanced
+          #   test_location: source
     container:
       image: docker://opensearchstaging/ci-runner:ci-runner-rockylinux8-opensearch-dashboards-integtest-v2
       options: --user 1001
     env:
       START_CMD: ${{ matrix.config == 'query_enhanced' &&
-        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true' --opensearchDashboards.branding.useExpandedHeader=true' ||
+        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         matrix.config == 'dashboard' &&
-        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true' --opensearchDashboards.branding.useExpandedHeader=true'||
-        'node ../scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=false' }} --opensearchDashboards.branding.useExpandedHeader=true'
+        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --opensearchDashboards.branding.useExpandedHeader=true'||
+        'node ../scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=false --opensearchDashboards.branding.useExpandedHeader=true' }}
       OPENSEARCH_SNAPSHOT_CMD: ${{ matrix.config == 'query_enhanced' &&
         '/bin/bash -c "./opensearch-2.17.0/opensearch-tar-install.sh &"' ||
         matrix.config == 'dashboard' &&
@@ -218,8 +220,7 @@ jobs:
       # Screenshots are only captured on failure, will change this once we do visual regression tests
       - name: Download OpenSearch
         if: matrix.config == 'query_enhanced'
-        uses: actions/upload-artifact@v4
-        if: failure()
+        uses: suisei-cn/actions-download-file@v1.4.0
         with:
           url: https://artifacts.opensearch.org/releases/bundle/opensearch/${{ env.LATEST_VERSION }}/opensearch-${{ env.LATEST_VERSION }}-linux-x64.tar.gz
 
