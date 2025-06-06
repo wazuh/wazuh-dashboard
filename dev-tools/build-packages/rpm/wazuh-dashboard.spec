@@ -17,8 +17,6 @@ buildroot:   %{_tmppath}/%{name}-%{version}-%{release}-wazuh-dashboard-%(%{__id_
 Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
-Requires(preun):  /sbin/service
-Requires(postun): /sbin/service
 AutoReqProv: no
 Requires: libcap
 ExclusiveOS: linux
