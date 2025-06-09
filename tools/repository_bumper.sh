@@ -223,7 +223,7 @@ compare_versions_and_set_revision() {
         local current_revision_int=$((10#$current_revision_val))
         local new_revision_int=$((current_revision_int + 1))
         # Format back to two digits with leading zero
-        if [ -n "$STAGE" ]; then
+        if [ -n "$STAGE" ] && [ "$STAGE" != "$CURRENT_STAGE" ]; then
           REVISION=$(printf "%02d" "$new_revision_int")
           log "Current revision: $current_revision_val. New revision set to: $REVISION"
         else
