@@ -8,6 +8,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 5.0.0
 
+### Fixed
+
+- Fixed missing CI workflows from 6.0.0 to `main` branch [#712](https://github.com/wazuh/wazuh-dashboard/pull/712)
+
 ## Wazuh dashboard v4.14.0 - OpenSearch Dashboards 2.19.2 - Revision 00
 
 ### Added
