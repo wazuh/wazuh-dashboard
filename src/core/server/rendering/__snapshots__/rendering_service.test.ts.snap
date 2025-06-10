@@ -6,12 +6,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -29,6 +29,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -49,6 +50,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "6.0.0",
 }
 `;
 
@@ -58,12 +60,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -81,6 +83,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -101,6 +104,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "6.0.0",
 }
 `;
 
@@ -110,12 +114,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -133,6 +137,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -153,6 +158,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "6.0.0",
 }
 `;
 
@@ -162,12 +168,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -185,6 +191,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -209,6 +216,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "6.0.0",
 }
 `;
 
@@ -218,12 +226,12 @@ Object {
   "basePath": "",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -241,6 +249,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -261,6 +270,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "6.0.0",
 }
 `;
 
@@ -270,12 +280,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -293,6 +303,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -313,6 +324,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "6.0.0",
 }
 `;
 
@@ -322,12 +334,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -345,6 +357,7 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
   },
   "i18n": Object {
@@ -365,5 +378,6 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "6.0.0",
 }
 `;

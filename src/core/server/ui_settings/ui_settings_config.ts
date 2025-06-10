@@ -38,7 +38,7 @@ const deprecations: ConfigDeprecationProvider = ({ unused, renameFromRoot }) => 
   renameFromRoot('server.defaultRoute', 'uiSettings.overrides.defaultRoute'),
 ];
 
-export const DEFAULT_THEME_VERSION = 'v8';
+export const DEFAULT_THEME_VERSION = 'v7';
 
 /* There are 4 levels of uiSettings:
  *   1) defaults hardcoded in code
