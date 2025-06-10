@@ -207,25 +207,28 @@ compare_versions_and_set_revision() {
       else
         # Versions are identical (Major, Minor, Patch are equal)
         log "New version ($VERSION) is identical to current version ($CURRENT_VERSION)."
-        if [ -n "$STAGE" ]; then
-          log "Attempting to extract current revision from $PACKAGE_JSON using sed (Note: This is fragile)"
-          local current_revision_val=$(sed -n 's/^\s*"revision"\s*:\s*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
-          # Check if sed successfully extracted a revision
-          if [ -z "$current_revision_val" ]; then
-            log "ERROR: Failed to extract 'revision' from $PACKAGE_JSON using sed. Check file format or key presence."
-            exit 1 # Exit if sed fails
-          fi
-          log "Successfully extracted revision using sed: $current_revision_val"
-          if [ -z "$current_revision_val" ] || [ "$current_revision_val" == "null" ]; then
-            log "ERROR: Could not read current revision from $PACKAGE_JSON"
-            exit 1
-          fi
-          # Ensure CURRENT_REVISION is treated as a number (remove leading zeros for arithmetic if necessary, handle base 10)
-          local current_revision_int=$((10#$current_revision_val))
-          local new_revision_int=$((current_revision_int + 1))
-          # Format back to two digits with leading zero
+        log "Attempting to extract current revision from $PACKAGE_JSON using sed (Note: This is fragile)"
+        local current_revision_val=$(sed -n 's/^\s*"revision"\s*:\s*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
+        # Check if sed successfully extracted a revision
+        if [ -z "$current_revision_val" ]; then
+          log "ERROR: Failed to extract 'revision' from $PACKAGE_JSON using sed. Check file format or key presence."
+          exit 1 # Exit if sed fails
+        fi
+        log "Successfully extracted revision using sed: $current_revision_val"
+        if [ -z "$current_revision_val" ] || [ "$current_revision_val" == "null" ]; then
+          log "ERROR: Could not read current revision from $PACKAGE_JSON"
+          exit 1
+        fi
+        # Ensure CURRENT_REVISION is treated as a number (remove leading zeros for arithmetic if necessary, handle base 10)
+        local current_revision_int=$((10#$current_revision_val))
+        local new_revision_int=$((current_revision_int + 1))
+        # Format back to two digits with leading zero
+        if [ -n "$STAGE" ] && [ "$STAGE" != "$CURRENT_STAGE" ]; then
           REVISION=$(printf "%02d" "$new_revision_int")
           log "Current revision: $current_revision_val. New revision set to: $REVISION"
+        else
+          REVISION=$(printf "%02d" "$current_revision_int")
+          log "Current revision: $current_revision_val."
         fi
       fi
     fi
