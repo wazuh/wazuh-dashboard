@@ -1,6 +1,6 @@
 run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.id }}
 name: Build Wazuh dashboard with plugins
-
+# Test comment
 on:
   workflow_dispatch:
     inputs:
