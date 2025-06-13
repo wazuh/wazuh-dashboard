@@ -36,7 +36,7 @@ import { fromRoot } from '../../core/server/utils';
 
 const LATEST_PLUGIN_BASE_URL =
   'https://ci.opensearch.org/ci/dbc/distribution-build-opensearch-dashboards';
-const LATEST_WAZUH_PLUGIN_BASE_URL = 'https://packages-dev.wazuh.com/pre-release/ui/dashboard';
+const LATEST_WAZUH_PLUGIN_BASE_URL = 'https://packages-dev.wazuh.com';
 
 function generateUrls({ version, plugin, wazuhVersion }) {
   return plugin.includes('wazuh')
@@ -53,7 +53,7 @@ function generatePluginUrl(version, plugin) {
 }
 
 function generateWazuhPluginUrl(version, plugin) {
-  return `${LATEST_WAZUH_PLUGIN_BASE_URL}/${plugin}-${version}-1.zip`;
+  return `${LATEST_WAZUH_PLUGIN_BASE_URL}/pre-release/ui/dashboard/${plugin}-${version}-1.zip`;
 }
 
 export function parseMilliseconds(val) {
