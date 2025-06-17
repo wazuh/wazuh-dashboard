@@ -227,7 +227,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.13.1
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@bug/workflow-permission-pr-write
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
@@ -244,7 +244,7 @@ jobs:
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.13.1
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@bug/workflow-permission-pr-write
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
