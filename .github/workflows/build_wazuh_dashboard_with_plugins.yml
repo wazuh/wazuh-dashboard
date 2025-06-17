@@ -244,6 +244,8 @@ jobs:
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
+    permissions:
+      pull-requests: write
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@bug/workflow-permission-pr-write
     with:
       reference: ${{ inputs.reference_security_plugins }}
