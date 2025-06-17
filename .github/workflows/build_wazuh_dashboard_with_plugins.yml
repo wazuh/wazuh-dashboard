@@ -235,6 +235,8 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
+    permissions:
+      pull-requests: write
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@main
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
@@ -242,6 +244,8 @@ jobs:
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
+    permissions:
+      pull-requests: write
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@main
     with:
       reference: ${{ inputs.reference_security_plugins }}
