@@ -267,6 +267,8 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
+    permissions:
+      pull-requests: write
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/6_builderpackage_plugins.yml@6.0.0
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
@@ -274,6 +276,8 @@ jobs:
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
+    permissions:
+      pull-requests: write
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/6_builderpackage_security_plugin.yml@6.0.0
     with:
       reference: ${{ inputs.reference_security_plugins }}
@@ -281,6 +285,8 @@ jobs:
   build-report-plugin:
     needs: [validate-job]
     name: Build reporting plugin
+    permissions:
+      pull-requests: write
     uses: wazuh/wazuh-dashboard-reporting/.github/workflows/6_builderpackage_reporting_plugin.yml@6.0.0
     with:
       reference: ${{ inputs.reference_report_plugins }}
