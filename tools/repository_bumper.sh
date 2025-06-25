@@ -504,7 +504,7 @@ update_readme_for_base_packages() {
     if grep -qE "$reporting_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
       log "Pattern '$reporting_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
       # If the pattern exists, perform the substitution and set modified to true
-      sed_inplace -E "s/${readme_example_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      sed_inplace -E "s/${reporting_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
       modified=true
     else
       log "Pattern '$reporting_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
@@ -529,7 +529,7 @@ update_readme_for_dev_image() {
     if grep -qE "$app_pattern_regex" "$README_FOR_DEV_IMAGE"; then
       log "Pattern '$app_pattern_regex' found in $(basename $README_FOR_DEV_IMAGE). Attempting update..."
       # If the pattern exists, perform the substitution and set modified to true
-      sed -i -E "s/${app_pattern_regex}/${VERSION}/g" "$README_FOR_DEV_IMAGE"
+      sed_inplace -E "s/${app_pattern_regex}/${VERSION}/g" "$README_FOR_DEV_IMAGE"
       modified=true
     else
       log "Pattern '$app_pattern_regex' not found in $(basename $README_FOR_DEV_IMAGE). Skipping update for this pattern."
@@ -555,7 +555,7 @@ update_dockerfile_for_build_dev_image() {
     if grep -qE "$app_pattern_regex" "$DOCKERFILE_FOR_BUILD_DEV_IMAGE"; then
       log "Pattern '$app_pattern_regex' found in $(basename $DOCKERFILE_FOR_BUILD_DEV_IMAGE). Attempting update..."
       # If the pattern exists, perform the substitution and set modified to true
-      sed -i -E "s/${app_pattern_regex}/${VERSION}/g" "$DOCKERFILE_FOR_BUILD_DEV_IMAGE"
+      sed_inplace -E "s/${app_pattern_regex}/${VERSION}/g" "$DOCKERFILE_FOR_BUILD_DEV_IMAGE"
       modified=true
     else
       log "Pattern '$app_pattern_regex' not found in $(basename $DOCKERFILE_FOR_BUILD_DEV_IMAGE). Skipping update for this pattern."
