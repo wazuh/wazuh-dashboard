@@ -374,19 +374,16 @@ update_changelog() {
     fi
   else
     log "No existing changelog entry for this version and OpenSearch Dashboards version. Inserting new entry."
-    local new_entry
-    new_entry=$(printf "${changelog_header}%s\n\n### Added\n\n- Support for Wazuh %s\n" "$REVISION" "$VERSION")
 
-    # Use awk to insert the new entry after the title and description (lines 1-4)
-    awk -v entry="$new_entry" '
-    NR == 1 { print; next } # Print line 1 (# Change Log)
-    NR == 2 { print; next } # Print line 2 (blank)
-    NR == 3 { print; next } # Print line 3 (description)
-    NR == 4 { print; printf "%s\n\n", entry; next } # Print line 4 (blank) and insert entry
-    { print } # Print the rest of the lines starting from line 5
-    ' "$changelog_file" >temp_changelog && mv temp_changelog "$changelog_file" || {
+   # Create the new entry directly in the changelog using sed
+    local temp_file=$(mktemp)
+    head -n 4 "$changelog_file" >"$temp_file"
+    printf "\n## Wazuh v%s - OpenSearch Dashboards %s - Revision %s\n\n### Added\n\n- Support for Wazuh %s\n\n" "$VERSION" "$OPENSEARCH_VERSION" "$REVISION" "$VERSION" >>"$temp_file"
+    tail -n +5 "$changelog_file" >>"$temp_file"
+
+    mv "$temp_file" "$changelog_file" || {
       log "ERROR: Failed to update $changelog_file"
-      rm -f temp_changelog # Clean up temp file on error
+      rm -f "$temp_file" # Clean up temp file on error
       exit 1
     }
     log "CHANGELOG.md updated successfully."
