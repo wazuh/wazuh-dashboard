@@ -37,6 +37,11 @@ on:
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
         default: 'main'
+      referenceQ_report_plugins:
+        type: string
+        description: 'Branch/tag/commit of the wazuh-dashboard-reporting repository to build the main plugins'
+        required: true
+        default: 'main'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -74,6 +79,10 @@ on:
         type: string
         required: true
         default: 'main'
+      reference_report_plugins:
+        type: string
+        required: true
+        default: 'main'
       is_stage:
         type: boolean
         required: true
@@ -102,6 +111,7 @@ jobs:
       COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
       PLUGINS_SHA: ${{ steps.setup-variables.outputs.PLUGINS_SHA }}
       SECURITY_SHA: ${{ steps.setup-variables.outputs.SECURITY_SHA }}
+      REPORTING_SHA: ${{ steps.setup-variables.outputs.REPORTING_SHA }}
       PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
       WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
       WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
@@ -132,6 +142,18 @@ jobs:
           git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/wazuh/wazuh-security-dashboards-plugin.git wzsp
           cd wzsp
           echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Get SHA of wazuh-dashboards-reporting
+        id: get-reporting-sha
+        run: |
+          git clone -b ${{ inputs.reference_report_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboards-reporting.git wzrp
+          cd wzrp
+          echo "WAZUH_REPORTING_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Setup variables
         id: setup-variables
@@ -157,6 +179,7 @@ jobs:
           COMMIT_SHA=$(git rev-parse --short HEAD)
           PLUGINS_SHA=${{steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA}}
           SECURITY_SHA=${{steps.get-security-sha.outputs.WAZUH_SECURITY_SHA}}
+          REPORTING_SHA=${{steps.get-reporting-sha.outputs.WAZUH_REPORTING_SHA}}
           if [ "${{ inputs.is_stage }}" = "true" ]; then
             PRODUCTION=--production
           else
@@ -164,6 +187,7 @@ jobs:
           fi
           WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
           WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+          WAZUH_REPORT_PLUGIN=reports-dashboards_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_report_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
@@ -192,10 +216,11 @@ jobs:
           echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
           echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
+          echo "REPORTING_SHA=$REPORTING_SHA" >> $GITHUB_OUTPUT
           echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
           echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
           echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
-          echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
+          echo "WAZUH_REPORT_PLUGIN=$WAZUH_REPORT_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_CORE=$WAZUH_PLUGINS_CORE" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_CHECK_UPDATES=$WAZUH_PLUGINS_CHECK_UPDATES" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
@@ -250,6 +275,15 @@ jobs:
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
+  build-report-plugin:
+    needs: [validate-job]
+    name: Build reporting plugin
+    permissions:
+      pull-requests: write
+    uses: wazuh/wazuh-dashboard-reporting/.github/workflows/5_builderpackage_reporting_plugin.yml@main
+    with:
+      reference: ${{ inputs.reference_report_plugins }}
+
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
@@ -291,12 +325,18 @@ jobs:
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+      - name: Download report plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_REPORT_PLUGIN }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
 
       - name: Zip plugins
         run: |
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
 
       - name: Build package
         run: |
@@ -306,7 +346,8 @@ jobs:
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
+            -rp file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/report-package.zip \
+            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}}-${{needs.setup-variables.outputs.REPORTING_SHA}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Upload artifact
