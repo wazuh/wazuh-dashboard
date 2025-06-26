@@ -37,7 +37,7 @@ on:
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
         default: 'main'
-      referenceQ_report_plugins:
+      reference_report_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-reporting repository to build the main plugins'
         required: true
