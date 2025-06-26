@@ -334,19 +334,9 @@ jobs:
 
       - name: Zip plugins
         run: |
-          echo "Zipping plugins"
-          echo "Current directory: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
-          echo "Wazuh dashboard slim: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}"
-          echo ls -la ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-          echo "Wazuh security plugin: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}"
-          echo ls -la ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
-          echo "Wazuh report plugin: ${{ needs.setup-variables.outputs.WAZUH_REPORT_PLUGIN }}"
-          echo ls -la ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
-          echo "Wazuh plugins wazuh: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}"
-          echo ls -la ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
 
       - name: Build package
