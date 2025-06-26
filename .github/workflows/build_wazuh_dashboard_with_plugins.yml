@@ -118,6 +118,7 @@ jobs:
       WAZUH_PLUGINS_WAZUH: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
       WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
       WAZUH_PLUGINS_CHECK_UPDATES: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+      WAZUH_REPORT_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_REPORT_PLUGIN }}
       PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
       ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
     steps:
