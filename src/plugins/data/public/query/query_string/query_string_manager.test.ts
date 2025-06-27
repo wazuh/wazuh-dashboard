@@ -62,6 +62,7 @@ describe('QueryStringManager', () => {
     jest.useFakeTimers();
     // Reset mocks between tests
     jest.clearAllMocks();
+
     storage = new DataStorage(window.localStorage, 'opensearchDashboards.');
     storage.clear();
     sessionStorage = new DataStorage(window.sessionStorage, 'opensearchDashboards.');
