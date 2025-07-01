@@ -6,7 +6,7 @@
 #         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=main \
-#         -t quay.io/wazuh/osd-dev:3.1.0-6.0.0 \
+#         -t quay.io/wazuh/osd-dev:3.1.0-5.0.0 \
 #         -f wzd.dockerfile .
 
 ARG NODE_VERSION=20.18.3
