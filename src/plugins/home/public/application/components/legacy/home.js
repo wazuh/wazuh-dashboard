@@ -80,7 +80,6 @@ export class Home extends Component {
     // this.fetchIsNewOpenSearchDashboardsInstance();
     // Wazuh dashboard changes
     this.skipWelcome();
-    this.dismissNewThemeModal();
 
     const homeTitle = i18n.translate('home.breadcrumbs.homeTitle', { defaultMessage: 'Home' });
     getServices().chrome.setBreadcrumbs([{ text: homeTitle }]);

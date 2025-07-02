@@ -132,10 +132,11 @@ jobs:
           - group: 12Explore
             config: explore
             test_location: source
+          # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
           # Explore tests - group 3
-          - group: 13Explore
-            config: explore
-            test_location: source
+          # - group: 13Explore
+          #   config: explore
+          #   test_location: source
           # Explore tests - group 4
           - group: 14Explore
             config: explore
