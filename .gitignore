@@ -1,6 +1,8 @@
 .aws-config.json
 .signing-config.json
 .ackrc
+/dev-tools/build-packages/output
+/dev-tools/build-packages/tmp
 /.opensearch
 /.chromium
 /package.json.bak
@@ -79,3 +81,8 @@ snapshots.js
 # Ignore the lighthousereport generatated
 .lighthouserc.js
 .lhci_output.json
+
+# Ignore the generated packages
+/dev-tools/build-packages/base-packages-to-base/packages
+
+*.zip

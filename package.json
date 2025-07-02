@@ -19,6 +19,10 @@
     "number": 8467,
     "sha": "6cb7fec4e154faa0a4a3fee4b33dfef91b9870d9"
   },
+  "wazuh": {
+    "version": "5.0.0",
+    "revision": "00"
+  },
   "homepage": "https://opensearch.org",
   "bugs": {
     "url": "http://github.com/opensearch-project/OpenSearch-Dashboards/issues"
@@ -106,7 +110,9 @@
     "osd:ciGroup15Explore": "echo \"cypress/integration/core_opensearch_dashboards/opensearch_dashboards/apps/explore/05/*.spec.js\"",
     "osd:ciGroupS3Explore": "echo \"cypress/integration/core_opensearch_dashboards/opensearch_dashboards/apps/explore/s3_tests/*.spec.js\"",
     "generate:opensearchsqlantlr": "./node_modules/antlr4ng-cli/index.js -Dlanguage=TypeScript -o ./src/plugins/data/public/antlr/opensearch_sql/.generated -visitor -no-listener -Xexact-output-dir ./src/plugins/data/public/antlr/opensearch_sql/grammar/OpenSearchSQLLexer.g4 ./src/plugins/data/public/antlr/opensearch_sql/grammar/OpenSearchSQLParser.g4",
-    "generate:opensearchpplantlr": "./node_modules/antlr4ng-cli/index.js -Dlanguage=TypeScript -o ./src/plugins/data/public/antlr/opensearch_ppl/.generated -visitor -no-listener -Xexact-output-dir ./src/plugins/data/public/antlr/opensearch_ppl/grammar/OpenSearchPPLLexer.g4 ./src/plugins/data/public/antlr/opensearch_ppl/grammar/OpenSearchPPLParser.g4"
+    "generate:opensearchpplantlr": "./node_modules/antlr4ng-cli/index.js -Dlanguage=TypeScript -o ./src/plugins/data/public/antlr/opensearch_ppl/.generated -visitor -no-listener -Xexact-output-dir ./src/plugins/data/public/antlr/opensearch_ppl/grammar/OpenSearchPPLLexer.g4 ./src/plugins/data/public/antlr/opensearch_ppl/grammar/OpenSearchPPLParser.g4",
+    "wzd-revision": "scripts/use_node -e \"console.log(require('./package.json').wazuh.revision)\"",
+    "wzd-version": "scripts/use_node -e \"console.log(require('./package.json').wazuh.version)\""
   },
   "repository": {
     "type": "git",
