@@ -174,7 +174,7 @@ export class EmbeddableExamplesPlugin
         overlays: (await core.getStartServices())[0].overlays,
       }))
     );
-
+    // @ts-expect-error Error TS2322
     const editBookAction = createEditBookAction(async () => ({
       getAttributeService: (await core.getStartServices())[1].dashboard.getAttributeService,
       openModal: (await core.getStartServices())[0].overlays.openModal,

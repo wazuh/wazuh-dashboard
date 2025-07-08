@@ -44,7 +44,6 @@ import {
   EuiFlexItem,
   EuiDescriptionList,
   EuiFlexGrid,
-  EuiCard,
   EuiLink,
   EuiText,
 } from '@elastic/eui';

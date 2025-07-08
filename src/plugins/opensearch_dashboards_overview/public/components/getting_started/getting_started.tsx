@@ -54,7 +54,7 @@ interface Props {
 
 export const GettingStarted: FC<Props> = ({ addBasePath, isDarkTheme, apps }) => {
   const {
-    services: { application },
+    services: {},
   } = useOpenSearchDashboards<CoreStart>();
   const gettingStartedGraphicURL = `/plugins/${PLUGIN_ID}/assets/opensearch_dashboards_montage_${
     isDarkTheme ? 'dark' : 'light'

@@ -32,6 +32,7 @@ describe.skip('<HomeApp />', () => {
   let currentService: ReturnType<typeof getMockedServices>;
   beforeEach(() => {
     currentService = getMockedServices();
+    // @ts-ignore Error TS2345
     setServices(currentService);
   });
 
@@ -51,6 +52,7 @@ describe.skip('<ImportSampleDataApp />', () => {
   let currentService: ReturnType<typeof getMockedServices>;
   beforeEach(() => {
     currentService = getMockedServices();
+    // @ts-ignore Error TS2345
     setServices(currentService);
   });
 
