@@ -131,6 +131,7 @@ export interface HeaderProps {
   useUpdatedHeader?: boolean;
   globalSearchCommands?: GlobalSearchCommand[];
   injectedMetadata?: InjectedMetadataStart;
+  darkmode: boolean;
 }
 
 const hasValue = (value: any) => {
@@ -508,6 +509,7 @@ export function Header({
         opensearchDashboardsDocLink={opensearchDashboardsDocLink}
         opensearchDashboardsVersion={opensearchDashboardsVersion}
         surveyLink={survey}
+        darkmode={observables.darkmode}
       />
     </EuiHeaderSectionItem>
   );

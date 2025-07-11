@@ -315,6 +315,7 @@ export class ChromeService {
                 opensearchDashboardsVersion={injectedMetadata.getOpenSearchDashboardsVersion()}
                 surveyLink={injectedMetadata.getSurvey()}
                 useUpdatedAppearance
+                darkmode={uiSettings.get('theme:darkMode')}
               />
             </I18nProvider>,
             element
@@ -389,14 +390,14 @@ export class ChromeService {
           breadcrumbs$={breadcrumbs$.pipe(takeUntil(this.stop$))}
           breadcrumbsEnricher$={breadcrumbsEnricher$.pipe(takeUntil(this.stop$))}
           customNavLink$={customNavLink$.pipe(takeUntil(this.stop$))}
-          opensearchDashboardsDocLink={docLinks.links.opensearchDashboards.introduction}
+          opensearchDashboardsDocLink={docLinks.links.wazuh.index}
           forceAppSwitcherNavigation$={navLinks.getForceAppSwitcherNavigation$()}
           helpExtension$={helpExtension$.pipe(takeUntil(this.stop$))}
           helpSupportUrl$={helpSupportUrl$.pipe(takeUntil(this.stop$))}
-          homeHref={application.getUrlForApp('home')}
+          homeHref={application.getUrlForApp('wz-home')}
           isVisible$={this.isVisible$}
           headerVariant$={this.headerVariant$}
-          opensearchDashboardsVersion={injectedMetadata.getOpenSearchDashboardsVersion()}
+          opensearchDashboardsVersion={injectedMetadata.getWazuhVersion()}
           navLinks$={navLinks.getNavLinks$()}
           recentlyAccessed$={recentlyAccessed.get$()}
           navControlsLeft$={navControls.getLeft$()}
@@ -422,6 +423,7 @@ export class ChromeService {
           useUpdatedHeader={this.useUpdatedHeader}
           globalSearchCommands={globalSearch.getAllSearchCommands()}
           injectedMetadata={injectedMetadata}
+          darkmode={uiSettings.get('theme:darkMode')}
         />
       ),
 
