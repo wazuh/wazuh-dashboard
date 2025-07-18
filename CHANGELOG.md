@@ -22,7 +22,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Reduced default session and cookie expiration to 15 minutes for the Wazuh security plugin [#749](https://github.com/wazuh/wazuh-dashboard/issues/749)[#321](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/321)
 
-## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 03
+## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 04
 
 ### Added
 
