@@ -31,12 +31,12 @@ on:
         type: string
         description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
         required: true
-        default: 'main'
+        default: 'master'
       reference_wazuh_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
-        default: 'main'
+        default: 'master'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -69,11 +69,11 @@ on:
       reference_security_plugins:
         type: string
         required: true
-        default: 'main'
+        default: 'master'
       reference_wazuh_plugins:
         type: string
         required: true
-        default: 'main'
+        default: 'master'
       is_stage:
         type: boolean
         required: true
@@ -206,7 +206,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@v4.12.0
+    uses: ivmerk/wazuh-dashboard/.github/workflows/build_base.yml@master
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
@@ -214,14 +214,14 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@v4.12.0
+    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@v4.12.0
+    uses: ivmerk/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
