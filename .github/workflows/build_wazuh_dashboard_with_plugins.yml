@@ -221,7 +221,7 @@ jobs:
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@v4.12.0-rc1
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@v4.12.0
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
