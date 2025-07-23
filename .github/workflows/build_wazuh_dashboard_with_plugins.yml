@@ -214,7 +214,7 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@v4.12.0-rc1
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@v4.12.0
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
