@@ -18,9 +18,6 @@ on:
         required: true
         options:
           - amd64
-          - x86_64
-          - aarch64
-          - arm64
         default: amd64
       revision:
         type: string
