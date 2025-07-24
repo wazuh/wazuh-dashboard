@@ -68,12 +68,21 @@ jobs:
       - name: Get plugin SHAs
         id: shas
         run: |
+          # Удаляем, если остались с предыдущих шагов
+          rm -rf plugins security
+
+          # Клонируем wazuh-dashboard-plugins
           git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/ivmerk/wazuh-dashboard-plugins.git plugins
-          echo "PLUGINS_SHA=$(cd plugins && git rev-parse --short HEAD)" >> $GITHUB_ENV
+          PLUGINS_SHA=$(cd plugins && git rev-parse --short HEAD)
+          echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_ENV
+          echo "PLUGINS_SHA=$PLUGINS_SHA"
 
+          # Клонируем wazuh-security-dashboards-plugin
           git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/ivmerk/wazuh-security-dashboards-plugin.git security
-          echo "SECURITY_SHA=$(cd security && git rev-parse --short HEAD)" >> $GITHUB_ENV
-
+          SECURITY_SHA=$(cd security && git rev-parse --short HEAD)
+          echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_ENV
+          echo "SECURITY_SHA=$SECURITY_SHA"
+      
       - name: Set build variables
         id: vars
         run: |
