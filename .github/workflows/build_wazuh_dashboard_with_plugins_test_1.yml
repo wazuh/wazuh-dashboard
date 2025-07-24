@@ -105,8 +105,6 @@ jobs:
       PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
       ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
