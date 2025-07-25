@@ -43,7 +43,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          repository: wazuh/wazuh-dashboard
+          repository: ivmerk/wazuh-dashboard
           path: ./artifacts
           ref: ${{ inputs.CHECKOUT_TO }}
 
