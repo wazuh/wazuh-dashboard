@@ -51,7 +51,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.13.1",
+  "wazuhVersion": "4.14.0",
 }
 `;
 
@@ -106,7 +106,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.13.1",
+  "wazuhVersion": "4.14.0",
 }
 `;
 
@@ -161,7 +161,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.13.1",
+  "wazuhVersion": "4.14.0",
 }
 `;
 
@@ -220,7 +220,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.13.1",
+  "wazuhVersion": "4.14.0",
 }
 `;
 
@@ -275,7 +275,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.13.1",
+  "wazuhVersion": "4.14.0",
 }
 `;
 
@@ -326,7 +326,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.13.1",
+  "wazuhVersion": "4.14.0",
 }
 `;
 
@@ -381,6 +381,6 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "4.13.1",
+  "wazuhVersion": "4.14.0",
 }
 `;
