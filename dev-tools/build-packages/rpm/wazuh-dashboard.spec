@@ -62,7 +62,7 @@ sed -i 's/OSD_USE_NODE_JS_FILE_PATH/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_U
 
 mkdir -p %{buildroot}%{CONFIG_DIR}
 mkdir -p %{buildroot}%{INSTALL_DIR}
-mkdir -p %{buildroot}/etc/systemd/system
+mkdir -p %{buildroot}/usr/lib/systemd/system
 mkdir -p %{buildroot}%{_initrddir}
 mkdir -p %{buildroot}/etc/default
 
@@ -76,10 +76,10 @@ mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
 
 mkdir -p %{buildroot}%{INSTALL_DIR}/config
 
-cp %{buildroot}%{INSTALL_DIR}/etc/services/wazuh-dashboard.service %{buildroot}/etc/systemd/system/wazuh-dashboard.service
+cp %{buildroot}%{INSTALL_DIR}/etc/services/wazuh-dashboard.service %{buildroot}/usr/lib/systemd/system/wazuh-dashboard.service
 cp %{buildroot}%{INSTALL_DIR}/etc/services/default %{buildroot}/etc/default/wazuh-dashboard
 
-chmod 644 %{buildroot}/etc/systemd/system/wazuh-dashboard.service
+chmod 644 %{buildroot}/usr/lib/systemd/system/wazuh-dashboard.service
 chmod 640 %{buildroot}/etc/default/wazuh-dashboard
 
 rm -rf %{buildroot}%{INSTALL_DIR}/etc/
@@ -87,7 +87,7 @@ rm -rf %{buildroot}%{INSTALL_DIR}/etc/
 find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
 find %{buildroot}%{CONFIG_DIR} -exec chown %{USER}:%{GROUP} {} \;
 
-chown root:root %{buildroot}/etc/systemd/system/wazuh-dashboard.service
+chown root:root %{buildroot}/usr/lib/systemd/system/wazuh-dashboard.service
 
 find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -exec chown %{USER}:%{GROUP} {} \;
 find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 644 -exec chmod 640 {} \;
@@ -205,6 +205,8 @@ rm -fr %{buildroot}
 
 %config(noreplace) %attr(0750, %{USER}, %{GROUP}) "/etc/default/wazuh-dashboard"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
+
+%attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
 
 %attr(440, %{USER}, %{GROUP}) %{INSTALL_DIR}/VERSION.json
 %dir %attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}
