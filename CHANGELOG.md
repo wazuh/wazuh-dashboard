@@ -8,6 +8,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 5.0.0
 
+### Removed
+
+- Removed creation of /usr/lib/.build-id/* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
+
 ## Wazuh dashboard v4.14.0 - OpenSearch Dashboards 2.19.2 - Revision 00
 
 ### Added
