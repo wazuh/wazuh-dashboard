@@ -74,7 +74,7 @@ override_dh_install:
 	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/config
 
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard.service $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
-	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard $(TARGET_DIR)/etc/systemd/system/$(NAME)
+	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard $(TARGET_DIR)/usr/lib/systemd/system/$(NAME)
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/default $(TARGET_DIR)/etc/default/$(NAME)
 
 	rm -rf $(TARGET_DIR)$(INSTALLATION_DIR)/etc
@@ -92,11 +92,11 @@ override_dh_fixperms:
 	chmod 750 $(TARGET_DIR)$(INSTALLATION_DIR)
 	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)
 	chown root:root $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
-	chown root:root $(TARGET_DIR)/etc/systemd/system/"$(NAME)"
+	chown root:root $(TARGET_DIR)/usr/lib/systemd/system/"$(NAME)"
 	chown $(USER):$(GROUP) $(TARGET_DIR)/etc/default/"$(NAME)"
 	chown $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION.json
 	chmod 440 $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION.json
-	chmod 750 $(TARGET_DIR)/etc/systemd/system/wazuh-dashboard
+	chmod 750 $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard
 	chmod 750 $(TARGET_DIR)/etc/default/wazuh-dashboard
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/opensearch_dashboards.yml
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/node.options
