@@ -29,9 +29,14 @@ on:
         type: string
 
 jobs:
+  setup-variables:
+    runs-on: ${{ inputs.ARCHITECTURE == 'amd64' && 'ubuntu-latest' }}
+    name: Setup variables
+    
   build:
-    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'ubuntu-latest' || 'wz-linux-arm64' }}
+    runs-on: ${{ inputs.ARCHITECTURE == 'amd64' && 'ubuntu-latest' }}
     name: Build
+    needs: setup-variables
     defaults:
       run:
         working-directory: ./artifacts
