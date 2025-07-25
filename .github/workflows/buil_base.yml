@@ -5,10 +5,14 @@ name: Build base
 on:
   workflow_call:
     inputs:
-      CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'main'
+      SYSTEM:
+        type: string
+        required: true
+        default: 'deb'
+      CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'marter'
         description: 'The branch/tag/commit to checkout to'
         required: true
-        default: 'main'
+        default: 'master'
         type: string
       ARCHITECTURE:
         description: 'The architecture to build the package for'
@@ -18,10 +22,18 @@ on:
 
   workflow_dispatch:
     inputs:
-      CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'main'
+      SYSTEM:
+        type: choice
+        description: 'Package OS'
+        required: true
+        options:
+          - deb
+          - rpm
+        default: 'deb'
+      CHECKOUT_TO: # This is the branch to checkout to. Defaults to 'master'
         description: 'The branch/tag/commit to checkout to'
         required: true
-        default: 'main'
+        default: 'master'
       ARCHITECTURE:
         description: 'The architecture to build the package for'
         required: true
@@ -32,6 +44,18 @@ jobs:
   setup-variables:
     runs-on: ${{ inputs.ARCHITECTURE == 'amd64' && 'ubuntu-latest' }}
     name: Setup variables
+    steps:
+      - name: Validate inputs
+        run: |
+          if [[ "${{ inputs.architecture }}" == "amd64" || "${{ inputs.architecture }}" == "arm64" ]] && [[ "${{ inputs.system }}" == "rpm" ]]; then
+            echo "Invalid combination of architecture and system"
+            exit 1
+          fi
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "aarch64" ]] && [[ "${{ inputs.system }}" == "deb" ]]; then
+            echo "Invalid combination of architecture and system"
+            exit 1
+          fi
+      
     
   build:
     runs-on: ${{ inputs.ARCHITECTURE == 'amd64' && 'ubuntu-latest' }}
