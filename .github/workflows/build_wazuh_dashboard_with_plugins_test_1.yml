@@ -177,7 +177,6 @@ jobs:
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
-      SYSTEM: ${{ inputs.system }}
 
   build-main-plugins:
     needs: [validate-job]
