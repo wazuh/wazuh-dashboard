@@ -12,20 +12,14 @@ on:
           - rpm
         default: 'deb'
       architecture:
-        type: choice
-        description: 'Package architecture'
+        description: 'Architecture (amd64 or arm64)'
         required: true
-        options:
-          - amd64
-          - x86_64
-          - aarch64
-          - arm64
-        default: amd64
+        default: 'amd64'
       revision:
         type: string
         description: 'Package revision'
         required: true
-        default: '0'
+        default: '1'
       reference_security_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
@@ -161,7 +155,7 @@ jobs:
           echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
     
   validate-job:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     needs: setup-variables
     name: Validate inputs
     steps:
@@ -183,6 +177,7 @@ jobs:
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
+      SYSTEM: ${{ inputs.system }}
 
   build-main-plugins:
     needs: [validate-job]
