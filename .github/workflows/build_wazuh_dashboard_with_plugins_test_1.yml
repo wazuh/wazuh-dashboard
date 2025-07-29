@@ -73,12 +73,12 @@ jobs:
       ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
 
     steps:
-      - name: Checkout dashboard sources
+      - name: Checkout dashboard repo
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard
-          path: dashboard
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ inputs.reference_wazuh_plugins }}
+
 
       - name: Setup Node
         uses: actions/setup-node@v4
