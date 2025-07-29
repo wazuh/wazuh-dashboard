@@ -76,7 +76,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version-file: '18.19.0'
+          node-version: '18.19.0'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Get SHA of wazuh-dashboard-plugins
