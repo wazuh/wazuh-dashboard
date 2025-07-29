@@ -100,66 +100,66 @@ jobs:
           cd wzsp
           echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-- name: Setup variables
-  id: setup-variables
-  run: |
-    CURRENT_DIR=$(pwd -P)
+      - name: Setup variables
+        id: setup-variables
+        run: |
+          CURRENT_DIR=$(pwd -P)
 
-    VERSION=$(jq -r '.version' dashboard/VERSION.json)
-    REVISION=$(jq -r '.stage' dashboard/VERSION.json)
+          VERSION=$(jq -r '.version' dashboard/VERSION.json)
+          REVISION=$(jq -r '.stage' dashboard/VERSION.json)
 
-    COMMIT_SHA=$(git rev-parse --short HEAD)
-    PLUGINS_SHA=${{ steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA }}
-    SECURITY_SHA=${{ steps.get-security-sha.outputs.WAZUH_SECURITY_SHA }}
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          PLUGINS_SHA=${{ steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA }}
+          SECURITY_SHA=${{ steps.get-security-sha.outputs.WAZUH_SECURITY_SHA }}
 
-    if [ "${{ inputs.is_stage }}" = "true" ]; then
-      PRODUCTION=--production
-    else
-      PRODUCTION=""
-    fi
+          if [ "${{ inputs.is_stage }}" = "true" ]; then
+            PRODUCTION=--production
+          else
+            PRODUCTION=""
+          fi
 
-    ARCH_SHORT=$([[ "${{ inputs.ARCHITECTURE }}" == "x86_64" || "${{ inputs.ARCHITECTURE }}" == "amd64" ]] && echo "x64" || echo "arm64")
+          ARCH_SHORT=$([[ "${{ inputs.ARCHITECTURE }}" == "x86_64" || "${{ inputs.ARCHITECTURE }}" == "amd64" ]] && echo "x64" || echo "arm64")
 
-    WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${ARCH_SHORT}.tar.gz
-    WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
-    WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
-    WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
-    WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${ARCH_SHORT}.tar.gz
+          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
 
-    if [ "${{ inputs.system }}" = "deb" ]; then
-      if [ "${{ inputs.is_stage }}" = "true" ]; then
-        PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
-      else
-        PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.deb
-      fi
-    else
-      if [ "${{ inputs.is_stage }}" = "true" ]; then
-        PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
-      else
-        PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.rpm
-      fi
-    fi
+          if [ "${{ inputs.system }}" = "deb" ]; then
+            if [ "${{ inputs.is_stage }}" = "true" ]; then
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
+            else
+          PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.deb
+          fi
+          else
+          if [ "${{ inputs.is_stage }}" = "true" ]; then
+            PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
+          else
+            PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.rpm
+          fi
+          fi
 
-    if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
-      ARCHITECTURE_FLAG=""
-    else
-      ARCHITECTURE_FLAG=--arm
-    fi
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            ARCHITECTURE_FLAG=""
+          else
+            ARCHITECTURE_FLAG=--arm
+          fi
 
-    echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
-    echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-    echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
-    echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
-    echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
-    echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
-    echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
-    echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
-    echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
-    echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
-    echo "WAZUH_PLUGINS_CORE=$WAZUH_PLUGINS_CORE" >> $GITHUB_OUTPUT
-    echo "WAZUH_PLUGINS_CHECK_UPDATES=$WAZUH_PLUGINS_CHECK_UPDATES" >> $GITHUB_OUTPUT
-    echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-    echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
+          echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
+          echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
+          echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
+          echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
+          echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CORE=$WAZUH_PLUGINS_CORE" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CHECK_UPDATES=$WAZUH_PLUGINS_CHECK_UPDATES" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
     
   validate-job:
     runs-on: ubuntu-24.04
