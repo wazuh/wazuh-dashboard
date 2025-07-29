@@ -104,9 +104,8 @@ jobs:
         id: setup-variables
         run: |
           CURRENT_DIR=$(pwd -P)
-
-          VERSION=$(jq -r '.version' dashboard/VERSION.json)
-          REVISION=$(jq -r '.stage' dashboard/VERSION.json)
+          VERSION=$(jq -r '.version' VERSION.json)
+          REVISION=$(jq -r '.stage' VERSION.json)
 
           COMMIT_SHA=$(git rev-parse --short HEAD)
           PLUGINS_SHA=${{ steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA }}
