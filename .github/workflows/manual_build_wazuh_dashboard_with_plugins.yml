@@ -17,6 +17,9 @@ on:
         default: 'amd64'
 
 jobs:
+  setup-variables:
+    runs-on: ubuntu-24.04
+    name: Setup variables
   check-condition:
     runs-on: ubuntu-latest
     name: Run echo
@@ -35,6 +38,10 @@ jobs:
             echo "Directory 'artifacts' does not exist."
           fi
           pwd
+          ls -al
+          cd ..
+          ls -al
+          cd ..
           ls -al
           cd ..
           ls -al
