@@ -214,7 +214,7 @@ jobs:
       - name: Download security plugin artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+          name: wazuh-security-dashboards-plugin_4.12.0-03_master.zip
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
 
       - name: Download main plugin's artifact
