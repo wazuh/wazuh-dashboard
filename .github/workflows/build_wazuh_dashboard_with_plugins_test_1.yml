@@ -173,7 +173,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: ivmerk/wazuh-dashboard/.github/workflows/build_base.yml@master
+    uses: ivmerk/wazuh-dashboard/.github/workflows/manual_build_base.yml@master
     with:
       CHECKOUT_TO: master
       ARCHITECTURE: ${{ inputs.architecture }}
