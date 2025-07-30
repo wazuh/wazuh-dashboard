@@ -26,5 +26,5 @@ jobs:
           echo "::group::Contents of artifacts/"
           ls -al
           pwd
-          echo "input ${{input.system}}"
+          echo "${{input.system}}"
           echo "::endgroup::"
