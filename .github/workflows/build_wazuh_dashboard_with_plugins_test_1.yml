@@ -220,17 +220,17 @@ jobs:
       - name: Download main plugin's artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          name: wazuh-dashboard-plugins_wazuh_4.12.0-03_master.zip
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
       - name: Download core plugin's artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          name: wazuh-dashboard-plugins_wazuh-core_4.12.0-03_master.zip
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
       - name: Download check update plugin's artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          name: wazuh-dashboard-plugins_wazuh-check-updates_4.12.0-03_master.zip
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
      
       - name: Debug artifacts
