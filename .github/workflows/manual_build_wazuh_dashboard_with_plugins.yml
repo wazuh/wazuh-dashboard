@@ -35,4 +35,7 @@ jobs:
             echo "Directory 'artifacts' does not exist."
           fi
           pwd
+          ls -al
+          cd ..
+          ls -al
           echo "::endgroup::"
