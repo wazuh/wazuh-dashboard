@@ -14,6 +14,7 @@ export type HealthCheckConfigType = TypeOf<typeof configSchema>;
  * @public
  */
 export const configSchema = schema.object({
+  enabled: schema.boolean({ defaultValue: true }),
   schedule_interval: schema.duration({
     defaultValue: 15 * 60 * 1000,
     validate: (value) => {

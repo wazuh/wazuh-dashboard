@@ -123,6 +123,8 @@ export function createPluginSetupContext<
     },
     getStartServices: () => plugin.startDependencies,
     workspaces: deps.workspaces,
+    // Wazuh
+    healthCheck: deps.healthCheck,
   };
 }
 
@@ -177,5 +179,7 @@ export function createPluginStartContext<
     },
     fatalErrors: deps.fatalErrors,
     workspaces: deps.workspaces,
+    // Wazuh
+    healthCheck: deps.healthCheck,
   };
 }

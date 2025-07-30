@@ -16,6 +16,25 @@ export interface HealthCheckStatus {
   error?: string | null;
 }
 
+/**
+ * Wraps `fn` so only one call runs at a time.
+ * Subsequent calls return the same Promise until the first completes.
+ */
+function singleInstance(fn) {
+  let activePromise = null;
+
+  return function (...args) {
+    // If no active run, invoke and store its promise
+    if (!activePromise) {
+      activePromise = Promise.resolve(fn.apply(this, args)).finally(() => {
+        activePromise = null;
+      });
+    }
+    // Return the in-flight or just-finished promise
+    return activePromise;
+  };
+}
+
 export class HealthCheck extends TaskManager implements TaskManager {
   private items = new Map();
   status$: BehaviorSubject<HealthCheckStatus> = new BehaviorSubject({
@@ -24,6 +43,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
     error: null,
   });
   private statusSubscriptions: Subscription = new Subscription();
+  private _enabled: boolean = false;
   private _retryDelay: number = 0;
   private _maxRetryAttempts: number = 0;
   private _internalScheduledCheckTime: number = 0;
@@ -31,6 +51,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
   private _coreStartServices: any;
   constructor(private readonly logger: Logger, services: any) {
     super(logger, services);
+    this.runInternal = singleInstance(this._runInternal).bind(this);
   }
 
   getCheckInfo(taskName: string) {
@@ -54,17 +75,28 @@ export class HealthCheck extends TaskManager implements TaskManager {
 
   async setup(
     core: any,
-    config: { retries_delay: number; max_retries: number; schedule_interval: number }
+    config: {
+      enabled: boolean;
+      retries_delay: number;
+      max_retries: number;
+      schedule_interval: number;
+    }
   ) {
+    this._enabled = config.enabled;
     this._retryDelay = config.retries_delay.asMilliseconds();
     this._maxRetryAttempts = config.max_retries;
     this._internalScheduledCheckTime = config.schedule_interval.asMilliseconds();
+
+    if (!this._enabled) {
+      this.logger.debug('Disabled. Skip setup');
+      return;
+    }
 
     const router = core.http.createRouter('/api/healthcheck');
     addRoutes(router, { healthcheck: this, logger: this.logger });
   }
 
-  async runInternal() {
+  private async _runInternal() {
     return this.run({ services: { core: this._coreStartServices }, scope: 'internal' });
   }
 
@@ -81,16 +113,20 @@ export class HealthCheck extends TaskManager implements TaskManager {
   }
 
   async start(core: any) {
+    if (!this._enabled) {
+      this.logger.debug('Disabled. Skip start');
+      return;
+    }
     this._coreStartServices = core;
-    this.logger.debug(`Waiting until all checks are ok...`);
+    this.logger.debug('Waiting until all checks are ok...');
 
     await this.runInitialCheck();
-    this.logger.info(`Checks are ok`);
+    this.logger.info('Checks are ok');
 
-    this.logger.debug(`Setting scheduled checks`);
+    this.logger.debug('Setting scheduled checks');
     this.scheduled = new ScheduledIntervalTask(async () => {
       try {
-        this.logger.debug(`Running scheduled check`);
+        this.logger.debug('Running scheduled check');
         await this.runInternal();
       } catch (error) {
         this.logger.error(`Error in scheduled check: ${error.message}`);
@@ -171,6 +207,8 @@ export class HealthCheck extends TaskManager implements TaskManager {
         }
         // Emit message through observer
         this.status$.next(data);
+
+        return data;
       },
       {
         maxAttempts: this._maxRetryAttempts,

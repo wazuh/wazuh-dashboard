@@ -1,0 +1,23 @@
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { HealthCheckNavButton } from './component';
+
+export const mount = ({ coreStart, status$, fetch, run }) => {
+  const isPlacedInLeftNav = coreStart.uiSettings.get('home:useNewHomePage');
+
+  coreStart.chrome.navControls[isPlacedInLeftNav ? 'registerLeftBottom' : 'registerRight']({
+    order: isPlacedInLeftNav ? 8999 : 1999,
+    mount: (element: HTMLElement) => {
+      ReactDOM.render(
+        <HealthCheckNavButton coreStart={coreStart} status$={status$} fetch={fetch} run={run} />,
+        element
+      );
+      return () => ReactDOM.unmountComponentAtNode(element);
+    },
+  });
+};

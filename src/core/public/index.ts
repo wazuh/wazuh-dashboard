@@ -102,6 +102,7 @@ import {
 } from './context';
 import { Branding } from '../types';
 import { WorkspacesStart, WorkspacesSetup } from './workspace';
+import { HealthCheckServiceSetup, HealthCheckServiceStart } from './healthcheck';
 
 export type { Logos } from '../common';
 export { PackageInfo, EnvironmentMode } from '../server/types';
@@ -288,6 +289,9 @@ export interface CoreSetup<TPluginsStart extends object = object, TStart = unkno
   getStartServices: StartServicesAccessor<TPluginsStart, TStart>;
   /** {@link WorkspacesSetup} */
   workspaces: WorkspacesSetup;
+  // Wazuh
+  /** {@link HealthCheckServiceSetup} */
+  healthCheck: HealthCheckServiceSetup;
 }
 
 /**
@@ -344,6 +348,9 @@ export interface CoreStart {
   };
   /** {@link WorkspacesStart} */
   workspaces: WorkspacesStart;
+  // Wazuh
+  /** {@link HealthCheckServiceStart} */
+  healthCheck: HealthCheckServiceStart;
 }
 
 export {

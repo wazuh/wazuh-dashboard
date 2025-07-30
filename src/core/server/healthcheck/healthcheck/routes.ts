@@ -96,9 +96,11 @@ export function addRoutes(router, { healthcheck, logger }) {
     {
       path: '/internal',
       validate: {
-        query: schema.object({
-          tasks: validateTaskList,
-        }),
+        query: schema.maybe(
+          schema.object({
+            tasks: validateTaskList,
+          })
+        ),
       },
     },
     async (context, request, response) => {
@@ -106,14 +108,14 @@ export function addRoutes(router, { healthcheck, logger }) {
         logger.debug(`Running healthcheck tasks related to internal scope`);
         const tasksNames = request.query.tasks ? getTaskList(request.query.tasks) : undefined;
 
-        const results = await initialization.runAsInternal(tasksNames);
+        const results = await healthcheck.runInternal(tasksNames);
 
         logger.info('Healthcheck tasks related to internal scope were executed');
 
         return response.ok({
           body: {
             message: 'All healthcheck tasks are returned.',
-            tasks: results,
+            tasks: results?.checks,
           },
         });
       } catch (error) {
