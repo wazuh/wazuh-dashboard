@@ -177,6 +177,7 @@ jobs:
     with:
       CHECKOUT_TO: master
       ARCHITECTURE: ${{ inputs.architecture }}
+      SYSTEM: deb
 
   build-main-plugins:
     needs: [validate-job]
