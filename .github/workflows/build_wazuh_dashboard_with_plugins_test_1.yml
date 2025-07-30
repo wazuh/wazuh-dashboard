@@ -204,7 +204,35 @@ jobs:
         with:
           node-version: '18.19.0'
           registry-url: 'https://registry.npmjs.org'
-          
+      
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
+
+      - name: Download security plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+
+      - name: Download main plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+      - name: Download core plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+      - name: Download check update plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+     
       - name: Debug artifacts
         run: |
           echo "::group::Contents of artifacts/"
