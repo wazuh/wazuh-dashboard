@@ -21,10 +21,18 @@ jobs:
     runs-on: ubuntu-latest
     name: Run echo
     steps:
-      - name: Debug artifacts
+      - name: Print context info
+        run: |
+          echo "Architecture: ${{ inputs.architecture }}"
+          echo "System: ${{ inputs.system }}"
+
+      - name: List artifacts directory
         run: |
           echo "::group::Contents of artifacts/"
-          ls -al
+          if [ -d "artifacts" ]; then
+            ls -al artifacts
+          else
+            echo "Directory 'artifacts' does not exist."
+          fi
           pwd
-          echo "${{input.system}}"
           echo "::endgroup::"
