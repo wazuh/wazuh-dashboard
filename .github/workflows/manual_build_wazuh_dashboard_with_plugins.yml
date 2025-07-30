@@ -1,0 +1,30 @@
+name: Manual build Wazuh dashboard with plugins
+
+on:
+  workflow_dispatch:
+    inputs:
+      system:
+        type: choice
+        description: 'Package OS'
+        required: true
+        options:
+          - deb
+          - rpm
+        default: 'deb'
+      architecture:
+        description: 'Architecture (amd64 or arm64)'
+        required: true
+        default: 'amd64'
+
+jobs:
+  check-condition:
+    runs-on: ubuntu-latest
+    name: Run echo
+    steps:
+      - name: Debug artifacts
+        run: |
+          echo "::group::Contents of artifacts/"
+          ls -al
+          pwd
+          echo "input ${{input.system}}"
+          echo "::endgroup::"
