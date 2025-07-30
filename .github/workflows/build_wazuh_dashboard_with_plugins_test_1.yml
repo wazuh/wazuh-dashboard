@@ -208,7 +208,7 @@ jobs:
       - name: Download dashboard artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          name: wazuh-dashboard_4.12.0-03_x64.tar.gz
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
 
       - name: Download security plugin artifact
