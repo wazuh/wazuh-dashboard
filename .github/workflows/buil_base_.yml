@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Build base
+name: Build base_
 
 on:
   workflow_call:
