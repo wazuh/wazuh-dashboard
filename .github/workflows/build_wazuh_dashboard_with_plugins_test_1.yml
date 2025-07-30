@@ -175,7 +175,7 @@ jobs:
     name: Build dashboard
     uses: ivmerk/wazuh-dashboard/.github/workflows/build_base.yml@master
     with:
-      CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
+      CHECKOUT_TO: master
       ARCHITECTURE: ${{ inputs.architecture }}
 
   build-main-plugins:
