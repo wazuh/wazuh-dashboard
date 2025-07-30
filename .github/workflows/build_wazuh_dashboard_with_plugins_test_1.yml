@@ -204,6 +204,12 @@ jobs:
         with:
           node-version: '18.19.0'
           registry-url: 'https://registry.npmjs.org'
+          
+      - name: Debug artifacts
+        run: |
+          echo "::group::Contents of artifacts/"
+          ls -R ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts
+          echo "::endgroup::"
 
       - name: Zip plugins
         run: |
