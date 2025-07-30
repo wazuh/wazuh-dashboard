@@ -15,11 +15,56 @@ on:
         description: 'Architecture (amd64 or arm64)'
         required: true
         default: 'amd64'
+      revision:
+        type: string
+        description: 'Package revision'
+        required: true
+        default: '1'
+      reference_security_plugins:
+        type: string
+        description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
+        required: true
+        default: 'master'
+      reference_wazuh_plugins:
+        type: string
+        description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
+        required: true
+        default: 'master'
 
 jobs:
   setup-variables:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     name: Setup variables
+    outputs:
+      CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Get SHA of wazuh-dashboard-plugins
+        id: get-plugins-sha
+        run: |
+          git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/ivmerk/wazuh-dashboard-plugins.git wzdp
+          cd wzdp
+          echo "WAZUH_PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Get SHA of wazuh-security-dashboards-plugin
+        id: get-security-sha
+        run: |
+          git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/ivmerk/wazuh-security-dashboards-plugin.git wzsp
+          cd wzsp
+          echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Setup variables
+        id: setup-variables
+        run: |
+          CURRENT_DIR=$(pwd -P)
+          VERSION=$(jq -r '.version' VERSION.json)
   check-condition:
     runs-on: ubuntu-latest
     name: Run echo
