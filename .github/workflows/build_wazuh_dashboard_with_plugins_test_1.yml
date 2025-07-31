@@ -277,8 +277,8 @@ jobs:
 
       - name: Move generated .deb to artifacts folder
         run: |
-          mkdir -p ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/target
-          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/*.deb ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/target/
+          mkdir -p ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output
+          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/*.deb ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/
       - name: List target artifacts
         run: |
             ls -lh ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/
