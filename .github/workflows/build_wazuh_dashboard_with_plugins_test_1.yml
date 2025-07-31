@@ -274,7 +274,10 @@ jobs:
         run: |
           echo "VERSION=${{ needs.setup-variables.outputs.VERSION }}" >> $GITHUB_ENV
           echo "ARTIFACT_BUILD_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}" >> $GITHUB_ENV
-          
+
+      - name: List target artifacts
+        run: ls -lh /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/
+      
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
