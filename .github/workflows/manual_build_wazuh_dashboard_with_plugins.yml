@@ -65,9 +65,11 @@ jobs:
         run: |
           CURRENT_DIR=$(pwd -P)
           VERSION=$(jq -r '.version' VERSION.json)
-
+          
+          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
           WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
 
+          echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
           echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
       
       - name: Checking home folder
@@ -79,7 +81,8 @@ jobs:
       - name: Show variable
         id: show-variable
         run: |
-          echo "WAZUH_SECURITY_PLUGIN ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          echo "WAZUH_DASHBOARD_SLIM ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          echo "WAZUH_SECURITY_PLUGIN ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
 
 
           
