@@ -66,6 +66,7 @@ jobs:
           CURRENT_DIR=$(pwd -P)
           VERSION=$(jq -r '.version' VERSION.json)
   check-condition:
+    needs: setup-variables
     runs-on: ubuntu-latest
     name: Run echo
     steps:
