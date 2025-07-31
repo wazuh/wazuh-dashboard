@@ -65,11 +65,23 @@ jobs:
         run: |
           CURRENT_DIR=$(pwd -P)
           VERSION=$(jq -r '.version' VERSION.json)
+
+          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+
+          echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
+      
       - name: Checking home folder
         id: home-folger
         run: |
           pwd
           ls -al
+
+      - name: Show variable
+        id: show-variable
+        run: |
+          echo "WAZUH_SECURITY_PLUGIN ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+
+
           
   check-condition:
     needs: setup-variables
