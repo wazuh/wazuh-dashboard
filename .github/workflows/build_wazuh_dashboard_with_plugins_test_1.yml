@@ -275,14 +275,10 @@ jobs:
           echo "VERSION=${{ needs.setup-variables.outputs.VERSION }}" >> $GITHUB_ENV
           echo "ARTIFACT_BUILD_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}" >> $GITHUB_ENV
           
-      - name: Rename artifact
-        run: |
-          mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ (inputs.architecture == 'x86_64' || inputs.architecture == 'amd64') && 'x64' || 'arm64' }}.${{ inputs.system }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
-      
-      - uses: actions/upload-artifact@v4
-        if: success()
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_BUILD_NAME }}
-          path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
+          name: ${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/target/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
           retention-days: 30
           overwrite: true
