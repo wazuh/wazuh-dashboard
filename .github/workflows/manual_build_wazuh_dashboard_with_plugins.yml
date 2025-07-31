@@ -64,8 +64,13 @@ jobs:
         id: setup-variables
         run: |
           CURRENT_DIR=$(pwd -P)
-          pwd
           VERSION=$(jq -r '.version' VERSION.json)
+      - name: Checking home folder
+        id: home-folger
+        run: |
+          pwd
+          ls -al
+          
   check-condition:
     needs: setup-variables
     runs-on: ubuntu-latest
