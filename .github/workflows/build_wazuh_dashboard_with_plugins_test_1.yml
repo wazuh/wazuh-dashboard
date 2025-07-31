@@ -250,6 +250,11 @@ jobs:
           echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
           ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}
           ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools
+
+      - name: Clone dev-tools
+        run: |
+          git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
+          cp -r temp-dashboard/dev-tools ${{ needs.setup-variables.outputs.CURRENT_DIR }}
       
       - name: Build package
         run: |
