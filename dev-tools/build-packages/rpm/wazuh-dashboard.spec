@@ -31,6 +31,10 @@ ExclusiveOS: linux
 %global DASHBOARD_FILE wazuh-dashboard.tar.gz
 %define _source_payload w9.gzdio
 %define _binary_payload w9.gzdio
+# Disable creation of /usr/lib/.build-id/* links
+%define _build_id_links none
+# Optional: don’t fail the build if build-ids are missing
+%undefine _missing_build_ids_terminate_build
 
 # -----------------------------------------------------------------------------
 
