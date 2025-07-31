@@ -75,6 +75,8 @@ override_dh_install:
 
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard.service $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard $(TARGET_DIR)/usr/lib/systemd/system/$(NAME)
+  # Install the systemd unit only under /usr/lib/systemd/system
+  install -D -m 0644 $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard.service $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/default $(TARGET_DIR)/etc/default/$(NAME)
 
 	rm -rf $(TARGET_DIR)$(INSTALLATION_DIR)/etc
