@@ -245,6 +245,12 @@ jobs:
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/wazuh-dashboard_4.12.0-03_x64.tar.gz
 
+      - name: Debug current dir contents
+        run: |
+          echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
+          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}
+          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools
+      
       - name: Build package
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
