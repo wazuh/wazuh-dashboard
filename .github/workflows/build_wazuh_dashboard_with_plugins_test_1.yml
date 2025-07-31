@@ -269,10 +269,16 @@ jobs:
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
-            
-      - name: Rename artifact
-        run: mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
 
+      - name: Export variables to env
+        run: |
+          echo "VERSION=${{ needs.setup-variables.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "ARTIFACT_BUILD_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}" >> $GITHUB_ENV
+          
+      - name: Rename artifact
+        run: |
+          mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ (inputs.architecture == 'x86_64' || inputs.architecture == 'amd64') && 'x64' || 'arm64' }}.${{ inputs.system }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
+      
       - uses: actions/upload-artifact@v4
         if: success()
         with:
