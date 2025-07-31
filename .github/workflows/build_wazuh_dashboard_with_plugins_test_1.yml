@@ -275,6 +275,10 @@ jobs:
           echo "VERSION=${{ needs.setup-variables.outputs.VERSION }}" >> $GITHUB_ENV
           echo "ARTIFACT_BUILD_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}" >> $GITHUB_ENV
 
+      - name: Move generated .deb to artifacts folder
+        run: |
+          mkdir -p ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/target
+          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/*.deb ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/target/
       - name: List target artifacts
         run: |
             ls -lh ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/
