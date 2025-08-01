@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FormattedMessage, I18nProvider } from '@osd/i18n/react';
 import {
   EuiButtonEmpty,
@@ -16,76 +16,35 @@ import {
   EuiFlexItem,
   EuiText,
   EuiButtonIcon,
+  EuiHorizontalRule,
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
-
-function computeOverallChecks(checks) {
-  let status = 'green';
-
-  if (checks.some(({ result, _meta }) => !_meta.isCritical && result === 'fail')) {
-    status = 'yellow';
-  }
-
-  if (checks.some(({ result, _meta }) => _meta.isCritical && result === 'fail')) {
-    status = 'red';
-  }
-
-  return status;
-}
-
-function computeCheckStatus(check) {
-  return check.result === 'success' ? 'green' : 'red';
-}
-
-const mapStatusHealth = {
-  green: 'success',
-  yellow: 'warning',
-  red: 'danger',
-  default: 'gray',
-};
-
-const CheckDetails = ({ check }) => {
-  // TODO: format dates
-  const { name, duration, startedAt, finishedAt } = check;
-  const [detailsIsOpen, setDetailsIsOpen] = useState<boolean>(false);
-  const status = computeCheckStatus(check);
-  return (
-    <>
-      <EuiFlexGroup justifyContent="spaceBetween">
-        <EuiFlexItem grow={false}>
-          <EuiToolTip content={`Health check status: ${status}`} position="bottom">
-            <EuiHealth color={mapStatusHealth[status] || mapStatusHealth.default}>{name}</EuiHealth>
-          </EuiToolTip>
-        </EuiFlexItem>
-        <EuiFlexItem grow={false}>
-          <EuiButtonIcon iconType="iInCircle" onClick={() => setDetailsIsOpen((state) => !state)} />
-        </EuiFlexItem>
-      </EuiFlexGroup>
-
-      {detailsIsOpen && (
-        <div>
-          <EuiText size="xs">
-            <span>
-              {startedAt} - {finishedAt} ({duration}s)
-            </span>
-          </EuiText>
-        </div>
-      )}
-    </>
-  );
-};
+import { groupBy } from 'lodash';
+import { useAsyncAction } from './hook/use_async_action';
+import { ButtonExportHealthCheck } from './export_checks';
+import { HealthIcon } from './health_icon';
+import { getHealthFromStatus } from './services/health';
+import { CheckDetails } from './check_details';
 
 export const HealthCheckNavButton = (props) => {
   const [isPopoverOpen, setPopoverOpen] = React.useState<boolean>(false);
-  const { ok, checks } = useObservable(props.status$, props.status$.getValue());
+  const { status, checks } = useObservable(props.status$, props.status$.getValue());
+  const runAction = useAsyncAction(() => props.run());
 
-  const overallStatus = computeOverallChecks(checks);
+  const checksGroupByResult = useMemo(() => {
+    return groupBy(checks, 'result');
+  }, [checks]);
+
+  const runFailedAction = useAsyncAction(
+    () => props.run(checksGroupByResult.fail.map(({ name }) => name)),
+    []
+  );
 
   const isPlacedInLeftNav = props.coreStart.uiSettings.get('home:useNewHomePage');
 
   const overallStatusIndicator = (
     <EuiHealth
-      color={mapStatusHealth[overallStatus] || mapStatusHealth.default}
+      color={getHealthFromStatus(status)}
       onClick={() => setPopoverOpen((prevState) => !prevState)}
     />
   );
@@ -98,7 +57,7 @@ export const HealthCheckNavButton = (props) => {
           id="core.healthcheck.status.tooltip"
           defaultMessage="Health check status: {status}"
           values={{
-            status: overallStatus,
+            status,
           }}
         />
       }
@@ -135,45 +94,80 @@ export const HealthCheckNavButton = (props) => {
         responsive={false}
       >
         <EuiFlexItem grow={false}>
-          <EuiToolTip
-            content={
-              <FormattedMessage
-                id="core.healthcheck.status.tooltip"
-                defaultMessage="Health check status: {status}"
-                values={{
-                  status: overallStatus,
-                }}
-              />
-            }
-            position="bottom"
-          >
-            <EuiHealth color={mapStatusHealth[overallStatus] || mapStatusHealth.default}>
-              <EuiText>
-                <h3>
-                  <FormattedMessage id="core.healthcheck.title" defaultMessage="Health check" />
-                </h3>
-              </EuiText>
-            </EuiHealth>
-          </EuiToolTip>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'right' }}>
+            <HealthIcon status={status} />
+            <EuiText>
+              <h3>
+                <FormattedMessage id="core.healthcheck.title" defaultMessage="Health check" />
+              </h3>
+            </EuiText>
+            <div style={{ marginLeft: '4px' }}>
+              {['success', 'fail', 'null'].map((result) => {
+                const groupedByResult = checksGroupByResult[result];
+                if (groupedByResult) {
+                  const statusHealth = props.computeCheckStatus({ result });
+                  return <HealthIcon status={statusHealth}>{groupedByResult.length}</HealthIcon>;
+                }
+                return null;
+              })}
+            </div>
+          </div>
         </EuiFlexItem>
         <EuiFlexItem grow={false}>
-          <EuiFlexGroup gutterSize="xs">
+          <EuiFlexGroup gutterSize="xs" responsive={false}>
+            <EuiFlexItem grow={false}>
+              <ButtonExportHealthCheck data={{ status, checks }} />
+            </EuiFlexItem>
             <EuiFlexItem grow={false}>
               <EuiToolTip
-                content={<FormattedMessage id="core.healthcheck.run" defaultMessage="Run checks" />}
+                content={
+                  <FormattedMessage
+                    id="core.healthcheck.run.only_failed"
+                    defaultMessage="Run failed checks"
+                  />
+                }
                 position="bottom"
               >
-                <EuiButtonIcon iconType="refresh" onClick={props.run} />
+                <EuiButtonIcon
+                  iconType="refresh"
+                  onClick={() => runFailedAction.run()}
+                  isDisabled={[].length === 0 || runFailedAction.running}
+                  iconSize="l"
+                  color="danger"
+                />
+              </EuiToolTip>
+            </EuiFlexItem>
+            <EuiFlexItem grow={false}>
+              <EuiToolTip
+                content={
+                  <FormattedMessage
+                    id="core.healthcheck.run.enabled"
+                    defaultMessage="Run enabled checks"
+                  />
+                }
+                position="bottom"
+              >
+                <EuiButtonIcon
+                  iconType="refresh"
+                  onClick={runAction.run}
+                  isDisabled={runAction.running}
+                  iconSize="l"
+                />
               </EuiToolTip>
             </EuiFlexItem>
           </EuiFlexGroup>
         </EuiFlexItem>
       </EuiFlexGroup>
+      <EuiHorizontalRule margin="xs" />
       <EuiFlexGroup direction="column" gutterSize="xs" responsive={false}>
         {checks.map((check) => (
           <EuiFlexItem key={check.name}>
             <div>
-              <CheckDetails check={check} />
+              <CheckDetails
+                check={check}
+                computeCheckStatus={props.computeCheckStatus}
+                run={() => props.run([check.name])}
+              />
             </div>
           </EuiFlexItem>
         ))}
