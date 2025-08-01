@@ -20,16 +20,6 @@ on:
         description: 'Package revision'
         required: true
         default: '1'
-      repository_security_plugins:
-        type: string
-        description: 'Repository of the wazuh-security-dashboards-plugin to build the security plugin'
-        required: true
-        default: 'ivmerk'
-      repository_wazuh_plugins:
-        type: string
-        description: 'Repository of the wazuh-dashboards-plugins to build the security plugin'
-        required: true
-        default: 'ivmerk'
       reference_security_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
@@ -62,13 +52,13 @@ jobs:
       - name: Get SHA of wazuh-dashboard-plugins
         id: get-plugins-sha
         run: |
-          git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/${{ inputs.repository_wazuh_plugins }}/wazuh-dashboard-plugins.git wzdp
+          git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/ivmerk/wazuh-dashboard-plugins.git wzdp
           cd wzdp
           echo "WAZUH_PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Get SHA of wazuh-security-dashboards-plugin
         id: get-security-sha
         run: |
-          git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/${{ inputs.repository_security_plugins }}/wazuh-security-dashboards-plugin.git wzsp
+          git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/ivmerk/wazuh-security-dashboards-plugin.git wzsp
           cd wzsp
           echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
