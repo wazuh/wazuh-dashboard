@@ -128,3 +128,10 @@ jobs:
       CHECKOUT_TO: master
       ARCHITECTURE: ${{ inputs.architecture }}
       SYSTEM: ${{ inputs.system }}
+      
+  build-main-plugins:
+    needs: setup-variables
+    name: Build plugins
+    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual_build.yml@master
+    with:
+      reference: ${{ inputs.reference_wazuh_plugins }}
