@@ -13,8 +13,12 @@ export type HealthCheckConfigType = TypeOf<typeof configSchema>;
  * Validation schema for initialization service config.
  * @public
  */
+const schemaChecksEnabled = schema.string();
 export const configSchema = schema.object({
   enabled: schema.boolean({ defaultValue: true }),
+  checks_enabled: schema.oneOf([schemaChecksEnabled, schema.arrayOf(schemaChecksEnabled)], {
+    defaultValue: '.*',
+  }),
   schedule_interval: schema.duration({
     defaultValue: 15 * 60 * 1000,
     validate: (value) => {

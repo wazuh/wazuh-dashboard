@@ -20,19 +20,55 @@ export interface HealthCheckStatus {
  * Wraps `fn` so only one call runs at a time.
  * Subsequent calls return the same Promise until the first completes.
  */
-function singleInstance(fn) {
-  let activePromise = null;
+function singlePromiseInstance(fn, serializer = JSON.stringify) {
+  const activePromises = {};
 
   return function (...args) {
+    const serialized = serializer(...args);
     // If no active run, invoke and store its promise
-    if (!activePromise) {
-      activePromise = Promise.resolve(fn.apply(this, args)).finally(() => {
-        activePromise = null;
+    if (!activePromises[serialized]) {
+      activePromises[serialized] = Promise.resolve(fn.apply(this, args)).finally(() => {
+        delete activePromises[serialized];
       });
     }
     // Return the in-flight or just-finished promise
-    return activePromise;
+    return activePromises[serialized];
   };
+}
+
+/**
+ * Filters an array of task names by an array of regex patterns.
+ *
+ * @param {string[]} list           - Array of list name strings to filter.
+ * @param {string[]} regexFilters   - Array of regex patterns as strings.
+ *                                     Patterns can be plain (e.g. "^foo")
+ *                                     or in slash-notation with flags (e.g. "/bar$/i").
+ * @returns {string[]}              - A new array containing only matching list names.
+ */
+function filterListByRegex(list: string[], regexFilters: string[]) {
+  // Helper: convert a string into a RegExp object
+  const toRegExp = (str) => {
+    // If in /pattern/flags form, extract pattern and flags
+    const slashForm = str.match(/^\/(.+)\/([gimsuy]*)$/);
+    if (slashForm) {
+      return new RegExp(slashForm[1], slashForm[2]);
+    }
+    // Otherwise treat the entire string as the pattern, no flags
+    return new RegExp(str);
+  };
+
+  // Compile all filters up front, ignoring invalid ones
+  const compiled = regexFilters.reduce((arr, pat) => {
+    try {
+      arr.push(toRegExp(pat));
+    } catch (e) {
+      // console.warn(`Invalid regex "${pat}" skipped.`);
+    }
+    return arr;
+  }, []);
+
+  // Filter: include a task if any regex matches
+  return list.filter((task) => compiled.some((rx) => rx.test(task)));
 }
 
 export class HealthCheck extends TaskManager implements TaskManager {
@@ -47,11 +83,12 @@ export class HealthCheck extends TaskManager implements TaskManager {
   private _retryDelay: number = 0;
   private _maxRetryAttempts: number = 0;
   private _internalScheduledCheckTime: number = 0;
+  private _checks_enabled: string[] = [];
   private scheduled?: ScheduledIntervalTask;
   private _coreStartServices: any;
   constructor(private readonly logger: Logger, services: any) {
     super(logger, services);
-    this.runInternal = singleInstance(this._runInternal).bind(this);
+    this.runInternal = singlePromiseInstance(this._runInternal).bind(this);
   }
 
   getCheckInfo(taskName: string) {
@@ -77,6 +114,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
     core: any,
     config: {
       enabled: boolean;
+      checks_enabled: string | string[];
       retries_delay: number;
       max_retries: number;
       schedule_interval: number;
@@ -86,22 +124,39 @@ export class HealthCheck extends TaskManager implements TaskManager {
     this._retryDelay = config.retries_delay.asMilliseconds();
     this._maxRetryAttempts = config.max_retries;
     this._internalScheduledCheckTime = config.schedule_interval.asMilliseconds();
-
-    if (!this._enabled) {
-      this.logger.debug('Disabled. Skip setup');
-      return;
+    if (typeof config.checks_enabled === 'string') {
+      this._checks_enabled = [config.checks_enabled];
+    } else {
+      this._checks_enabled = config.checks_enabled;
     }
 
+    this.logger.debug('Adding API routes');
     const router = core.http.createRouter('/api/healthcheck');
     addRoutes(router, { healthcheck: this, logger: this.logger });
+    this.logger.debug('Added API routes');
   }
 
-  private async _runInternal() {
-    return this.run({ services: { core: this._coreStartServices }, scope: 'internal' });
+  private filterEnabledChecks() {
+    const allTaskNames = [...this.items.keys()];
+
+    return filterListByRegex(allTaskNames, this._checks_enabled);
+  }
+
+  private async _runInternal(names?: string[]) {
+    const taskNames = names || this.filterEnabledChecks();
+
+    return this.run(
+      {
+        services: { core: this._coreStartServices },
+        scope: 'internal',
+      },
+      taskNames
+    );
   }
 
   async runInitialCheck() {
-    return new Promise<void>((res) => {
+    this.logger.debug('Waiting until all checks are ok...');
+    await new Promise<void>((res) => {
       this.runInternal().catch(() => {});
 
       this.status$.subscribe(({ ok }) => {
@@ -110,18 +165,36 @@ export class HealthCheck extends TaskManager implements TaskManager {
         }
       });
     });
+    this.logger.info('Checks are ok');
+    return;
   }
 
   async start(core: any) {
+    this._coreStartServices = core;
+    const enabledChecks = this.filterEnabledChecks();
+
+    if (enabledChecks.length > 0) {
+      this.logger.info(`Enabled checks [${enabledChecks.length}]: [${enabledChecks.join(',')}]`);
+    } else {
+      this.logger.info(`Disabled health check due to no enabled checks.`);
+      this._enabled = false;
+    }
+
     if (!this._enabled) {
       this.logger.debug('Disabled. Skip start');
       return;
     }
-    this._coreStartServices = core;
-    this.logger.debug('Waiting until all checks are ok...');
+
+    // Define props to task items
+    [...this.items.values()].forEach((item) => {
+      if (enabledChecks.includes(item.name)) {
+        item._meta.isEnabled = true;
+      } else {
+        item._meta.isEnabled = false;
+      }
+    });
 
     await this.runInitialCheck();
-    this.logger.info('Checks are ok');
 
     this.logger.debug('Setting scheduled checks');
     this.scheduled = new ScheduledIntervalTask(async () => {
@@ -196,9 +269,9 @@ export class HealthCheck extends TaskManager implements TaskManager {
         }
         const failedCriticalChecks = data.checks?.filter(
           ({ status, result, _meta = {} }) =>
+            _meta?.isCritical &&
             status === TASK.RUN_STATUS.FINISHED &&
-            result === TASK.RUN_RESULT.FAIL &&
-            _meta?.isCritical
+            result === TASK.RUN_RESULT.FAIL
         );
         if (failedCriticalChecks?.length) {
           throw new Error(
