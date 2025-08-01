@@ -32,6 +32,7 @@ function enhanceTaskLogger(logger) {
 }
 
 export function addRoutes(router, { healthcheck, logger }) {
+  // TODO: protect routes with enabled service
   const validateTaskList = schema.maybe(
     schema.string({
       validate(value: string) {
@@ -55,14 +56,16 @@ export function addRoutes(router, { healthcheck, logger }) {
     {
       path: '/internal',
       validate: {
-        tasks: schema.object({
-          tasks: validateTaskList,
-        }),
+        query: schema.maybe(
+          schema.object({
+            name: validateTaskList,
+          })
+        ),
       },
     },
     async (context, request, response) => {
       try {
-        const tasksNames = request.query.tasks ? getTaskList(request.query.tasks) : undefined;
+        const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
 
         logger.debug(`Getting initialization tasks related to internal scope`);
 
@@ -91,14 +94,13 @@ export function addRoutes(router, { healthcheck, logger }) {
   );
 
   // Run the internal initialization tasks
-  // TODO: protect with administrator privilegies
   router.post(
     {
       path: '/internal',
       validate: {
         query: schema.maybe(
           schema.object({
-            tasks: validateTaskList,
+            name: validateTaskList,
           })
         ),
       },
@@ -106,7 +108,7 @@ export function addRoutes(router, { healthcheck, logger }) {
     async (context, request, response) => {
       try {
         logger.debug(`Running healthcheck tasks related to internal scope`);
-        const tasksNames = request.query.tasks ? getTaskList(request.query.tasks) : undefined;
+        const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
 
         const results = await healthcheck.runInternal(tasksNames);
 
@@ -128,107 +130,108 @@ export function addRoutes(router, { healthcheck, logger }) {
     }
   );
 
-  router.post(
-    {
-      path: '/user',
-      validate: {
-        // TODO: restrict to user tasks
-        query: schema.object({
-          tasks: validateTaskList,
-        }),
-      },
-    },
-    async (context, request, response) => {
-      try {
-        const tasksNames = request.query.tasks ? getTaskList(request.query.tasks) : undefined;
-        const { username } = await context.wazuh_core.dashboardSecurity.getCurrentUser(
-          request,
-          context
-        );
-        const scope = 'user';
+  // TODO: this is an initial implementation for user context tasks
+  // router.post(
+  //   {
+  //     path: '/user',
+  //     validate: {
+  //       // TODO: restrict to user tasks
+  //       body: schema.object({
+  //         tasks: validateTaskList,
+  //       }),
+  //     },
+  //   },
+  //   async (context, request, response) => {
+  //     try {
+  //       const tasksNames = request.query.tasks ? getTaskList(request.query.tasks) : undefined;
+  //       const { username } = await context.wazuh_core.dashboardSecurity.getCurrentUser(
+  //         request,
+  //         context
+  //       );
+  //       const scope = 'user';
 
-        logger.debug(`Getting healthcheck tasks related to user [${username}] scope [${scope}]`);
+  //       logger.debug(`Getting healthcheck tasks related to user [${username}] scope [${scope}]`);
 
-        const initializationTasks = context.wazuh_core.initialization.get();
-        const indexPatternTasks = initializationTasks
-          .filter(({ name }) => name.startsWith('index-pattern:'))
-          .map(({ name }) =>
-            context.wazuh_core.initialization.createNewTaskFromRegisteredTask(name)
-          );
-        const settingsTasks = initializationTasks
-          .filter(({ name }) => name.startsWith('setting:'))
-          .map(({ name }) =>
-            context.wazuh_core.initialization.createNewTaskFromRegisteredTask(name)
-          );
-        const allUserTasks = [...indexPatternTasks, ...settingsTasks];
-        const tasks = tasksNames
-          ? allUserTasks.filter(({ name }) => tasksNames.includes(name))
-          : allUserTasks;
+  //       const initializationTasks = context.wazuh_core.initialization.get();
+  //       const indexPatternTasks = initializationTasks
+  //         .filter(({ name }) => name.startsWith('index-pattern:'))
+  //         .map(({ name }) =>
+  //           context.wazuh_core.initialization.createNewTaskFromRegisteredTask(name)
+  //         );
+  //       const settingsTasks = initializationTasks
+  //         .filter(({ name }) => name.startsWith('setting:'))
+  //         .map(({ name }) =>
+  //           context.wazuh_core.initialization.createNewTaskFromRegisteredTask(name)
+  //         );
+  //       const allUserTasks = [...indexPatternTasks, ...settingsTasks];
+  //       const tasks = tasksNames
+  //         ? allUserTasks.filter(({ name }) => tasksNames.includes(name))
+  //         : allUserTasks;
 
-        logger.debug(
-          `Initialization tasks related to user [${username}] scope [${scope}]: [${tasks
-            .map(({ name }) => name)
-            .join(', ')}]`
-        );
+  //       logger.debug(
+  //         `Initialization tasks related to user [${username}] scope [${scope}]: [${tasks
+  //           .map(({ name }) => name)
+  //           .join(', ')}]`
+  //       );
 
-        const taskContext = context.wazuh_core.initialization.createRunContext('user', {
-          core: context.core,
-          request,
-        });
+  //       const taskContext = context.wazuh_core.initialization.createRunContext('user', {
+  //         core: context.core,
+  //         request,
+  //       });
 
-        logger.debug(`Running tasks for user [${username}] scope [${scope}]`);
+  //       logger.debug(`Running tasks for user [${username}] scope [${scope}]`);
 
-        const results = await Promise.all(
-          tasks.map(async (task) => {
-            const taskLogger = enhanceTaskLogger(logger);
+  //       const results = await Promise.all(
+  //         tasks.map(async (task) => {
+  //           const taskLogger = enhanceTaskLogger(logger);
 
-            try {
-              await task.run({
-                ...taskContext,
-                // TODO: use user selection index patterns
-                logger: taskLogger,
-                ...(task.name.includes('index-pattern:')
-                  ? {
-                      getIndexPatternID: () =>
-                        task.name /* TODO: use request parameters/body/cookies */,
-                    }
-                  : {}),
-              });
-            } catch {
-              /* empty */
-            } finally {
-              // eslint-disable-next-line no-unsafe-finally
-              return {
-                logs: taskLogger.getLogs(),
-                ...task.getInfo(),
-              };
-            }
-          })
-        );
+  //           try {
+  //             await task.run({
+  //               ...taskContext,
+  //               // TODO: use user selection index patterns
+  //               logger: taskLogger,
+  //               ...(task.name.includes('index-pattern:')
+  //                 ? {
+  //                     getIndexPatternID: () =>
+  //                       task.name /* TODO: use request parameters/body/cookies */,
+  //                   }
+  //                 : {}),
+  //             });
+  //           } catch {
+  //             /* empty */
+  //           } finally {
+  //             // eslint-disable-next-line no-unsafe-finally
+  //             return {
+  //               logs: taskLogger.getLogs(),
+  //               ...task.getInfo(),
+  //             };
+  //           }
+  //         })
+  //       );
 
-        logger.debug(`All tasks for user [${username}] scope [${scope}] run`);
+  //       logger.debug(`All tasks for user [${username}] scope [${scope}] run`);
 
-        const initialMessage = 'All the initialization tasks related to user scope were executed.';
-        const message = [
-          initialMessage,
-          results.some(({ error }) => error) && 'There was some errors.',
-        ]
-          .filter(Boolean)
-          .join(' ');
+  //       const initialMessage = 'All the initialization tasks related to user scope were executed.';
+  //       const message = [
+  //         initialMessage,
+  //         results.some(({ error }) => error) && 'There was some errors.',
+  //       ]
+  //         .filter(Boolean)
+  //         .join(' ');
 
-        return response.ok({
-          body: {
-            message,
-            tasks: results,
-          },
-        });
-      } catch (error) {
-        return response.internalError({
-          body: {
-            message: `Error initializating the tasks: ${error.message}`,
-          },
-        });
-      }
-    }
-  );
+  //       return response.ok({
+  //         body: {
+  //           message,
+  //           tasks: results,
+  //         },
+  //       });
+  //     } catch (error) {
+  //       return response.internalError({
+  //         body: {
+  //           message: `Error initializating the tasks: ${error.message}`,
+  //         },
+  //       });
+  //     }
+  //   }
+  // );
 }
