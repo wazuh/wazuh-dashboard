@@ -9,7 +9,7 @@ export class ScheduledIntervalTask {
   constructor(private fn: Function, private time: number) {
     this.run = this.run.bind(this);
   }
-  async run() {
+  private async run() {
     this.status = 'started';
     const results = await this.fn();
     this.status = 'finished';
