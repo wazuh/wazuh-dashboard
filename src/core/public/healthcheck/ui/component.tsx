@@ -131,7 +131,11 @@ export const HealthCheckNavButton = (props) => {
                 <EuiButtonIcon
                   iconType="refresh"
                   onClick={() => runFailedAction.run()}
-                  isDisabled={[].length === 0 || runFailedAction.running}
+                  isDisabled={
+                    !checksGroupByResult?.fail ||
+                    checksGroupByResult?.fail?.length === 0 ||
+                    runFailedAction.running
+                  }
                   iconSize="l"
                   color="danger"
                 />
