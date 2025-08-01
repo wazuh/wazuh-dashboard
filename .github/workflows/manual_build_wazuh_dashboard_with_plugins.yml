@@ -119,3 +119,19 @@ jobs:
           cd ..
           ls -al
           echo "::endgroup::"
+
+  build-base:
+    needs: setup-variables
+    name: Build dashboard
+    uses: ivmerk/wazuh-dashboard/.github/workflows/manual_build_base.yml@master
+    with:
+      CHECKOUT_TO: master
+      ARCHITECTURE: ${{ inputs.architecture }}
+      SYSTEM: ${{ inputs.system }}
+      
+  build-main-plugins:
+    needs: setup-variables
+    name: Build plugins
+    uses: ${{ inputs.repository_wazuh_plugins }}/wazuh-dashboard-plugins/.github/workflows/manual_build.yml@master
+    with:
+      reference: ${{ inputs.reference_wazuh_plugins }}
