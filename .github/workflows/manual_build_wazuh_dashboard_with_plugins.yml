@@ -122,6 +122,6 @@ jobs:
   build-main-plugins:
     needs: setup-variables
     name: Build plugins
-    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual_build.yml@master
+    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
