@@ -37,7 +37,7 @@ export const HealthCheckNavButton = (props) => {
 
   const runFailedAction = useAsyncAction(
     () => props.run(checksGroupByResult.fail.map(({ name }) => name)),
-    []
+    [checksGroupByResult]
   );
 
   const isPlacedInLeftNav = props.coreStart.uiSettings.get('home:useNewHomePage');
@@ -106,7 +106,11 @@ export const HealthCheckNavButton = (props) => {
                 const groupedByResult = checksGroupByResult[result];
                 if (groupedByResult) {
                   const statusHealth = props.computeCheckStatus({ result });
-                  return <HealthIcon status={statusHealth}>{groupedByResult.length}</HealthIcon>;
+                  return (
+                    <HealthIcon key={statusHealth} status={statusHealth}>
+                      {groupedByResult.length}
+                    </HealthIcon>
+                  );
                 }
                 return null;
               })}
