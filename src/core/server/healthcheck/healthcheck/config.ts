@@ -19,7 +19,7 @@ export const configSchema = schema.object({
   checks_enabled: schema.oneOf([schemaChecksEnabled, schema.arrayOf(schemaChecksEnabled)], {
     defaultValue: '.*',
   }),
-  schedule_interval: schema.duration({
+  interval: schema.duration({
     defaultValue: 15 * 60 * 1000,
     validate: (value) => {
       const minValue = 5 * 60 * 1000;

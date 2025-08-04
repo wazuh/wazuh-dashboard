@@ -117,13 +117,13 @@ export class HealthCheck extends TaskManager implements TaskManager {
       checks_enabled: string | string[];
       retries_delay: number;
       max_retries: number;
-      schedule_interval: number;
+      interval: number;
     }
   ) {
     this._enabled = config.enabled;
     this._retryDelay = config.retries_delay.asMilliseconds();
     this._maxRetryAttempts = config.max_retries;
-    this._internalScheduledCheckTime = config.schedule_interval.asMilliseconds();
+    this._internalScheduledCheckTime = config.interval.asMilliseconds();
     if (typeof config.checks_enabled === 'string') {
       this._checks_enabled = [config.checks_enabled];
     } else {
