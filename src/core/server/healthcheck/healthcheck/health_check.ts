@@ -279,6 +279,8 @@ export class HealthCheck extends TaskManager implements TaskManager {
           );
         }
         // Emit message through observer
+        /* WARNING: this emits the data related to the executed checks. If we need a global state this should be combined. Adding an execution related to the user
+        context should not emit a new value. This could need to be refactored to support the user context case. */
         this.status$.next(data);
 
         return data;
