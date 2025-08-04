@@ -2,7 +2,7 @@
  * Copyright Wazuh
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import { Duration } from 'moment';
 import { Logger } from 'opensearch-dashboards/server';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { retry, TASK, TaskManager } from '../task';
@@ -45,7 +45,7 @@ function singlePromiseInstance(fn, serializer = JSON.stringify) {
  *                                     or in slash-notation with flags (e.g. "/bar$/i").
  * @returns {string[]}              - A new array containing only matching list names.
  */
-function filterListByRegex(list: string[], regexFilters: string[]) {
+export function filterListByRegex(list: string[], regexFilters: string[]) {
   // Helper: convert a string into a RegExp object
   const toRegExp = (str) => {
     // If in /pattern/flags form, extract pattern and flags
@@ -115,9 +115,9 @@ export class HealthCheck extends TaskManager implements TaskManager {
     config: {
       enabled: boolean;
       checks_enabled: string | string[];
-      retries_delay: number;
+      retries_delay: Duration;
       max_retries: number;
-      interval: number;
+      interval: Duration;
     }
   ) {
     this._enabled = config.enabled;
