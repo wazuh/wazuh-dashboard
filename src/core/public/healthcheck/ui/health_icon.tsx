@@ -19,7 +19,7 @@ const statusChecksExplain = {
   yellow: (
     <FormattedMessage
       id="core.healthcheck.status_info.yellow"
-      defaultMessage="Status: red. This indicates that the verification had some problem but it could work."
+      defaultMessage="Status: yellow. This indicates that the verification had some problem but it could work."
     />
   ),
   red: (
