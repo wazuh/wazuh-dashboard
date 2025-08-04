@@ -127,8 +127,8 @@ export class HealthcheckService {
 
     if (
       checks.some(
-        ({ result, _meta }) =>
-          _meta.isCritical && overallStatus === 'finished' && result !== 'success'
+        ({ result, _meta, status }) =>
+          _meta.isCritical && status === 'finished' && result !== 'success'
       )
     ) {
       overallStatus = 'red';
