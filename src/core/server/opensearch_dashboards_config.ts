@@ -80,7 +80,7 @@ export const config = {
         defaultValue: '/',
       }),
       applicationTitle: schema.string({
-        defaultValue: 'Wazuh',
+        defaultValue: 'Scoupd Dashboard',
       }),
       useExpandedHeader: schema.boolean({
         defaultValue: false,
