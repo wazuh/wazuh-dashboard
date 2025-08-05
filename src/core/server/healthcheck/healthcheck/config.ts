@@ -10,10 +10,20 @@ import { ServiceConfigDescriptor } from '../../internal_types';
 export type HealthCheckConfigType = TypeOf<typeof configSchema>;
 
 /**
- * Validation schema for initialization service config.
+ * Validation schema for health check service config.
  * @public
  */
-const schemaChecksEnabled = schema.string();
+const schemaChecksEnabled = schema.string({
+  minLength: 1,
+  validate: (value) => {
+    try {
+      new RegExp(value);
+      return undefined;
+    } catch (error) {
+      return `Value is not a valid regular expression: ${error.message}`;
+    }
+  },
+});
 export const configSchema = schema.object({
   enabled: schema.boolean({ defaultValue: true }),
   checks_enabled: schema.oneOf([schemaChecksEnabled, schema.arrayOf(schemaChecksEnabled)], {
@@ -39,7 +49,10 @@ export const configSchema = schema.object({
         : undefined;
     },
   }),
-  max_retries: schema.number({ defaultValue: 5 }),
+  max_retries: schema.number({
+    defaultValue: 5,
+    min: 1,
+  }),
 });
 
 const deprecations: ConfigDeprecationProvider = ({ renameFromRoot, renameFromRootWithoutMap }) => [
