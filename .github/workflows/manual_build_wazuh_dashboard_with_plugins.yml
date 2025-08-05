@@ -36,7 +36,23 @@ on:
         default: 'master'
 
 jobs:
+  prepare-refs:
+    runs-on: ubuntu-latest
+    name: Prepare References
+    outputs:
+      dashboard_ref: ${{ steps.set-refs.outputs.dashboard_ref }}
+      wazuh_plugins_ref: ${{ steps.set-refs.outputs.wazuh_plugins_ref }}
+      security_plugins_ref: ${{ steps.set-refs.outputs.security_plugins_ref }}
+    steps:
+      - name: Set effective refs
+        id: set-refs
+        run: |
+          echo "dashboard_ref=${{ inputs.reference_dashboard || github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "wazuh_plugins_ref=${{ inputs.reference_wazuh_plugins || 'master' }}" >> $GITHUB_OUTPUT
+          echo "security_plugins_ref=${{ inputs.reference_security_plugins || 'master' }}" >> $GITHUB_OUTPUT
+          
   setup-variables:
+    needs: prepare-refs
     runs-on: ubuntu-latest
     name: Setup variables
     outputs:
@@ -46,6 +62,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-dashboard
+          ref: ${{ needs.prepare-refs.outputs.dashboard_ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
