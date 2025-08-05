@@ -152,6 +152,7 @@ export const HealthCheckNavButton = (props) => {
                   }
                   iconSize="l"
                   color="danger"
+                  aria-label="Run failed checks"
                 />
               </EuiToolTip>
             </EuiFlexItem>
@@ -170,6 +171,7 @@ export const HealthCheckNavButton = (props) => {
                   onClick={runAction.run}
                   isDisabled={runAction.running}
                   iconSize="l"
+                  aria-label="Run enabled checks"
                 />
               </EuiToolTip>
             </EuiFlexItem>
@@ -185,6 +187,7 @@ export const HealthCheckNavButton = (props) => {
                 check={check}
                 computeCheckStatus={props.computeCheckStatus}
                 run={() => props.run([check.name])}
+                formatDate={props.formatDate}
               />
             </div>
           </EuiFlexItem>

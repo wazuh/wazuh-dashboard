@@ -59,6 +59,7 @@ export const CheckDetails = ({ check, computeCheckStatus, run }) => {
               <EuiButtonIcon
                 iconType="iInCircle"
                 onClick={() => setDetailsIsOpen((state) => !state)}
+                aria-label="View details"
               />
             </EuiToolTip>
 
@@ -72,6 +73,7 @@ export const CheckDetails = ({ check, computeCheckStatus, run }) => {
                 iconType="refresh"
                 onClick={runAction.run}
                 isDisabled={runAction.running}
+                aria-label="Run check"
               />
             </EuiToolTip>
           </div>

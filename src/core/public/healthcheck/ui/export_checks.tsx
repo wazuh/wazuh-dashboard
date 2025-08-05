@@ -58,6 +58,7 @@ export const ButtonExportHealthCheck = (data) => {
         onClick={action.run}
         isDisabled={action.running}
         iconSize="l"
+        aria-label="Export health check data"
       />
     </EuiToolTip>
   );
