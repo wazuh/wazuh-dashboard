@@ -270,14 +270,14 @@ jobs:
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@${{ inputs.reference_wazuh_plugins }}
+    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: ivmerk/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@${{ inputs.reference_security_plugins }}
+    uses: ivmerk/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
