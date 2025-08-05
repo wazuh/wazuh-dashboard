@@ -3,11 +3,6 @@ name: Build Wazuh dashboard with plugins test 1
 on:
   workflow_dispatch:
     inputs:
-      reference_dashboard:
-        type: string
-        description: 'Branch/tag/commit of the wazuh-dashboard repository to use'
-        required: true
-        default: ${{ github.ref_name }}
       system:
         type: choice
         description: 'Package OS'
@@ -50,9 +45,10 @@ on:
         type: string
         required: false
 
+
 jobs:
   setup-variables:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Setup variables
     outputs:
       CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
@@ -75,7 +71,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard
-          ref: ${{ inputs.reference_dashboard }}
+          ref: ${{ inputs.reference_wazuh_plugins }}
+
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -103,6 +100,7 @@ jobs:
           CURRENT_DIR=$(pwd -P)
           VERSION=$(jq -r '.version' VERSION.json)
           REVISION=$(jq -r '.stage' VERSION.json)
+
           COMMIT_SHA=$(git rev-parse --short HEAD)
           PLUGINS_SHA=${{ steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA }}
           SECURITY_SHA=${{ steps.get-security-sha.outputs.WAZUH_SECURITY_SHA }}
@@ -125,14 +123,14 @@ jobs:
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.deb
-            fi
+          PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.deb
+          fi
           else
-            if [ "${{ inputs.is_stage }}" = "true" ]; then
-              PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
-            else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.rpm
-            fi
+          if [ "${{ inputs.is_stage }}" = "true" ]; then
+            PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
+          else
+            PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.rpm
+          fi
           fi
 
           if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
@@ -175,23 +173,23 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: ivmerk/wazuh-dashboard/.github/workflows/manual_build_base.yml@${{ inputs.reference_dashboard }}
+    uses: ivmerk/wazuh-dashboard/.github/workflows/manual_build_base.yml@master
     with:
-      CHECKOUT_TO: ${{ inputs.reference_dashboard }}
+      CHECKOUT_TO: master
       ARCHITECTURE: ${{ inputs.architecture }}
       SYSTEM: deb
 
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
-    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@${{ inputs.reference_wazuh_plugins }}
+    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
-    uses: ivmerk/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@${{ inputs.reference_security_plugins }}
+    uses: ivmerk/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@master
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
@@ -200,10 +198,9 @@ jobs:
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
+    
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.reference_dashboard }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -214,29 +211,29 @@ jobs:
       - name: Download dashboard artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          name: wazuh-dashboard_4.12.0-03_x64.tar.gz
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
 
       - name: Download security plugin artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+          name: wazuh-security-dashboards-plugin_4.12.0-03_master.zip
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
 
       - name: Download main plugin's artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          name: wazuh-dashboard-plugins_wazuh_4.12.0-03_master.zip
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
       - name: Download core plugin's artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          name: wazuh-dashboard-plugins_wazuh-core_4.12.0-03_master.zip
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
       - name: Download check update plugin's artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          name: wazuh-dashboard-plugins_wazuh-check-updates_4.12.0-03_master.zip
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
      
       - name: Debug artifacts
@@ -249,7 +246,7 @@ jobs:
         run: |
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/wazuh-dashboard_4.12.0-03_x64.tar.gz
 
       - name: Debug current dir contents
         run: |
@@ -257,6 +254,11 @@ jobs:
           ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}
           ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools
 
+      - name: Clone dev-tools
+        run: |
+          git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
+          cp -r temp-dashboard/dev-tools ${{ needs.setup-variables.outputs.CURRENT_DIR }}
+      
       - name: Build package
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
@@ -273,12 +275,10 @@ jobs:
           echo "VERSION=${{ needs.setup-variables.outputs.VERSION }}" >> $GITHUB_ENV
           echo "ARTIFACT_BUILD_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}" >> $GITHUB_ENV
 
-      - name: Move generated package to artifacts folder
+      - name: Move generated .deb to artifacts folder
         run: |
           mkdir -p ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output
-          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/*.deb ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/ || true
-          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/*.rpm ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/ || true
-          
+          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/*.deb ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/
       - name: List target artifacts
         run: |
             ls -lh ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/
