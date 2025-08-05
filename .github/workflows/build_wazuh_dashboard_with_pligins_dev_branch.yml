@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-name: Build Wazuh dashboard with plugins (dev branch)
-=======
 name: Build Wazuh dashboard with plugins dev branch
->>>>>>> Stashed changes
 
 on:
   workflow_dispatch:
