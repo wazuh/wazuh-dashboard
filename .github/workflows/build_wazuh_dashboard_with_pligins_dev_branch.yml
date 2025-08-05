@@ -1,20 +1,29 @@
+<<<<<<< Updated upstream
 name: Build Wazuh dashboard with plugins (dev branch)
+=======
+name: Build Wazuh dashboard with plugins dev branch
+>>>>>>> Stashed changes
 
 on:
   workflow_dispatch:
     inputs:
       reference_dashboard:
         type: string
-        description: 'Branch/tag/commit of the wazuh-dashboard repository to use'
-        required: true
-        default: ${{ github.ref_name }}
+        description: 'Branch/tag of wazuh-dashboard repo. If empty, uses the branch this workflow is on.'
+        required: false
+      reference_security_plugins:
+        type: string
+        description: 'Branch/tag/commit of wazuh-security-dashboards-plugin. If empty, uses master.'
+        required: false
+      reference_wazuh_plugins:
+        type: string
+        description: 'Branch/tag/commit of wazuh-dashboard-plugins. If empty, uses master.'
+        required: false
       system:
         type: choice
         description: 'Package OS'
         required: true
-        options:
-          - deb
-          - rpm
+        options: [deb, rpm]
         default: 'deb'
       architecture:
         description: 'Architecture (amd64 or arm64)'
@@ -25,16 +34,6 @@ on:
         description: 'Package revision'
         required: true
         default: '1'
-      reference_security_plugins:
-        type: string
-        description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
-        required: true
-        default: 'master'
-      reference_wazuh_plugins:
-        type: string
-        description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
-        required: true
-        default: 'master'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -51,7 +50,23 @@ on:
         required: false
 
 jobs:
+  prepare-refs:
+   runs-on: ubuntu-latest
+   name: Prepare References
+   outputs:
+     dashboard_ref: ${{ steps.set-refs.outputs.dashboard_ref }}
+     wazuh_plugins_ref: ${{ steps.set-refs.outputs.wazuh_plugins_ref }}
+     security_plugins_ref: ${{ steps.set-refs.outputs.security_plugins_ref }}
+   steps:
+     - name: Set effective refs
+       id: set-refs
+       run: |
+         echo "dashboard_ref=${{ inputs.reference_dashboard || github.ref_name }}" >> $GITHUB_OUTPUT
+         echo "wazuh_plugins_ref=${{ inputs.reference_wazuh_plugins || 'master' }}" >> $GITHUB_OUTPUT
+         echo "security_plugins_ref=${{ inputs.reference_security_plugins || 'master' }}" >> $GITHUB_OUTPUT
+
   setup-variables:
+    needs: prepare-refs
     runs-on: ubuntu-latest
     name: Setup variables
     outputs:
@@ -75,7 +90,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard
-          ref: ${{ inputs.reference_dashboard }}
+          ref: ${{ needs.prepare-refs.outputs.dashboard_ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -173,13 +188,88 @@ jobs:
           fi
 
   build-base:
-    needs: [validate-job]
+    needs: [validate-job, prepare-variables]
     name: Build dashboard
-    uses: ivmerk/wazuh-dashboard/.github/workflows/manual_build_base.yml@${{ inputs.reference_dashboard }}
-    with:
-      CHECKOUT_TO: ${{ inputs.reference_dashboard }}
-      ARCHITECTURE: ${{ inputs.architecture }}
-      SYSTEM: deb
+# Используем правильный runner, как в вашем основном workflow
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
+    defaults:
+      run:
+        working-directory: ./artifacts # Устанавливаем рабочую директорию для всех шагов run
+
+    steps:
+      # ШАГ 1: Checkout (из reusable workflow)
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-dashboard
+          path: ./artifacts # Клонируем в поддиректорию
+          ref: ${{ needs.prepare-refs.outputs.dashboard_ref }} # Используем динамическую ветку
+
+      # ШАГ 2: Setup Node (из reusable workflow)
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: './artifacts/.nvmrc' # Путь к файлу теперь включает поддиректорию
+          registry-url: 'https://registry.npmjs.org'
+
+      # ШАГ 3: Setup Yarn (из reusable workflow)
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      # ШАГ 4: Caching (из reusable workflow)
+      - name: Configure Yarn Cache
+        id: yarn-cache-dir-path
+        # working-directory не применяется к этому шагу, так как он не 'run'
+        run: echo "dir=$(yarn --cwd ./artifacts cache dir)" >> $GITHUB_OUTPUT
+
+      - name: Initialize Yarn Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-${{ hashFiles('./artifacts/yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      # ШАГ 5: Get versions (из reusable workflow)
+      - name: Get package version
+        run: |
+          echo "VERSION=$(yarn --silent pkg-version)" >> $GITHUB_ENV
+          echo "WZD_VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "WZD_REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+
+      # ШАГ 6: Get artifact name (из reusable workflow, убрали matrix)
+      - name: Get artifact build name
+        run: |
+          ARCH_SUFFIX=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
+          echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${ARCH_SUFFIX}.tar.gz" >> $GITHUB_ENV
+
+      # ШАГ 7: Bootstrap (из reusable workflow)
+      - name: Run bootstrap
+        run: yarn osd bootstrap
+
+      # ШАГ 8: Build (из reusable workflow)
+      - name: Build
+        run: |
+          BUILD_ARCH_FLAG=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "linux" || echo "linux-arm")
+          yarn build-platform --${BUILD_ARCH_FLAG} --skip-os-packages --release
+
+      # ШАГ 9: Rename artifact (из reusable workflow)
+      - name: Rename artifact
+        run: |
+          ARCH_SUFFIX_OS=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
+          mv ./target/opensearch-dashboards-${{ env.VERSION }}-linux-${ARCH_SUFFIX_OS}.tar.gz ./target/${{ env.ARTIFACT_BUILD_NAME }}
+
+      # ШАГ 10: Upload artifact (из reusable workflow)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_BUILD_NAME }}
+          path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
+          retention-days: 30
+          overwrite: true
 
   build-main-plugins:
     needs: [validate-job]
