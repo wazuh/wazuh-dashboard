@@ -20,6 +20,10 @@ on:
         description: 'Package revision'
         required: true
         default: '1'
+      reference_dashboard:
+        type: string
+        description: 'Branch/tag of wazuh-dashboard repo. If empty, uses the branch this workflow is on.'
+        required: false # Сделали необязательным
       reference_security_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
