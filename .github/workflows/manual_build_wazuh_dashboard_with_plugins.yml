@@ -133,15 +133,90 @@ jobs:
           cd ..
           ls -al
           echo "::endgroup::"
-
+          
   build-base:
-    needs: setup-variables
-    name: Build dashboard
-    uses: ivmerk/wazuh-dashboard/.github/workflows/manual_build_base.yml@master
-    with:
-      CHECKOUT_TO: master
-      ARCHITECTURE: ${{ inputs.architecture }}
-      SYSTEM: ${{ inputs.system }}
+    needs: [prepare-refs, setup-variables]
+    runs-on: ubuntu-latest
+    name: Build dashboard base
+    defaults:
+      run:
+        working-directory: ./artifacts # Устанавливаем рабочую директорию для всех шагов run
+
+    steps:
+      # ШАГ 1: Checkout (из reusable workflow)
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-dashboard
+          path: ./artifacts # Клонируем в поддиректорию
+          ref: ${{ needs.prepare-refs.outputs.dashboard_ref }} # Используем динамическую ветку
+
+      # ШАГ 2: Setup Node (из reusable workflow)
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: './artifacts/.nvmrc' # Путь к файлу теперь включает поддиректорию
+          registry-url: 'https://registry.npmjs.org'
+
+      # ШАГ 3: Setup Yarn (из reusable workflow)
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      # ШАГ 4: Caching (из reusable workflow)
+      - name: Configure Yarn Cache
+        id: yarn-cache-dir-path
+        # working-directory не применяется к этому шагу, так как он не 'run'
+        run: echo "dir=$(yarn --cwd ./artifacts cache dir)" >> $GITHUB_OUTPUT
+
+      - name: Initialize Yarn Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-${{ hashFiles('./artifacts/yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      # ШАГ 5: Get versions (из reusable workflow)
+      - name: Get package version
+        run: |
+          echo "VERSION=$(yarn --silent pkg-version)" >> $GITHUB_ENV
+          echo "WZD_VERSION=$(yarn --silent wzd-version)" >> $GITHUB_ENV
+          echo "WZD_REVISION=$(yarn --silent wzd-revision)" >> $GITHUB_ENV
+
+      # ШАГ 6: Get artifact name (из reusable workflow, убрали matrix)
+      - name: Get artifact build name
+        run: |
+          ARCH_SUFFIX=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
+          echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${ARCH_SUFFIX}.tar.gz" >> $GITHUB_ENV
+          
+      # ШАГ 7: Bootstrap (из reusable workflow)
+      - name: Run bootstrap
+        run: yarn osd bootstrap
+
+      # ШАГ 8: Build (из reusable workflow)
+      - name: Build
+        run: |
+          BUILD_ARCH_FLAG=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "linux" || echo "linux-arm")
+          yarn build-platform --${BUILD_ARCH_FLAG} --skip-os-packages --release
+
+      # ШАГ 9: Rename artifact (из reusable workflow)
+      - name: Rename artifact
+        run: |
+          ARCH_SUFFIX_OS=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
+          mv ./target/opensearch-dashboards-${{ env.VERSION }}-linux-${ARCH_SUFFIX_OS}.tar.gz ./target/${{ env.ARTIFACT_BUILD_NAME }}
+
+      # ШАГ 10: Upload artifact (из reusable workflow)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_BUILD_NAME }}
+          path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
+          retention-days: 30
+          overwrite: true
+          
       
   build-main-plugins:
     needs: setup-variables
