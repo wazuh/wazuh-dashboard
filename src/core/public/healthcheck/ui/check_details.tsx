@@ -8,8 +8,7 @@ import { FormattedMessage } from 'react-intl';
 import { HealthIcon } from './health_icon';
 import { useAsyncAction } from './hook/use_async_action';
 
-export const CheckDetails = ({ check, computeCheckStatus, run }) => {
-  // TODO: format dates
+export const CheckDetails = ({ check, computeCheckStatus, run, formatDate }) => {
   const { name, duration, startedAt, finishedAt, error, _meta } = check;
   const [detailsIsOpen, setDetailsIsOpen] = useState<boolean>(false);
   const status = computeCheckStatus(check);
@@ -88,8 +87,8 @@ export const CheckDetails = ({ check, computeCheckStatus, run }) => {
                 id="core.healthcheck.check.details.date"
                 defaultMessage="{startedAt} - {finishedAt} ({duration}s)"
                 values={{
-                  startedAt: startedAt || '-',
-                  finishedAt: finishedAt || '-',
+                  startedAt: startedAt ? formatDate(startedAt) : '-',
+                  finishedAt: finishedAt ? formatDate(finishedAt) : '-',
                   duration: duration || '-',
                 }}
               />
