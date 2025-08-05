@@ -51,7 +51,31 @@ export function addRoutes(router, { healthcheck, logger }) {
     })
   );
 
-  // Get the status of internal initialization tasks
+  // Get configuration
+
+  router.get(
+    {
+      path: '/config',
+      validate: false,
+    },
+    async (context, request, response) => {
+      try {
+        logger.debug('Getting health check config');
+
+        return response.ok({
+          body: healthcheck.getConfig(),
+        });
+      } catch (error) {
+        return response.internalError({
+          body: {
+            message: `Error getting the health check config: ${error.message}`,
+          },
+        });
+      }
+    }
+  );
+
+  // Get the status of internal health check tasks
   router.get(
     {
       path: '/internal',
@@ -67,7 +91,7 @@ export function addRoutes(router, { healthcheck, logger }) {
       try {
         const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
 
-        logger.debug(`Getting initialization tasks related to internal scope`);
+        logger.debug(`Getting health check tasks related to internal scope`);
 
         const tasksData = healthcheck.getChecksInfo(tasksNames);
 
@@ -93,7 +117,7 @@ export function addRoutes(router, { healthcheck, logger }) {
     }
   );
 
-  // Run the internal initialization tasks
+  // Run the internal health check tasks
   router.post(
     {
       path: '/internal',

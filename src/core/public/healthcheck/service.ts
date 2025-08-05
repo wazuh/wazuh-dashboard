@@ -98,14 +98,28 @@ export class HealthcheckService {
           },
         },
       },
+      getConfig: async () => {
+        try {
+          return await core.http.get('/api/healthcheck/config');
+        } catch (error) {
+          core.notifications.toasts.add({
+            color: 'danger',
+            title: 'Error getting the health check config.',
+            text: error.message,
+          });
+          throw error;
+        }
+      },
     };
 
+    // const config = this.initializerContext.config.get();
     // Mount UI button
     mount({
       coreStart: core,
       status$: this.status$,
       fetch: deps.client.internal.fetch,
       run: deps.client.internal.run,
+      getConfig: deps.getConfig,
       computeCheckStatus: (check) => this.computeStatus(check),
     });
 

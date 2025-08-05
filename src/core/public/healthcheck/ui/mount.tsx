@@ -7,7 +7,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { HealthCheckNavButton } from './component';
 
-export const mount = ({ coreStart, status$, fetch, run, computeCheckStatus }) => {
+export const mount = ({ coreStart, status$, fetch, run, computeCheckStatus, getConfig }) => {
   const isPlacedInLeftNav = coreStart.uiSettings.get('home:useNewHomePage');
 
   coreStart.chrome.navControls[isPlacedInLeftNav ? 'registerLeftBottom' : 'registerRight']({
@@ -19,6 +19,7 @@ export const mount = ({ coreStart, status$, fetch, run, computeCheckStatus }) =>
           status$={status$}
           fetch={fetch}
           run={run}
+          getConfig={getConfig}
           computeCheckStatus={computeCheckStatus}
         />,
         element

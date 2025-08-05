@@ -302,4 +302,14 @@ export class HealthCheck extends TaskManager implements TaskManager {
     this.statusSubscriptions.add(subscription);
     return subscription;
   }
+
+  getConfig() {
+    return {
+      enabled: this._enabled,
+      retries_delay: this._retryDelay,
+      max_retries: this._maxRetryAttempts,
+      interval: this._internalScheduledCheckTime,
+      checks_enabled: this._checks_enabled,
+    };
+  }
 }

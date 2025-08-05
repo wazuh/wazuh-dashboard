@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, I18nProvider } from '@osd/i18n/react';
 import {
   EuiButtonEmpty,
@@ -20,6 +20,7 @@ import {
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { groupBy } from 'lodash';
+import { interval } from 'rxjs';
 import { useAsyncAction } from './hook/use_async_action';
 import { ButtonExportHealthCheck } from './export_checks';
 import { HealthIcon } from './health_icon';
@@ -27,9 +28,23 @@ import { getHealthFromStatus } from './services/health';
 import { CheckDetails } from './check_details';
 
 export const HealthCheckNavButton = (props) => {
-  const [isPopoverOpen, setPopoverOpen] = React.useState<boolean>(false);
+  const [isPopoverOpen, setPopoverOpen] = useState<boolean>(false);
   const { status, checks } = useObservable(props.status$, props.status$.getValue());
   const runAction = useAsyncAction(() => props.run());
+  const updateInterval = useRef();
+
+  useEffect(() => {
+    props.getConfig().then((config) => {
+      props.fetch().catch();
+      const intervalConfig = config?.interval;
+      if (interval) {
+        updateInterval.current = interval(intervalConfig).subscribe(() => props.fetch());
+      }
+    });
+
+    return () => updateInterval?.current?.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const checksGroupByResult = useMemo(() => {
     return groupBy(checks, 'result');
@@ -79,11 +94,6 @@ export const HealthCheckNavButton = (props) => {
   ) : (
     button
   );
-
-  useEffect(() => {
-    props.fetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const contextMenuPanel = (
     <div style={{ maxWidth: '400px' }}>
