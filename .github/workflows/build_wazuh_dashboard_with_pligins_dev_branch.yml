@@ -1,4 +1,4 @@
-name: Build Wazuh dashboard with plugins test 1
+name: Build Wazuh dashboard with plugins (dev branch)
 
 on:
   workflow_dispatch:
