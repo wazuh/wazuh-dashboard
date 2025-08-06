@@ -273,48 +273,26 @@ jobs:
   build-main-plugins:
     needs: [prepare-refs]
     name: Build Main Plugins
-    runs-on: ubuntu-latest
-    steps:
-      # ШАГ 1: Клонируем репозиторий с плагинами нужной ветки
-      - name: Checkout wazuh-dashboard-plugins repo
-        uses: actions/checkout@v4
-        with:
-          repository: ivmerk/wazuh-dashboard-plugins
-          ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
-          path: ./wazuh-plugins-repo # Клонируем в локальную папку
+    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/dev-environment.yml@master
+    # Примечание: можно заменить @master на конкретный тег, например, @v4.8.0 для большей стабильности
+    with:
+      # Мы передаем в reusable workflow ту ветку, которую нужно собрать
+      reference: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
+      # Остальные параметры, которые ожидает dev-environment.yml
+      command: 'yarn build'
+      artifact_name: 'wazuh-dashboard-plugins'
 
-      # ШАГ 2: Вызываем их собственный workflow сборки из локальной папки!
-      # Мы вызываем сразу dev-environment.yml, так как manual-build.yml - просто обертка.
-      - name: Run the local build workflow
-        uses: ./wazuh-plugins-repo/.github/workflows/dev-environment.yml
-        with:
-          reference: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
-          command: 'yarn build'
-          artifact_name: 'wazuh-dashboard-plugins'
 
-  # =================================================================
-  #           Сборка плагина БЕЗОПАСНОСТИ (ПРАВИЛЬНЫЙ СПОСОБ)
-  # =================================================================
+
   build-security-plugin:
     needs: [prepare-refs]
     name: Build Security Plugin
-    runs-on: ubuntu-latest
-    steps:
-      # ШАГ 1: Клонируем репозиторий с плагином безопасности нужной ветки
-      - name: Checkout wazuh-security-dashboards-plugin repo
-        uses: actions/checkout@v4
-        with:
-          repository: ivmerk/wazuh-security-dashboards-plugin
-          ref: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
-          path: ./security-plugin-repo # Клонируем в свою локальную папку
-
-      # ШАГ 2: Вызываем их собственный workflow сборки из локальной папки
-      - name: Run the local build workflow
-        uses: ./security-plugin-repo/.github/workflows/dev-environment.yml
-        with:
-          reference: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
-          command: 'yarn build'
-          artifact_name: 'wazuh-security-dashboards-plugin'
+    uses: ivmerk/wazuh-security-dashboards-plugin/.github/workflows/dev-environment.yml@master
+    with:
+      # И здесь делаем то же самое
+      reference: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
+      command: 'yarn build'
+      artifact_name: 'wazuh-security-dashboards-plugin'
 
 
   build-and-test-package:
