@@ -26,14 +26,12 @@ on:
         required: false # Сделали необязательным
       reference_security_plugins:
         type: string
-        description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
-        required: true
-        default: 'master'
+        description: 'Branch/tag/commit of wazuh-security-dashboards-plugin. If empty, uses master.'
+        required: false
       reference_wazuh_plugins:
         type: string
-        description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
-        required: true
-        default: 'master'
+        description: 'Branch/tag/commit of wazuh-dashboard-plugins. If empty, uses master.'
+        required: false
 
 jobs:
   prepare-refs:
@@ -55,21 +53,33 @@ jobs:
     needs: prepare-refs
     runs-on: ubuntu-latest
     name: Setup variables
+    # Все outputs остаются без изменений
     outputs:
       CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
+      VERSION: ${{ steps.setup-variables.outputs.VERSION }}
+      REVISION: ${{ steps.setup-variables.outputs.REVISION }}
+      COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
+      PLUGINS_SHA: ${{ steps.setup-variables.outputs.PLUGINS_SHA }}
+      SECURITY_SHA: ${{ steps.setup-variables.outputs.SECURITY_SHA }}
+      PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
       WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
       WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+      WAZUH_PLUGINS_WAZUH: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+      WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+      WAZUH_PLUGINS_CHECK_UPDATES: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+      PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
+      ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
     steps:
-      - name: Checkout code
+      - name: Checkout dashboard repo for versioning
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard
           ref: ${{ needs.prepare-refs.outputs.dashboard_ref }}
-
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '18.19.0'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Get SHA of wazuh-dashboard-plugins
@@ -78,6 +88,7 @@ jobs:
           git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/ivmerk/wazuh-dashboard-plugins.git wzdp
           cd wzdp
           echo "WAZUH_PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Get SHA of wazuh-security-dashboards-plugin
         id: get-security-sha
         run: |
@@ -90,19 +101,61 @@ jobs:
         run: |
           CURRENT_DIR=$(pwd -P)
           VERSION=$(jq -r '.version' VERSION.json)
-          REVISION="${{ inputs.revision }}"
-          
-          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
-          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+          REVISION=$(jq -r '.stage' VERSION.json)
 
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          PLUGINS_SHA=${{ steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA }}
+          SECURITY_SHA=${{ steps.get-security-sha.outputs.WAZUH_SECURITY_SHA }}
+
+          if [ "${{ inputs.is_stage }}" = "true" ]; then
+            PRODUCTION=--production
+          else
+            PRODUCTION=""
+          fi
+
+          ARCH_SHORT=$([[ "${{ inputs.ARCHITECTURE }}" == "x86_64" || "${{ inputs.ARCHITECTURE }}" == "amd64" ]] && echo "x64" || echo "arm64")
+
+          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${ARCH_SHORT}.tar.gz
+          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+
+          if [ "${{ inputs.system }}" = "deb" ]; then
+            if [ "${{ inputs.is_stage }}" = "true" ]; then
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
+            else
+          PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.deb
+          fi
+          else
+          if [ "${{ inputs.is_stage }}" = "true" ]; then
+            PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
+          else
+            PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.rpm
+          fi
+          fi
+
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            ARCHITECTURE_FLAG=""
+          else
+            ARCHITECTURE_FLAG=--arm
+          fi
+
+          echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
+          echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
+          echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
           echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
           echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
-      
-      - name: Checking home folder
-        id: home-folger
-        run: |
-          pwd
-          ls -al
+          echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CORE=$WAZUH_PLUGINS_CORE" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CHECK_UPDATES=$WAZUH_PLUGINS_CHECK_UPDATES" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
+    
  
   check-condition:
     needs: setup-variables
@@ -218,9 +271,189 @@ jobs:
           overwrite: true
           
       
-  build-main-plugins:
-    needs: setup-variables
-    name: Build plugins
-    uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@master
-    with:
-      reference: ${{ inputs.reference_wazuh_plugins }}
+build-main-plugins:
+    needs: [validate-job, prepare-refs, setup-variables]
+    name: Build main plugins
+    runs-on: ubuntu-latest
+    secrets: inherit # Наследуем секреты, как в оригинальном workflow
+    steps:
+      - name: Checkout wazuh-dashboard-plugins
+        uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-dashboard-plugins
+          ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn and Cache
+        run: |
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+          
+      - name: Install dependencies
+        run: yarn osd bootstrap
+
+      - name: Build plugins
+        run: yarn build
+
+      - name: Upload Wazuh plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          path: ./plugins/wazuh/build/*.zip
+
+      - name: Upload Wazuh Core plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          path: ./plugins/wazuh-core/build/*.zip
+
+      - name: Upload Check Updates plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          path: ./plugins/wazuh-check-updates/build/*.zip
+
+  # =================================================================
+  #           ИНТЕГРИРОВАННАЯ ЗАДАЧА СБОРКИ ПЛАГИНА БЕЗОПАСНОСТИ
+  # =================================================================
+  build-security-plugin:
+    needs: [validate-job, prepare-refs, setup-variables]
+    name: Build security plugin
+    runs-on: ubuntu-latest
+    secrets: inherit # Наследуем секреты, как в оригинальном workflow
+    steps:
+      - name: Checkout wazuh-security-dashboards-plugin
+        uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-security-dashboards-plugin
+          ref: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn and Cache
+        run: |
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+          
+      - name: Install dependencies
+        run: yarn osd bootstrap
+
+      - name: Build plugin
+        run: yarn build
+      
+      - name: Upload security plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+          # Путь `./build/*.zip` - стандартный для таких сборок
+          path: ./build/*.zip
+
+  # Эта задача остается почти без изменений
+  build-and-test-package:
+    needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
+    name: Generate packages
+
+      steps:
+    
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wazuh-dashboard_4.12.0-03_x64.tar.gz
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
+
+      - name: Download security plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wazuh-security-dashboards-plugin_4.12.0-03_master.zip
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+
+      - name: Download main plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wazuh-dashboard-plugins_wazuh_4.12.0-03_master.zip
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+      - name: Download core plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wazuh-dashboard-plugins_wazuh-core_4.12.0-03_master.zip
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+      - name: Download check update plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wazuh-dashboard-plugins_wazuh-check-updates_4.12.0-03_master.zip
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+     
+      - name: Debug artifacts
+        run: |
+          echo "::group::Contents of artifacts/"
+          ls -R ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts
+          echo "::endgroup::"
+
+      - name: Zip plugins
+        run: |
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/wazuh-dashboard_4.12.0-03_x64.tar.gz
+
+      - name: Debug current dir contents
+        run: |
+          echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
+          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}
+          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools
+
+      - name: Clone dev-tools
+        run: |
+          git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
+          cp -r temp-dashboard/dev-tools ${{ needs.setup-variables.outputs.CURRENT_DIR }}
+      
+      - name: Build package
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+          bash ./build-packages.sh \
+            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
+            -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
+            -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
+            -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
+            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+
+      - name: Export variables to env
+        run: |
+          echo "VERSION=${{ needs.setup-variables.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "ARTIFACT_BUILD_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}" >> $GITHUB_ENV
+
+      - name: Move generated .deb to artifacts folder
+        run: |
+          mkdir -p ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output
+          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/*.deb ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/
+      - name: List target artifacts
+        run: |
+            ls -lh ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/
+            ls -lh ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          retention-days: 30
+          overwrite: true
