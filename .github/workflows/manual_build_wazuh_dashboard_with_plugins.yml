@@ -321,7 +321,7 @@ build-main-plugins:
   # =================================================================
   #           ИНТЕГРИРОВАННАЯ ЗАДАЧА СБОРКИ ПЛАГИНА БЕЗОПАСНОСТИ
   # =================================================================
-  build-security-plugin:
+build-security-plugin:
     needs: [validate-job, prepare-refs, setup-variables]
     name: Build security plugin
     runs-on: ubuntu-latest
@@ -358,7 +358,7 @@ build-main-plugins:
           path: ./build/*.zip
 
   # Эта задача остается почти без изменений
-  build-and-test-package:
+build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
