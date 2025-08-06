@@ -210,7 +210,12 @@ export const HealthCheckNavButton = (props) => {
           }}
           panelPaddingSize="s"
         >
-          <EuiContextMenuPanel>{contextMenuPanel}</EuiContextMenuPanel>
+          <EuiContextMenuPanel
+            size="s"
+            style={{ overflowY: 'scroll', maxHeight: '75vh', overflowX: 'hidden' }}
+          >
+            {contextMenuPanel}
+          </EuiContextMenuPanel>
         </EuiPopover>
       </EuiHeaderSectionItemButton>
     </I18nProvider>
