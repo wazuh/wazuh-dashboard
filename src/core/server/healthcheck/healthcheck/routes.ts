@@ -160,7 +160,6 @@ export function addRoutesReadyServer(router, { healthcheck, logger }) {
   );
 
   // Get configuration
-
   router.get(
     {
       path: '/config',
