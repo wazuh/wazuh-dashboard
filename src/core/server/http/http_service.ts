@@ -196,11 +196,11 @@ export class HttpService
   private async runNotReadyServer(config: HttpConfig, deps: any) {
     this.log.debug('starting NotReady server');
     const httpServer = new HttpServer(this.logger, 'NotReady');
-    const { server } = await httpServer.setup(config);
+    const { server, basePath } = await httpServer.setup(config);
     this.notReadyServer = server;
 
     // Wazuh: decorate server
-    deps.getHealthCheckService().enhanceNotReadyServer(server);
+    deps.getHealthCheckService().enhanceNotReadyServer(server, basePath);
     // use hapi server while OpenSearchDashboardsResponseFactory doesn't allow specifying custom headers
     // https://github.com/elastic/kibana/issues/33779
     // Wazuh: comment

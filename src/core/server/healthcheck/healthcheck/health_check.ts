@@ -7,7 +7,7 @@ import { Logger } from 'opensearch-dashboards/server';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { retry, TASK, TaskManager } from '../task';
 import type { TaskRunResult } from '../task';
-import { addRoutes } from './routes';
+import { addRoutesReadyServer } from './routes';
 import { ScheduledIntervalTask } from './scheduled_task';
 
 export interface HealthCheckStatus {
@@ -132,7 +132,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
 
     this.logger.debug('Adding API routes');
     const router = core.http.createRouter('/api/healthcheck');
-    addRoutes(router, { healthcheck: this, logger: this.logger });
+    addRoutesReadyServer(router, { healthcheck: this, logger: this.logger });
     this.logger.debug('Added API routes');
   }
 
