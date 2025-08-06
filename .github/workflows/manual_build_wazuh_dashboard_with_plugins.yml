@@ -271,12 +271,11 @@ jobs:
           overwrite: true
           
       
-build-main-plugins:
-  needs: [validate-job, prepare-refs, setup-variables]
-  name: Build main plugins
-  runs-on: ubuntu-latest
-  secrets: inherit # Наследуем секреты, как в оригинальном workflow
-  steps:
+  build-main-plugins:
+    needs: [prepare-refs, setup-variables]
+    runs-on: ubuntu-latest
+    name: Build main plugins
+    steps:
     - name: Checkout wazuh-dashboard-plugins
       uses: actions/checkout@v4
       with:
@@ -322,10 +321,9 @@ build-main-plugins:
   #           ИНТЕГРИРОВАННАЯ ЗАДАЧА СБОРКИ ПЛАГИНА БЕЗОПАСНОСТИ
   # =================================================================
   build-security-plugin:
-    needs: [validate-job, prepare-refs, setup-variables]
+    needs: [prepare-refs, setup-variables]
     name: Build security plugin
     runs-on: ubuntu-latest
-    secrets: inherit # Наследуем секреты, как в оригинальном workflow
     steps:
       - name: Checkout wazuh-security-dashboards-plugin
         uses: actions/checkout@v4
