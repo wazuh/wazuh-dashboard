@@ -179,7 +179,12 @@ export const HealthCheckNavButton = (props) => {
         </EuiFlexItem>
       </EuiFlexGroup>
       <EuiHorizontalRule margin="xs" />
-      <EuiFlexGroup direction="column" gutterSize="xs" responsive={false}>
+      <EuiFlexGroup
+        direction="column"
+        gutterSize="xs"
+        responsive={false}
+        style={{ overflowY: 'scroll', maxHeight: '65vh', overflowX: 'hidden' }}
+      >
         {checks.map((check) => (
           <EuiFlexItem key={check.name}>
             <div>
@@ -210,12 +215,7 @@ export const HealthCheckNavButton = (props) => {
           }}
           panelPaddingSize="s"
         >
-          <EuiContextMenuPanel
-            size="s"
-            style={{ overflowY: 'scroll', maxHeight: '75vh', overflowX: 'hidden' }}
-          >
-            {contextMenuPanel}
-          </EuiContextMenuPanel>
+          <EuiContextMenuPanel>{contextMenuPanel}</EuiContextMenuPanel>
         </EuiPopover>
       </EuiHeaderSectionItemButton>
     </I18nProvider>
