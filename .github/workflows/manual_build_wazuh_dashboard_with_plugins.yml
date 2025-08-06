@@ -194,7 +194,8 @@ jobs:
     defaults:
       run:
         working-directory: ./artifacts # Устанавливаем рабочую директорию для всех шагов run
-
+    outputs:
+      artifact_name: ${{ steps.export-name.outputs.value }}
     steps:
       # ШАГ 1: Checkout (из reusable workflow)
       - name: Checkout code
@@ -241,6 +242,7 @@ jobs:
 
       # ШАГ 6: Get artifact name (из reusable workflow, убрали matrix)
       - name: Get artifact build name
+        id: get-artifact-name
         run: |
           ARCH_SUFFIX=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
           echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${ARCH_SUFFIX}.tar.gz" >> $GITHUB_ENV
@@ -269,6 +271,10 @@ jobs:
           path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
           retention-days: 30
           overwrite: true
+
+      - name: Export artifact name as job output
+        id: export-name
+        run: echo "value=${{ env.ARTIFACT_BUILD_NAME }}" >> $GITHUB_OUTPUT
           
   build-main-plugins:
     needs: [prepare-refs]
@@ -315,7 +321,7 @@ jobs:
       - name: Download dashboard artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          name: ${{ needs.build-base.outputs.artifact_name }}
           path: artifacts/dashboard
 
       - name: Download security plugin artifact
