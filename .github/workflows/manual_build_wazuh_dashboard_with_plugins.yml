@@ -275,12 +275,16 @@ jobs:
     needs: [prepare-refs, setup-variables]
     runs-on: ubuntu-latest
     name: Build main plugins
+    defaults:
+      run:
+        working-directory: ./wazuh-plugins-src
     steps:
     - name: Checkout wazuh-dashboard-plugins
       uses: actions/checkout@v4
       with:
         repository: ivmerk/wazuh-dashboard-plugins
         ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
+        path: ./wazuh-plugins-src
 
     - name: Setup Node
       uses: actions/setup-node@v4
@@ -292,6 +296,13 @@ jobs:
       run: |
         npm i -g yarn@1.22.10
         yarn config set network-timeout 1000000 -g
+
+    - name: DEBUG Check current directory and its contents
+      run: |
+        echo "Current directory is:"
+        pwd
+        echo "Contents:"
+        ls -la       
           
     - name: Install dependencies
       run: yarn osd bootstrap
@@ -333,6 +344,7 @@ jobs:
         with:
           repository: ivmerk/wazuh-security-dashboards-plugin
           ref: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
+          path: ./security-plugin-src
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -344,6 +356,13 @@ jobs:
         run: |
           npm i -g yarn@1.22.10
           yarn config set network-timeout 1000000 -g
+
+      - name: DEBUG Check current directory and its contents
+        run: |
+          echo "Current directory is:"
+          pwd
+          echo "Contents:"
+          ls -la    
           
       - name: Install dependencies
         run: yarn osd bootstrap
