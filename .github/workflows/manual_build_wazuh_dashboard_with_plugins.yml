@@ -270,116 +270,92 @@ jobs:
           retention-days: 30
           overwrite: true
           
-      
-  build-main-plugins:
+  build-all-plugins:
     needs: [prepare-refs, setup-variables]
+    name: Build All Plugins in a Unified Environment
     runs-on: ubuntu-latest
-    name: Build main plugins
-    defaults:
-      run:
-        working-directory: ./wazuh-plugins-src
     steps:
-    - name: Checkout wazuh-dashboard-plugins
-      uses: actions/checkout@v4
-      with:
-        repository: ivmerk/wazuh-dashboard-plugins
-        ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
-        path: ./wazuh-plugins-src
+      # --- ШАГ 1: Создаем сборочный стенд ---
+      # Клонируем основной wazuh-dashboard. Он будет "хостом" для сборки.
+      - name: Checkout wazuh-dashboard (as build host)
+        uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-dashboard
+          ref: ${{ needs.prepare-refs.outputs.dashboard_ref }}
+          path: ./build-root
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18.19.0'
-        registry-url: 'https://registry.npmjs.org'
+      # --- ШАГ 2: Добавляем плагины в сборочный стенд ---
+      # Клонируем репозиторий с основными плагинами в специальную папку `plugins`.
+      # Это стандартный путь для плагинов OpenSearch Dashboards.
+      - name: Checkout wazuh-dashboard-plugins
+        uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-dashboard-plugins
+          ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
+          path: ./build-root/plugins/wazuh-dashboard-plugins
 
-    - name: Setup Yarn and Cache
-      run: |
-        npm i -g yarn@1.22.10
-        yarn config set network-timeout 1000000 -g
-
-    - name: DEBUG Check current directory and its contents
-      run: |
-        echo "Current directory is:"
-        pwd
-        echo "Contents:"
-        ls -la       
-          
-    - name: Install dependencies
-      run: yarn osd bootstrap
-
-    - name: Build plugins
-      run: yarn build
-
-    - name: Upload Wazuh plugin artifact
-      uses: actions/upload-artifact@v4
-      with:
-         name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-         path: ./plugins/wazuh/build/*.zip
-
-    - name: Upload Wazuh Core plugin artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-        path: ./plugins/wazuh-core/build/*.zip
-
-    - name: Upload Check Updates plugin artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-        path: ./plugins/wazuh-check-updates/build/*.zip
-
-  # =================================================================
-  #           ИНТЕГРИРОВАННАЯ ЗАДАЧА СБОРКИ ПЛАГИНА БЕЗОПАСНОСТИ
-  # =================================================================
-  build-security-plugin:
-    needs: [prepare-refs, setup-variables]
-    name: Build security plugin
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./security-plugin-src
-    steps:
+      # Клонируем репозиторий с плагином безопасности туда же.
       - name: Checkout wazuh-security-dashboards-plugin
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-security-dashboards-plugin
           ref: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
-          path: ./security-plugin-src
+          path: ./build-root/plugins/wazuh-security-dashboards-plugin
 
+      # --- ШАГ 3: Настраиваем окружение ---
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '18.19.0'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup Yarn and Cache
-        run: |
-          npm i -g yarn@1.22.10
-          yarn config set network-timeout 1000000 -g
+      - name: Setup Yarn
+        run: npm i -g yarn@1.22.10
 
-      - name: DEBUG Check current directory and its contents
+      # --- ШАГ 4: Собираем! ---
+      # Устанавливаем рабочую директорию для всех последующих команд.
+      - name: Bootstrap and Build
+        working-directory: ./build-root # Все команды теперь выполняются из корня wazuh-dashboard
         run: |
-          echo "Current directory is:"
-          pwd
-          echo "Contents:"
-          ls -la    
-          
-      - name: Install dependencies
-        run: yarn osd bootstrap
+          echo "--- Bootstrapping dependencies for dashboard and all plugins ---"
+          # Эта команда найдет package.json в корне wazuh-dashboard
+          # и свяжет зависимости с плагинами в папке ./plugins
+          yarn osd bootstrap
 
-      - name: Build plugin
-        run: yarn build
+          echo "--- Building all plugins ---"
+          # Эта команда (предположительно) запускает сборку для всех найденных плагинов.
+          # Если она не работает, возможно, придется запускать `yarn build` в каждой папке плагина.
+          # Но bootstrap должен настроить все для единой сборки.
+          yarn build --skip-os-packages
       
+      # --- ШАГ 5: Загружаем готовые артефакты ---
+      # Пути теперь длинные, но правильные, относительно корня воркспейса.
+      - name: Upload Wazuh plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          path: ./build-root/plugins/wazuh-dashboard-plugins/plugins/wazuh/build/*.zip
+
+      - name: Upload Wazuh Core plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          path: ./build-root/plugins/wazuh-dashboard-plugins/plugins/wazuh-core/build/*.zip
+
+      - name: Upload Check Updates plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          path: ./build-root/plugins/wazuh-dashboard-plugins/plugins/wazuh-check-updates/build/*.zip
+
       - name: Upload security plugin artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          # Путь `./build/*.zip` - стандартный для таких сборок
-          path: ./build/*.zip
-
-  # Эта задача остается почти без изменений
+          path: ./build-root/plugins/wazuh-security-dashboards-plugin/build/*.zip
+ 
   build-and-test-package:
-    needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
+    needs: [setup-variables, build-all-plugins, build-base]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
