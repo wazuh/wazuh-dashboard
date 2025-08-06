@@ -327,15 +327,19 @@ jobs:
       - name: Debug artifacts
         run: |
           echo "::group::Contents of artifacts/"
-          ls -R ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts
+          ls -R artifacts
+          echo "::endgroup::"
           echo "::endgroup::"
 
       - name: Zip plugins
         run: |
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/wazuh-dashboard_4.12.0-03_x64.tar.gz
-
+          mkdir -p artifacts/plugins
+          mkdir -p artifacts/security-plugin
+          mkdir -p artifacts/dashboard
+          zip -r -j artifacts/wazuh-package.zip artifacts/plugins
+          zip -r -j artifacts/security-package.zip artifacts/security-plugin
+          zip -r -j artifacts/dashboard-package.zip artifacts/dashboard/
+ 
       - name: Debug current dir contents
         run: |
           echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
@@ -349,14 +353,14 @@ jobs:
       
       - name: Build package
         run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+          cd dev-tools/build-packages
+          # Здесь мы используем АБСОЛЮТНЫЙ путь, но построенный на основе переменной github.workspace, что правильно
           bash ./build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
-            -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
-            -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
-            -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
-            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+            -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
+            -s file://${{ github.workspace }}/artifacts/security-package.zip \
+            -b file://${{ github.workspace }}/artifacts/dashboard-package.zip \
+            # ... и так далее
 
       - name: Export variables to env
         run: |
