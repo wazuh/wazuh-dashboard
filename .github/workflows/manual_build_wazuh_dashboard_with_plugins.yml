@@ -293,6 +293,7 @@ jobs:
       reference: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
       command: 'yarn build'
       artifact_name: 'wazuh-security-dashboards-plugin'
+      artifact_path: 'wazuh-security-plugin/build'
 
 
   build-and-test-package:
