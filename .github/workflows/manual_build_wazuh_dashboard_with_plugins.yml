@@ -272,56 +272,56 @@ jobs:
           
       
 build-main-plugins:
-    needs: [validate-job, prepare-refs, setup-variables]
-    name: Build main plugins
-    runs-on: ubuntu-latest
-    secrets: inherit # Наследуем секреты, как в оригинальном workflow
-    steps:
-      - name: Checkout wazuh-dashboard-plugins
-        uses: actions/checkout@v4
-        with:
-          repository: ivmerk/wazuh-dashboard-plugins
-          ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
+  needs: [validate-job, prepare-refs, setup-variables]
+  name: Build main plugins
+  runs-on: ubuntu-latest
+  secrets: inherit # Наследуем секреты, как в оригинальном workflow
+  steps:
+    - name: Checkout wazuh-dashboard-plugins
+      uses: actions/checkout@v4
+      with:
+        repository: ivmerk/wazuh-dashboard-plugins
+        ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup Yarn and Cache
-        run: |
-          npm i -g yarn@1.22.10
-          yarn config set network-timeout 1000000 -g
+    - name: Setup Yarn and Cache
+      run: |
+        npm i -g yarn@1.22.10
+        yarn config set network-timeout 1000000 -g
           
-      - name: Install dependencies
-        run: yarn osd bootstrap
+    - name: Install dependencies
+      run: yarn osd bootstrap
 
-      - name: Build plugins
-        run: yarn build
+    - name: Build plugins
+      run: yarn build
 
-      - name: Upload Wazuh plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: ./plugins/wazuh/build/*.zip
+    - name: Upload Wazuh plugin artifact
+      uses: actions/upload-artifact@v4
+      with:
+         name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+         path: ./plugins/wazuh/build/*.zip
 
-      - name: Upload Wazuh Core plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: ./plugins/wazuh-core/build/*.zip
+    - name: Upload Wazuh Core plugin artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+        path: ./plugins/wazuh-core/build/*.zip
 
-      - name: Upload Check Updates plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: ./plugins/wazuh-check-updates/build/*.zip
+    - name: Upload Check Updates plugin artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+        path: ./plugins/wazuh-check-updates/build/*.zip
 
   # =================================================================
   #           ИНТЕГРИРОВАННАЯ ЗАДАЧА СБОРКИ ПЛАГИНА БЕЗОПАСНОСТИ
   # =================================================================
-build-security-plugin:
+  build-security-plugin:
     needs: [validate-job, prepare-refs, setup-variables]
     name: Build security plugin
     runs-on: ubuntu-latest
@@ -358,12 +358,11 @@ build-security-plugin:
           path: ./build/*.zip
 
   # Эта задача остается почти без изменений
-build-and-test-package:
+  build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
-
-      steps:
+    steps:
     
       - name: Checkout code
         uses: actions/checkout@v4
