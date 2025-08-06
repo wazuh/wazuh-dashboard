@@ -270,92 +270,56 @@ jobs:
           retention-days: 30
           overwrite: true
           
-  build-all-plugins:
-    needs: [prepare-refs, setup-variables]
-    name: Build All Plugins in a Unified Environment
+  build-main-plugins:
+    needs: [prepare-refs]
+    name: Build Main Plugins
     runs-on: ubuntu-latest
     steps:
-      # --- ШАГ 1: Создаем сборочный стенд ---
-      # Клонируем основной wazuh-dashboard. Он будет "хостом" для сборки.
-      - name: Checkout wazuh-dashboard (as build host)
-        uses: actions/checkout@v4
-        with:
-          repository: ivmerk/wazuh-dashboard
-          ref: ${{ needs.prepare-refs.outputs.dashboard_ref }}
-          path: ./build-root
-
-      # --- ШАГ 2: Добавляем плагины в сборочный стенд ---
-      # Клонируем репозиторий с основными плагинами в специальную папку `plugins`.
-      # Это стандартный путь для плагинов OpenSearch Dashboards.
-      - name: Checkout wazuh-dashboard-plugins
+      # ШАГ 1: Клонируем репозиторий с плагинами нужной ветки
+      - name: Checkout wazuh-dashboard-plugins repo
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard-plugins
           ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
-          path: ./build-root/plugins/wazuh-dashboard-plugins
+          path: ./wazuh-plugins-repo # Клонируем в локальную папку
 
-      # Клонируем репозиторий с плагином безопасности туда же.
-      - name: Checkout wazuh-security-dashboards-plugin
+      # ШАГ 2: Вызываем их собственный workflow сборки из локальной папки!
+      # Мы вызываем сразу dev-environment.yml, так как manual-build.yml - просто обертка.
+      - name: Run the local build workflow
+        uses: ./wazuh-plugins-repo/.github/workflows/dev-environment.yml
+        with:
+          reference: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
+          command: 'yarn build'
+          artifact_name: 'wazuh-dashboard-plugins'
+
+  # =================================================================
+  #           Сборка плагина БЕЗОПАСНОСТИ (ПРАВИЛЬНЫЙ СПОСОБ)
+  # =================================================================
+  build-security-plugin:
+    needs: [prepare-refs]
+    name: Build Security Plugin
+    runs-on: ubuntu-latest
+    steps:
+      # ШАГ 1: Клонируем репозиторий с плагином безопасности нужной ветки
+      - name: Checkout wazuh-security-dashboards-plugin repo
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-security-dashboards-plugin
           ref: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
-          path: ./build-root/plugins/wazuh-security-dashboards-plugin
+          path: ./security-plugin-repo # Клонируем в свою локальную папку
 
-      # --- ШАГ 3: Настраиваем окружение ---
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      # ШАГ 2: Вызываем их собственный workflow сборки из локальной папки
+      - name: Run the local build workflow
+        uses: ./security-plugin-repo/.github/workflows/dev-environment.yml
         with:
-          node-version: '18.19.0'
-          registry-url: 'https://registry.npmjs.org'
+          reference: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
+          command: 'yarn build'
+          artifact_name: 'wazuh-security-dashboards-plugin'
 
-      - name: Setup Yarn
-        run: npm i -g yarn@1.22.10
 
-      # --- ШАГ 4: Собираем! ---
-      # Устанавливаем рабочую директорию для всех последующих команд.
-      - name: Bootstrap and Build
-        working-directory: ./build-root # Все команды теперь выполняются из корня wazuh-dashboard
-        run: |
-          echo "--- Bootstrapping dependencies for dashboard and all plugins ---"
-          # Эта команда найдет package.json в корне wazuh-dashboard
-          # и свяжет зависимости с плагинами в папке ./plugins
-          yarn osd bootstrap
-
-          echo "--- Building all plugins ---"
-          # Эта команда (предположительно) запускает сборку для всех найденных плагинов.
-          # Если она не работает, возможно, придется запускать `yarn build` в каждой папке плагина.
-          # Но bootstrap должен настроить все для единой сборки.
-          yarn build --skip-os-packages
-      
-      # --- ШАГ 5: Загружаем готовые артефакты ---
-      # Пути теперь длинные, но правильные, относительно корня воркспейса.
-      - name: Upload Wazuh plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: ./build-root/plugins/wazuh-dashboard-plugins/plugins/wazuh/build/*.zip
-
-      - name: Upload Wazuh Core plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: ./build-root/plugins/wazuh-dashboard-plugins/plugins/wazuh-core/build/*.zip
-
-      - name: Upload Check Updates plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: ./build-root/plugins/wazuh-dashboard-plugins/plugins/wazuh-check-updates/build/*.zip
-
-      - name: Upload security plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          path: ./build-root/plugins/wazuh-security-dashboards-plugin/build/*.zip
- 
   build-and-test-package:
-    needs: [setup-variables, build-all-plugins, build-base]
+    needs: [setup-variables, build-base, build-main-plugins, build-security-plugin]
+
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
