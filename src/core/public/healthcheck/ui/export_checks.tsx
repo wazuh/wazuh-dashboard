@@ -41,7 +41,11 @@ function downloadFile(filename, content, mimeType = 'text/plain') {
 
 export const ButtonExportHealthCheck = (data) => {
   const action = useAsyncAction(() =>
-    downloadFile('healthcheck.json', JSON.stringify(data, null, 2), 'application/json')
+    downloadFile(
+      'healthcheck.json',
+      JSON.stringify({ ...data, _meta: { server: 'ready' } }, null, 2),
+      'application/json'
+    )
   );
   return (
     <EuiToolTip
