@@ -70,32 +70,68 @@ jobs:
       PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
       ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
     steps:
-      - name: Checkout dashboard repo for versioning
+      # --- ШАГ 1: Клонируем все нужные репозитории ---
+      - name: Checkout dashboard repo (for main version)
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard
           ref: ${{ needs.prepare-refs.outputs.dashboard_ref }}
-      
-      - name: Setup Node
-        uses: actions/setup-node@v4
+          path: ./wazuh-dashboard
+
+      - name: Checkout wazuh-dashboard-plugins repo (for its version)
+        uses: actions/checkout@v4
         with:
-          node-version: '18.19.0'
-          registry-url: 'https://registry.npmjs.org'
+          repository: ivmerk/wazuh-dashboard-plugins
+          ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
+          path: ./wazuh-dashboard-plugins
 
-      - name: Get SHA of wazuh-dashboard-plugins
-        id: get-plugins-sha
+      - name: Checkout wazuh-security-dashboards-plugin repo (for its version)
+        uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-security-dashboards-plugin
+          ref: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
+          path: ./wazuh-security-plugin
+
+      # --- ШАГ 2: Собираем SHA (как и раньше) ---
+      - name: Get SHAs
+        id: get-shas
         run: |
-          git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/ivmerk/wazuh-dashboard-plugins.git wzdp
-          cd wzdp
-          echo "WAZUH_PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          cd ./wazuh-dashboard && echo "DASHBOARD_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT && cd ..
+          cd ./wazuh-dashboard-plugins && echo "PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT && cd ..
+          cd ./wazuh-security-plugin && echo "SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT && cd ..
 
-      - name: Get SHA of wazuh-security-dashboards-plugin
-        id: get-security-sha
+      # --- ШАГ 3: Генерируем правильные имена, читая из каждого package.json ---
+      - name: Setup dynamic names
+        id: setup-variables
         run: |
-          git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/ivmerk/wazuh-security-dashboards-plugin.git wzsp
-          cd wzsp
-          echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          # --- Версии для wazuh-dashboard ---
+          DASHBOARD_VERSION=$(jq -r '.version' ./wazuh-dashboard/VERSION.json)
+          # Этот REVISION мы оставим как есть, так как он используется для build-base, где мы уже решили проблему
+          DASHBOARD_REVISION=$(jq -r '.stage' ./wazuh-dashboard/VERSION.json)
 
+          # --- Версии для wazuh-security-plugin ---
+          # Путь к package.json может отличаться, проверьте его в репозитории!
+          SECURITY_PLUGIN_VERSION=$(jq -r '.wazuh.version' ./wazuh-security-plugin/package.json)
+          SECURITY_PLUGIN_REVISION=$(jq -r '.wazuh.revision' ./wazuh-security-plugin/package.json)
+          SECURITY_PLUGIN_REF=$(echo ${{ needs.prepare-refs.outputs.security_plugins_ref }} | sed 's/\//-/g')
+          
+          # --- Версии для wazuh-dashboard-plugins ---
+          # Здесь package.json лежит глубже
+          MAIN_PLUGINS_VERSION=$(jq -r '.version' ./wazuh-dashboard-plugins/plugins/main/package.json)
+          MAIN_PLUGINS_REVISION=$(jq -r '.revision' ./wazuh-dashboard-plugins/plugins/main/package.json)
+          MAIN_PLUGINS_REF=$(echo ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }} | sed 's/\//-/g')
+          
+          # --- Генерируем имена артефактов ---
+          ARCH_SHORT=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
+          
+          # Имя для build-base (оно будет переопределено, но пусть будет)
+          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${DASHBOARD_VERSION}-${DASHBOARD_REVISION}_${ARCH_SHORT}.tar.gz" >> $GITHUB_OUTPUT
+
+          # Имена для плагинов - теперь они будут ТОЧНЫМИ
+          echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${SECURITY_PLUGIN_VERSION}-${SECURITY_PLUGIN_REVISION}_${SECURITY_PLUGIN_REF}.zip" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
       - name: Setup variables
         id: setup-variables
         run: |
