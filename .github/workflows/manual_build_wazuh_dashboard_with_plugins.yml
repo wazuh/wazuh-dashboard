@@ -340,17 +340,7 @@ jobs:
           zip -r -j artifacts/security-package.zip artifacts/security-plugin
           zip -r -j artifacts/dashboard-package.zip artifacts/dashboard/
  
-      - name: Debug current dir contents
-        run: |
-          echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
-          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}
-          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools
-
-      - name: Clone dev-tools
-        run: |
-          git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
-          cp -r temp-dashboard/dev-tools ${{ needs.setup-variables.outputs.CURRENT_DIR }}
-      
+   
       - name: Build package
         run: |
           cd dev-tools/build-packages
@@ -360,26 +350,26 @@ jobs:
             -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
             -s file://${{ github.workspace }}/artifacts/security-package.zip \
             -b file://${{ github.workspace }}/artifacts/dashboard-package.zip \
-            # ... и так далее
-
-      - name: Export variables to env
+            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+      
+      - name: Move generated package to artifacts folder
         run: |
-          echo "VERSION=${{ needs.setup-variables.outputs.VERSION }}" >> $GITHUB_ENV
-          echo "ARTIFACT_BUILD_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}" >> $GITHUB_ENV
+          # Используем относительные пути
+          mkdir -p artifacts/output
+          mv dev-tools/build-packages/output/*.deb artifacts/output/ || true
+          mv dev-tools/build-packages/output/*.rpm artifacts/output/ || true
 
-      - name: Move generated .deb to artifacts folder
-        run: |
-          mkdir -p ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output
-          mv ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/*.deb ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/
       - name: List target artifacts
         run: |
-            ls -lh ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/
-            ls -lh ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/
+          ls -lh artifacts/
+          ls -lh artifacts/output/
       
-      - name: Upload artifact
+      - name: Upload final package artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.PACKAGE_NAME }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          # Используем относительный путь
+          path: artifacts/output/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
           retention-days: 30
           overwrite: true
