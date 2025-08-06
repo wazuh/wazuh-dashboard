@@ -310,19 +310,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: artifacts/plugins
 
       - name: Download core plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: artifacts/plugins
 
       - name: Download check update plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: artifacts/plugins
      
       - name: Debug artifacts
         run: |
