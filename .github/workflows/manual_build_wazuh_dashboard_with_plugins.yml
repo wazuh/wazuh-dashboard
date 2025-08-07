@@ -96,10 +96,43 @@ jobs:
       - name: Get SHAs
         id: get-shas
         run: |
-          cd ./wazuh-dashboard && echo "DASHBOARD_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT && cd ..
-          cd ./wazuh-dashboard-plugins && echo "PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT && cd ..
-          cd ./wazuh-security-plugin && echo "SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT && cd ..
+          # Эта команда заставит скрипт упасть при первой же ошибке.
+          set -e
 
+          echo "--- Getting SHAs ---"
+
+          # Блок для wazuh-dashboard
+          if [ -d "./wazuh-dashboard" ]; then
+            cd ./wazuh-dashboard
+            echo "DASHBOARD_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+            cd ..
+          else
+            echo "ERROR: Directory ./wazuh-dashboard not found!"
+            exit 1
+          fi
+
+          # Блок для wazuh-dashboard-plugins
+          if [ -d "./wazuh-dashboard-plugins" ]; then
+            cd ./wazuh-dashboard-plugins
+            echo "PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+            cd ..
+          else
+            echo "ERROR: Directory ./wazuh-dashboard-plugins not found!"
+            exit 1
+          fi
+
+          # Блок для wazuh-security-plugin
+          if [ -d "./wazuh-security-plugin" ]; then
+            cd ./wazuh-security-plugin
+            echo "SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+            cd ..
+          else
+            echo "ERROR: Directory ./wazuh-security-plugin not found!"
+            exit 1
+          fi
+
+          echo "--- SHAs obtained successfully ---"
+      
       # --- ШАГ 3: Генерируем правильные имена, читая из каждого package.json ---
       - name: Setup dynamic names
         id: setup-variables
