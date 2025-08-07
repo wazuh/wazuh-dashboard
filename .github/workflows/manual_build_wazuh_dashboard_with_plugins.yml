@@ -50,108 +50,121 @@ jobs:
           echo "security_plugins_ref=${{ inputs.reference_security_plugins || 'master' }}" >> $GITHUB_OUTPUT
           
   setup-variables:
-    needs: prepare-refs
+    needs: prepare-refs # Зависит от задачи, определяющей ветки
     runs-on: ubuntu-latest
-    name: Setup variables
-    # Все outputs остаются без изменений
+    name: Setup all variables reliably
+    # Объявляем ВСЕ outputs, которые мы будем создавать
     outputs:
-      CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
-      VERSION: ${{ steps.setup-variables.outputs.VERSION }}
-      REVISION: ${{ steps.setup-variables.outputs.REVISION }}
-      COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
-      PLUGINS_SHA: ${{ steps.setup-variables.outputs.PLUGINS_SHA }}
-      SECURITY_SHA: ${{ steps.setup-variables.outputs.SECURITY_SHA }}
-      PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
-      WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-      WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-      WAZUH_PLUGINS_WAZUH: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-      WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-      WAZUH_PLUGINS_CHECK_UPDATES: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-      PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
-      ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
+      COMMIT_SHA: ${{ steps.export-vars.outputs.COMMIT_SHA }}
+      PLUGINS_SHA: ${{ steps.export-vars.outputs.PLUGINS_SHA }}
+      SECURITY_SHA: ${{ steps.export-vars.outputs.SECURITY_SHA }}
+      PACKAGE_NAME: ${{ steps.export-vars.outputs.PACKAGE_NAME }}
+      WAZUH_DASHBOARD_SLIM: ${{ steps.export-vars.outputs.WAZUH_DASHBOARD_SLIM }}
+      WAZUH_SECURITY_PLUGIN: ${{ steps.export-vars.outputs.WAZUH_SECURITY_PLUGIN }}
+      WAZUH_PLUGINS_WAZUH: ${{ steps.export-vars.outputs.WAZUH_PLUGINS_WAZUH }}
+      WAZUH_PLUGINS_CORE: ${{ steps.export-vars.outputs.WAZUH_PLUGINS_CORE }}
+      WAZUH_PLUGINS_CHECK_UPDATES: ${{ steps.export-vars.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+      ARCHITECTURE_FLAG: ${{ steps.export-vars.outputs.ARCHITECTURE_FLAG }}
+      PRODUCTION: ${{ steps.export-vars.outputs.PRODUCTION }}
+
     steps:
-      # --- ШАГ 1: Клонируем все нужные репозитории ---
-      - name: Checkout dashboard repo (for main version)
+      - name: Checkout ALL source repositories
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard
           ref: ${{ needs.prepare-refs.outputs.dashboard_ref }}
           path: ./wazuh-dashboard
 
-      - name: Checkout wazuh-dashboard-plugins repo (for its version)
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard-plugins
           ref: ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }}
           path: ./wazuh-dashboard-plugins
 
-      - name: Checkout wazuh-security-dashboards-plugin repo (for its version)
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-security-dashboards-plugin
           ref: ${{ needs.prepare-refs.outputs.security_plugins_ref }}
           path: ./wazuh-security-plugin
-
-      # --- ШАГ 2: Собираем SHA (как и раньше) ---
-      - name: Get SHA of wazuh-dashboard
-        id: get-dashboard-sha
-        run: |
-          set -e
-          # Предполагаем, что wazuh-dashboard уже склонирован на предыдущем шаге
-          cd ./wazuh-dashboard 
-          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Get SHA of wazuh-dashboard-plugins
-        id: get-plugins-sha
-        run: |
-          set -e
-          git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/ivmerk/wazuh-dashboard-plugins.git wzdp
-          cd wzdp
-          echo "PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Get SHA of wazuh-security-dashboards-plugin
-        id: get-security-sha
-        run: |
-          set -e
-          git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/ivmerk/wazuh-security-dashboards-plugin.git wzsp
-          cd wzsp
-          echo "SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "--- SHAs obtained successfully ---"
       
-      # --- ШАГ 3: Генерируем правильные имена, читая из каждого package.json ---
-      - name: Setup dynamic names
-        id: setup-variables
+      # Этот шаг будет вычислять ВСЕ переменные и экспортировать их.
+      - name: Calculate and Export All Variables
+        id: export-vars
         run: |
-          # --- Версии для wazuh-dashboard ---
-          DASHBOARD_VERSION=$(jq -r '.version' ./wazuh-dashboard/VERSION.json)
-          # Этот REVISION мы оставим как есть, так как он используется для build-base, где мы уже решили проблему
-          DASHBOARD_REVISION=$(jq -r '.stage' ./wazuh-dashboard/VERSION.json)
+          # set -e заставит скрипт упасть, если какая-то команда не сработает
+          set -e
 
-          # --- Версии для wazuh-security-plugin ---
-          # Путь к package.json может отличаться, проверьте его в репозитории!
+          echo "--- Calculating all variables ---"
+          
+          # --- Получаем SHAs ---
+          COMMIT_SHA=$(cd ./wazuh-dashboard && git rev-parse --short HEAD)
+          PLUGINS_SHA=$(cd ./wazuh-dashboard-plugins && git rev-parse --short HEAD)
+          SECURITY_SHA=$(cd ./wazuh-security-plugin && git rev-parse --short HEAD)
+          
+          echo "Dashboard SHA: $COMMIT_SHA"
+          echo "Plugins SHA: $PLUGINS_SHA"
+          echo "Security SHA: $SECURITY_SHA"
+          
+          # --- Получаем версии из файлов ---
+          DASHBOARD_VERSION=$(jq -r '.version' ./wazuh-dashboard/VERSION.json)
+          DASHBOARD_REVISION=$(jq -r '.stage' ./wazuh-dashboard/VERSION.json)
           SECURITY_PLUGIN_VERSION=$(jq -r '.wazuh.version' ./wazuh-security-plugin/package.json)
           SECURITY_PLUGIN_REVISION=$(jq -r '.wazuh.revision' ./wazuh-security-plugin/package.json)
-          SECURITY_PLUGIN_REF=$(echo ${{ needs.prepare-refs.outputs.security_plugins_ref }} | sed 's/\//-/g')
-          
-          # --- Версии для wazuh-dashboard-plugins ---
-          # Здесь package.json лежит глубже
           MAIN_PLUGINS_VERSION=$(jq -r '.version' ./wazuh-dashboard-plugins/plugins/main/package.json)
           MAIN_PLUGINS_REVISION=$(jq -r '.revision' ./wazuh-dashboard-plugins/plugins/main/package.json)
-          MAIN_PLUGINS_REF=$(echo ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }} | sed 's/\//-/g')
-          
-          # --- Генерируем имена артефактов ---
-          ARCH_SHORT=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
-          
-          # Имя для build-base (оно будет переопределено, но пусть будет)
-          echo "WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${DASHBOARD_VERSION}-${DASHBOARD_REVISION}_${ARCH_SHORT}.tar.gz" >> $GITHUB_OUTPUT
 
-          # Имена для плагинов - теперь они будут ТОЧНЫМИ
-          echo "WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${SECURITY_PLUGIN_VERSION}-${SECURITY_PLUGIN_REVISION}_${SECURITY_PLUGIN_REF}.zip" >> $GITHUB_OUTPUT
-          echo "WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
-          echo "WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
-          echo "WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
-          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          # --- Рассчитываем имена артефактов ---
+          ARCH_SHORT=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
+          SECURITY_PLUGIN_REF=$(echo ${{ needs.prepare-refs.outputs.security_plugins_ref }} | sed 's/\//-/g')
+          MAIN_PLUGINS_REF=$(echo ${{ needs.prepare-refs.outputs.wazuh_plugins_ref }} | sed 's/\//-/g')
+
+          WAZUH_DASHBOARD_SLIM="wazuh-dashboard_${DASHBOARD_VERSION}-${DASHBOARD_REVISION}_${ARCH_SHORT}.tar.gz"
+          WAZUH_SECURITY_PLUGIN="wazuh-security-dashboards-plugin_${SECURITY_PLUGIN_VERSION}-${SECURITY_PLUGIN_REVISION}_${SECURITY_PLUGIN_REF}.zip"
+          WAZUH_PLUGINS_WAZUH="wazuh-dashboard-plugins_wazuh_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip"
+          WAZUH_PLUGINS_CORE="wazuh-dashboard-plugins_wazuh-core_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip"
+          WAZUH_PLUGINS_CHECK_UPDATES="wazuh-dashboard-plugins_wazuh-check-updates_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip"
+
+          # --- Рассчитываем имя финального пакета (PACKAGE_NAME) ---
+          if [ "${{ inputs.system }}" = "deb" ]; then
+            if [ "${{ inputs.is_stage }}" = "true" ]; then
+              PACKAGE_NAME="wazuh-dashboard_${DASHBOARD_VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb"
+            else
+              PACKAGE_NAME="wazuh-dashboard_${DASHBOARD_VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.deb"
+            fi
+          else # rpm
+            if [ "${{ inputs.is_stage }}" = "true" ]; then
+              PACKAGE_NAME="wazuh-dashboard-${DASHBOARD_VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm"
+            else
+              PACKAGE_NAME="wazuh-dashboard_${DASHBOARD_VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.rpm"
+            fi
+          fi
           
+          # --- Рассчитываем флаги ---
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            ARCHITECTURE_FLAG=""
+          else
+            ARCHITECTURE_FLAG="--arm"
+          fi
+          
+          if [ "${{ inputs.is_stage }}" = "true" ]; then
+            PRODUCTION="--production"
+          else
+            PRODUCTION=""
+          fi
+
+          # --- Выводим все переменные в GITHUB_OUTPUT ---
+          echo "--- Exporting all variables to outputs ---"
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
+          echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
+          echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CORE=$WAZUH_PLUGINS_CORE" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CHECK_UPDATES=$WAZUH_PLUGINS_CHECK_UPDATES" >> $GITHUB_OUTPUT
+          echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
+          echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
   check-condition:
     needs: setup-variables
     runs-on: ubuntu-latest
@@ -272,7 +285,7 @@ jobs:
         run: echo "value=${{ env.ARTIFACT_BUILD_NAME }}" >> $GITHUB_OUTPUT
           
   build-main-plugins:
-    needs: [prepare-refs]
+    needs: [prepare-refs, setup-variables]
     name: Build Main Plugins
     uses: ivmerk/wazuh-dashboard-plugins/.github/workflows/dev-environment.yml@master
     # Примечание: можно заменить @master на конкретный тег, например, @v4.8.0 для большей стабильности
@@ -286,7 +299,7 @@ jobs:
 
 
   build-security-plugin:
-    needs: [prepare-refs]
+    needs: [prepare-refs, setup-variables]
     name: Build Security Plugin
     uses: ivmerk/wazuh-security-dashboards-plugin/.github/workflows/dev-environment.yml@master
     with:
@@ -298,7 +311,7 @@ jobs:
 
 
   build-and-test-package:
-    needs: [setup-variables, build-base, build-main-plugins, build-security-plugin]
+    needs: [build-base, build-main-plugins, build-security-plugin]
 
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
