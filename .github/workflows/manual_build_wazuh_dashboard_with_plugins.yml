@@ -379,11 +379,7 @@ jobs:
    
       - name: Build package
         run: |
-          # Переходим в папку со скриптом сборки
-          cd dev-tools/build-packages
-          # Запускаем скрипт. Он, в свою очередь, запустит `docker build`
-          # из правильного контекста, и Docker сможет найти все нужные файлы.
-          bash ./build-packages.sh \
+          bash dev-tools/build-packages/build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
             -s file://${{ github.workspace }}/artifacts/security-package.zip \
