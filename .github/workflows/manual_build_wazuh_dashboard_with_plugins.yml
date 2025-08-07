@@ -376,10 +376,25 @@ jobs:
           zip -r -j artifacts/security-package.zip artifacts/security-plugin
           zip -r -j artifacts/dashboard-package.zip artifacts/dashboard/
  
-   
+      - name: Prepare build context for Docker
+        run: |
+          echo "Preparing files for the Docker build context..."
+          # Скрипт build-packages.sh находится в dev-tools/build-packages/
+          # Внутри него есть папки deb/Docker/ и rpm/Docker/
+          # Мы копируем необходимые файлы из корня репозитория прямо туда.
+          if [ "${{ inputs.system }}" = "deb" ]; then
+            cp ./deb-builder.sh dev-tools/build-packages/deb/Docker/
+            cp -r ./debian dev-tools/build-packages/deb/Docker/
+            echo "Copied debian files to dev-tools/build-packages/deb/Docker/"
+          else # rpm
+            cp ./rpm-builder.sh dev-tools/build-packages/rpm/Docker/
+            cp ./wazuh-dashboard.spec dev-tools/build-packages/rpm/Docker/
+            echo "Copied rpm files to dev-tools/build-packages/rpm/Docker/"
+          fi
       - name: Build package
         run: |
-          bash dev-tools/build-packages/build-packages.sh \
+          cd dev-tools/build-packages
+          bash ./build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
             -s file://${{ github.workspace }}/artifacts/security-package.zip \
