@@ -93,44 +93,29 @@ jobs:
           path: ./wazuh-security-plugin
 
       # --- ШАГ 2: Собираем SHA (как и раньше) ---
-      - name: Get SHAs
-        id: get-shas
+      - name: Get SHA of wazuh-dashboard
+        id: get-dashboard-sha
         run: |
-          # Эта команда заставит скрипт упасть при первой же ошибке.
           set -e
+          # Предполагаем, что wazuh-dashboard уже склонирован на предыдущем шаге
+          cd ./wazuh-dashboard 
+          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-          echo "--- Getting SHAs ---"
+      - name: Get SHA of wazuh-dashboard-plugins
+        id: get-plugins-sha
+        run: |
+          set -e
+          git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/ivmerk/wazuh-dashboard-plugins.git wzdp
+          cd wzdp
+          echo "PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-          # Блок для wazuh-dashboard
-          if [ -d "./wazuh-dashboard" ]; then
-            cd ./wazuh-dashboard
-            echo "DASHBOARD_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-            cd ..
-          else
-            echo "ERROR: Directory ./wazuh-dashboard not found!"
-            exit 1
-          fi
-
-          # Блок для wazuh-dashboard-plugins
-          if [ -d "./wazuh-dashboard-plugins" ]; then
-            cd ./wazuh-dashboard-plugins
-            echo "PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-            cd ..
-          else
-            echo "ERROR: Directory ./wazuh-dashboard-plugins not found!"
-            exit 1
-          fi
-
-          # Блок для wazuh-security-plugin
-          if [ -d "./wazuh-security-plugin" ]; then
-            cd ./wazuh-security-plugin
-            echo "SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-            cd ..
-          else
-            echo "ERROR: Directory ./wazuh-security-plugin not found!"
-            exit 1
-          fi
-
+      - name: Get SHA of wazuh-security-dashboards-plugin
+        id: get-security-sha
+        run: |
+          set -e
+          git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/ivmerk/wazuh-security-dashboards-plugin.git wzsp
+          cd wzsp
+          echo "SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "--- SHAs obtained successfully ---"
       
       # --- ШАГ 3: Генерируем правильные имена, читая из каждого package.json ---
