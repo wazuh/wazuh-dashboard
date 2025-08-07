@@ -538,6 +538,36 @@ update_rendering_service_test_snap() {
   fi
 }
 
+update_healthcheck_server_not_ready_troubleshooting_link() {
+  local file="${REPO_PATH}/src/core/server/healthcheck/healthcheck/config.ts"
+
+  if [ -f "$file" ]; then
+    log "Updating health check server not ready troubleshooting link..."
+
+    # Strip off the last dot and everything after it
+    local current_version_minor="${CURRENT_VERSION%.*}"
+    local version_minor="${VERSION%.*}"
+
+    if [[ "$current_version_minor" != "$version_minor" ]]; then
+      # Update all occurrences of ("wazuhVersion": "x.y.z",) with ("wazuhVersion": "$VERSION",)
+      # Define the pattern regex
+      local pattern_regex="(https://documentation.wazuh.com/)$current_version_minor"
+      # Check if the pattern exists in the file
+      if grep -qE "$pattern_regex" "$file"; then
+        log "Pattern '$pattern_regex' found in $(basename $file). Attempting update..."
+        # If the pattern exists, perform the substitution
+        sed_inplace -E "s|${pattern_regex}|\1${version_minor}|g" "$file"
+        log "Successfully updated health check server not ready troubleshooting link."
+      else
+        log "Pattern '$pattern_regex' not found in $(basename $file). Skipping update for this pattern."
+      fi
+    fi
+
+  else
+    log "ERROR: health check server not ready troubleshooting link not found at $file" >&2
+  fi
+}
+
 # --- Main Execution ---
 main() {
   # Initialize log file
@@ -571,13 +601,14 @@ main() {
   # Start file modifications
   log "Starting file modifications..."
 
-  update_root_version_json
-  update_package_json
-  update_build_workflow
-  update_base_package_dockerfile
-  update_readme_for_base_packages
-  update_rendering_service_test_snap
-  update_changelog
+  # update_root_version_json
+  # update_package_json
+  # update_build_workflow
+  # update_base_package_dockerfile
+  # update_readme_for_base_packages
+  # update_rendering_service_test_snap
+  # update_changelog
+  update_healthcheck_server_not_ready_troubleshooting_link
 
   log "File modifications completed."
   log "Repository bump completed successfully. Log file: $LOG_FILE"

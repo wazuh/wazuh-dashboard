@@ -85,6 +85,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
   private _maxRetryAttempts: number = 0;
   private _internalScheduledCheckTime: number = 0;
   private _checks_enabled: string[] = [];
+  private _server_not_ready_troubleshooting_link: string = '';
   private scheduled?: ScheduledIntervalTask;
   private _coreStartServices: any;
   constructor(private readonly logger: Logger, services: any) {
@@ -119,12 +120,14 @@ export class HealthCheck extends TaskManager implements TaskManager {
       retries_delay: Duration;
       max_retries: number;
       interval: Duration;
+      server_not_ready_troubleshooting_link: string;
     }
   ) {
     this._enabled = config.enabled;
     this._retryDelay = config.retries_delay.asMilliseconds();
     this._maxRetryAttempts = config.max_retries;
     this._internalScheduledCheckTime = config.interval.asMilliseconds();
+    this._server_not_ready_troubleshooting_link = config.server_not_ready_troubleshooting_link;
     if (typeof config.checks_enabled === 'string') {
       this._checks_enabled = [config.checks_enabled];
     } else {
@@ -310,6 +313,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
       max_retries: this._maxRetryAttempts,
       interval: this._internalScheduledCheckTime,
       checks_enabled: this._checks_enabled,
+      server_not_ready_troubleshooting_link: this._server_not_ready_troubleshooting_link,
     };
   }
 }

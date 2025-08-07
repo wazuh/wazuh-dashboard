@@ -65,6 +65,9 @@ export class HealthCheckService
       path: '/{p*}',
       method: '*',
       handler: (request, h) => {
+        const documentationTroubleshootingLink = this.healthCheck.getConfig()
+          .server_not_ready_troubleshooting_link;
+
         const html = /* html */ `
           <!DOCTYPE html>
           <html>
@@ -78,7 +81,7 @@ export class HealthCheckService
                 background-color: transparent;
                 color: #e57373; /* Light red */
                 border: 2px solid #e57373;
-                padding: 10px 20px;
+                padding: 5px 10px;
                 font-size: 16px;
                 border-radius: 4px;
                 cursor: pointer;
@@ -119,6 +122,43 @@ export class HealthCheckService
                 color: #a1a1a1;              /* Muted text color */
                 border: 2px solid #f5c2c7;   /* Soft border */
               }
+
+              pre.code, code.code {
+                background-color: #f5f5f5; /* light gray */
+                color: #333;               /* dark text for contrast */
+                font-family: Consolas, Monaco, 'Courier New', monospace;
+                font-size: 14px;
+                padding: 10px;
+                border-radius: 5px;
+                overflow-x: auto;
+                display: block;
+                white-space: pre-wrap;
+              }
+
+              .d-flex{
+                display: flex;
+              }
+
+              .d-jc-center{
+                justify-content: center;
+              }
+
+              .d-ai-center{
+                align-items: center;
+              }
+
+              .d-gap-m{
+                gap: 10px;
+              }
+
+              .margin-m{
+                margin: 10px;
+              }
+
+              .padding-m{
+                padding: 10px;
+              }
+
             </style>
 
             <script>
@@ -217,7 +257,7 @@ export class HealthCheckService
                   const data = await httpClient('/api/healthcheck/internal?'+params.toString(), 'POST');
                   updateContent(mergeArraysByKey(tasks || [], data.tasks, 'name'));
                 } catch (error) {
-                  console.error('Failed to fetch health check:', error);
+                  console.error('Failed to run health check:', error);
                 }finally{
                   btn.disabled = false;
                 }
@@ -234,14 +274,15 @@ export class HealthCheckService
 
                 let content = '';
                 if(criticalErrors.length > 0  || nonCriticalErrors.length > 0){
-                  content += '<p>'
-                  content += '  <span>Health check<span>'
+                  content += '<div style="height:20px"></div>'
+                  content += '<div class="d-flex d-ai-center d-gap-m">'
+                  content += '  <div>Some errors were found related to the health check</div>'
 
                   if(tasks && tasks.length > 0){
                     content += ' <button class="btn btn-export-checks" id="btn-export-checks" onclick="downloadChecksFile()">Export checks</button>'
                   }
 
-                  content += '</p>'
+                  content += '</div>'
                 }
 
                 if(criticalErrors.length){
@@ -281,11 +322,44 @@ export class HealthCheckService
                 div.innerHTML = content;
               }
 
+              // Copy debug command
+              function fallbackCopyText(text) {
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+
+                // Prevent scrolling to bottom
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'absolute';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+
+                textarea.select();
+                textarea.setSelectionRange(0, textarea.value.length);
+
+                try {
+                  document.execCommand('copy');
+                  console.log('Copied to clipboard via execCommand!');
+                } catch (err) {
+                  console.error('Fallback: Oops, unable to copy', err);
+                }
+
+                document.body.removeChild(textarea);
+              }
+
               // Auto-call the function when the page loads
               window.addEventListener('load', fetchHealthCheck);
+              //# sourceURL=main.js
             </script>
             <body>
               <p>${appName} server is not ready yet</>
+              <p>If this message persists after a time of the initialization, this could be caused for some problem. Review the app logs for more information</p>
+              ${
+                documentationTroubleshootingLink
+                  ? '<div><a rel="noopener noreferrer" target="__blank" href="' +
+                    documentationTroubleshootingLink +
+                    '">Troubleshooting</a></div>'
+                  : ''
+              }
               <div id="root"></div>
             </body>
           </html>
