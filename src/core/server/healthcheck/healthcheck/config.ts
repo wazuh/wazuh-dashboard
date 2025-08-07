@@ -55,7 +55,7 @@ export const configSchema = schema.object({
   }),
   server_not_ready_troubleshooting_link: schema.string({
     defaultValue:
-      'https://documentation.wazuh.com/5.1/user-manual/wazuh-dashboard/troubleshooting.html#none-of-the-above-solutions-are-fixing-my-problem',
+      'https://documentation.wazuh.com/5.0/user-manual/wazuh-dashboard/troubleshooting.html#none-of-the-above-solutions-are-fixing-my-problem',
     validate: (value) => {
       const pattern = /^(https?:\/\/)[\w\-]+(\.[\w\-]+)+([/?#].*)?$/i;
       return pattern.test(value) ? undefined : 'Value is not valid URL.';
