@@ -376,24 +376,10 @@ jobs:
           zip -r -j artifacts/security-package.zip artifacts/security-plugin
           zip -r -j artifacts/dashboard-package.zip artifacts/dashboard/
  
-      - name: Prepare build context for Docker
-        run: |
-          echo "Preparing files for the Docker build context..."
-          # Скрипт build-packages.sh находится в dev-tools/build-packages/
-          # Внутри него есть папки deb/Docker/ и rpm/Docker/
-          # Мы копируем необходимые файлы из корня репозитория прямо туда.
-          if [ "${{ inputs.system }}" = "deb" ]; then
-            cp ./deb-builder.sh dev-tools/build-packages/deb/Docker/
-            cp -r ./debian dev-tools/build-packages/deb/Docker/
-            echo "Copied debian files to dev-tools/build-packages/deb/Docker/"
-          else # rpm
-            cp ./rpm-builder.sh dev-tools/build-packages/rpm/Docker/
-            cp ./wazuh-dashboard.spec dev-tools/build-packages/rpm/Docker/
-            echo "Copied rpm files to dev-tools/build-packages/rpm/Docker/"
-          fi
+
       - name: Build package
+        working-directory: ./dev-tools/build-packages
         run: |
-          cd dev-tools/build-packages
           bash ./build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
@@ -404,21 +390,20 @@ jobs:
       
       - name: Move generated package to artifacts folder
         run: |
-          # Используем относительные пути
-          mkdir -p artifacts/output
-          mv dev-tools/build-packages/output/*.deb artifacts/output/ || true
-          mv dev-tools/build-packages/output/*.rpm artifacts/output/ || true
+          mkdir -p ${{ github.workspace }}/artifacts/output
+          # Мы должны искать пакет относительно корня воркспейса
+          mv ${{ github.workspace }}/dev-tools/build-packages/output/*.deb ${{ github.workspace }}/artifacts/output/ || true
+          mv ${{ github.workspace }}/dev-tools/build-packages/output/*.rpm ${{ github.workspace }}/artifacts/output/ || true
 
       - name: List target artifacts
         run: |
-          ls -lh artifacts/
-          ls -lh artifacts/output/
+          ls -lh ${{ github.workspace }}/artifacts/
+          ls -lh ${{ github.workspace }}/artifacts/output/
       
       - name: Upload final package artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.PACKAGE_NAME }}
-          # Используем относительный путь
-          path: artifacts/output/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          path: ${{ github.workspace }}/artifacts/output/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
           retention-days: 30
           overwrite: true
