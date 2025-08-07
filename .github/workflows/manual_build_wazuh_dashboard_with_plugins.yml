@@ -317,8 +317,12 @@ jobs:
     name: Generate packages
     steps:
     
-      - name: Checkout code
+      - name: Checkout wazuh-dashboard repository
         uses: actions/checkout@v4
+        with:
+          repository: ivmerk/wazuh-dashboard
+          ref: ${{ needs.prepare-refs.outputs.dashboard_ref }}
+
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -375,15 +379,17 @@ jobs:
    
       - name: Build package
         run: |
+          # Переходим в папку со скриптом сборки
           cd dev-tools/build-packages
-          # Здесь мы используем АБСОЛЮТНЫЙ путь, но построенный на основе переменной github.workspace, что правильно
+          # Запускаем скрипт. Он, в свою очередь, запустит `docker build`
+          # из правильного контекста, и Docker сможет найти все нужные файлы.
           bash ./build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
             -s file://${{ github.workspace }}/artifacts/security-package.zip \
             -b file://${{ github.workspace }}/artifacts/dashboard-package.zip \
             --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
-            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug   
       
       - name: Move generated package to artifacts folder
         run: |
