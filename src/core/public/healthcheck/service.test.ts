@@ -10,13 +10,13 @@ import { mount as mountUI } from './ui/mount';
 jest.mock('./ui/mount', () => ({ mount: jest.fn() }));
 
 const initialChecks = [
-  { name: 'task:1', result: 'success', status: 'finished', _meta: {} },
-  { name: 'task:2', result: 'success', status: 'finished', _meta: {} },
+  { name: 'task:1', result: 'green', status: 'finished', _meta: {} },
+  { name: 'task:2', result: 'green', status: 'finished', _meta: {} },
 ];
-const runChecks = [{ name: 'task:2', result: 'fail', status: 'finished', _meta: {} }];
+const runChecks = [{ name: 'task:2', result: 'red', status: 'finished', _meta: {} }];
 const mergedChecks = [
-  { name: 'task:1', result: 'success', status: 'finished', _meta: {} },
-  { name: 'task:2', result: 'fail', status: 'finished', _meta: {} },
+  { name: 'task:1', result: 'green', status: 'finished', _meta: {} },
+  { name: 'task:2', result: 'red', status: 'finished', _meta: {} },
 ];
 
 describe('HealthcheckService', () => {
@@ -70,13 +70,13 @@ describe('HealthcheckService', () => {
   });
 
   it.each`
-    checks                                                                                                                                                            | status
-    ${[{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: {} }]}                   | ${'green'}
-    ${[{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: {} }]}                      | ${'yellow'}
-    ${[{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: { isCritical: true } }]} | ${'green'}
-    ${[{ name: 'task:1', result: 'fail', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: { isCritical: true } }]}    | ${'yellow'}
-    ${[{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: { isCritical: true } }]}    | ${'red'}
-    ${[{ name: 'task:1', result: 'fail', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: { isCritical: true } }]}       | ${'red'}
+    checks                                                                                                                                                        | status
+    ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: {} }]}                   | ${'green'}
+    ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: {} }]}                     | ${'yellow'}
+    ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: { isCritical: true } }]} | ${'green'}
+    ${[{ name: 'task:1', result: 'red', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: { isCritical: true } }]}   | ${'yellow'}
+    ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: { isCritical: true } }]}   | ${'red'}
+    ${[{ name: 'task:1', result: 'red', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: { isCritical: true } }]}     | ${'red'}
   `('compute status overall', async ({ checks, status }) => {
     const service = new HealthcheckService();
 
@@ -84,9 +84,9 @@ describe('HealthcheckService', () => {
   });
 
   it.each`
-    checks                                                                  | status
-    ${{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }} | ${'green'}
-    ${{ name: 'task:1', result: 'fail', status: 'finished', _meta: {} }}    | ${'red'}
+    checks                                                                | status
+    ${{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }} | ${'green'}
+    ${{ name: 'task:1', result: 'red', status: 'finished', _meta: {} }}   | ${'red'}
   `('compute check status', async ({ checks, status }) => {
     const service = new HealthcheckService();
 
@@ -94,13 +94,13 @@ describe('HealthcheckService', () => {
   });
 
   it.each`
-    checks                                                                                                                                                            | result
-    ${[{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: {} }]}                   | ${{ status: 'green', checks: [{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: {} }] }}
-    ${[{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: {} }]}                      | ${{ status: 'yellow', checks: [{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: {} }] }}
-    ${[{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: { isCritical: true } }]} | ${{ status: 'green', checks: [{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: { isCritical: true } }] }}
-    ${[{ name: 'task:1', result: 'fail', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: { isCritical: true } }]}    | ${{ status: 'yellow', checks: [{ name: 'task:1', result: 'fail', status: 'finished', _meta: {} }, { name: 'task:2', result: 'success', status: 'finished', _meta: { isCritical: true } }] }}
-    ${[{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: { isCritical: true } }]}    | ${{ status: 'red', checks: [{ name: 'task:1', result: 'success', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: { isCritical: true } }] }}
-    ${[{ name: 'task:1', result: 'fail', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: { isCritical: true } }]}       | ${{ status: 'red', checks: [{ name: 'task:1', result: 'fail', status: 'finished', _meta: {} }, { name: 'task:2', result: 'fail', status: 'finished', _meta: { isCritical: true } }] }}
+    checks                                                                                                                                                        | result
+    ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: {} }]}                   | ${{ status: 'green', checks: [{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: {} }] }}
+    ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: {} }]}                     | ${{ status: 'yellow', checks: [{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: {} }] }}
+    ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: { isCritical: true } }]} | ${{ status: 'green', checks: [{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: { isCritical: true } }] }}
+    ${[{ name: 'task:1', result: 'red', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: { isCritical: true } }]}   | ${{ status: 'yellow', checks: [{ name: 'task:1', result: 'red', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: { isCritical: true } }] }}
+    ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: { isCritical: true } }]}   | ${{ status: 'red', checks: [{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: { isCritical: true } }] }}
+    ${[{ name: 'task:1', result: 'red', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: { isCritical: true } }]}     | ${{ status: 'red', checks: [{ name: 'task:1', result: 'red', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: { isCritical: true } }] }}
   `('generateNextState', async ({ checks, result }) => {
     const service = new HealthcheckService();
 

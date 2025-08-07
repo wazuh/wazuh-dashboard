@@ -8,10 +8,9 @@ import { FormattedMessage } from 'react-intl';
 import { HealthIcon } from './health_icon';
 import { useAsyncAction } from './hook/use_async_action';
 
-export const CheckDetails = ({ check, computeCheckStatus, run, formatDate }) => {
+export const CheckDetails = ({ check, run, formatDate }) => {
   const { name, duration, startedAt, finishedAt, error, _meta } = check;
   const [detailsIsOpen, setDetailsIsOpen] = useState<boolean>(false);
-  const status = computeCheckStatus(check);
   const runAction = useAsyncAction(run);
 
   let nameCheck = (
@@ -40,7 +39,7 @@ export const CheckDetails = ({ check, computeCheckStatus, run, formatDate }) => 
       <EuiFlexGroup justifyContent="spaceBetween" responsive={false}>
         <EuiFlexItem grow={false}>
           <div style={{ display: 'flex' }}>
-            <HealthIcon status={status} />
+            <HealthIcon status={check.result} />
             {nameCheck}
           </div>
         </EuiFlexItem>

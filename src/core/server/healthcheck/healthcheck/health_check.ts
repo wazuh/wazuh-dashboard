@@ -5,6 +5,7 @@
 import { Duration } from 'moment';
 import { Logger } from 'opensearch-dashboards/server';
 import { BehaviorSubject, Subscription } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 import { retry, TASK, TaskManager } from '../task';
 import type { TaskRunResult } from '../task';
 import { addRoutesReadyServer } from './routes';
@@ -156,15 +157,14 @@ export class HealthCheck extends TaskManager implements TaskManager {
 
   async runInitialCheck() {
     this.logger.debug('Waiting until all checks are ok...');
-    await new Promise<void>((res) => {
-      this.runInternal().catch(() => {});
+    this.runInternal().catch(() => {});
+    await this.status$
+      .pipe(
+        filter(({ ok }) => ok),
+        take(1)
+      )
+      .toPromise();
 
-      this.status$.subscribe(({ ok }) => {
-        if (ok) {
-          res();
-        }
-      });
-    });
     this.logger.info('Checks are ok');
     return;
   }
@@ -236,7 +236,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
           checks.every(
             ({ status, result, ..._meta }) =>
               status === TASK.RUN_STATUS.FINISHED &&
-              (_meta?.isCritical ? result === TASK.RUN_RESULT.SUCCESS : true)
+              (_meta?.isCritical ? result === TASK.RUN_RESULT.GREEN : true)
           );
       }
 
@@ -271,7 +271,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
           ({ status, result, _meta = {} }) =>
             _meta?.isCritical &&
             status === TASK.RUN_STATUS.FINISHED &&
-            result === TASK.RUN_RESULT.FAIL
+            result === TASK.RUN_RESULT.RED
         );
         if (failedCriticalChecks?.length) {
           throw new Error(

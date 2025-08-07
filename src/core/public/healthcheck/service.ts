@@ -7,6 +7,7 @@ import { BehaviorSubject } from 'rxjs';
 import { get } from 'lodash';
 import { mount } from './ui/mount';
 import { HealthCheckServiceStartDeps, HealthCheckStatus } from './types';
+import { TASK } from './constants';
 
 export function mergeArraysOfByProp<T>(arr1: T[], arr2: T[], prop: string) {
   const map = new Map(arr1.map((item: T) => [get(item, prop), { ...item }]));
@@ -133,7 +134,7 @@ export class HealthcheckService {
     if (
       checks.some(
         ({ result, _meta, status }) =>
-          !_meta.isCritical && status === 'finished' && result !== 'success'
+          !_meta.isCritical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
       )
     ) {
       overallStatus = 'yellow';
@@ -142,7 +143,7 @@ export class HealthcheckService {
     if (
       checks.some(
         ({ result, _meta, status }) =>
-          _meta.isCritical && status === 'finished' && result !== 'success'
+          _meta.isCritical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
       )
     ) {
       overallStatus = 'red';

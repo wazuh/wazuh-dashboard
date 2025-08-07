@@ -48,10 +48,10 @@ export class Task implements ITask {
     try {
       this.init();
       this.data = await this.runInternal(...params);
-      this.result = TASK.RUN_RESULT.SUCCESS;
+      this.result = TASK.RUN_RESULT.GREEN;
     } catch (error_) {
       error = error_;
-      this.result = TASK.RUN_RESULT.FAIL;
+      this.result = TASK.RUN_RESULT.RED;
       this.error = error_.message;
     } finally {
       this.status = TASK.RUN_STATUS.FINISHED;

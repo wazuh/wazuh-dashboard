@@ -34,6 +34,12 @@ const statusChecksExplain = {
       defaultMessage="Status: gray. This indicates that the verification has been disabled."
     />
   ),
+  null: (
+    <FormattedMessage
+      id="core.healthcheck.status_info.gray"
+      defaultMessage="Status: gray. This indicates that the verification has been disabled."
+    />
+  ),
 };
 
 export const HealthIcon = ({
