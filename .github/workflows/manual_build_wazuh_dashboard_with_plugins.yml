@@ -132,7 +132,8 @@ jobs:
           echo "WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${MAIN_PLUGINS_VERSION}-${MAIN_PLUGINS_REVISION}_${MAIN_PLUGINS_REF}.zip" >> $GITHUB_OUTPUT
-
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          
   check-condition:
     needs: setup-variables
     runs-on: ubuntu-latest
