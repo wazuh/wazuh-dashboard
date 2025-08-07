@@ -41,6 +41,7 @@ describe('QueryStringManager', () => {
   let mockSearchInterceptor: jest.Mocked<ISearchInterceptor>;
 
   beforeEach(() => {
+    window.sessionStorage.clear();
     storage = new DataStorage(window.localStorage, 'opensearchDashboards.');
     sessionStorage = new DataStorage(window.sessionStorage, 'opensearchDashboards.');
     mockSearchInterceptor = {} as jest.Mocked<ISearchInterceptor>;
