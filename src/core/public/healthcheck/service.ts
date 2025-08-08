@@ -113,16 +113,17 @@ export class HealthcheckService {
       },
     };
 
-    // const config = this.initializerContext.config.get();
     // Mount UI button
-    mount({
-      coreStart: core,
-      status$: this.status$,
-      fetch: deps.client.internal.fetch,
-      run: deps.client.internal.run,
-      getConfig: deps.getConfig,
-      computeCheckStatus: (check) => this.computeStatus(check),
-    });
+    if (core.healthCheckConfig.enabled) {
+      mount({
+        coreStart: core,
+        status$: this.status$,
+        fetch: deps.client.internal.fetch,
+        run: deps.client.internal.run,
+        getConfig: async () => core.healthCheckConfig,
+        computeCheckStatus: (check) => this.computeStatus(check),
+      });
+    }
 
     return deps;
   }

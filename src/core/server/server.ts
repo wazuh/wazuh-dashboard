@@ -223,11 +223,21 @@ export class Server {
       metrics: metricsSetup,
     });
 
+    // Wazuh
+    const healthCheckSetup = await this.healthcheck.setup({
+      http: httpSetup,
+      httpService: this.http,
+    });
+
     const renderingSetup = await this.rendering.setup({
       http: httpSetup,
       status: statusSetup,
       uiPlugins,
       dynamicConfig: dynamicConfigServiceSetup,
+      // Wazuh
+      healthCheck: {
+        getConfig: () => this.healthcheck.healthCheck.getConfig(),
+      },
     });
 
     const httpResourcesSetup = this.httpResources.setup({
@@ -242,12 +252,6 @@ export class Server {
     const securitySetup = this.security.setup();
 
     this.coreUsageData.setup({ metrics: metricsSetup });
-
-    // Wazuh
-    const healthCheckSetup = await this.healthcheck.setup({
-      http: httpSetup,
-      httpService: this.http,
-    });
 
     const coreSetup: InternalCoreSetup = {
       capabilities: capabilitiesSetup,

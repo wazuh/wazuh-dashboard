@@ -250,7 +250,13 @@ export class CoreSystem {
       });
 
       // Wazuh
-      const healthCheck = await this.healthCheck.start({ chrome, uiSettings, http, notifications });
+      const healthCheck = await this.healthCheck.start({
+        chrome,
+        uiSettings,
+        http,
+        notifications,
+        healthCheckConfig: this.injectedMetadata.state.healthCheck,
+      });
 
       this.coreApp.start({ application, http, notifications, uiSettings });
 

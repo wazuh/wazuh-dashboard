@@ -5,6 +5,7 @@
 
 import { BehaviorSubject } from 'rxjs';
 import { UiSettingsServiceStart } from 'opensearch-dashboards/server';
+import { Duration } from 'moment';
 import { HttpSetup } from '../http';
 import { NotificationsStart } from '../notifications';
 import { ChromeStart } from '../chrome';
@@ -14,11 +15,26 @@ export interface HealthCheckStatus {
   checks: any[];
 }
 
+export interface HealthCheckConfigDefinition {
+  enabled: boolean;
+  checks_enabled: string | string[];
+  retries_delay: Duration;
+  max_retries: number;
+  interval: Duration;
+  server_not_ready_troubleshooting_link: string;
+}
+
+export type HealthCheckConfig = HealthCheckConfigDefinition & {
+  retries_delay: number;
+  interval: number;
+};
+
 export interface HealthCheckServiceStartDeps {
   http: HttpSetup;
   notifications: NotificationsStart;
   chrome: ChromeStart;
   uiSettings: UiSettingsServiceStart;
+  healthCheckConfig: HealthCheckConfig;
 }
 
 export interface HealthCheckServiceSetup {
