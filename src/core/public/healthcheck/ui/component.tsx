@@ -215,23 +215,29 @@ export const HealthCheckNavButton = (props) => {
     </div>
   );
 
+  const popover = (
+    <EuiPopover
+      data-test-subj="healthcheck-popover"
+      id="healthcheckMenu"
+      anchorPosition={isPlacedInLeftNav ? 'rightDown' : undefined}
+      button={innerElement}
+      isOpen={isPopoverOpen}
+      closePopover={() => {
+        setPopoverOpen(false);
+      }}
+      panelPaddingSize="s"
+    >
+      <EuiContextMenuPanel>{contextMenuPanel}</EuiContextMenuPanel>
+    </EuiPopover>
+  );
+
   return (
     <I18nProvider>
-      <EuiHeaderSectionItemButton id="user-icon-btn" size="l">
-        <EuiPopover
-          data-test-subj="account-popover"
-          id="actionsMenu"
-          anchorPosition={isPlacedInLeftNav ? 'rightDown' : undefined}
-          button={innerElement}
-          isOpen={isPopoverOpen}
-          closePopover={() => {
-            setPopoverOpen(false);
-          }}
-          panelPaddingSize="s"
-        >
-          <EuiContextMenuPanel>{contextMenuPanel}</EuiContextMenuPanel>
-        </EuiPopover>
-      </EuiHeaderSectionItemButton>
+      {isPlacedInLeftNav ? (
+        popover
+      ) : (
+        <EuiHeaderSectionItemButton size="l">{popover}</EuiHeaderSectionItemButton>
+      )}
     </I18nProvider>
   );
 };

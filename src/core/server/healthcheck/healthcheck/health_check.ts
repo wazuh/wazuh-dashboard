@@ -2,7 +2,6 @@
  * Copyright Wazuh
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Duration } from 'moment';
 import { Logger } from 'opensearch-dashboards/server';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
@@ -10,6 +9,7 @@ import { retry, TASK, TaskManager } from '../task';
 import type { TaskRunResult } from '../task';
 import { addRoutesReadyServer } from './routes';
 import { ScheduledIntervalTask } from './scheduled_task';
+import { HealthCheckConfig } from './types';
 
 export interface HealthCheckStatus {
   ok: boolean | null;
@@ -112,17 +112,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
     }
   }
 
-  async setup(
-    core: any,
-    config: {
-      enabled: boolean;
-      checks_enabled: string | string[];
-      retries_delay: Duration;
-      max_retries: number;
-      interval: Duration;
-      server_not_ready_troubleshooting_link: string;
-    }
-  ) {
+  async setup(core: any, config: HealthCheckConfigDefinition) {
     this._enabled = config.enabled;
     this._retryDelay = config.retries_delay.asMilliseconds();
     this._maxRetryAttempts = config.max_retries;
@@ -176,16 +166,16 @@ export class HealthCheck extends TaskManager implements TaskManager {
     this._coreStartServices = core;
     const enabledChecks = this.filterEnabledChecks();
 
+    if (!this._enabled) {
+      this.logger.info('Disabled. Skip start');
+      return;
+    }
+
     if (enabledChecks.length > 0) {
       this.logger.info(`Enabled checks [${enabledChecks.length}]: [${enabledChecks.join(',')}]`);
     } else {
       this.logger.info(`Disabled health check due to no enabled checks.`);
       this._enabled = false;
-    }
-
-    if (!this._enabled) {
-      this.logger.debug('Disabled. Skip start');
-      return;
     }
 
     // Define props to task items
@@ -306,7 +296,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
     return subscription;
   }
 
-  getConfig() {
+  getConfig(): HealthCheckConfig {
     return {
       enabled: this._enabled,
       retries_delay: this._retryDelay,

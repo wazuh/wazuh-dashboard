@@ -97,7 +97,7 @@ async function handlerGetTasks(_context, request, response) {
 
     return response.ok({
       body: {
-        message: 'All healthcheck tasks are returned.',
+        message: 'Task information was returned.',
         tasks: tasksData,
       },
     });
@@ -127,7 +127,7 @@ async function handlerRunTasks(_context, request, response) {
 
     return response.ok({
       body: {
-        message: 'All healthcheck tasks are returned.',
+        message: 'Task information was returned.',
         tasks,
       },
     });

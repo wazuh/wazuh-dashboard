@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Duration } from 'moment';
 import { LifecycleService, WazuhCoreServices } from '../types'; // TODO: fix
 import { CoreStart, Logger } from '../../../../../core/server'; // TODO: fix
 
@@ -73,3 +74,17 @@ export interface HealthCheckServiceSetup {
 }
 
 export type HealthCheckServiceStart = HealthCheckServiceSetup;
+
+export interface HealthCheckConfigDefinition {
+  enabled: boolean;
+  checks_enabled: string | string[];
+  retries_delay: Duration;
+  max_retries: number;
+  interval: Duration;
+  server_not_ready_troubleshooting_link: string;
+}
+
+export type HealthCheckConfig = HealthCheckConfigDefinition & {
+  retries_delay: number;
+  interval: number;
+};
