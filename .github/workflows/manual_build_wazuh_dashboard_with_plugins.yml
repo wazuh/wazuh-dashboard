@@ -384,6 +384,11 @@ jobs:
           git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
           cp -r temp-dashboard/dev-tools .
           
+      - name: Copy deb-builder.sh and debian to Docker context
+        run: |
+          cp dev-tools/build-packages/deb/deb-builder.sh dev-tools/build-packages/deb/Docker/
+          cp -r dev-tools/build-packages/deb/debian dev-tools/build-packages/deb/Docker/
+
       - name: Build package
         run: |
           cd dev-tools/build-packages
