@@ -61,7 +61,7 @@ export const HealthCheckNavButton = (props) => {
   }, [checks]);
 
   const runFailedAction = useAsyncAction(
-    () => props.run(checksGroupByResult.fail.map(({ name }) => name)),
+    () => props.run(checksGroupByResult.red.map(({ name }) => name)),
     [checksGroupByResult]
   );
 
@@ -161,8 +161,8 @@ export const HealthCheckNavButton = (props) => {
                   iconType="refresh"
                   onClick={() => runFailedAction.run()}
                   isDisabled={
-                    !checksGroupByResult?.fail ||
-                    checksGroupByResult?.fail?.length === 0 ||
+                    !checksGroupByResult?.red ||
+                    checksGroupByResult?.red?.length === 0 ||
                     runFailedAction.running
                   }
                   iconSize="l"
