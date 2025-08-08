@@ -259,7 +259,11 @@ jobs:
         run: |
           ARCH_SUFFIX=$([[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]] && echo "x64" || echo "arm64")
           echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${ARCH_SUFFIX}.tar.gz" >> $GITHUB_ENV
-          
+
+      - name: Set WAZUH_DASHBOARD_SLIM env
+        run: |
+          echo "WAZUH_DASHBOARD_SLIM=${{ env.ARTIFACT_BUILD_NAME }}" >> $GITHUB_ENV
+      
       # ШАГ 7: Bootstrap (из reusable workflow)
       - name: Run bootstrap
         run: yarn osd bootstrap
