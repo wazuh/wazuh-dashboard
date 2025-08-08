@@ -55,7 +55,9 @@ jobs:
     name: Setup all variables reliably
     # Объявляем ВСЕ outputs, которые мы будем создавать
     outputs:
+    
       COMMIT_SHA: ${{ steps.export-vars.outputs.COMMIT_SHA }}
+      CURRENT_DIR: ${{ steps.export-vars.outputs.CURRENT_DIR }}
       PLUGINS_SHA: ${{ steps.export-vars.outputs.PLUGINS_SHA }}
       SECURITY_SHA: ${{ steps.export-vars.outputs.SECURITY_SHA }}
       PACKAGE_NAME: ${{ steps.export-vars.outputs.PACKAGE_NAME }}
@@ -95,6 +97,8 @@ jobs:
           set -e
 
           echo "--- Calculating all variables ---"
+          CURRENT_DIR="${GITHUB_WORKSPACE}"
+          echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
           
           # --- Получаем SHAs ---
           COMMIT_SHA=$(cd ./wazuh-dashboard && git rev-parse --short HEAD)
