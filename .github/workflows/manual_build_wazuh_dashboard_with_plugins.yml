@@ -104,7 +104,8 @@ jobs:
           COMMIT_SHA=$(cd ./wazuh-dashboard && git rev-parse --short HEAD)
           PLUGINS_SHA=$(cd ./wazuh-dashboard-plugins && git rev-parse --short HEAD)
           SECURITY_SHA=$(cd ./wazuh-security-plugin && git rev-parse --short HEAD)
-          
+
+          echo "Current Dir: $CURRENT_DIR"
           echo "Dashboard SHA: $COMMIT_SHA"
           echo "Plugins SHA: $PLUGINS_SHA"
           echo "Security SHA: $SECURITY_SHA"
