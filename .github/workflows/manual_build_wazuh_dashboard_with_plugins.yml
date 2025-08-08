@@ -371,8 +371,8 @@ jobs:
           bash ./build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
-            -s file:/${{ github.workspace }}/artifacts/security-package.zip \
-            -b file:/${{ github.workspace }}/artifacts/dashboard-package.zip \
+            -s file://${{ github.workspace }}/artifacts/security-package.zip \
+            -b file://${{ github.workspace }}/artifacts/dashboard-package.zip \
             --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
