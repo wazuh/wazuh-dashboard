@@ -42,17 +42,29 @@ healthcheck.checks_enabled: 'task.*' # Enable the task1, task2, another-task.
 ## Server
 
 1. Setup the health check
+
+1.1. Setup the configuration
+
+1.2. Register API endpoints routes
+
 2. Register check task in the plugin `setup` lifecycle
+
 3. Start the health check
-  If this is enabled:
-  3.1. Mark the enabled task according to the `checks_enabled` filter 
-  3.2. Run the initial check. If some critical task fails, then the dashboard server will be blocked in the `server is not ready yet` view
-  3.3. Once passed the initial check, this sets a scheduled check, to update the check status
-  ```
-    server    log   [10:04:59.857] [info][healthcheck] Checks are ok
-    server    log   [10:04:59.857] [info][healthcheck] Set scheduled checks each 300000ms
-  ```
-  3.4. Continue the server startup
+
+If this is enabled:
+
+3.1. Mark the enabled task according to the `checks_enabled` filter
+
+3.2. Run the initial check. If some critical task fails, then the dashboard server will be blocked in the `server is not ready yet` view
+
+3.3. Once passed the initial check, this sets a scheduled check, to update the check status
+
+```
+  server    log   [10:04:59.857] [info][healthcheck] Checks are ok
+  server    log   [10:04:59.857] [info][healthcheck] Set scheduled checks each 300000ms
+```
+
+3.4. Continue the server startup
 
 ## Frontend
 
@@ -161,6 +173,16 @@ interface InitializationTaskRunData {
   _meta: any
 }
 ```
+
+## API
+
+The backend service registers routes to manage the related data:
+
+- `GET /api/healthcheck/config`: allow to retrieve the health check configuration.
+
+- `GET /api/healthcheck/internal`: allow to retrieve the run info of the checks. This allows to use the `name` query parameter to get specific checks.
+
+- `POST /api/healthcheck/internal`: allow to run info of the checks. This allows to use the `name` query parameter to get specific checks.
 
 # Notes
 
