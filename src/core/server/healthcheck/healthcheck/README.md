@@ -1,82 +1,104 @@
 # HealthCheck
 
-The `HealthCheck` provides a mechanism to register and run tasks when the app runs.
+The `HealthCheck` provides a mechanism to see and manage the health of checks.
+> :warning: In this stage, this only runs in the internal context that only can apply to the `Global` tenant if multitenancy is enabled.
 
-This is exposed throught the initialization service of core.
+This allows to register the check tasks that can be used by the plugin in the `setup` lifecycle.
+
+# Configuration
+
+| setting |description | default value | allowed values |
+| --- | --- | --- | --- |
+| `healthcheck.enabled` | define if the health check is enabled or not | true | true, false |
+| `healthcheck.checks_enabled` | define the checks that are enabled. This is a regular expression or a list of regular expressions (NodeJS compatibles) | `.*` | string or list of strings |
+| `healthcheck.interval` | define the interval to run the health check after the initial check | 15m | 5m to 24h |
+| `healthcheck.retries_delay` | define the wait time after a failed overall health check. | 2.5s | 0 to 1m |
+| `healthcheck.max_retries` | define the maximum count of retries of the overall health check that can be executed. | 5 | integer, minimum 1 |
+| `healthcheck.server_not_ready_troubleshooting_link` | define the troubleshotting link in the not ready server. | URL to Wazuh docs | a valid URL |
+
+## Enabling checks
+
+By default all the checks are enabled.
+
+The user can configure the enabled checks using the `healthcheck.checks_enabled` setting.
+
+For example, assumming the following checks are registered:
+- task1
+- task2
+- another-task
+- another-check
+
+Examples To only enable the `task1` and `task2` checks, you can provide the following configuration:
+
+```xml
+healthcheck.checks_enabled: '^test.*' # Enable the task1 and task2. Start with "test" and then any character
+healthcheck.checks_enabled: ['^test1$', '^another-task$'] # Enable the task1 and another-task.
+healthcheck.checks_enabled: '^another.*' # Enable the another-task and another-check.
+healthcheck.checks_enabled: 'task.*' # Enable the task1, task2, another-task.
+```
+
+# Lyfecycle
+
+## Server
+
+1. Setup the health check
+2. Register check task in the plugin `setup` lifecycle
+3. Start the health check
+  If this is enabled:
+  3.1. Mark the enabled task according to the `checks_enabled` filter 
+  3.2. Run the initial check. If some critical task fails, then the dashboard server will be blocked in the `server is not ready yet` view
+  3.3. Once passed the initial check, this sets a scheduled check, to update the check status
+  ```
+    server    log   [10:04:59.857] [info][healthcheck] Checks are ok
+    server    log   [10:04:59.857] [info][healthcheck] Set scheduled checks each 300000ms
+  ```
+  3.4. Continue the server startup
+
+## Frontend
+
+1. Setup the health check
+2. Start the health check
+  If this is enabled, then this register a button to be mounted in the menu
 
 Other plugins can register tasks in the plugin `setup` lifecycle that will be run on the server starts lifecycle.
 
 Optionally the registered tasks could be retrieved to run in API endpoints or getting information about its status.
 
-There are 2 scopes:
-
-- `internal`: run through the internal user
-  - on plugin starts
-  - on demand
-- `user`: run through the logged (requester) user
-  - on demand
+# Scopes
 
 The scopes can be used to get a specific context (clients, parameters) that is set in the `scope` property of the task context.
+> :warning: In this stage, this only runs in the internal context that only can apply to the `Global` tenant if multitenancy is enabled.
 
-The `internal` scoped tasks keep the same execution data (see [Task execution data](#task-execution-data)), and the `user` scoped task are newly created on demand.
+The `internal` scoped tasks keep the same execution data (see [Task execution data](#task-execution-data)).
 
-When the app starts, all the registered tasks run for the `internal` scope and should pass to swap the server to the "final" server, else
-accessing to the app will display the `Wazuh dashboard server is not ready yet` view and optionally list the errors in the tasks. This blocks
-set the final server until all the checks are ok.
+When the app starts, all the registered tasks run for the `internal` scope.
 
-# HealthCheck tasks
+# Tasks
+
+## Task definition interface
 
 A task can be defined with:
 
 ```ts
-interface InitializationTaskDefinition {
+export interface TaskDefinition {
+  // Task identifier. This should be unique. See the name convention.
   name: string;
   run: (ctx: any) => any;
-  order?: number
+  /* Define the order to execute the task. Multiple task can take the same order and they will be executed in parallel.
+  If it is not defined, the task will be executed as last order group. */
+  order?: number;
+  // Other metafields
+  [key: string]: any;
+  // Define if the task is critical. If it fails, the initial check can block the initialization or this could mark the overall status as failed in the scheduled checks.
   isCritical: boolean
 }
-```
-
-The `name` is used to identify the task and this is rendered in the context logger.
-
-The `order` defines the order to execute the task. Multiple tasks can have the same order and will be executed in parallel. If it is not defined, the task will be executed as last order group.
-
-The `isCritical` defines on any error, the health check should be considered as failed.
-
-The `ctx` is the context of the task execution and includes core services and task context services or dependencies.
-
-For example, in the server log:
-
-```
-server    log   [11:57:39.648] [info][index-pattern-vulnerabilities-states][healthcheck][plugins][wazuhCore] Index pattern with ID [wazuh-states-vulnerabilities-*] does not exist
-
-```
-
-the task name is `index-pattern-vulnerabilities-states`.
-
-## Task name convention
-
-- lowercase
-- kebab case (`word1-word2`)
-- use colon ( `:` ) for tasks related to some entity that have different subentities.
-
-```
-entity_identifier:entity_specific
-```
-
-For example:
-
-```
-index-pattern:alerts
-index-pattern:statistics
-index-pattern:vulnerabilities-states
 ```
 
 ## Register a task
 
 ```ts
 // plugin setup
-setup(){
+setup(core){
 
   // Register a task
   core.healthcheck.register({
@@ -90,6 +112,37 @@ setup(){
 }
 ```
 
+The `ctx` property provide the context execution.
+
+- `internal`:
+
+```ts
+interface {
+    services: {},
+    context: { services: CoreStartServices, scope: 'internal' },
+    logger: LoggerAdapter { logger: [BaseLogger] }
+  }
+
+```
+
+## Task name convention
+
+- lowercase
+- kebab case (`word1-word2`)
+- use colon ( `:` ) for tasks related to some entity that have different sub entities.
+
+```
+entity_identifier:entity_specific
+```
+
+For example:
+
+```
+index-pattern:alerts
+index-pattern:statistics
+index-pattern:vulnerabilities-states
+```
+
 ## Task execution data
 
 The task has the following data related to the execution:
@@ -98,7 +151,7 @@ The task has the following data related to the execution:
 interface InitializationTaskRunData {
   name: string;
   status: 'not_started' | 'running' | 'finished';
-  result: 'success' | 'fail';
+  result: 'green' | 'red' | null;
   createdAt: string | null;
   startedAt: string | null;
   finishedAt: string | null;
@@ -109,50 +162,79 @@ interface InitializationTaskRunData {
 }
 ```
 
-## Create a task instance
+# Notes
 
-This is used to create the user scoped tasks.
+- The list of enabled checks are listed in a `info` log in the app logs. This can be used to know the check task names to create a regular expression to filter the enabled checks.
 
-```ts
-const newTask =
-  core.healthcheck.createNewTaskFromRegisteredTask(
-    'example-task',
-  );
+```
+server    log   [10:04:59.621] [info][healthcheck] Enabled checks [2]: [server-api:connection-compatibility,index-pattern:alerts,index-pattern:monitoring,index-pattern:statistitcs,index-pattern:vulnerabilities-states,index-pattern:states-inventory,index-pattern:states-inventory-groups,index-pattern:states-inventory-hardware,index-pattern:states-inventory-hotfixes,index-pattern:states-inventory-interfaces,index-pattern:states-inventory-networks,index-pattern:states-inventory-packages,index-pattern:states-inventory-ports,index-pattern:states-inventory-processes,index-pattern:states-inventory-protocols,index-pattern:states-inventory-system,index-pattern:states-inventory-users,index-pattern:states-fim-files,index-pattern:states-fim-registry-keys,index-pattern:states-fim-registry-values]
+```
+- If the health check is disabled, a `info` log is displayed in the app logs.
+
+# Debug
+
+## Server
+
+The backend service uses a logger tagged as `healthcheck`, so the user can use that keyword to filter the related logs.
+
+```console
+journalctl -ru wazuh-dashboard | grep healthcheck
 ```
 
-## Context
+The user can increase the verbosity with the `logging.verbose: true` setting.
 
-### Internal
+## Frontend
 
-```ts
-interface {
-  services: {
-  },
-  context: {
-    services: {
-      core: CoreStartServices
-    },
-    logger: Logger,
-    scope: 'internal'
+The UI allows exporting the checks to a JSON file to be shared easily.
+
+- Not ready yet server: export the health check results to a JSON file using the `Export checks` button
+```
+{
+  checks: [
+    {
+      "name": "server-api:connection-compatibility",
+      "status": "finished",
+      "result": "green",
+      "data": {},
+      "createdAt": "2025-08-08T10:04:59.428Z",
+      "startedAt": "2025-08-08T10:19:59.858Z",
+      "finishedAt": "2025-08-08T10:19:59.948Z",
+      "duration": 0.09,
+      "error": null,
+      "_meta": {
+        "isCritical": true,
+        "isEnabled": true
+      }
+    }
+  ],
+  _meta: {
+    server: "not_ready"
   }
 }
 ```
-
-### User
-
-```ts
-TBD
-interface {
-  services: {
-  },
-  context: {
-    services: {
-      core: CoreStartServices
-    },
-    context: RequestHandlerContext,
-    request: OpenSearchDashboardsRequest
-    logger: Logger,
-    scope: 'user'
+- ready server: export the health check results to a JSON file using the health check UI
+```
+{
+  status: "yellow",
+  checks: [
+    {
+      "name": "server-api:connection-compatibility",
+      "status": "finished",
+      "result": "green",
+      "data": {},
+      "createdAt": "2025-08-08T10:04:59.428Z",
+      "startedAt": "2025-08-08T10:19:59.858Z",
+      "finishedAt": "2025-08-08T10:19:59.948Z",
+      "duration": 0.09,
+      "error": null,
+      "_meta": {
+        "isCritical": true,
+        "isEnabled": true
+      }
+    }
+  ],
+  _meta: {
+    server: "ready"
   }
 }
 ```
