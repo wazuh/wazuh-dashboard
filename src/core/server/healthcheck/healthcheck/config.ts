@@ -43,9 +43,9 @@ export const configSchema = schema.object({
     defaultValue: 2.5 * 1000,
     validate: (value) => {
       const minValue = 0;
-      const maxValue = 6 * 60 * 60 * 1000;
+      const maxValue = 60 * 1000;
       return value.asMilliseconds() < minValue || value.asMilliseconds() > maxValue
-        ? 'Value is not valid. This should be between 0 seconds (0s) and 6 hours (6h)'
+        ? 'Value is not valid. This should be between 0 seconds (0s) and 1 minute (1m)'
         : undefined;
     },
   }),
