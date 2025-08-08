@@ -353,11 +353,18 @@ jobs:
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
           path: artifacts/plugins
+          
       - name: Download check update plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
           path: artifacts/plugins
+      
+      - name: Debug artifacts
+        run: |
+          echo "::group::Contents of artifacts/"
+          ls -R artifacts
+          echo "::endgroup::"
 
       - name: Zip plugins
         run: |
@@ -365,6 +372,18 @@ jobs:
           zip -r -j artifacts/security-package.zip artifacts/security-plugin
           zip -r -j artifacts/dashboard-package.zip artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
 
+      - name: Debug current dir contents
+        run: |
+          echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
+          ls -al 
+          ls -al dev-tools
+          ls -al dev-tools/build-packages
+          
+      - name: Clone dev-tools
+        run: |
+          git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
+          cp -r temp-dashboard/dev-tools .
+          
       - name: Build package
         run: |
           cd dev-tools/build-packages
