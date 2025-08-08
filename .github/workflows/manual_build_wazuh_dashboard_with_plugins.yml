@@ -366,12 +366,12 @@ jobs:
           ls -R artifacts
           echo "::endgroup::"
 
-      - name: Zip plugins
+      - name: Prepare packages (no zip, just passthrough)
         run: |
-          zip -r -j artifacts/wazuh-package.zip artifacts/plugins
-          zip -r -j artifacts/security-package.zip artifacts/security-plugin
-          zip -r -j artifacts/dashboard-package.zip artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-
+          cp artifacts/dashboard/wazuh-dashboard_*.tar.gz artifacts/dashboard.tar.gz
+          cp artifacts/plugins/*.zip artifacts/
+          cp artifacts/security-plugin/*.zip artifacts/
+      
       - name: Debug current dir contents
         run: |
           echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
@@ -393,12 +393,12 @@ jobs:
         run: |
           cd dev-tools/build-packages
           bash ./build-packages.sh \
-            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
-            -a file:///${{ github.workspace }}/artifacts/wazuh-package.zip \
-            -s file:///${{ github.workspace }}/artifacts/security-package.zip \
-            -b file:///${{ github.workspace }}/artifacts/dashboard-package.zip \
-            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
-            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+          -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
+          -a file:///${{ github.workspace }}/artifacts/wazuh-*.zip \
+          -s file:///${{ github.workspace }}/artifacts/security-dashboards-*.zip \
+          -b file:///${{ github.workspace }}/artifacts/dashboard.tar.gz \
+          --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
+          --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Test package
         run: |
