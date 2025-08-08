@@ -12,9 +12,9 @@ This allows to register the check tasks that can be used by the plugin in the `s
 | `healthcheck.enabled` | define if the health check is enabled or not | true | true, false |
 | `healthcheck.checks_enabled` | define the checks that are enabled. This is a regular expression or a list of regular expressions (NodeJS compatibles) | `.*` | string or list of strings |
 | `healthcheck.interval` | define the interval to run the health check after the initial check | 15m | 5m to 24h |
-| `healthcheck.retries_delay` | define the wait time after a failed overall health check. | 2.5s | 0 to 1m |
-| `healthcheck.max_retries` | define the maximum count of retries of the overall health check that can be executed. | 5 | integer, minimum 1 |
-| `healthcheck.server_not_ready_troubleshooting_link` | define the troubleshotting link in the not ready server. | URL to Wazuh docs | a valid URL |
+| `healthcheck.retries_delay` | define the wait time after a failed overall health check | 2.5s | 0 to 1m |
+| `healthcheck.max_retries` | define the maximum count of retries of the overall health check that can be executed | 5 | integer, minimum 1 |
+| `healthcheck.server_not_ready_troubleshooting_link` | define the troubleshooting link in the not-ready server | URL to Wazuh docs | a valid URL |
 
 ## Enabling checks
 
