@@ -366,17 +366,16 @@ jobs:
           ls -R artifacts
           echo "::endgroup::"
 
-      - name: Prepare packages
+      - name: Flatten artifact files
         run: |
-          echo "::group::Copying plugins and dashboard tar.gz"
-          cp artifacts/plugins/*.zip artifacts/
-          cp artifacts/security-plugin/*.zip artifacts/
-    
+          echo "::group::Flattening artifacts"
+          find artifacts/plugins -type f -name "*.zip" -exec cp {} artifacts/ \;
+          find artifacts/security-plugin -type f -name "*.zip" -exec cp {} artifacts/ \;
           TAR=$(find artifacts/dashboard -type f -name 'wazuh-dashboard_*.tar.gz' | head -n 1)
-          echo "Found: $TAR"
+          echo "Found dashboard tar.gz: $TAR"
           cp "$TAR" artifacts/dashboard.tar.gz
           echo "::endgroup::"
-      
+          
       - name: Debug current dir contents
         run: |
           echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
