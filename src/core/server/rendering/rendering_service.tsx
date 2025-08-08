@@ -67,6 +67,8 @@ export class RenderingService {
     status,
     uiPlugins,
     dynamicConfig,
+    // Wazuh
+    healthCheck,
   }: RenderingSetupDeps): Promise<InternalRenderingServiceSetup> {
     const [opensearchDashboardsConfig, serverConfig] = await Promise.all([
       this.coreContext.configService
@@ -169,6 +171,8 @@ export class RenderingService {
               useExpandedHeader: brandingAssignment.useExpandedHeader,
             },
             survey: opensearchDashboardsConfig.survey.url,
+            // Wazuh
+            healthCheck: healthCheck.getConfig(),
           },
         };
 
