@@ -39,7 +39,7 @@ function downloadFile(filename, content, mimeType = 'text/plain') {
   URL.revokeObjectURL(url);
 }
 
-export const ButtonExportHealthCheck = (data) => {
+export const ButtonExportHealthCheck = ({ data }) => {
   const action = useAsyncAction(() =>
     downloadFile(
       'healthcheck.json',
