@@ -366,11 +366,16 @@ jobs:
           ls -R artifacts
           echo "::endgroup::"
 
-      - name: Prepare packages (no zip, just passthrough)
+      - name: Prepare packages
         run: |
-          cp artifacts/dashboard/wazuh-dashboard_*.tar.gz artifacts/dashboard.tar.gz
+          echo "::group::Copying plugins and dashboard tar.gz"
           cp artifacts/plugins/*.zip artifacts/
           cp artifacts/security-plugin/*.zip artifacts/
+    
+          TAR=$(find artifacts/dashboard -type f -name 'wazuh-dashboard_*.tar.gz' | head -n 1)
+          echo "Found: $TAR"
+          cp "$TAR" artifacts/dashboard.tar.gz
+          echo "::endgroup::"
       
       - name: Debug current dir contents
         run: |
