@@ -342,29 +342,45 @@ jobs:
 
 
       - name: Locate and organize downloaded artifacts
-        id: organize
         run: |
           echo "--- Organizing downloaded artifacts ---"
+          # Просто показываем структуру для отладки
           ls -R ./artifacts/
           
-          # Находим и перемещаем dashboard.tar.gz
-          DASHBOARD_FILE=$(find ./artifacts -name "wazuh-dashboard_*.tar.gz")
+          # Создаем папки для отсортированных артефактов
           mkdir -p ./organized_artifacts/dashboard
-          mv "$DASHBOARD_FILE" ./organized_artifacts/dashboard/
-          echo "Organized dashboard: $DASHBOARD_FILE"
+          mkdir -p ./organized_artifacts/security-plugin
+          mkdir -p ./organized_artifacts/plugins
+
+          # Находим и перемещаем dashboard.tar.gz
+          DASHBOARD_FILE=$(find ./artifacts -type f -name "wazuh-dashboard_*.tar.gz")
+          if [ -n "$DASHBOARD_FILE" ]; then
+            mv "$DASHBOARD_FILE" ./organized_artifacts/dashboard/
+            echo "Organized dashboard: $DASHBOARD_FILE"
+          else
+            echo "ERROR: Dashboard artifact not found!"
+            exit 1
+          fi
           
           # Находим и перемещаем плагин безопасности
-          SECURITY_PLUGIN_FILE=$(find ./artifacts -name "wazuh-security-dashboards-plugin_*.zip")
-          mkdir -p ./organized_artifacts/security-plugin
-          mv "$SECURITY_PLUGIN_FILE" ./organized_artifacts/security-plugin/
-          echo "Organized security plugin: $SECURITY_PLUGIN_FILE"
+          # Здесь у нас в папке лежит ZIP, а внутри него еще один ZIP. Нам нужен тот, что внутри.
+          SECURITY_PLUGIN_FILE=$(find ./artifacts -type f -name "security-dashboards-*.zip")
+          if [ -n "$SECURITY_PLUGIN_FILE" ]; then
+            mv "$SECURITY_PLUGIN_FILE" ./organized_artifacts/security-plugin/
+            echo "Organized security plugin: $SECURITY_PLUGIN_FILE"
+          else
+            echo "ERROR: Security plugin artifact not found!"
+            exit 1
+          fi
           
           # Находим и перемещаем все основные плагины
-          mkdir -p ./organized_artifacts/plugins
-          find ./artifacts -name "wazuh-dashboard-plugins_*.zip" -exec mv {} ./organized_artifacts/plugins/ \;
+          # Тоже самое: ищем ZIP-файлы ВНУТРИ скачанных папок
+          find ./artifacts -type f -name "wazuh-*.zip" -exec mv {} ./organized_artifacts/plugins/ \;
+          find ./artifacts -type f -name "wazuhCore-*.zip" -exec mv {} ./organized_artifacts/plugins/ \;
+          find ./artifacts -type f -name "wazuhCheckUpdates-*.zip" -exec mv {} ./organized_artifacts/plugins/ \;
           echo "Organized main plugins."
           
-          echo "--- Final structure ---"
+          echo "--- Final structure of organized_artifacts ---"
           ls -R ./organized_artifacts/
       
       - name: Debug artifacts
