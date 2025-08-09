@@ -412,7 +412,6 @@ jobs:
         run: |
           bash ./build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
-            # Передаем ТОЧНЫЕ абсолютные пути к архивам
             -a file://${{ github.workspace }}/${{ steps.find_paths.outputs.plugins_zip_path }} \
             -s file://${{ github.workspace }}/${{ steps.find_paths.outputs.security_zip_path }} \
             -b file://${{ github.workspace }}/${{ steps.find_paths.outputs.dashboard_file_path }} \
