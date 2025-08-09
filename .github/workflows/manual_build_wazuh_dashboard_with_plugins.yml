@@ -334,35 +334,38 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
+      
+      - name: Download all created artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts/
 
-      - name: Download dashboard artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          path: artifacts/dashboard
 
-      - name: Download security plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          path: artifacts/security-plugin
-
-      - name: Download main plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: artifacts/plugins
-      - name: Download core plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: artifacts/plugins
+      - name: Locate and organize downloaded artifacts
+        id: organize
+        run: |
+          echo "--- Organizing downloaded artifacts ---"
+          ls -R ./artifacts/
           
-      - name: Download check update plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: artifacts/plugins
+          # Находим и перемещаем dashboard.tar.gz
+          DASHBOARD_FILE=$(find ./artifacts -name "wazuh-dashboard_*.tar.gz")
+          mkdir -p ./organized_artifacts/dashboard
+          mv "$DASHBOARD_FILE" ./organized_artifacts/dashboard/
+          echo "Organized dashboard: $DASHBOARD_FILE"
+          
+          # Находим и перемещаем плагин безопасности
+          SECURITY_PLUGIN_FILE=$(find ./artifacts -name "wazuh-security-dashboards-plugin_*.zip")
+          mkdir -p ./organized_artifacts/security-plugin
+          mv "$SECURITY_PLUGIN_FILE" ./organized_artifacts/security-plugin/
+          echo "Organized security plugin: $SECURITY_PLUGIN_FILE"
+          
+          # Находим и перемещаем все основные плагины
+          mkdir -p ./organized_artifacts/plugins
+          find ./artifacts -name "wazuh-dashboard-plugins_*.zip" -exec mv {} ./organized_artifacts/plugins/ \;
+          echo "Organized main plugins."
+          
+          echo "--- Final structure ---"
+          ls -R ./organized_artifacts/
       
       - name: Debug artifacts
         run: |
@@ -370,15 +373,11 @@ jobs:
           ls -R artifacts
           echo "::endgroup::"
 
-      - name: Flatten artifact files
+      - name: Zip plugins
         run: |
-          echo "::group::Flattening artifacts"
-          find artifacts/plugins -type f -name "*.zip" -exec cp {} artifacts/ \;
-          find artifacts/security-plugin -type f -name "*.zip" -exec cp {} artifacts/ \;
-          TAR=$(find artifacts/dashboard -type f -name 'wazuh-dashboard_*.tar.gz' | head -n 1)
-          echo "Found dashboard tar.gz: $TAR"
-          cp "$TAR" artifacts/dashboard.tar.gz
-          echo "::endgroup::"
+          zip -r -j organized_artifacts/wazuh-package.zip organized_artifacts/plugins
+          zip -r -j organized_artifacts/security-package.zip organized_artifacts/security-plugin
+          zip -r -j organized_artifacts/dashboard-package.zip organized_artifacts/dashboard/
           
       - name: Debug current dir contents
         run: |
