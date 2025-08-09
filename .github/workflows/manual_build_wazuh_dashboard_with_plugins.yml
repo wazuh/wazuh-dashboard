@@ -391,9 +391,9 @@ jobs:
 
       - name: Zip plugins
         run: |
-          zip -r -j organized_artifacts/wazuh-package.zip organized_artifacts/plugins
-          zip -r -j organized_artifacts/security-package.zip organized_artifacts/security-plugin
-          zip -r -j organized_artifacts/dashboard-package.zip organized_artifacts/dashboard/
+          zip -r -j artifacts/wazuh-package.zip organized_artifacts/plugins
+          zip -r -j artifacts/security-package.zip organized_artifacts/security-plugin
+          zip -r -j artifacts/dashboard-package.zip organized_artifacts/dashboard/
           
       - name: Debug current dir contents
         run: |
@@ -417,9 +417,9 @@ jobs:
           cd dev-tools/build-packages
           bash ./build-packages.sh \
           -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
-          -a file:///${{ github.workspace }}/artifacts/wazuh-*.zip \
-          -s file:///${{ github.workspace }}/artifacts/security-dashboards-*.zip \
-          -b file:///${{ github.workspace }}/artifacts/dashboard.tar.gz \
+          -a file://${{ github.workspace }}/artifacts/wazuh-*.zip \
+          -s file://${{ github.workspace }}/artifacts/security-dashboards-*.zip \
+          -b file://${{ github.workspace }}/artifacts/dashboard.tar.gz \
           --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
           --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
