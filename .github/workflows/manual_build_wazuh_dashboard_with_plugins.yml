@@ -391,37 +391,33 @@ jobs:
 
       - name: Zip plugins
         run: |
-          zip -r -j artifacts/wazuh-package.zip organized_artifacts/plugins
-          zip -r -j artifacts/security-package.zip organized_artifacts/security-plugin
-          zip -r -j artifacts/dashboard-package.zip organized_artifacts/dashboard/
-          
-      - name: Debug current dir contents
-        run: |
-          echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
-          ls -al 
-          ls -al dev-tools
-          ls -al dev-tools/build-packages
-          
-      - name: Clone dev-tools
-        run: |
-          git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
-          cp -r temp-dashboard/dev-tools .
-          
-      - name: Copy deb-builder.sh and debian to Docker context
-        run: |
-          cp dev-tools/build-packages/deb/deb-builder.sh dev-tools/build-packages/deb/Docker/
-          cp -r dev-tools/build-packages/deb/debian dev-tools/build-packages/deb/Docker/
+          zip -r -j organized_artifacts/wazuh-package.zip organized_artifacts/plugins
+          zip -r -j organized_artifacts/security-package.zip organized_artifacts/security-plugin
+          # В dashboard-package кладем сам .tar.gz файл
+          zip -r -j organized_artifacts/dashboard-package.zip organized_artifacts/dashboard/
 
-      - name: Build package
+      - name: Find exact artifact paths
+        id: find_paths
         run: |
-          cd dev-tools/build-packages
+          # Находим точный путь к .tar.gz файлу дашборда
+          DASHBOARD_PATH=$(find organized_artifacts/dashboard -type f -name "*.tar.gz")
+          echo "Found Dashboard path: $DASHBOARD_PATH"
+          echo "dashboard_file_path=$DASHBOARD_PATH" >> $GITHUB_OUTPUT
+          echo "plugins_zip_path=organized_artifacts/wazuh-package.zip" >> $GITHUB_OUTPUT
+          echo "security_zip_path=organized_artifacts/security-package.zip" >> $GITHUB_OUTPUT
+
+  
+      - name: Build package
+        working-directory: ./dev-tools/build-packages
+        run: |
           bash ./build-packages.sh \
-          -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
-          -a file://${{ github.workspace }}/artifacts/wazuh-*.zip \
-          -s file://${{ github.workspace }}/artifacts/security-dashboards-*.zip \
-          -b file://${{ github.workspace }}/artifacts/dashboard.tar.gz \
-          --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
-          --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
+            # Передаем ТОЧНЫЕ абсолютные пути к архивам
+            -a file://${{ github.workspace }}/${{ steps.find_paths.outputs.plugins_zip_path }} \
+            -s file://${{ github.workspace }}/${{ steps.find_paths.outputs.security_zip_path }} \
+            -b file://${{ github.workspace }}/${{ steps.find_paths.outputs.dashboard_file_path }} \
+            --commit-sha ${{ needs.setup-variables.outputs.COMMIT_SHA }}-${{ needs.setup-variables.outputs.PLUGINS_SHA }}-${{ needs.setup-variables.outputs.SECURITY_SHA }} \
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Test package
         run: |
