@@ -405,19 +405,21 @@ jobs:
           echo "dashboard_file_path=$DASHBOARD_PATH" >> $GITHUB_OUTPUT
           echo "plugins_zip_path=organized_artifacts/wazuh-package.zip" >> $GITHUB_OUTPUT
           echo "security_zip_path=organized_artifacts/security-package.zip" >> $GITHUB_OUTPUT
-
-  
-      - name: Build package
-        working-directory: ./dev-tools/build-packages
+      
+      - name: Prepare Docker build context
         run: |
           if [ "${{ inputs.system }}" = "deb" ]; then
             echo "Preparing Debian build context..."
-            cp ${{ github.workspace }}/deb-builder.sh ./deb/Docker/
-            cp -r ${{ github.workspace }}/debian ./deb/Docker/
+            cp dev-tools/build-packages/deb/deb-builder.sh dev-tools/build-packages/deb/Docker/
+            cp -r dev-tools/build-packages/deb/debian dev-tools/build-packages/deb/Docker/
             echo "Context prepared. Listing files:"
-            ls -l ./deb/Docker/
+            ls -l dev-tools/build-packages/deb/Docker/
           fi
-          bash ./build-packages.sh \
+  
+      - name: Build package
+        working-directory: ./dev-tools/build-packages
+        run: | 
+          bash dev-tools/build-packages/build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/${{ steps.find_paths.outputs.plugins_zip_path }} \
             -s file://${{ github.workspace }}/${{ steps.find_paths.outputs.security_zip_path }} \
