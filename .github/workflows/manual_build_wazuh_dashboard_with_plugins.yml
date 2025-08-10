@@ -418,11 +418,18 @@ jobs:
             echo "Context prepared. Listing files:"
             ls -l dev-tools/build-packages/deb/Docker/
           fi
-  
+      
+      - name: Debug paths
+        run: |
+          pwd
+          ls -la
+          ls -la "${{ github.workspace }}/dev-tools/build-packages"
+          test -f "${{ github.workspace }}/dev-tools/build-packages/build-packages.sh" || (echo "build-packages.sh missing"; exit 1)
+      
       - name: Build package
-        working-directory: ./dev-tools/build-packages
         run: | 
-          bash dev-tools/build-packages/build-packages.sh \
+          bash "${{ github.workspace }}/dev-tools/build-packages/build-packages.sh" \
+            -r 1 \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/${{ steps.find_paths.outputs.plugins_zip_path }} \
             -s file://${{ github.workspace }}/${{ steps.find_paths.outputs.security_zip_path }} \
