@@ -433,26 +433,35 @@ jobs:
           test -f "${{ github.workspace }}/dev-tools/build-packages/build-packages.sh" || (echo "build-packages.sh missing"; exit 1)
 
       - name: Normalize dashboard tar name for packager
+        id: normalize-dashboard
         run: |
-          # значения подставь из своих переменных/инпутов
-          WZD_VERSION="${{ env.WZD_VERSION || '4.12.0' }}"
-          REV_PACK="${{ inputs.revision }}"         # то, что передаёшь в -r (сейчас 1)
-          ARCH_IN="${{ inputs.architecture }}"      # amd64 / arm64
-          # входной файл (как он скачан из build-base)
-          SRC="organized_artifacts/dashboard/wazuh-dashboard_${WZD_VERSION}-03_${ARCH_IN/x86_64/x64}.tar.gz"
-          # маппинг архитектуры в суффикс, который ждёт скрипт (linux-x64|linux-arm64)
-          if [[ "$ARCH_IN" == "x86_64" || "$ARCH_IN" == "amd64" ]]; then
-            ARCH_SUFFIX="linux-x64"
-          else
-            ARCH_SUFFIX="linux-arm64"
+          set -euo pipefail
+          # 1) Находим ЕДИНСТВЕННЫЙ tar.gz дашборда в папке
+          SRC=$(find organized_artifacts/dashboard -maxdepth 1 -type f -name 'wazuh-dashboard_*.tar.gz' | head -n 1)
+          if [[ -z "${SRC:-}" || ! -f "$SRC" ]]; then
+            echo "Dashboard tar.gz not found in organized_artifacts/dashboard"; exit 1
           fi
-          DEST="organized_artifacts/dashboard/wazuh-dashboard-${WZD_VERSION}-${REV_PACK}-${ARCH_SUFFIX}.tar.gz"
-          echo "SRC:  $SRC"
+          echo "Found dashboard tar: $SRC"
+          # 2) Версию берём из env, если есть; иначе выдёргиваем из имени
+          WZD_VERSION="${WZD_VERSION:-}"
+          if [[ -z "$WZD_VERSION" ]]; then
+          # имя вида: wazuh-dashboard_4.12.0-03_x64.tar.gz
+            WZD_VERSION="$(basename "$SRC" | sed -E 's/^wazuh-dashboard_([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')"
+          fi
+          # 3) Ревизию для паковщика берём из inputs.revision (то, что передаёшь в -r)
+          REV_PACK="${{ inputs.revision }}"
+          # 4) Маппинг архитектуры для ИМЕНИ назначения
+          ARCH_IN="${{ inputs.architecture }}"
+          if [[ "$ARCH_IN" == "x86_64" || "$ARCH_IN" == "amd64" ]]; then
+            DEST_ARCH_SUFFIX="linux-x64"
+          else
+            DEST_ARCH_SUFFIX="linux-arm64"
+          fi
+          DEST="organized_artifacts/dashboard/wazuh-dashboard-${WZD_VERSION}-${REV_PACK}-${DEST_ARCH_SUFFIX}.tar.gz"
           echo "DEST: $DEST"
           cp "$SRC" "$DEST"
-          # экспортируем путь, чтобы ниже не вычислять снова
+          # 5) Экспорт для следующих шагов
           echo "dashboard_file_path=$DEST" >> $GITHUB_OUTPUT
-          id: normalize-dashboard
       
       - name: Build package
         run: | 
