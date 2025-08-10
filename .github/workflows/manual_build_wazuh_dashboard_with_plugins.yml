@@ -461,7 +461,7 @@ jobs:
 
       - name: Debug current dir contents
         run: |
-          echo "Current DIR: ${{ github.workspace }}
+          echo "Current DIR: ${{ github.workspace }}"
           echo "--ls -al--"
           ls -al ${{ github.workspace }}
           echo "--ls -al ${{ github.workspace }}/dev-tools--"
