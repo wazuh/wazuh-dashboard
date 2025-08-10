@@ -57,7 +57,6 @@ jobs:
     outputs:
     
       COMMIT_SHA: ${{ steps.export-vars.outputs.COMMIT_SHA }}
-      CURRENT_DIR: ${{ steps.export-vars.outputs.CURRENT_DIR }}
       PLUGINS_SHA: ${{ steps.export-vars.outputs.PLUGINS_SHA }}
       SECURITY_SHA: ${{ steps.export-vars.outputs.SECURITY_SHA }}
       PACKAGE_NAME: ${{ steps.export-vars.outputs.PACKAGE_NAME }}
@@ -96,16 +95,12 @@ jobs:
           # set -e заставит скрипт упасть, если какая-то команда не сработает
           set -e
 
-          echo "--- Calculating all variables ---"
-          CURRENT_DIR="${GITHUB_WORKSPACE}"
-          echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
           
           # --- Получаем SHAs ---
           COMMIT_SHA=$(cd ./wazuh-dashboard && git rev-parse --short HEAD)
           PLUGINS_SHA=$(cd ./wazuh-dashboard-plugins && git rev-parse --short HEAD)
           SECURITY_SHA=$(cd ./wazuh-security-plugin && git rev-parse --short HEAD)
 
-          echo "Current Dir: $CURRENT_DIR"
           echo "Dashboard SHA: $COMMIT_SHA"
           echo "Plugins SHA: $PLUGINS_SHA"
           echo "Security SHA: $SECURITY_SHA"
@@ -479,9 +474,9 @@ jobs:
           cd ${{ github.workspace }}/dev-tools/build-packages
           bash ./build-packages.sh \
           -r ${{ inputs.revision }}  ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }}\
-          -a file:///${{ github.workspace }}/organized_artifacts/wazuh-package.zip \  
-          -s file:///${{ github.workspace }}/organized_artifacts/security-package.zip \
-          -b file:///${{ github.workspace }}/${{ steps.normalize-dashboard.outputs.dashboard_file_path }} \
+          -a file://${{ github.workspace }}/organized_artifacts/wazuh-package.zip \
+          -s file://${{ github.workspace }}/organized_artifacts/security-package.zip \
+          -b file://${{ github.workspace }}/${{ steps.normalize-dashboard.outputs.dashboard_file_path }} \
           --commit-sha ${{ needs.setup-variables.outputs.COMMIT_SHA }}-${{ needs.setup-variables.outputs.PLUGINS_SHA }}-${{ needs.setup-variables.outputs.SECURITY_SHA }} \
           --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
@@ -489,7 +484,7 @@ jobs:
         run: |
           cd dev-tools/test-packages
           ls -laR ${{ github.workspace }}/dev-tools/build-packages/output
-          cp ../build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
+          cp ../build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
