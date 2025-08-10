@@ -459,10 +459,26 @@ jobs:
           # Экспорт пути (если дальше хочешь использовать)
           echo "dashboard_file_path=$DEST_PATH" >> $GITHUB_OUTPUT
 
+      - name: Debug current dir contents
+        run: |
+          echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
+          echo "--ls -al--"
+          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}
+          echo "--ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools--"
+          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools
+          echo "--ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages--"
+          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+
+      - name: Clone dev-tools
+        run: |
+          git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
+          cp -r temp-dashboard/dev-tools ${{ needs.setup-variables.outputs.CURRENT_DIR }}
+          
       - name: Build package
         run: |
-          bash dev-tools/build-packages/build-packages.sh \
-          -r ${{ inputs.revision }} \
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+          bash ./build-packages.sh \
+          -r ${{ inputs.revision }}  ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }}\
           -a file:///${{ github.workspace }}/organized_artifacts/wazuh-package.zip \  
           -s file:///${{ github.workspace }}/organized_artifacts/security-package.zip \
           -b file:///${{ github.workspace }}/${{ steps.normalize-dashboard.outputs.dashboard_file_path }} \
