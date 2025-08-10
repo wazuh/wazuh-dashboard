@@ -476,3 +476,99 @@ jobs:
           retention-days: 30
           overwrite: true
 
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wazuh-dashboard_4.12.0-03_x64.tar.gz
+          path: ${{ github.workspace }}/artifacts/dashboard
+
+      - name: Download security plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wazuh-security-dashboards-plugin_4.12.0-03*.zip
+          path: ${{ github.workspace }}/artifacts/security-plugin
+          merge-multiple: true
+
+      - name: Download main plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wazuh-dashboard-plugins_wazuh_4.12.0-03*.zip
+          path: ${{ github.workspace }}/artifacts/plugins
+          merge-multiple: true
+          
+      - name: Download core plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wazuh-dashboard-plugins_wazuh-core_4.12.0-03*.zip
+          path: ${{ github.workspace }}/artifacts/plugins
+          merge-multiple: true
+          
+      - name: Download check update plugin's artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wazuh-dashboard-plugins_wazuh-check-updates_4.12.0-03*.zip
+          path: ${{ github.workspace }}/artifacts/plugins
+          merge-multiple: true
+     
+      - name: Debug artifacts
+        run: |
+          echo "::group::Contents of artifacts/"
+          ls -R ${{ github.workspace }}/artifacts
+          echo "::endgroup::"
+      - name: Zip plugins
+        run: |
+          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
+          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/wazuh-dashboard_4.12.0-03_x64.tar.gz
+      - name: Debug current dir contents
+        run: |
+          echo "Current DIR: ${{ github.workspace }}"
+          echo "--ls -al ${{ github.workspace }}--"
+          ls -al ${{ github.workspace }}
+          echo "--ls -al ${{ github.workspace }}/dev-tools--"
+          ls -al ${{ github.workspace }}/dev-tools
+      - name: Clone dev-tools
+        run: |
+          git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
+          cp -r temp-dashboard/dev-tools ${{ github.workspace }}
+      
+      - name: Build package
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+          bash ./build-packages.sh \
+            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
+            -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
+            -s file://${{ github.workspace }}/artifacts/security-package.zip \
+            -b file://${{ github.workspace }}/artifacts/dashboard-package.zip \
+            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+      - name: Export variables to env
+        run: |
+          echo "VERSION=${{ needs.setup-variables.outputs.VERSION }}" >> $GITHUB_ENV
+          echo "ARTIFACT_BUILD_NAME=${{ needs.setup-variables.outputs.PACKAGE_NAME }}" >> $GITHUB_ENV
+      - name: Move generated .deb to artifacts folder
+        run: |
+          mkdir -p ${{ github.workspace }}/artifacts/output
+          mv ${{ github.workspace }}/dev-tools/build-packages/output/*.deb ${{ github.workspace }}/artifacts/output/
+      - name: List target artifacts
+        run: |
+            ls -lh ${{ github.workspace }}/artifacts/
+            ls -lh ${{ github.workspace }}/artifacts/output/
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          path: ${{ github.workspace }}/artifacts/output/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
+          retention-days: 30
+          overwrite: true
