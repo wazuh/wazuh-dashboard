@@ -461,22 +461,22 @@ jobs:
 
       - name: Debug current dir contents
         run: |
-          echo "Current DIR: ${{ needs.setup-variables.outputs.CURRENT_DIR }}"
+          echo "Current DIR: ${{ github.workspace }}
           echo "--ls -al--"
-          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}
-          echo "--ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools--"
-          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools
-          echo "--ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages--"
-          ls -al ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+          ls -al ${{ github.workspace }}
+          echo "--ls -al ${{ github.workspace }}/dev-tools--"
+          ls -al ${{ github.workspace }}/dev-tools
+          echo "--ls -al ${{ github.workspace }}/dev-tools/build-packages--"
+          ls -al ${{ github.workspace }}/dev-tools/build-packages
 
       - name: Clone dev-tools
         run: |
           git clone --depth=1 https://github.com/ivmerk/wazuh-dashboard.git temp-dashboard
-          cp -r temp-dashboard/dev-tools ${{ needs.setup-variables.outputs.CURRENT_DIR }}
+          cp -r temp-dashboard/dev-tools ${{ github.workspace }}
           
       - name: Build package
         run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+          cd ${{ github.workspace }}/dev-tools/build-packages
           bash ./build-packages.sh \
           -r ${{ inputs.revision }}  ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }}\
           -a file:///${{ github.workspace }}/organized_artifacts/wazuh-package.zip \  
