@@ -424,10 +424,35 @@ jobs:
       
       - name: Debug paths
         run: |
+          echo "--pwd--"
           pwd
+          echo "--ls -la--"
           ls -la
+          echo "--ls -la "${{ github.workspace }}/dev-tools/build-packages"--"          
           ls -la "${{ github.workspace }}/dev-tools/build-packages"
           test -f "${{ github.workspace }}/dev-tools/build-packages/build-packages.sh" || (echo "build-packages.sh missing"; exit 1)
+
+      - name: Normalize dashboard tar name for packager
+        run: |
+          # значения подставь из своих переменных/инпутов
+          WZD_VERSION="${{ env.WZD_VERSION || '4.12.0' }}"
+          REV_PACK="${{ inputs.revision }}"         # то, что передаёшь в -r (сейчас 1)
+          ARCH_IN="${{ inputs.architecture }}"      # amd64 / arm64
+          # входной файл (как он скачан из build-base)
+          SRC="organized_artifacts/dashboard/wazuh-dashboard_${WZD_VERSION}-03_${ARCH_IN/x86_64/x64}.tar.gz"
+          # маппинг архитектуры в суффикс, который ждёт скрипт (linux-x64|linux-arm64)
+          if [[ "$ARCH_IN" == "x86_64" || "$ARCH_IN" == "amd64" ]]; then
+            ARCH_SUFFIX="linux-x64"
+          else
+            ARCH_SUFFIX="linux-arm64"
+          fi
+          DEST="organized_artifacts/dashboard/wazuh-dashboard-${WZD_VERSION}-${REV_PACK}-${ARCH_SUFFIX}.tar.gz"
+          echo "SRC:  $SRC"
+          echo "DEST: $DEST"
+          cp "$SRC" "$DEST"
+          # экспортируем путь, чтобы ниже не вычислять снова
+          echo "dashboard_file_path=$DEST" >> $GITHUB_OUTPUT
+          id: normalize-dashboard
       
       - name: Build package
         run: | 
@@ -436,7 +461,7 @@ jobs:
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/${{ steps.find_paths.outputs.plugins_zip_path }} \
             -s file://${{ github.workspace }}/${{ steps.find_paths.outputs.security_zip_path }} \
-            -b file://${{ github.workspace }}/${{ steps.find_paths.outputs.dashboard_file_path }} \
+            -b file://${{ github.workspace }}/${{ steps.normalize-dashboard.outputs.dashboard_file_path }} \
             --commit-sha ${{ needs.setup-variables.outputs.COMMIT_SHA }}-${{ needs.setup-variables.outputs.PLUGINS_SHA }}-${{ needs.setup-variables.outputs.SECURITY_SHA }} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
