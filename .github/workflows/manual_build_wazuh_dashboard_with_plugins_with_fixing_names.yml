@@ -286,8 +286,7 @@ jobs:
 
 
   build-and-test-package:
-    needs: [build-base, build-main-plugins, build-security-plugin]
-
+    needs: [prepare-refs, setup-variables, build-base, build-main-plugins, build-security-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
