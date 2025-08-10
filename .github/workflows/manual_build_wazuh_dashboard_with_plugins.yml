@@ -382,6 +382,9 @@ jobs:
           find ./artifacts -type f -name "wazuhCore-*.zip" -exec mv {} ./organized_artifacts/plugins/ \;
           find ./artifacts -type f -name "wazuhCheckUpdates-*.zip" -exec mv {} ./organized_artifacts/plugins/ \;
           echo "Organized main plugins."
+
+          echo "--PWD--"
+          pwd
           
           echo "--- Final structure of organized_artifacts ---"
           ls -R ./organized_artifacts/
