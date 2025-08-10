@@ -432,47 +432,42 @@ jobs:
           ls -la "${{ github.workspace }}/dev-tools/build-packages"
           test -f "${{ github.workspace }}/dev-tools/build-packages/build-packages.sh" || (echo "build-packages.sh missing"; exit 1)
 
-      - name: Normalize dashboard tar name for packager
+      - name: Normalize dashboard tar name and place into output
         id: normalize-dashboard
         run: |
           set -euo pipefail
-          # 1) Находим ЕДИНСТВЕННЫЙ tar.gz дашборда в папке
+          # 1) Берём реальный tar.gz из organized_artifacts/dashboard
           SRC=$(find organized_artifacts/dashboard -maxdepth 1 -type f -name 'wazuh-dashboard_*.tar.gz' | head -n 1)
-          if [[ -z "${SRC:-}" || ! -f "$SRC" ]]; then
-            echo "Dashboard tar.gz not found in organized_artifacts/dashboard"; exit 1
-          fi
-          echo "Found dashboard tar: $SRC"
-          # 2) Версию берём из env, если есть; иначе выдёргиваем из имени
-          WZD_VERSION="${WZD_VERSION:-}"
-          if [[ -z "$WZD_VERSION" ]]; then
-          # имя вида: wazuh-dashboard_4.12.0-03_x64.tar.gz
-            WZD_VERSION="$(basename "$SRC" | sed -E 's/^wazuh-dashboard_([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')"
-          fi
-          # 3) Ревизию для паковщика берём из inputs.revision (то, что передаёшь в -r)
+          [[ -n "${SRC:-}" && -f "$SRC" ]] || { echo "Dashboard tar not found"; exit 1; }
+          echo "Found: $SRC"
+          # 2) Версия из имени файла (wazuh-dashboard_4.12.0-03_x64.tar.gz -> 4.12.0)
+          WZD_VERSION="$(basename "$SRC" | sed -E 's/^wazuh-dashboard_([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')"
+          # 3) Ревизия — то, что ты передаёшь в -r
           REV_PACK="${{ inputs.revision }}"
-          # 4) Маппинг архитектуры для ИМЕНИ назначения
-          ARCH_IN="${{ inputs.architecture }}"
-          if [[ "$ARCH_IN" == "x86_64" || "$ARCH_IN" == "amd64" ]]; then
-            DEST_ARCH_SUFFIX="linux-x64"
+          # 4) Архитектура для имени, которое ждёт паковщик
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            ARCH_SUFFIX="linux-x64"
           else
-            DEST_ARCH_SUFFIX="linux-arm64"
+            ARCH_SUFFIX="linux-arm64"
           fi
-          DEST="organized_artifacts/dashboard/wazuh-dashboard-${WZD_VERSION}-${REV_PACK}-${DEST_ARCH_SUFFIX}.tar.gz"
-          echo "DEST: $DEST"
-          cp "$SRC" "$DEST"
-          # 5) Экспорт для следующих шагов
-          echo "dashboard_file_path=$DEST" >> $GITHUB_OUTPUT
-      
+          DEST_NAME="wazuh-dashboard-${WZD_VERSION}-${REV_PACK}-${ARCH_SUFFIX}.tar.gz"
+          DEST_PATH="dev-tools/build-packages/output/$DEST_NAME"
+          # 5) Кладём именно туда, что монтируется как /output в контейнере
+          mkdir -p dev-tools/build-packages/output
+          cp "$SRC" "$DEST_PATH"
+          echo "Prepared base tar at: $DEST_PATH"
+          # Экспорт пути (если дальше хочешь использовать)
+          echo "dashboard_file_path=$DEST_PATH" >> $GITHUB_OUTPUT
+
       - name: Build package
-        run: | 
-          bash "${{ github.workspace }}/dev-tools/build-packages/build-packages.sh" \
-            -r 1 \
-            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
-            -a file://${{ github.workspace }}/${{ steps.find_paths.outputs.plugins_zip_path }} \
-            -s file://${{ github.workspace }}/${{ steps.find_paths.outputs.security_zip_path }} \
-            -b file://${{ github.workspace }}/${{ steps.normalize-dashboard.outputs.dashboard_file_path }} \
-            --commit-sha ${{ needs.setup-variables.outputs.COMMIT_SHA }}-${{ needs.setup-variables.outputs.PLUGINS_SHA }}-${{ needs.setup-variables.outputs.SECURITY_SHA }} \
-            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+        run: |
+          bash dev-tools/build-packages/build-packages.sh \
+          -r ${{ inputs.revision }} \
+          -a file:///${{ github.workspace }}/organized_artifacts/wazuh-package.zip \  
+          -s file:///${{ github.workspace }}/organized_artifacts/security-package.zip \
+          -b file:///${{ github.workspace }}/${{ steps.normalize-dashboard.outputs.dashboard_file_path }} \
+          --commit-sha ${{ needs.setup-variables.outputs.COMMIT_SHA }}-${{ needs.setup-variables.outputs.PLUGINS_SHA }}-${{ needs.setup-variables.outputs.SECURITY_SHA }} \
+          --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Test package
         run: |
