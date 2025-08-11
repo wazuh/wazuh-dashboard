@@ -13,7 +13,7 @@ import { HealthCheckConfig } from '../../../common/healthcheck';
 
 export interface HealthCheckStatus {
   ok: boolean | null;
-  checks: any[] | null;
+  checks: TaskInfo[] | null;
   error?: string | null;
 }
 
@@ -21,18 +21,20 @@ export interface HealthCheckStatus {
  * Wraps `fn` so only one call runs at a time.
  * Subsequent calls return the same Promise until the first completes.
  */
-function singlePromiseInstance(fn, serializer = JSON.stringify) {
+function singlePromiseInstance<T = () => Promise<any>>(fn: T, serializer = JSON.stringify) {
   const activePromises: {
     [key: string]: Promise<any>;
   } = {};
 
-  return function (...args: any[]) {
+  return function (this: T, ...args: any[]) {
     const serialized: string = serializer(...(args as [any, any]));
     // If no active run, invoke and store its promise
     if (!activePromises[serialized]) {
-      activePromises[serialized] = Promise.resolve(fn.apply(this, args)).finally(() => {
-        delete activePromises[serialized];
-      });
+      activePromises[serialized] = Promise.resolve((fn as Function).apply(this, args)).finally(
+        () => {
+          delete activePromises[serialized];
+        }
+      );
     }
     // Return the in-flight or just-finished promise
     return activePromises[serialized];
@@ -89,7 +91,8 @@ export class HealthCheck extends TaskManager implements TaskManager {
   private _server_not_ready_troubleshooting_link: string = '';
   private scheduled?: ScheduledIntervalTask;
   private _coreStartServices: any;
-  constructor(private readonly logger: Logger, services: any) {
+  public runInternal: (names?: string[]) => Promise<any>;
+  constructor(private readonly logger: Logger, services: any = {}) {
     super(logger, services);
     this.runInternal = singlePromiseInstance(this._runInternal).bind(this);
   }
@@ -155,7 +158,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
     this.runInternal().catch(() => {});
     await this.status$
       .pipe(
-        filter(({ ok }) => ok),
+        filter(({ ok }: { ok: HealthCheckStatus['ok'] }, _index: number) => ok),
         take(1)
       )
       .toPromise();

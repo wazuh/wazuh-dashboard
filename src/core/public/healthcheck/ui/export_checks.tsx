@@ -6,7 +6,7 @@
 import React from 'react';
 import { EuiButtonIcon, EuiToolTip } from '@elastic/eui';
 import { FormattedMessage } from '@osd/i18n/react';
-import { HealthCheckStatus, TaskInfo } from 'src/core/common/healthcheck';
+import { HealthCheckStatus } from 'src/core/common/healthcheck';
 import { useAsyncAction } from './hook/use_async_action';
 
 /**

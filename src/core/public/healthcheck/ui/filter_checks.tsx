@@ -81,7 +81,13 @@ const availableFiltersCategories = [
   },
 ];
 
-export const ButtonFilterChecksCheck = ({ filters, setFilters }) => {
+export const ButtonFilterChecksCheck = ({
+  filters,
+  setFilters,
+}: {
+  filters: Array<{ id: CheckFilters }>;
+  setFilters: (fn: (state: Array<{ id: CheckFilters }>) => Array<{ id: CheckFilters }>) => void;
+}) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const button = (
     <EuiToolTip
@@ -163,14 +169,20 @@ export const ButtonFilterChecksCheck = ({ filters, setFilters }) => {
                           key={`${categoryId}:${availableFilter.id}`}
                           id={availableFilter.id}
                           label={availableFilter.label}
-                          checked={Boolean(filters.find(({ id }) => id === availableFilter.id))}
+                          checked={Boolean(
+                            filters.find(
+                              ({ id }: { id: CheckFilters }) => id === availableFilter.id
+                            )
+                          )}
                           onChange={(e) => {
                             const value = e.target.checked;
-                            setFilters((state) => {
+                            setFilters((state: Array<{ id: CheckFilters }>) => {
                               return [
-                                ...state.filter(({ id }) => id !== availableFilter.id),
+                                ...state.filter(
+                                  ({ id }: { id: CheckFilters }) => id !== availableFilter.id
+                                ),
                                 ...(value ? [{ id: availableFilter.id }] : []),
-                              ];
+                              ] as Array<{ id: CheckFilters }>;
                             });
                           }}
                         />
