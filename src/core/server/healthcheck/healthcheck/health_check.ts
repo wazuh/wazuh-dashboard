@@ -21,12 +21,12 @@ export interface HealthCheckStatus {
  * Wraps `fn` so only one call runs at a time.
  * Subsequent calls return the same Promise until the first completes.
  */
-function singlePromiseInstance<T = () => Promise<any>>(fn: T, serializer = JSON.stringify) {
+function singlePromiseInstance(fn: Function, serializer = JSON.stringify) {
   const activePromises: {
     [key: string]: Promise<any>;
   } = {};
 
-  return function (this: T, ...args: any[]) {
+  return function (this: HealthCheck, ...args: any[]) {
     const serialized: string = serializer(...(args as [any, any]));
     // If no active run, invoke and store its promise
     if (!activePromises[serialized]) {
@@ -81,7 +81,8 @@ export class HealthCheck extends TaskManager implements TaskManager {
   status$: BehaviorSubject<HealthCheckStatus> = new BehaviorSubject({
     ok: null,
     checks: [],
-  });
+    error: null,
+  } as HealthCheckStatus);
   private statusSubscriptions: Subscription = new Subscription();
   private _enabled: boolean = false;
   private _retryDelay: number = 0;
@@ -158,7 +159,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
     this.runInternal().catch(() => {});
     await this.status$
       .pipe(
-        filter(({ ok }: { ok: HealthCheckStatus['ok'] }, _index: number) => ok),
+        filter(({ ok }: HealthCheckStatus, _index: number) => Boolean(ok)),
         take(1)
       )
       .toPromise();

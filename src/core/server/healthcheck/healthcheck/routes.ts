@@ -43,7 +43,7 @@ function createAdapterHandler(
 }
 
 function validateRoute(validation?: {
-  query?: { validate?: (value: any) => { name?: string | undefined } };
+  query?: { validate?: (value: any) => Readonly<{ name?: string | undefined }> | undefined };
 }) {
   return function (fn: (...params: any[]) => void) {
     return function (...args: any[]) {

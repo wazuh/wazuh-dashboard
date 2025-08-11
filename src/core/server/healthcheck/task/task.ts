@@ -5,11 +5,12 @@
 // import { TASK } from '../healthcheck/constants';
 import { TASK } from './constants';
 import { ITask, TaskDefinition } from './types';
+import { TaskInfo } from '../../../common/healthcheck';
 
 export class Task implements ITask {
   public name: string;
   public order?: number;
-  private readonly runInternal: any;
+  public readonly runInternal: any;
   public status: ITask['status'] = TASK.RUN_STATUS.NOT_STARTED;
   public result: ITask['result'] = TASK.RUN_RESULT.GRAY;
   public data: any = null;
@@ -38,7 +39,7 @@ export class Task implements ITask {
     this.error = null;
   }
 
-  async run(...params: any[]) {
+  async run(...params: any[]): Promise<TaskInfo> {
     if (this.status === TASK.RUN_STATUS.RUNNING) {
       throw new Error(`Another instance of task ${this.name} is running`);
     }

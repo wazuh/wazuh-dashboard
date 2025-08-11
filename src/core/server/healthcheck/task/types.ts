@@ -17,7 +17,7 @@ export interface TaskDefinition {
 export interface ITask extends TaskInfo {
   runInternal: (ctx: any) => any;
   order?: number;
-  run: <Context = any, Result = any>(ctx: Context) => Promise<Result>;
+  run: (...params: any[]) => Promise<TaskInfo>;
   getInfo: () => TaskInfo;
 }
 
