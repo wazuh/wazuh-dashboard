@@ -4,7 +4,8 @@
  */
 
 import { Logger } from 'opensearch-dashboards/server';
-import { ITask, TaskManager as ITaskManager, TaskDefinition, TaskInfo } from './types';
+import { ITask, TaskManager as ITaskManager, TaskDefinition } from './types';
+import { TaskInfo } from '../../../common/healthcheck';
 import { Task } from './task';
 
 /**
@@ -110,7 +111,7 @@ export class TaskManager implements ITaskManager {
           ? allTasks.filter(({ name }) => taskNames.includes(name))
           : allTasks;
 
-        return this.runTasksInOrder(tasks, async (item) => {
+        return this.runTasksInOrder(tasks, async (item: ITask) => {
           const logger = this.logger.get(item.name);
 
           try {

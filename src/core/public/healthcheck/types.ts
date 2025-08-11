@@ -26,8 +26,8 @@ export interface HealthCheckServiceStart {
   status$: BehaviorSubject<{ ok: boolean | null; checks: any[] }>;
   client: {
     internal: {
-      fetch: () => Promise<HealthCheckStatus>;
-      run: () => Promise<HealthCheckStatus>;
+      fetch: (tasknames?: string[]) => Promise<HealthCheckStatus>;
+      run: (tasknames?: string[]) => Promise<HealthCheckStatus>;
     };
   };
 }

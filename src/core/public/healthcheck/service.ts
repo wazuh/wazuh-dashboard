@@ -5,8 +5,10 @@
 
 import { BehaviorSubject } from 'rxjs';
 import { get } from 'lodash';
+import { TaskInfo } from 'src/core/common/healthcheck';
 import { mount } from './ui/mount';
-import { HealthCheckServiceStartDeps, HealthCheckStatus } from './types';
+import { HealthCheckServiceStartDeps } from './types';
+import { HealthCheckStatus } from '../../common/healthcheck';
 import { TASK } from './constants';
 
 export function mergeArraysOfByProp<T>(arr1: T[], arr2: T[], prop: string) {
@@ -44,7 +46,7 @@ export class HealthcheckService {
             try {
               let query;
 
-              if (taskNames?.length > 0) {
+              if (taskNames && taskNames?.length > 0) {
                 query = {
                   name: taskNames.join(','),
                 };
@@ -67,7 +69,7 @@ export class HealthcheckService {
             try {
               let query;
 
-              if (taskNames?.length > 0) {
+              if (taskNames && taskNames?.length > 0) {
                 query = {
                   name: taskNames.join(','),
                 };
@@ -121,7 +123,6 @@ export class HealthcheckService {
         fetch: deps.client.internal.fetch,
         run: deps.client.internal.run,
         getConfig: async () => core.healthCheckConfig,
-        computeCheckStatus: (check) => this.computeStatus(check),
       });
     }
 
@@ -134,8 +135,15 @@ export class HealthcheckService {
 
     if (
       checks.some(
-        ({ result, _meta, status }) =>
-          !_meta.isCritical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
+        ({
+          result,
+          _meta,
+          status,
+        }: {
+          result: TaskInfo['result'];
+          _meta: TaskInfo['_meta'];
+          status: TaskInfo['status'];
+        }) => !_meta.isCritical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
       )
     ) {
       overallStatus = 'yellow';
@@ -143,8 +151,15 @@ export class HealthcheckService {
 
     if (
       checks.some(
-        ({ result, _meta, status }) =>
-          _meta.isCritical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
+        ({
+          result,
+          _meta,
+          status,
+        }: {
+          result: TaskInfo['result'];
+          _meta: TaskInfo['_meta'];
+          status: TaskInfo['status'];
+        }) => _meta.isCritical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
       )
     ) {
       overallStatus = 'red';
@@ -166,7 +181,7 @@ export class HealthcheckService {
     return { status, checks: this.sortByProp(checks, 'name') };
   }
 
-  private sortByProp(arr, prop, ascending = true) {
+  private sortByProp(arr: any[], prop: string, ascending = true) {
     return arr.slice().sort((a, b) => {
       if (get(a, prop) < get(b, prop)) return ascending ? -1 : 1;
       if (get(a, prop) > get(b, prop)) return ascending ? 1 : -1;

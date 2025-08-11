@@ -20,7 +20,8 @@ import {
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { groupBy } from 'lodash';
-import { interval } from 'rxjs';
+import { BehaviorSubject, interval } from 'rxjs';
+import { HealthCheckConfig, HealthCheckStatus, TaskInfo } from 'src/core/common/healthcheck';
 import { useAsyncAction } from './hook/use_async_action';
 import { ButtonExportHealthCheck } from './export_checks';
 import { HealthIcon } from './health_icon';
@@ -28,8 +29,17 @@ import { getHealthFromStatus } from './services/health';
 import { CheckDetails } from './check_details';
 import { ButtonFilterChecksCheck, checkFilters } from './filter_checks';
 import { TASK } from '../constants';
+import { HealthCheckServiceStart, HealthCheckServiceStartDeps } from '../types';
 
-export const HealthCheckNavButton = (props) => {
+export interface HealthCheckNavButtonProps {
+  coreStart: HealthCheckServiceStartDeps;
+  status$: BehaviorSubject<HealthCheckStatus>;
+  fetch: HealthCheckServiceStart['client']['internal']['fetch'];
+  run: HealthCheckServiceStart['client']['internal']['run'];
+  getConfig: () => Promise<HealthCheckConfig>;
+  formatDate: (date: string) => string;
+}
+export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
   const [isPopoverOpen, setPopoverOpen] = useState<boolean>(false);
   const { status, checks } = useObservable(props.status$, props.status$.getValue());
   const runAction = useAsyncAction(() => props.run());
@@ -122,7 +132,7 @@ export const HealthCheckNavButton = (props) => {
               </h3>
             </EuiText>
             <div style={{ marginLeft: '4px' }}>
-              {[TASK.RUN_RESULT.GREEN, TASK.RUN_RESULT.RED, TASK.RUN_RESULT.NULL].map((result) => {
+              {[TASK.RUN_RESULT.GREEN, TASK.RUN_RESULT.RED, TASK.RUN_RESULT.GRAY].map((result) => {
                 const groupedByResult = checksGroupByResult[result]?.length;
                 const filteredCheckByResult = filteredChecksGroupByResult?.[result]?.length ?? 0;
                 if (groupedByResult) {
@@ -200,7 +210,7 @@ export const HealthCheckNavButton = (props) => {
         responsive={false}
         style={{ overflowY: 'scroll', maxHeight: '65vh', overflowX: 'hidden' }}
       >
-        {filteredChecks.map((check) => (
+        {filteredChecks.map((check: TaskInfo) => (
           <EuiFlexItem key={check.name}>
             <div>
               <CheckDetails

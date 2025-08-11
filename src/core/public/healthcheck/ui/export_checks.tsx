@@ -45,11 +45,7 @@ function downloadFile(
 }
 
 interface ButtonExportHealthCheckProps {
-  data: HealthCheckStatus & {
-    _meta: {
-      server: string;
-    };
-  };
+  data: HealthCheckStatus;
 }
 
 export const ButtonExportHealthCheck = ({ data }: ButtonExportHealthCheckProps) => {

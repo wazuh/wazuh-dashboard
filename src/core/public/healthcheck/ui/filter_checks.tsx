@@ -33,7 +33,7 @@ export const checkFilters = {
   'result:green': propEquals('result', TASK.RUN_RESULT.GREEN),
   'result:yellow': propEquals('result', TASK.RUN_RESULT.YELLOW),
   'result:red': propEquals('result', TASK.RUN_RESULT.RED),
-  'result:gray': propEquals('result', TASK.RUN_RESULT.NULL),
+  'result:gray': propEquals('result', TASK.RUN_RESULT.GRAY),
   'critical:yes': propEquals('_meta.isCritical', true),
   'critical:no': propEquals('_meta.isCritical', false),
 };
@@ -64,7 +64,7 @@ const availableFiltersCategories = [
         id: 'result:red',
       },
       {
-        label: <HealthIcon status={TASK.RUN_RESULT.NULL} />,
+        label: <HealthIcon status={TASK.RUN_RESULT.GRAY} />,
         id: 'result:gray',
       },
     ],

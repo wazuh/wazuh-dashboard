@@ -3,45 +3,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Request, ResponseToolkit, Server } from '@hapi/hapi';
 import { schema } from '@osd/config-schema';
 
 const getTaskList = (tasksAsString: string) => tasksAsString.split(',');
 
-interface EnhancedLoggerLog {
-  timestamp: string;
-  level: string;
-  message: string;
+type ResponseType = (params: any) => void;
+interface ResponseHandler {
+  ok: ResponseType;
+  badRequest: ResponseType;
+  internalError: ResponseType;
 }
 
-function enhanceTaskLogger(logger) {
-  const logs: EnhancedLoggerLog[] = [];
-  const enhancedLogger = {
-    getLogs() {
-      return logs;
-    },
-  };
-
-  for (const level of ['debug', 'info', 'warn', 'error']) {
-    enhancedLogger[level] = (message: string) => {
-      logs.push({ timestamp: new Date().toISOString(), level, message });
-      logger[level](message);
-    };
-  }
-
-  return enhancedLogger;
-}
-
-function createAdapterHandler(fn) {
-  return function (request, h) {
+function createAdapterHandler(
+  fn: (context: {}, request: Request, response: ResponseHandler) => void
+) {
+  return function (request: Request, h: ResponseToolkit) {
     const context = {};
     const response = {
-      ok: ({ body }) => {
+      ok: ({ body }: { body: any }) => {
         return h.response(body).type('application/json').code(200);
       },
-      badRequest: ({ body }) => {
+      badRequest: ({ body }: { body: any }) => {
         return h.response(body).type('application/json').code(400);
       },
-      internalError: ({ body }) => {
+      internalError: ({ body }: { body: any }) => {
         return h.response(body).type('application/json').code(503);
       },
     };
@@ -49,13 +35,13 @@ function createAdapterHandler(fn) {
   };
 }
 
-function validateRoute(validation) {
-  return function (fn) {
-    return function (...args) {
+function validateRoute(validation?: { query?: { validate?: (value: any) => string | undefined } }) {
+  return function (fn: (...params: any[]) => void) {
+    return function (...args: any[]) {
       const [_, request, response] = args;
       if (validation && validation.query) {
         try {
-          validation.query.validate(request.query);
+          validation!.query!.validate!(request.query);
         } catch (err) {
           return response.badRequest({ body: { error: err.message } });
         }
@@ -65,7 +51,7 @@ function validateRoute(validation) {
   };
 }
 
-async function handlerGetConfig(_context, _request, response) {
+async function handlerGetConfig(_context: any, _request: Request, response: ResponseHandler) {
   try {
     this.logger.debug('Getting health check config');
 
@@ -81,7 +67,7 @@ async function handlerGetConfig(_context, _request, response) {
   }
 }
 
-async function handlerGetTasks(_context, request, response) {
+async function handlerGetTasks(_context: any, _request: Request, response: ResponseHandler) {
   try {
     const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
 
@@ -110,7 +96,7 @@ async function handlerGetTasks(_context, request, response) {
   }
 }
 
-async function handlerRunTasks(_context, request, response) {
+async function handlerRunTasks(_context: any, _request: Request, response: ResponseHandler) {
   try {
     this.logger.debug(`Running healthcheck tasks related to internal scope`);
     const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
@@ -140,14 +126,17 @@ async function handlerRunTasks(_context, request, response) {
   }
 }
 
-export function addRoutesReadyServer(router, { healthcheck, logger }) {
+export function addRoutesReadyServer(
+  router: any,
+  { healthcheck, logger }: { healthcheck: any; logger: any }
+) {
   const validateTaskList = schema.maybe(
     schema.string({
       validate(value: string) {
         const tasks = healthcheck.getAll();
         const requestTasks = getTaskList(value);
         const invalidTasks = requestTasks.filter((requestTask) =>
-          tasks.every(({ name }) => requestTask !== name)
+          tasks.every(({ name }: { name: string }) => requestTask !== name)
         );
 
         if (invalidTasks.length > 0) {
@@ -200,7 +189,10 @@ export function addRoutesReadyServer(router, { healthcheck, logger }) {
 }
 
 // Routers not-ready server
-export function addRoutesNotReadyServer(server, { healthcheck, logger }) {
+export function addRoutesNotReadyServer(
+  server: Server,
+  { healthcheck, logger }: { healthcheck: any; logger: any }
+) {
   const validateTaskList = schema.maybe(
     schema.string({
       validate(value: string) {

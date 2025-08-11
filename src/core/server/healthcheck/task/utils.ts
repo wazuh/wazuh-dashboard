@@ -22,7 +22,7 @@ export function retry<D>(
     delay: number;
   }
 ) {
-  return async function retryingFn(...args) {
+  return async function retryingFn(...args: any[]) {
     let attempt = 0;
     while (true) {
       try {

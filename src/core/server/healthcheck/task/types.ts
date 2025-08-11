@@ -15,12 +15,13 @@ export interface TaskDefinition {
 }
 
 export interface ITask extends TaskInfo {
+  order?: number;
   run: <Context = any, Result = any>(ctx: Context) => Promise<Result>;
   getInfo: () => TaskInfo;
 }
 
 // Task manager
-export interface TaskManager<S> {
+export interface TaskManager {
   register: (task: TaskDefinition) => void;
   get: (name: string) => ITask;
   getAll: () => ITask[];
