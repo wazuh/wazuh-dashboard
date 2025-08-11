@@ -67,8 +67,8 @@ override_dh_install:
 	mkdir -p $(TARGET_DIR)/etc/systemd/system
 	mkdir -p $(TARGET_DIR)/etc/default
 
-	cp wazuh-dashboard-base/config/node.options $(TARGET_DIR)$(CONFIG_DIR)
-	cp wazuh-dashboard-base/config/opensearch_dashboards.yml $(TARGET_DIR)$(CONFIG_DIR)
+	mv wazuh-dashboard-base/config/node.options $(TARGET_DIR)$(CONFIG_DIR)
+	mv wazuh-dashboard-base/config/opensearch_dashboards.yml $(TARGET_DIR)$(CONFIG_DIR)
 	mv wazuh-dashboard-base/* $(TARGET_DIR)$(INSTALLATION_DIR)
 
 	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/config
@@ -100,7 +100,7 @@ override_dh_fixperms:
 	chmod 750 $(TARGET_DIR)/etc/default/wazuh-dashboard
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/opensearch_dashboards.yml
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/node.options
-	chmod 640 $(TARGET_DIR)/etc/systemd/system/wazuh-dashboard.service
+	chmod 644 $(TARGET_DIR)/etc/systemd/system/wazuh-dashboard.service
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type d -exec chmod 750 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 644 -exec chmod 640 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 755 -exec chmod 750 {} \;
