@@ -9,6 +9,7 @@ import { NotificationsStart } from '../notifications';
 import { ChromeStart } from '../chrome';
 import { HealthCheckConfig, TaskInfo } from '../../common/healthcheck';
 import { IUiSettingsClient } from '../ui_settings';
+import { HealthCheckStatus } from './service';
 
 export interface HealthCheckServiceStartDeps {
   http: HttpSetup;
@@ -19,15 +20,15 @@ export interface HealthCheckServiceStartDeps {
 }
 
 export interface HealthCheckServiceSetup {
-  status$: BehaviorSubject<{ ok: boolean | null; checks: any[] }>;
+  status$: BehaviorSubject<{ status: TaskInfo['result']; checks: TaskInfo[] }>;
 }
 
 export interface HealthCheckServiceStart {
-  status$: BehaviorSubject<{ ok: boolean | null; checks: any[] }>;
+  status$: BehaviorSubject<{ status: TaskInfo['result']; checks: TaskInfo[] }>;
   client: {
     internal: {
-      fetch: (tasknames?: string[]) => Promise<TaskInfo[]>;
-      run: (tasknames?: string[]) => Promise<TaskInfo[]>;
+      fetch: (tasknames?: string[]) => Promise<HealthCheckStatus>;
+      run: (tasknames?: string[]) => Promise<HealthCheckStatus>;
     };
   };
 }

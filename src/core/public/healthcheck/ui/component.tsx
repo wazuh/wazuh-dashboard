@@ -21,7 +21,7 @@ import {
 import useObservable from 'react-use/lib/useObservable';
 import { groupBy } from 'lodash';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
-import { HealthCheckConfig, HealthCheckStatus, TaskInfo } from 'src/core/common/healthcheck';
+import { HealthCheckConfig, TaskInfo } from 'src/core/common/healthcheck';
 import { useAsyncAction } from './hook/use_async_action';
 import { ButtonExportHealthCheck } from './export_checks';
 import { HealthIcon } from './health_icon';
@@ -30,6 +30,7 @@ import { CheckDetails } from './check_details';
 import { ButtonFilterChecksCheck, CheckFilters, checkFilters } from './filter_checks';
 import { TASK } from '../constants';
 import { HealthCheckServiceStart, HealthCheckServiceStartDeps } from '../types';
+import { HealthCheckStatus } from '../service';
 
 export interface HealthCheckNavButtonProps {
   coreStart: HealthCheckServiceStartDeps;

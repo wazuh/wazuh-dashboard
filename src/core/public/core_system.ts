@@ -255,7 +255,7 @@ export class CoreSystem {
         uiSettings,
         http,
         notifications,
-        healthCheckConfig: this.injectedMetadata.state.healthCheck,
+        healthCheckConfig: injectedMetadata.getHealthCheck(),
       });
 
       this.coreApp.start({ application, http, notifications, uiSettings });

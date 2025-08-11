@@ -84,16 +84,6 @@ describe('HealthcheckService', () => {
   });
 
   it.each`
-    checks                                                                | status
-    ${{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }} | ${'green'}
-    ${{ name: 'task:1', result: 'red', status: 'finished', _meta: {} }}   | ${'red'}
-  `('compute check status', async ({ checks, status }) => {
-    const service = new HealthcheckService();
-
-    expect(service.computeStatus(checks)).toBe(status);
-  });
-
-  it.each`
     checks                                                                                                                                                        | result
     ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: {} }]}                   | ${{ status: 'green', checks: [{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'green', status: 'finished', _meta: {} }] }}
     ${[{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: {} }]}                     | ${{ status: 'yellow', checks: [{ name: 'task:1', result: 'green', status: 'finished', _meta: {} }, { name: 'task:2', result: 'red', status: 'finished', _meta: {} }] }}

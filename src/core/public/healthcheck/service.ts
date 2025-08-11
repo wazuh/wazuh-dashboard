@@ -8,7 +8,6 @@ import { get } from 'lodash';
 import { TaskInfo } from 'src/core/common/healthcheck';
 import { mount } from './ui/mount';
 import { HealthCheckServiceStartDeps } from './types';
-import { HealthCheckStatus } from '../../common/healthcheck';
 import { TASK } from './constants';
 
 export function mergeArraysOfByProp<T>(arr1: T[], arr2: T[], prop: string) {
@@ -18,17 +17,15 @@ export function mergeArraysOfByProp<T>(arr1: T[], arr2: T[], prop: string) {
 
   return [...map.values()];
 }
-
-const mapperCheckResultToColor = {
-  success: 'green',
-  fail: 'red',
-  null: 'gray',
-};
+export interface HealthCheckStatus {
+  status: TaskInfo['result'];
+  checks: TaskInfo[];
+}
 export class HealthcheckService {
   status$: BehaviorSubject<HealthCheckStatus> = new BehaviorSubject({
-    status: null,
+    status: 'gray',
     checks: [],
-  });
+  } as HealthCheckStatus);
   constructor() {}
   setup() {
     const deps = {
@@ -166,14 +163,6 @@ export class HealthcheckService {
     }
 
     return overallStatus as HealthCheckStatus['status'];
-  }
-
-  computeStatus(check: any): HealthCheckStatus['status'] {
-    if (!check?.result && !check?._meta?.isEnabled) {
-      return mapperCheckResultToColor.null;
-    }
-
-    return mapperCheckResultToColor[String(check.result)] || mapperCheckResultToColor.null;
   }
 
   generateNextState({ checks }: { checks: HealthCheckStatus['checks'] }): HealthCheckStatus {
