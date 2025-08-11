@@ -60,23 +60,13 @@ export class TaskManager implements ITaskManager {
     return [...this.items.values()];
   }
 
-  createNewTaskFromRegisteredTask(name: string) {
-    const task = this.get(name) as ITask;
-
-    if (!task) {
-      throw new Error(`Task [${name}] is not registered`);
-    }
-
-    return new Task({ ...(task._meta || {}), name, run: task.runInternal, order: task.order });
-  }
-
   /**
    * Run tasks in ascending order, executing same-order tasks in parallel.
    *
    * @param {Array<{ name: string, run: ()=>any|Promise<any>, order?: number }>} tasks
    * @returns {Promise<any[]>} results array in execution order
    */
-  private async runTasksInOrder(tasks: any[], cb) {
+  private async runTasksInOrder(tasks: any[], cb: (task: ITask) => Promise<TaskInfo>) {
     // 1. Sort by order (undefined → Infinity)
     const sorted = tasks.slice().sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
 

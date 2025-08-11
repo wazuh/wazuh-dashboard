@@ -20,14 +20,14 @@ import {
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { groupBy } from 'lodash';
-import { BehaviorSubject, interval } from 'rxjs';
+import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { HealthCheckConfig, HealthCheckStatus, TaskInfo } from 'src/core/common/healthcheck';
 import { useAsyncAction } from './hook/use_async_action';
 import { ButtonExportHealthCheck } from './export_checks';
 import { HealthIcon } from './health_icon';
 import { getHealthFromStatus } from './services/health';
 import { CheckDetails } from './check_details';
-import { ButtonFilterChecksCheck, checkFilters } from './filter_checks';
+import { ButtonFilterChecksCheck, CheckFilters, checkFilters } from './filter_checks';
 import { TASK } from '../constants';
 import { HealthCheckServiceStart, HealthCheckServiceStartDeps } from '../types';
 
@@ -43,8 +43,8 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
   const [isPopoverOpen, setPopoverOpen] = useState<boolean>(false);
   const { status, checks } = useObservable(props.status$, props.status$.getValue());
   const runAction = useAsyncAction(() => props.run());
-  const updateInterval = useRef();
-  const [filterChecks, setFilterChecks] = useState([]);
+  const updateInterval = useRef<Subscription>();
+  const [filterChecks, setFilterChecks] = useState<Array<{ id: CheckFilters }>>([]);
 
   useEffect(() => {
     props.getConfig().then((config) => {
@@ -59,7 +59,7 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filterCheck = (check) => {
+  const filterCheck = (check: TaskInfo, _index: number, _arr: TaskInfo[]) => {
     return filterChecks.length > 0 ? filterChecks.some(({ id }) => checkFilters[id](check)) : true;
   };
 

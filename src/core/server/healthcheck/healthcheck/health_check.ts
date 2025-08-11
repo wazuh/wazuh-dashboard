@@ -79,7 +79,6 @@ export class HealthCheck extends TaskManager implements TaskManager {
   status$: BehaviorSubject<HealthCheckStatus> = new BehaviorSubject({
     ok: null,
     checks: [],
-    error: null,
   });
   private statusSubscriptions: Subscription = new Subscription();
   private _enabled: boolean = false;

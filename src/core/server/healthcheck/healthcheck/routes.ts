@@ -3,12 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Request, ResponseToolkit, Server } from '@hapi/hapi';
+import { Lifecycle, Request, ResponseToolkit, Server } from '@hapi/hapi';
 import { schema } from '@osd/config-schema';
+import { Logger } from 'src/core/server';
+import { HealthCheck } from './health_check';
 
 const getTaskList = (tasksAsString: string) => tasksAsString.split(',');
 
-type ResponseType = (params: any) => void;
+type ResponseType = (params: any) => Lifecycle.ReturnValue;
+
+interface InjectedProps {
+  healthcheck: HealthCheck;
+  logger: Logger;
+}
 interface ResponseHandler {
   ok: ResponseType;
   badRequest: ResponseType;
@@ -16,8 +23,8 @@ interface ResponseHandler {
 }
 
 function createAdapterHandler(
-  fn: (context: {}, request: Request, response: ResponseHandler) => void
-) {
+  fn: (context: {}, request: Request, response: ResponseHandler) => Lifecycle.ReturnValue
+): Lifecycle.Method {
   return function (request: Request, h: ResponseToolkit) {
     const context = {};
     const response = {
@@ -35,7 +42,9 @@ function createAdapterHandler(
   };
 }
 
-function validateRoute(validation?: { query?: { validate?: (value: any) => string | undefined } }) {
+function validateRoute(validation?: {
+  query?: { validate?: (value: any) => { name?: string | undefined } };
+}) {
   return function (fn: (...params: any[]) => void) {
     return function (...args: any[]) {
       const [_, request, response] = args;
@@ -51,7 +60,12 @@ function validateRoute(validation?: { query?: { validate?: (value: any) => strin
   };
 }
 
-async function handlerGetConfig(_context: any, _request: Request, response: ResponseHandler) {
+async function handlerGetConfig(
+  this: InjectedProps,
+  _context: any,
+  _request: Request,
+  response: ResponseHandler
+) {
   try {
     this.logger.debug('Getting health check config');
 
@@ -67,7 +81,12 @@ async function handlerGetConfig(_context: any, _request: Request, response: Resp
   }
 }
 
-async function handlerGetTasks(_context: any, _request: Request, response: ResponseHandler) {
+async function handlerGetTasks(
+  this: InjectedProps,
+  _context: any,
+  request: Request,
+  response: ResponseHandler
+) {
   try {
     const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
 
@@ -96,7 +115,12 @@ async function handlerGetTasks(_context: any, _request: Request, response: Respo
   }
 }
 
-async function handlerRunTasks(_context: any, _request: Request, response: ResponseHandler) {
+async function handlerRunTasks(
+  this: InjectedProps,
+  _context: any,
+  request: Request,
+  response: ResponseHandler
+) {
   try {
     this.logger.debug(`Running healthcheck tasks related to internal scope`);
     const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
@@ -199,7 +223,7 @@ export function addRoutesNotReadyServer(
         const tasks = healthcheck.getAll();
         const requestTasks = getTaskList(value);
         const invalidTasks = requestTasks.filter((requestTask) =>
-          tasks.every(({ name }) => requestTask !== name)
+          tasks.every(({ name }: { name: string }) => requestTask !== name)
         );
 
         if (invalidTasks.length > 0) {

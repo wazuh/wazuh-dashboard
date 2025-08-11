@@ -38,6 +38,8 @@ export const checkFilters = {
   'critical:no': propEquals('_meta.isCritical', false),
 };
 
+export type CheckFilters = keyof typeof checkFilters;
+
 const availableFiltersCategories = [
   {
     label: 'Enabled',
