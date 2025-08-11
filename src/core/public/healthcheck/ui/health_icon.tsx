@@ -6,7 +6,7 @@
 import React from 'react';
 import { EuiHealth, EuiToolTip } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
-import { HealthCheckStatus } from '../types';
+import { TaskInfo } from 'src/core/common/healthcheck';
 import { getHealthFromStatus } from './services/health';
 
 const statusChecksExplain = {
@@ -47,9 +47,9 @@ export const HealthIcon = ({
   tooltip,
   status,
 }: {
-  children?: React.node;
-  tooltip?: React.node;
-  status: HealthCheckStatus['status'];
+  children?: React.ReactNode;
+  tooltip?: React.ReactNode;
+  status: TaskInfo['result'];
 }) => (
   <EuiToolTip content={tooltip || statusChecksExplain[status]} position="bottom">
     <EuiHealth color={getHealthFromStatus(status)}>{children}</EuiHealth>

@@ -21,8 +21,8 @@ import { get } from 'lodash';
 import { TASK } from '../constants';
 import { HealthIcon } from './health_icon';
 
-function propEquals(propPath, expectedValue) {
-  return function (obj) {
+function propEquals(propPath: string, expectedValue: any) {
+  return function (obj: any) {
     return get(obj, propPath) === expectedValue;
   };
 }

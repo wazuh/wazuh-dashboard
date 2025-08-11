@@ -240,6 +240,8 @@ export class LegacyService implements CoreService {
         createStoreFromRequest: startDeps.core.dynamicConfig.createStoreFromRequest,
       },
       workspace: startDeps.core.workspace,
+      // Wazuh
+      healthcheck: startDeps.core.healthcheck,
     };
 
     const router = setupDeps.core.http.createRouter('', this.legacyId);
@@ -310,6 +312,8 @@ export class LegacyService implements CoreService {
       getStartServices: () => Promise.resolve([coreStart, startDeps.plugins, {}]),
       security: setupDeps.core.security,
       workspace: setupDeps.core.workspace,
+      // Wazuh
+      healthcheck: setupDeps.core.healthcheck,
     };
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires

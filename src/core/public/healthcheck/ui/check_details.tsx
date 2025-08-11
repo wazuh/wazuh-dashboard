@@ -5,10 +5,17 @@
 import React, { useState } from 'react';
 import { EuiButtonIcon, EuiFlexGroup, EuiFlexItem, EuiText, EuiToolTip } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
+import { TaskInfo } from 'src/core/common/healthcheck';
 import { HealthIcon } from './health_icon';
 import { useAsyncAction } from './hook/use_async_action';
 
-export const CheckDetails = ({ check, run, formatDate }) => {
+interface CheckDetailsProps {
+  check: TaskInfo;
+  run: () => Promise<void>;
+  formatDate: (date: string) => string;
+}
+
+export const CheckDetails = ({ check, run, formatDate }: CheckDetailsProps) => {
   const { name, duration, startedAt, finishedAt, error, _meta } = check;
   const [detailsIsOpen, setDetailsIsOpen] = useState<boolean>(false);
   const runAction = useAsyncAction(run);

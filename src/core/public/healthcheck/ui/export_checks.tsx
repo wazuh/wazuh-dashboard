@@ -6,6 +6,7 @@
 import React from 'react';
 import { EuiButtonIcon, EuiToolTip } from '@elastic/eui';
 import { FormattedMessage } from '@osd/i18n/react';
+import { HealthCheckStatus, TaskInfo } from 'src/core/common/healthcheck';
 import { useAsyncAction } from './hook/use_async_action';
 
 /**
@@ -15,7 +16,11 @@ import { useAsyncAction } from './hook/use_async_action';
  * @param {string|Blob|Uint8Array} content  - File contents as text, Blob, or byte array.
  * @param {string} [mimeType]    - MIME type of the file (defaults to "text/plain").
  */
-function downloadFile(filename, content, mimeType = 'text/plain') {
+function downloadFile(
+  filename: string,
+  content: string | Blob | Uint8Array,
+  mimeType: string = 'text/plain'
+) {
   // Normalize content into a Blob
   let blob;
   if (content instanceof Blob) {
@@ -39,7 +44,15 @@ function downloadFile(filename, content, mimeType = 'text/plain') {
   URL.revokeObjectURL(url);
 }
 
-export const ButtonExportHealthCheck = ({ data }) => {
+interface ButtonExportHealthCheckProps {
+  data: HealthCheckStatus & {
+    _meta: {
+      server: string;
+    };
+  };
+}
+
+export const ButtonExportHealthCheck = ({ data }: ButtonExportHealthCheckProps) => {
   const action = useAsyncAction(() =>
     downloadFile(
       'healthcheck.json',

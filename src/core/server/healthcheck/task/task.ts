@@ -4,14 +4,14 @@
  */
 // import { TASK } from '../healthcheck/constants';
 import { TASK } from './constants';
-import { ITask, TaskDefinition, TaskInfo } from './types';
+import { ITask, TaskDefinition } from './types';
 
 export class Task implements ITask {
   public name: string;
   public order?: number;
   private readonly runInternal: any;
   public status: ITask['status'] = TASK.RUN_STATUS.NOT_STARTED;
-  public result: ITask['result'] = TASK.RUN_RESULT.NULL;
+  public result: ITask['result'] = TASK.RUN_RESULT.GRAY;
   public data: any = null;
   public createdAt: ITask['createdAt'] = new Date().toISOString();
   public startedAt: ITask['startedAt'] = null;
@@ -30,7 +30,7 @@ export class Task implements ITask {
 
   private init() {
     this.status = TASK.RUN_STATUS.RUNNING;
-    this.result = null;
+    this.result = TASK.RUN_RESULT.GRAY;
     this.data = null;
     this.startedAt = new Date().toISOString();
     this.finishedAt = null;
@@ -71,19 +71,17 @@ export class Task implements ITask {
   }
 
   getInfo() {
-    return Object.fromEntries(
-      [
-        'name',
-        'status',
-        'result',
-        'data',
-        'createdAt',
-        'startedAt',
-        'finishedAt',
-        'duration',
-        'error',
-        '_meta',
-      ].map((item) => [item, this[item]])
-    ) as TaskInfo;
+    return {
+      name: this.name,
+      status: this.status,
+      result: this.result,
+      data: this.data,
+      createdAt: this.createdAt,
+      startedAt: this.startedAt,
+      finishedAt: this.finishedAt,
+      duration: this.duration,
+      error: this.error,
+      _meta: this._meta,
+    };
   }
 }

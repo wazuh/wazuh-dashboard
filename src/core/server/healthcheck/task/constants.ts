@@ -11,6 +11,7 @@ export const TASK = {
   },
   RUN_RESULT: {
     NULL: null,
+    GRAY: 'gray',
     GREEN: 'green',
     YELLOW: 'yellow',
     RED: 'red',

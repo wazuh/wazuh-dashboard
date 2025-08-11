@@ -4,10 +4,16 @@
  */
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { HttpServerSetup } from 'opensearch-dashboards/server/http/http_server';
+import { Request, ResponseToolkit } from '@hapi/hapi';
 import { CoreService } from '../../../types';
 import { CoreContext } from '../../core_context';
 import { Logger } from '../../logging';
-import { HealthCheckServiceSetup, HealthCheckServiceStart } from './types';
+import {
+  HealthCheckServiceSetup,
+  HealthCheckServiceStart,
+  HealthCheckServiceStartDeps,
+} from './types';
 import { HealthCheck } from './health_check';
 import { HealthCheckConfigType } from './config';
 import { addRoutesNotReadyServer } from './routes';
@@ -27,8 +33,8 @@ export class HealthCheckService
   private readonly config$: Observable<HealthCheckConfigType>;
 
   constructor(private readonly coreContext: CoreContext) {
-    this.logger = coreContext.logger.get('healthcheck');
-    this.config$ = coreContext.configService.atPath<HealthCheckConfigType>('healthcheck');
+    this.logger = this.coreContext.logger.get('healthcheck');
+    this.config$ = this.coreContext.configService.atPath<HealthCheckConfigType>('healthcheck');
     this.healthCheck = new HealthCheck(this.logger, {});
   }
 
@@ -42,9 +48,9 @@ export class HealthCheckService
     return createSetup(this);
   }
 
-  async start(...params: any[]) {
+  async start(core: HealthCheckServiceStartDeps) {
     this.logger.debug('Start starts');
-    await this.healthCheck.start(...params);
+    await this.healthCheck.start(core);
 
     this.logger.debug('Start finished');
     return createSetup(this);
@@ -56,7 +62,7 @@ export class HealthCheckService
     this.logger.debug('Stop finished');
   }
 
-  enhanceNotReadyServer(server, basePath) {
+  enhanceNotReadyServer(server: HttpServerSetup['server'], basePath: HttpServerSetup['basePath']) {
     const appName = 'Wazuh dashboard';
 
     addRoutesNotReadyServer(server, { healthcheck: this.healthCheck, logger: this.logger });
@@ -64,7 +70,7 @@ export class HealthCheckService
     server.route({
       path: '/{p*}',
       method: '*',
-      handler: (request, h) => {
+      handler: (_request: Request, h: ResponseToolkit) => {
         const documentationTroubleshootingLink = this.healthCheck.getConfig()
           .server_not_ready_troubleshooting_link;
 

@@ -55,9 +55,11 @@ import {
 
 import { RequestHandlerContext } from '../../server';
 import { registerCoreHandlers } from './lifecycle_handlers';
+import { HealthCheckService } from '../healthcheck';
 
 export interface SetupDeps {
   context: ContextSetup;
+  getHealthCheckService: () => HealthCheckService;
 }
 
 export interface StartDeps {

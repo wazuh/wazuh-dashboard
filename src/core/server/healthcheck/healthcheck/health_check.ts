@@ -5,11 +5,11 @@
 import { Logger } from 'opensearch-dashboards/server';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
+import { TaskInfo } from 'src/core/common/healthcheck';
 import { retry, TASK, TaskManager } from '../task';
-import type { TaskRunResult } from '../task';
 import { addRoutesReadyServer } from './routes';
 import { ScheduledIntervalTask } from './scheduled_task';
-import { HealthCheckConfig } from './types';
+import { HealthCheckConfig } from '../../../common/healthcheck';
 
 export interface HealthCheckStatus {
   ok: boolean | null;
@@ -22,10 +22,12 @@ export interface HealthCheckStatus {
  * Subsequent calls return the same Promise until the first completes.
  */
 function singlePromiseInstance(fn, serializer = JSON.stringify) {
-  const activePromises = {};
+  const activePromises: {
+    [key: string]: Promise<any>;
+  } = {};
 
-  return function (...args) {
-    const serialized = serializer(...args);
+  return function (...args: any[]) {
+    const serialized: string = serializer(...(args as [any, any]));
     // If no active run, invoke and store its promise
     if (!activePromises[serialized]) {
       activePromises[serialized] = Promise.resolve(fn.apply(this, args)).finally(() => {
@@ -48,7 +50,7 @@ function singlePromiseInstance(fn, serializer = JSON.stringify) {
  */
 export function filterListByRegex(list: string[], regexFilters: string[]) {
   // Helper: convert a string into a RegExp object
-  const toRegExp = (str) => {
+  const toRegExp = (str: string) => {
     // If in /pattern/flags form, extract pattern and flags
     const slashForm = str.match(/^\/(.+)\/([gimsuy]*)$/);
     if (slashForm) {
@@ -66,7 +68,7 @@ export function filterListByRegex(list: string[], regexFilters: string[]) {
       // console.warn(`Invalid regex "${pat}" skipped.`);
     }
     return arr;
-  }, []);
+  }, [] as RegExp[]);
 
   // Filter: include a task if any regex matches
   return list.filter((task) => compiled.some((rx) => rx.test(task)));
@@ -104,7 +106,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
     return tasks.map((taskName) => this.getCheckInfo(taskName));
   }
 
-  setCheckResult(name: string, result: TaskRunResult) {
+  setCheckResult(name: string, result: TaskInfo['result']) {
     const task = this.get(name);
 
     if (task) {
@@ -112,7 +114,8 @@ export class HealthCheck extends TaskManager implements TaskManager {
     }
   }
 
-  async setup(core: any, config: HealthCheckConfigDefinition) {
+  async setup(...args: any[]) {
+    const [core, config] = args;
     this._enabled = config.enabled;
     this._retryDelay = config.retries_delay.asMilliseconds();
     this._maxRetryAttempts = config.max_retries;
@@ -162,8 +165,8 @@ export class HealthCheck extends TaskManager implements TaskManager {
     return;
   }
 
-  async start(core: any) {
-    this._coreStartServices = core;
+  async start(...args: any[]) {
+    this._coreStartServices = args[0];
     const enabledChecks = this.filterEnabledChecks();
 
     if (!this._enabled) {
@@ -211,7 +214,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
     this.logger.debug('Stop finished');
   }
 
-  async _run(ctx, taskNames) {
+  async _run(ctx: any, taskNames?: string[]) {
     let ok: null | boolean = null;
     let checks: any[] = [];
     let error = null;
@@ -223,7 +226,7 @@ export class HealthCheck extends TaskManager implements TaskManager {
       } else {
         this.logger.debug('Running checks');
 
-        checks = await super.run(ctx, taskNames);
+        checks = (await super.run(ctx, taskNames)) as TaskInfo[];
         ok =
           Array.isArray(checks) &&
           checks.every(
@@ -253,9 +256,9 @@ export class HealthCheck extends TaskManager implements TaskManager {
     return data;
   }
 
-  async run(...args) {
+  async run(...args: any[]) {
     return retry(
-      async (...params) => {
+      async (...params: [any, any]) => {
         const data = await this._run(...params);
         if (data.error) {
           throw new Error(data.error);

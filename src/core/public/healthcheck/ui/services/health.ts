@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { TaskInfo } from 'src/core/common/healthcheck';
+
 const mapStatusHealth = {
   green: 'success',
   yellow: 'warning',
@@ -10,6 +12,6 @@ const mapStatusHealth = {
   gray: 'subdued',
 };
 
-export function getHealthFromStatus(status: string) {
-  return mapStatusHealth[status] || mapStatusHealth.gray;
+export function getHealthFromStatus(status: TaskInfo['result']) {
+  return (status && mapStatusHealth[status]) || mapStatusHealth.gray;
 }
