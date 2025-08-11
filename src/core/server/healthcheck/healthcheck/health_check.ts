@@ -76,7 +76,7 @@ export function filterListByRegex(list: string[], regexFilters: string[]) {
   return list.filter((task) => compiled.some((rx) => rx.test(task)));
 }
 
-export class HealthCheck extends TaskManager implements TaskManager {
+export class HealthCheck extends TaskManager {
   private items = new Map();
   status$: BehaviorSubject<HealthCheckStatus> = new BehaviorSubject({
     ok: null,

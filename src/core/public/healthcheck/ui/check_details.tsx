@@ -12,7 +12,7 @@ import { useAsyncAction } from './hook/use_async_action';
 
 interface CheckDetailsProps {
   check: TaskInfo;
-  run: () => Promise<HealthCheckStatus>;
+  run: () => Promise<TaskInfo[]>;
   formatDate: (date: string) => string;
 }
 
