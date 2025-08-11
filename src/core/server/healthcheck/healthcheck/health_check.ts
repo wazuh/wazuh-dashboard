@@ -145,7 +145,7 @@ export class HealthCheck extends TaskManager {
   private async _runInternal(names?: string[]) {
     const taskNames = names || this.filterEnabledChecks();
 
-    return this.run(
+    return this.runWithDecorators(
       {
         services: { core: this._coreStartServices },
         scope: 'internal',
@@ -229,7 +229,7 @@ export class HealthCheck extends TaskManager {
       } else {
         this.logger.debug('Running checks');
 
-        checks = (await super.run(ctx, taskNames)) as TaskInfo[];
+        checks = (await this.run(ctx, taskNames)) as TaskInfo[];
         ok =
           Array.isArray(checks) &&
           checks.every(
@@ -259,10 +259,10 @@ export class HealthCheck extends TaskManager {
     return data;
   }
 
-  async run(...args: any[]) {
+  async runWithDecorators(ctxUpper: any, taskNamesUpper?: string[]) {
     return retry(
-      async (...params: [any, any]) => {
-        const data = await this._run(...params);
+      async (ctx: any, taskNames?: string[]) => {
+        const data = await this._run(ctx, taskNames);
         if (data.error) {
           throw new Error(data.error);
         }
@@ -288,7 +288,7 @@ export class HealthCheck extends TaskManager {
         maxAttempts: this._maxRetryAttempts,
         delay: this._retryDelay,
       }
-    )(...args);
+    )(ctxUpper, taskNamesUpper);
   }
 
   /**

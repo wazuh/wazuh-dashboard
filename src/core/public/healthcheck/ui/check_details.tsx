@@ -8,10 +8,11 @@ import { FormattedMessage } from 'react-intl';
 import { TaskInfo } from 'src/core/common/healthcheck';
 import { HealthIcon } from './health_icon';
 import { useAsyncAction } from './hook/use_async_action';
+import { HealthCheckStatus } from '../service';
 
 interface CheckDetailsProps {
   check: TaskInfo;
-  run: () => Promise<TaskInfo[]>;
+  run: () => Promise<HealthCheckStatus>;
   formatDate: (date: string) => string;
 }
 

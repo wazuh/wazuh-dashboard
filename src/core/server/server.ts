@@ -332,7 +332,6 @@ export class Server {
       metrics: metricsStart,
       savedObjects: savedObjectsStart,
       uiSettings: uiSettingsStart,
-      auditTrail: auditTrailStart,
       coreUsageData: coreUsageDataStart,
       crossCompatibility: crossCompatibilityServiceStart,
       dynamicConfig: dynamicConfigServiceStart,

@@ -5,16 +5,15 @@
 
 import { Duration } from 'moment';
 import { WorkspaceStart } from 'opensearch-dashboards/server/workspace';
-import { DynamicConfigServiceStart } from 'opensearch-dashboards/server/config';
+import { InternalDynamicConfigServiceStart } from 'opensearch-dashboards/server/config';
 import { CrossCompatibilityServiceStart } from 'opensearch-dashboards/server/cross_compatibility';
 import { CoreUsageDataStart } from 'opensearch-dashboards/server/core_usage_data';
-import { AuditTrailStart } from 'opensearch-dashboards/server/audit_trail';
 import { UiSettingsServiceStart } from 'opensearch-dashboards/server/ui_settings';
-import { MetricsServiceStart } from 'opensearch-dashboards/server/metrics';
-import { HttpServiceStart } from 'opensearch-dashboards/server/http';
-import { OpenSearchServiceStart } from 'opensearch-dashboards/server/opensearch';
+import { InternalMetricsServiceStart } from 'opensearch-dashboards/server/metrics';
+import { InternalHttpServiceStart } from 'opensearch-dashboards/server/http';
+import { InternalOpenSearchServiceStart } from 'opensearch-dashboards/server/opensearch';
 import { CapabilitiesStart } from 'opensearch-dashboards/server';
-import { SavedObjectsStartDeps } from 'opensearch-dashboards/server/saved_objects/saved_objects_service';
+import { InternalSavedObjectsServiceStart } from 'opensearch-dashboards/server/saved_objects/saved_objects_service';
 import { ITask, TaskDefinition } from '../task/types';
 
 // Healcheck
@@ -28,15 +27,14 @@ export type HealthCheckServiceStart = HealthCheckServiceSetup;
 
 export interface HealthCheckServiceStartDeps {
   capabilities: CapabilitiesStart;
-  opensearch: OpenSearchServiceStart;
-  http: HttpServiceStart;
-  metrics: MetricsServiceStart;
-  savedObjects: SavedObjectsStartDeps;
+  opensearch: InternalOpenSearchServiceStart;
+  http: InternalHttpServiceStart;
+  metrics: InternalMetricsServiceStart;
+  savedObjects: InternalSavedObjectsServiceStart;
   uiSettings: UiSettingsServiceStart;
-  auditTrail: AuditTrailStart;
   coreUsageData: CoreUsageDataStart;
   crossCompatibility: CrossCompatibilityServiceStart;
-  dynamicConfig: DynamicConfigServiceStart;
+  dynamicConfig: InternalDynamicConfigServiceStart;
   workspace: WorkspaceStart;
 }
 
