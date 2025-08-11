@@ -189,7 +189,8 @@ export class Server {
     const httpSetup = await this.http.setup({
       context: contextServiceSetup,
       // Wazuh
-      getHealthCheckService: () => this.healthcheck,
+      enhanceServerNotReady: (server, basePath) =>
+        this.healthcheck.enhanceNotReadyServer(server, basePath),
     });
 
     // Once http is setup, register routes and async local storage

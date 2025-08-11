@@ -53,13 +53,13 @@ import {
   InternalHttpServiceStart,
 } from './types';
 
-import { RequestHandlerContext } from '../../server';
+import { BasePath, RequestHandlerContext } from '../../server';
 import { registerCoreHandlers } from './lifecycle_handlers';
-import { HealthCheckService } from '../healthcheck';
 
 export interface SetupDeps {
   context: ContextSetup;
-  getHealthCheckService: () => HealthCheckService;
+  // Wazuh
+  enhanceServerNotReady: (server: Server, basePath: BasePath) => void;
 }
 
 export interface StartDeps {
@@ -202,7 +202,7 @@ export class HttpService
     this.notReadyServer = server;
 
     // Wazuh: decorate server
-    deps.getHealthCheckService().enhanceNotReadyServer(server, basePath);
+    deps.enhanceNotReadyServer(server, basePath);
     // use hapi server while OpenSearchDashboardsResponseFactory doesn't allow specifying custom headers
     // https://github.com/elastic/kibana/issues/33779
     // Wazuh: comment
