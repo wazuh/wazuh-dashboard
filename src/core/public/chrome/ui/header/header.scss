@@ -66,9 +66,10 @@ $customSoftYellow: mix(white, $euiColorWarning, 80%);
   }
 }
 
-  .primaryHeader {
-    background-color: $customSoftYellow !important;
-  }
+.primaryHeader {
+  background-color: $customSoftYellow !important;
+}
+
 .headerGlobalNav:has(.newTopNavHeader:not(.primaryApplicationHeader)) {
   margin-bottom: -1 * $euiSizeS;
 }
