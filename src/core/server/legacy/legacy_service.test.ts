@@ -119,7 +119,7 @@ beforeEach(() => {
       dynamicConfig: dynamicConfigServiceMock.createInternalSetupContract(),
       workspace: workspaceServiceMock.createInternalSetupContract(),
       // Wazuh
-      healthcheck: healthCheckServiceMock.createSetupContract(),
+      healthCheck: healthCheckServiceMock.createSetupContract(),
     },
     plugins: { 'plugin-id': 'plugin-value' },
     uiPlugins: {

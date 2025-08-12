@@ -501,7 +501,7 @@ export interface CoreSetup<TPluginsStart extends object = object, TStart = unkno
   workspace: WorkspaceSetup;
   // Wazuh
   /** {@link HealthCheckServiceSetup} */
-  healthcheck: HealthCheckServiceSetup;
+  healthCheck: HealthCheckServiceSetup;
 }
 
 /**
@@ -547,7 +547,7 @@ export interface CoreStart {
   workspace: WorkspaceStart;
   // Wazuh
   /** {@link HealthCheckServiceStart} */
-  healthcheck: HealthCheckServiceStart;
+  healthCheck: HealthCheckServiceStart;
 }
 
 export {

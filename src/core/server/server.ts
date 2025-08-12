@@ -103,7 +103,7 @@ export class Server {
   private readonly security: SecurityService;
   private readonly crossCompatibility: CrossCompatibilityService;
   // Wazuh
-  private readonly healthcheck: HealthCheckService;
+  private readonly healthCheck: HealthCheckService;
 
   #pluginsInitialized?: boolean;
   private coreStart?: InternalCoreStart;
@@ -149,7 +149,7 @@ export class Server {
     this.security = new SecurityService(core);
     this.crossCompatibility = new CrossCompatibilityService(core);
     // Wazuh
-    this.healthcheck = new HealthCheckService(core);
+    this.healthCheck = new HealthCheckService(core);
   }
 
   public async setup() {
@@ -190,7 +190,7 @@ export class Server {
       context: contextServiceSetup,
       // Wazuh
       enhanceNotReadyServer: (server, basePath) =>
-        this.healthcheck.enhanceNotReadyServer(server, basePath),
+        this.healthCheck.enhanceNotReadyServer(server, basePath),
     });
 
     // Once http is setup, register routes and async local storage
@@ -225,7 +225,7 @@ export class Server {
     });
 
     // Wazuh
-    const healthCheckSetup = await this.healthcheck.setup({
+    const healthCheckSetup = await this.healthCheck.setup({
       http: httpSetup,
       httpService: this.http,
     });
@@ -237,7 +237,7 @@ export class Server {
       dynamicConfig: dynamicConfigServiceSetup,
       // Wazuh
       healthCheck: {
-        getConfig: () => this.healthcheck.healthCheck.getConfig(),
+        getConfig: () => this.healthCheck.healthCheck.getConfig(),
       },
     });
 
@@ -272,7 +272,7 @@ export class Server {
       dynamicConfig: dynamicConfigServiceSetup,
       workspace: workspaceSetup,
       // Wazuh
-      healthcheck: healthCheckSetup,
+      healthCheck: healthCheckSetup,
     };
 
     const pluginsSetup = await this.plugins.setup(coreSetup);
@@ -325,7 +325,7 @@ export class Server {
     });
 
     // Wazuh
-    const healthCheckStart = await this.healthcheck.start({
+    const healthCheckStart = await this.healthCheck.start({
       capabilities: capabilitiesStart,
       opensearch: opensearchStart,
       http: httpStart,
@@ -351,7 +351,7 @@ export class Server {
       dynamicConfig: dynamicConfigServiceStart,
       workspace: workspaceStart,
       // Wazuh
-      healthcheck: healthCheckStart,
+      healthCheck: healthCheckStart,
     };
 
     const pluginsStart = await this.plugins.start(this.coreStart);
@@ -378,7 +378,7 @@ export class Server {
     await this.legacy.stop();
     await this.plugins.stop();
     // Wazuh
-    await this.healthcheck.stop();
+    await this.healthCheck.stop();
     await this.savedObjects.stop();
     await this.opensearch.stop();
     await this.http.stop();

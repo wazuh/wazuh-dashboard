@@ -228,7 +228,7 @@ export function createPluginSetupContext<TPlugin, TPluginDependencies>(
     },
     workspace: deps.workspace,
     // Wazuh
-    healthcheck: deps.healthcheck,
+    healthCheck: deps.healthCheck,
   };
 }
 
@@ -287,6 +287,6 @@ export function createPluginStartContext<TPlugin, TPluginDependencies>(
     },
     workspace: deps.workspace,
     // Wazuh
-    healthcheck: deps.healthcheck,
+    healthCheck: deps.healthCheck,
   };
 }

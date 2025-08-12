@@ -241,7 +241,7 @@ export class LegacyService implements CoreService {
       },
       workspace: startDeps.core.workspace,
       // Wazuh
-      healthcheck: startDeps.core.healthcheck,
+      healthCheck: startDeps.core.healthCheck,
     };
 
     const router = setupDeps.core.http.createRouter('', this.legacyId);
@@ -313,7 +313,7 @@ export class LegacyService implements CoreService {
       security: setupDeps.core.security,
       workspace: setupDeps.core.workspace,
       // Wazuh
-      healthcheck: setupDeps.core.healthcheck,
+      healthCheck: setupDeps.core.healthCheck,
     };
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires

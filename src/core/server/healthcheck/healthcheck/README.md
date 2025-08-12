@@ -113,7 +113,7 @@ export interface TaskDefinition {
 setup(core){
 
   // Register a task
-  core.healthcheck.register({
+  core.healthCheck.register({
     name: 'custom-task',
     run: (ctx) => {
       console.log('Run from wazuhCore starts' )

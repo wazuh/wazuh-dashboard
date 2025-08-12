@@ -77,7 +77,7 @@ export interface InternalCoreSetup {
   dynamicConfig: InternalDynamicConfigServiceSetup;
   workspace: InternalWorkspaceServiceSetup;
   // Wazuh
-  healthcheck: HealthCheckServiceSetup;
+  healthCheck: HealthCheckServiceSetup;
 }
 
 /**
@@ -96,7 +96,7 @@ export interface InternalCoreStart {
   dynamicConfig: InternalDynamicConfigServiceStart;
   workspace: InternalWorkspaceServiceStart;
   // Wazuh
-  healthcheck: HealthCheckServiceStart;
+  healthCheck: HealthCheckServiceStart;
 }
 
 /**
