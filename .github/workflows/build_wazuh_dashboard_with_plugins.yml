@@ -287,8 +287,7 @@ jobs:
       reference: ${{ inputs.reference_report_plugins }}
 
   build-package:
-    needs:
-      [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
+    needs: [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     name: Generate packages
     steps:
