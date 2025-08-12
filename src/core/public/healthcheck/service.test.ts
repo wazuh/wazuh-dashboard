@@ -6,6 +6,11 @@
 import { first } from 'rxjs/operators';
 import { HealthcheckService } from './service';
 import { mount as mountUI } from './ui/mount';
+import { HealthCheckConfig } from 'src/core/common/healthcheck';
+import { httpServiceMock } from '../http/http_service.mock';
+import { notificationServiceMock } from '../notifications/notifications_service.mock';
+import { chromeServiceMock } from '../chrome/chrome_service.mock';
+import { uiSettingsServiceMock } from '../ui_settings/ui_settings_service.mock';
 
 jest.mock('./ui/mount', () => ({ mount: jest.fn() }));
 
@@ -24,17 +29,14 @@ describe('HealthcheckService', () => {
     const service = new HealthcheckService();
 
     const core = {
-      http: {
-        get: jest.fn(() => ({
-          tasks: initialChecks,
-        })),
-        post: jest.fn(() => ({
-          tasks: runChecks,
-        })),
-      },
+      http: httpServiceMock.createStartContract(),
+      notifications: notificationServiceMock.createStartContract(),
+      chrome: chromeServiceMock.createStartContract(),
+      uiSettings: uiSettingsServiceMock.createStartContract(),
+      healthCheckConfig: {} as HealthCheckConfig,
     };
 
-    await service.start(core);
+    service.start(core);
 
     expect(mountUI).toBeCalledTimes(1);
   });
@@ -43,17 +45,14 @@ describe('HealthcheckService', () => {
     const service = new HealthcheckService();
 
     const core = {
-      http: {
-        get: jest.fn(() => ({
-          tasks: initialChecks,
-        })),
-        post: jest.fn(() => ({
-          tasks: runChecks,
-        })),
-      },
+      http: httpServiceMock.createStartContract(),
+      notifications: notificationServiceMock.createStartContract(),
+      chrome: chromeServiceMock.createStartContract(),
+      uiSettings: uiSettingsServiceMock.createStartContract(),
+      healthCheckConfig: {} as HealthCheckConfig,
     };
 
-    const start = await service.start(core);
+    const start = service.start(core);
 
     const responseFetch = await start.client.internal.fetch();
     expect(responseFetch.checks).toEqual(initialChecks);
