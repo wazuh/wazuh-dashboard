@@ -20,7 +20,7 @@ export const mount = ({
   const formatDateWithClient = (date: string) => formatDate(coreStart.uiSettings, date);
 
   coreStart.chrome.navControls[isPlacedInLeftNav ? 'registerLeftBottom' : 'registerRight']({
-    order: isPlacedInLeftNav ? 9999 : 2002,
+    order: isPlacedInLeftNav ? 9999 : 1999,
     mount: (element: HTMLElement) => {
       ReactDOM.render(
         <HealthCheckNavButton
