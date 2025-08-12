@@ -23,7 +23,10 @@
 #server.name: "your-hostname"
 
 # The URLs of the OpenSearch instances to use for all your queries.
-#opensearch.hosts: ["http://localhost:9200"]
+opensearch.hosts: ["https://localhost:9200"]
+opensearch.username: "admin"
+opensearch.password: "S7uP3r@eCur3Pa@@"
+opensearch.ssl.verificationMode: none
 
 # OpenSearch Dashboards uses an index in OpenSearch to store saved searches, visualizations and
 # dashboards. OpenSearch Dashboards creates a new index if the index doesn't already exist.
@@ -372,7 +375,7 @@
 
 # Set the backend roles in groups or users, whoever has the backend roles or exactly match the user ids defined in this config will be regard as dashboard admin.
 # Dashboard admin will have the access to all the workspaces(workspace.enabled: true) and objects inside OpenSearch Dashboards.
-# The default config is [], and no one will be dashboard admin. 
+# The default config is [], and no one will be dashboard admin.
 # If the user config is set to wildcard ["*"], anyone will be dashboard admin.
 # opensearchDashboards.dashboardAdmin.groups: ["dashboard_admin"]
 # opensearchDashboards.dashboardAdmin.users: ["dashboard_admin"]
