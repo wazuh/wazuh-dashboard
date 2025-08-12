@@ -54,6 +54,8 @@ import { securityServiceMock } from './security/security_service.mock';
 import { crossCompatibilityServiceMock } from './cross_compatibility/cross_compatibility.mock';
 import { dynamicConfigServiceMock } from './config/dynamic_config_service.mock';
 import { workspaceServiceMock } from './workspace/mocks';
+// Wazuh
+import { healthCheckServiceMock } from './healthcheck/healthcheck/service.mock';
 
 export { configServiceMock } from './config/mocks';
 export { dynamicConfigServiceMock } from './config/mocks';
@@ -173,6 +175,7 @@ function createCoreSetupMock({
     security: securityServiceMock.createSetupContract(),
     dynamicConfigService: dynamicConfigServiceMock.createSetupContract(),
     workspace: workspaceServiceMock.createSetupContract(),
+    healthcheck: healthCheckServiceMock.createSetupContract(),
   };
 
   return mock;
@@ -191,6 +194,7 @@ function createCoreStartMock() {
     crossCompatibility: crossCompatibilityServiceMock.createStartContract(),
     dynamicConfig: dynamicConfigServiceMock.createStartContract(),
     workspace: workspaceServiceMock.createStartContract(),
+    healthcheck: healthCheckServiceMock.createStartContract(),
   };
 
   return mock;
@@ -214,6 +218,7 @@ function createInternalCoreSetupMock() {
     security: securityServiceMock.createSetupContract(),
     dynamicConfig: dynamicConfigServiceMock.createInternalSetupContract(),
     workspace: workspaceServiceMock.createInternalSetupContract(),
+    healthcheck: healthCheckServiceMock.createSetupContract(),
   };
   return setupDeps;
 }
@@ -231,6 +236,7 @@ function createInternalCoreStartMock() {
     crossCompatibility: crossCompatibilityServiceMock.createStartContract(),
     dynamicConfig: dynamicConfigServiceMock.createInternalStartContract(),
     workspace: workspaceServiceMock.createInternalStartContract(),
+    healthcheck: healthCheckServiceMock.createStartContract(),
   };
   return startDeps;
 }

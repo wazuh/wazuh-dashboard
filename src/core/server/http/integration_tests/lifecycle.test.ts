@@ -51,7 +51,7 @@ const contextSetup = contextServiceMock.createSetupContract();
 const setupDeps = {
   context: contextSetup,
   // Wazuh
-  enhanceServerNotReady: (_server: Server, _basePath: BasePath) => {},
+  enhanceNotReadyServer: (_server: Server, _basePath: BasePath) => {},
 };
 
 const dynamicConfigService = dynamicConfigServiceMock.createInternalStartContract();

@@ -12,9 +12,9 @@ import { Task } from './task';
  * This class manages the initialization tasks and the internal health check.
  */
 export class TaskManager implements ITaskManager {
-  private readonly items: Map<string, ITask> = new Map();
+  protected readonly items: Map<string, ITask> = new Map();
 
-  constructor(private readonly logger: Logger, private readonly services: any) {}
+  constructor(protected readonly logger: Logger, protected readonly services: any) {}
 
   async setup() {
     this.logger.debug('Setup starts');

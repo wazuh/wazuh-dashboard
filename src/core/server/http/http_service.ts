@@ -59,7 +59,7 @@ import { registerCoreHandlers } from './lifecycle_handlers';
 export interface SetupDeps {
   context: ContextSetup;
   // Wazuh
-  enhanceServerNotReady?: (server: Server, basePath: BasePath) => void;
+  enhanceNotReadyServer?: (server: Server, basePath: BasePath) => void;
 }
 
 export interface StartDeps {

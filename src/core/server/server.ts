@@ -189,7 +189,7 @@ export class Server {
     const httpSetup = await this.http.setup({
       context: contextServiceSetup,
       // Wazuh
-      enhanceServerNotReady: (server, basePath) =>
+      enhanceNotReadyServer: (server, basePath) =>
         this.healthcheck.enhanceNotReadyServer(server, basePath),
     });
 

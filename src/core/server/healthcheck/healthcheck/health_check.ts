@@ -77,7 +77,6 @@ export function filterListByRegex(list: string[], regexFilters: string[]) {
 }
 
 export class HealthCheck extends TaskManager {
-  private items = new Map();
   status$: BehaviorSubject<HealthCheckStatus> = new BehaviorSubject({
     ok: null,
     checks: [],
@@ -93,7 +92,7 @@ export class HealthCheck extends TaskManager {
   private scheduled?: ScheduledIntervalTask;
   private _coreStartServices: any;
   public runInternal: (names?: string[]) => Promise<any>;
-  constructor(private readonly logger: Logger, services: any = {}) {
+  constructor(logger: Logger, services: any = {}) {
     super(logger, services);
     this.runInternal = singlePromiseInstance(this._runInternal).bind(this);
   }
