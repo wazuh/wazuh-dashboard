@@ -1,9 +1,9 @@
 alertingDashboards
+assistantDashboards
 customImportMapDashboards
-dashboards-assistant
-dashboards-observability
 ganttChartDashboards
 indexManagementDashboards
-ml-commons-dashboards
+mlCommonsDashboards
 notificationsDashboards
+observabilityDashboards
 reportsDashboards
