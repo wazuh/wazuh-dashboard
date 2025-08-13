@@ -94,6 +94,8 @@ import {
   CoreServicesUsageData,
 } from './core_usage_data';
 import { WorkspaceSetup, WorkspaceStart } from './workspace';
+// Wazuh
+import { HealthCheckServiceSetup, HealthCheckServiceStart } from './healthcheck';
 
 export { CoreUsageData, CoreConfigUsageData, CoreEnvironmentUsageData, CoreServicesUsageData };
 
@@ -497,6 +499,9 @@ export interface CoreSetup<TPluginsStart extends object = object, TStart = unkno
   dynamicConfigService: DynamicConfigServiceSetup;
   /** {@link WorkspaceSetup} */
   workspace: WorkspaceSetup;
+  // Wazuh
+  /** {@link HealthCheckServiceSetup} */
+  healthCheck: HealthCheckServiceSetup;
 }
 
 /**
@@ -540,6 +545,9 @@ export interface CoreStart {
   dynamicConfig: DynamicConfigServiceStart;
   /** {@link WorkspaceStart} */
   workspace: WorkspaceStart;
+  // Wazuh
+  /** {@link HealthCheckServiceStart} */
+  healthCheck: HealthCheckServiceStart;
 }
 
 export {
