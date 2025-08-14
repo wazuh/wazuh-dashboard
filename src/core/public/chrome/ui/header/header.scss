@@ -3,16 +3,17 @@
 * SPDX-License-Identifier: Apache-2.0
 */
 
+$customSoftYellow: mix(white, $euiColorWarning, 80%);
+
 .newTopNavHeader {
   z-index: 1000;
   padding: 0 $euiSize $euiSizeS;
   box-shadow: none;
   border-bottom: none;
-  background: none;
   height: auto;
   gap: $euiSizeS;
 
-  &.primaryHeader {
+  .primaryHeader {
     padding-top: $euiSizeM;
   }
 
@@ -63,6 +64,10 @@
   .euiHeaderSectionItem:not(:has(>:not(:empty))) {
     display: none;
   }
+}
+
+.primaryHeader {
+  background-color: $customSoftYellow !important;
 }
 
 .headerGlobalNav:has(.newTopNavHeader:not(.primaryApplicationHeader)) {
