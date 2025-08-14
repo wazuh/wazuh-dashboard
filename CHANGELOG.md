@@ -8,21 +8,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.14.0
 
-## Wazuh dashboard v4.13.1 - OpenSearch Dashboards 2.19.2 - Revision 00
-
-### Added
-
-- Support for Wazuh 4.13.1
-
-### Fixed
-
-- Fixed a problem with the service file that was marked world-inaccessible [#740](https://github.com/wazuh/wazuh-dashboard/pull/740)
-
-### Changed
-
-- Reduced default session and cookie expiration to 15 minutes for the Wazuh security plugin [#749](https://github.com/wazuh/wazuh-dashboard/issues/749)[#321](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/321)
-
-## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 04
+## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 05
 
 ### Added
 
@@ -31,12 +17,11 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Fixed
 
 - Fixed a problem that caused configuration files to be duplicated [#790](https://github.com/wazuh/wazuh-dashboard/issues/790)
+- Fixed a problem with the service file that was marked world-inaccessible [#740](https://github.com/wazuh/wazuh-dashboard/pull/740)
 
-## Wazuh dashboard v4.12.1 - OpenSearch Dashboards 2.19.1 - Revision 00
+### Changed
 
-### Added
-
-- Support for Wazuh 4.12.1
+- Reduced default session and cookie expiration to 15 minutes for the Wazuh security plugin [#749](https://github.com/wazuh/wazuh-dashboard/issues/749)[#321](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/321)
 
 ## Wazuh dashboard v4.12.0 - OpenSearch Dashboards 2.19.1 - Revision 03
 
