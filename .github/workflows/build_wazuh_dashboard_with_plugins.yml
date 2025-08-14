@@ -247,6 +247,7 @@ jobs:
     permissions:
       pull-requests: write
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.14.1
+
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
