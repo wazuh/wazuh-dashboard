@@ -12,27 +12,19 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Removed creation of /usr/lib/.build-id/* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
 
-## Wazuh dashboard v4.14.0 - OpenSearch Dashboards 2.19.2 - Revision 00
+## Wazuh dashboard v4.14.1 - OpenSearch Dashboards 2.19.3 - Revision 00
+
+### Added
+
+- Support for Wazuh 4.14.1
+
+## Wazuh dashboard v4.14.0 - OpenSearch Dashboards 2.19.3 - Revision 00
 
 ### Added
 
 - Support for Wazuh 4.14.0
 
-## Wazuh dashboard v4.13.1 - OpenSearch Dashboards 2.19.2 - Revision 00
-
-### Added
-
-- Support for Wazuh 4.13.1
-
-### Fixed
-
-- Fixed a problem with the service file that was marked world-inaccessible [#740](https://github.com/wazuh/wazuh-dashboard/pull/740)
-
-### Changed
-
-- Reduced default session and cookie expiration to 15 minutes for the Wazuh security plugin [#749](https://github.com/wazuh/wazuh-dashboard/issues/749)[#321](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/321)
-
-## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 04
+## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 05
 
 ### Added
 
@@ -41,6 +33,11 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Fixed
 
 - Fixed a problem that caused configuration files to be duplicated [#790](https://github.com/wazuh/wazuh-dashboard/issues/790)
+- Fixed a problem with the service file that was marked world-inaccessible [#740](https://github.com/wazuh/wazuh-dashboard/pull/740)
+
+### Changed
+
+- Reduced default session and cookie expiration to 15 minutes for the Wazuh security plugin [#749](https://github.com/wazuh/wazuh-dashboard/issues/749)[#321](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/321)
 
 ## Wazuh dashboard v4.12.0 - OpenSearch Dashboards 2.19.1 - Revision 03
 
@@ -138,4 +135,3 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Changed default logos and main menu app categories [141](https://github.com/wazuh/wazuh-dashboard/pull/141)
 - Changed default value of useExpandedHeader to false [#247](https://github.com/wazuh/wazuh-dashboard/pull/247)
 - Changed build number to match the Wazuh standard [#284](https://github.com/wazuh/wazuh-dashboard/pull/284)
- 
