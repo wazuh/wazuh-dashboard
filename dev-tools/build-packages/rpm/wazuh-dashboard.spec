@@ -210,8 +210,6 @@ rm -fr %{buildroot}
 %config(noreplace) %attr(0750, %{USER}, %{GROUP}) "/etc/default/wazuh-dashboard"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 
-%attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
-
 %attr(440, %{USER}, %{GROUP}) %{INSTALL_DIR}/VERSION.json
 %dir %attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src"
