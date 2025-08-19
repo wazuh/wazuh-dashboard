@@ -140,7 +140,7 @@ export const ButtonFilterChecksCheck = ({
                 content={
                   <FormattedMessage
                     id="core.healthcheck.filter.title.tooltip"
-                    defaultMessage="If any selected filter matches with the check, this will be filtered. This only affect to the visible checks."
+                    defaultMessage="If any selected filter matches with the check, this will be filtered. This only affects to the visible checks."
                   />
                 }
                 position="bottom"
