@@ -1,4 +1,4 @@
-name: Manual build Wazuh dashboard with plugins with fixing names with release
+name: Manual build Wazuh dashboard with plugins with fixing names with release (for delete)
 
 on:
   workflow_dispatch:
