@@ -224,9 +224,9 @@ jobs:
       - name: Checkout custom plugins (by inputs)
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.custom_plugins_repo }}
+          repository: ${{ inputs.reference_security_plugins }}
           # Если инпут пуст — возьми ту же ветку, что и для dashboard
-          ref: ${{ inputs.custom_plugins_ref != '' && inputs.custom_plugins_ref || needs.prepare-refs.outputs.dashboard_ref }}
+          ref: ${{ inputs.reference_security_plugins != '' && inputs.reference_security_plugins || needs.prepare-refs.outputs.dashboard_ref }}
           path: ./custom-plugins
           
       - name: Copy custom plugins into dashboard
