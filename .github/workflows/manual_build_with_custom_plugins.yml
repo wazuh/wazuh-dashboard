@@ -32,7 +32,11 @@ on:
         type: string
         description: 'Branch/tag/commit of wazuh-dashboard-plugins. If empty, uses master.'
         required: false
-
+      reference_custom_plugins:
+        type: string
+        description: 'Branch/tag/sha for custom plugins'
+        required: false
+        
 jobs:
   prepare-refs:
     runs-on: ubuntu-latest
@@ -217,15 +221,14 @@ jobs:
       - name: Set WAZUH_DASHBOARD_SLIM env
         run: echo "WAZUH_DASHBOARD_SLIM=${{ env.ARTIFACT_BUILD_NAME }}" >> $GITHUB_ENV
 
-      # >>> НОВОЕ: подтягиваем кастом-плагины и копируем их в исходники перед bootstrap
-      - name: Checkout custom plugins
+      - name: Checkout custom plugins (by inputs)
         uses: actions/checkout@v4
         with:
-          repository: ivmerk/wazuh-dashboard-custom-plugins
-          # при желании можно сделать динамическую ветку через prepare-refs
-          ref: master
-          path: ./custom-plugins   # это ПАПКА В КОРНЕ, не в ./artifacts
-
+          repository: ${{ inputs.custom_plugins_repo }}
+          # Если инпут пуст — возьми ту же ветку, что и для dashboard
+          ref: ${{ inputs.custom_plugins_ref != '' && inputs.custom_plugins_ref || needs.prepare-refs.outputs.dashboard_ref }}
+          path: ./custom-plugins
+          
       - name: Copy custom plugins into dashboard
         run: |
           set -euo pipefail
