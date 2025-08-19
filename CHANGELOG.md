@@ -10,7 +10,11 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 ### Removed
 
-- Removed creation of /usr/lib/.build-id/* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
+- Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
+
+### Changed
+
+- Changed the location of the wazuh-dashboard service to match with the other Wazuh components [#805](https://github.com/wazuh/wazuh-dashboard/issues/805)
 
 ## Wazuh dashboard v4.14.1 - OpenSearch Dashboards 2.19.3 - Revision 00
 
