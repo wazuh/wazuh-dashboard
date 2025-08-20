@@ -221,31 +221,19 @@ jobs:
       - name: Set WAZUH_DASHBOARD_SLIM env
         run: echo "WAZUH_DASHBOARD_SLIM=${{ env.ARTIFACT_BUILD_NAME }}" >> $GITHUB_ENV
 
-      - name: Checkout custom plugins (by inputs)
+      - name: Checkout custom plugins
         uses: actions/checkout@v4
         with:
           repository: ivmerk/wazuh-dashboard-custom-plugins
-          # Если инпут пуст — возьми ту же ветку, что и для dashboard
-          ref: ${{ inputs.reference_custom_plugins != '' && inputs.reference_custom_plugins || needs.prepare-refs.outputs.dashboard_ref }}
+          ref: ${{ inputs.reference_custom_plugins }}
           path: ./custom-plugins
           
       - name: Copy custom plugins into dashboard
         run: |
           set -euo pipefail
-          echo "Working dir: $(pwd)"             # здесь мы в ./artifacts (из defaults.run)
-          # Источник кастомных плагинов расположен на уровень выше (../custom-plugins)
-          SRC_BASE="../custom-plugins"
-          # Если в репо кастомов структура уже 'wazuh/plugins', копируем её,
-          # иначе копируем всё содержимое репо в папку плагинов
-          if [ -d "$SRC_BASE/wazuh/plugins" ]; then
-            SRC_DIR="$SRC_BASE/wazuh/plugins/"
-          else
-            SRC_DIR="$SRC_BASE/"
-          fi
-          rsync -a --delete "$SRC_DIR" ./src/plugins/
-          echo "Custom plugins copied into ./src/plugins:"
-          ls -al ./src/plugins
-      # <<< КОНЕЦ НОВОГО
+          cp -R ../custom-plugins/* ./src/plugins/
+          echo "Plugins after copy:"
+          ls -al ./src/plugins    
 
       - name: Run bootstrap
         run: yarn osd bootstrap
