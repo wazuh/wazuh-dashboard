@@ -242,10 +242,9 @@ jobs:
           else
             SRC_DIR="$SRC_BASE/"
           fi
-          mkdir -p ./wazuh/plugins
-          rsync -a --delete "$SRC_DIR" ./wazuh/plugins/
-          echo "Custom plugins copied into ./wazuh/plugins:"
-          ls -al ./wazuh/plugins
+          rsync -a --delete "$SRC_DIR" ./src/plugins/
+          echo "Custom plugins copied into ./src/plugins:"
+          ls -al ./src/plugins
       # <<< КОНЕЦ НОВОГО
 
       - name: Run bootstrap
