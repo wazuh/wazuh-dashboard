@@ -587,14 +587,14 @@ jobs:
       - name: Upload package
         run: |
           echo "Uploading package"
-          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/
-          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
+          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
           echo "S3 URI: ${s3uri}"
 
       - name: Upload SHA512
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/
-          s3uri="s3://packages-dev.internal.wazuh.com/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
+          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
+          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
