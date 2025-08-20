@@ -14,7 +14,7 @@ VERSION_FILE="${REPO_PATH}/VERSION.json"
 PACKAGE_JSON="${REPO_PATH}/package.json"
 VERSION=""
 REVISION="00"
-DATE="2025-04-15"
+DATE=""
 CURRENT_VERSION=""
 TAG=false
 WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
@@ -44,7 +44,8 @@ usage() {
   echo "  --stage STAGE       Specify the stage (e.g., alpha0, beta1, rc2, etc.)"
   echo "                      Required if --tag is not used"
   echo "  --date DATE         Specify the release date in yyyy-mm-dd format (e.g., 2025-04-15)"
-  echo "                      Used for updating changelog entries"
+  echo "                      Optional. Used for updating changelog entries. If not provided,"
+  echo "                      changelog updates will be skipped."
   echo "  --tag               Generate a tag"
   echo "                      If --stage is not set, it will be stageless(e.g., v4.6.0)"
   echo "                      Otherwise it will be with the provided stage (e.g., v4.6.0-alpha1)"
@@ -53,8 +54,10 @@ usage() {
   echo ""
   echo "Examples:"
   echo "  $0 --version 4.6.0 --stage alpha0 --date 2025-04-15"
+  echo "  $0 --version 4.6.0 --stage alpha0"
   echo "  $0 --tag --stage alpha1 --date 2025-04-15"
   echo "  $0 --tag --date 2025-04-15"
+  echo "  $0 --tag"
 }
 
 # --- Core Logic Functions ---
@@ -544,6 +547,12 @@ convert_date_to_deb_format() {
 
 # Function to update RPM changelog
 update_rpm_changelog() {
+  # Skip if no date provided
+  if [ -z "$DATE" ]; then
+    log "No date provided. Skipping RPM changelog update."
+    return
+  fi
+
   if [ ! -f "$RPM_CHANGELOG" ]; then
     log "WARNING: RPM changelog not found at $RPM_CHANGELOG. Skipping RPM changelog update."
     return
@@ -573,6 +582,12 @@ $more_info_entry" "$RPM_CHANGELOG"
 
 # Function to update Debian changelog
 update_deb_changelog() {
+  # Skip if no date provided
+  if [ -z "$DATE" ]; then
+    log "No date provided. Skipping Debian changelog update."
+    return
+  fi
+
   if [ ! -f "$DEB_CHANGELOG" ]; then
     log "WARNING: Debian changelog not found at $DEB_CHANGELOG. Skipping Debian changelog update."
     return
@@ -592,7 +607,7 @@ update_deb_changelog() {
   # Check if entry already exists
   if grep -q "wazuh-dashboard ($package_version)" "$DEB_CHANGELOG"; then
     log "Debian changelog entry for version $VERSION already exists. Updating date..."
-    # Update existing entry date - use a more reliable sed approach
+    # Update existing entry date
     # Find the line with the version and then find the next maintainer line to update
     sed -i "/wazuh-dashboard ($escaped_package_version)/,/^-- Wazuh, Inc/ s|^-- Wazuh, Inc <info@wazuh.com> .*|$maintainer_line|" "$DEB_CHANGELOG"
     log "Successfully updated Debian changelog date for version $VERSION"
