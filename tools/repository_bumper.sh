@@ -14,12 +14,16 @@ VERSION_FILE="${REPO_PATH}/VERSION.json"
 PACKAGE_JSON="${REPO_PATH}/package.json"
 VERSION=""
 REVISION="00"
+DATE="2025-04-15"
 CURRENT_VERSION=""
 TAG=false
 WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/build_wazuh_dashboard_with_plugins.yml"
 DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
 README_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/README.md"
 VERSION_PATTERN="[0-9]+\.[0-9]+\.[0-9]+"
+DATE_PATTERN="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+RPM_CHANGELOG="${REPO_PATH}/dev-tools/build-packages/rpm/wazuh-dashboard.spec"
+DEB_CHANGELOG="${REPO_PATH}/dev-tools/build-packages/deb/debian/changelog"
 
 # --- Helper Functions ---
 
@@ -66,13 +70,15 @@ sed_inplace() {
 
 # Function to show usage
 usage() {
-  echo "Usage: $0 [--version VERSION --stage STAGE | --tag] [--help]"
+  echo "Usage: $0 [--version VERSION --stage STAGE | --tag] [--date DATE] [--help]"
   echo ""
   echo "Parameters:"
   echo "  --version VERSION   Specify the version (e.g., 4.6.0)"
   echo "                      Required if --tag is not used"
   echo "  --stage STAGE       Specify the stage (e.g., alpha0, beta1, rc2, etc.)"
   echo "                      Required if --tag is not used"
+  echo "  --date DATE         Specify the release date in yyyy-mm-dd format (e.g., 2025-04-15)"
+  echo "                      Used for updating changelog entries"
   echo "  --tag               Generate a tag"
   echo "                      If --stage is not set, it will be stageless(e.g., v4.6.0)"
   echo "                      Otherwise it will be with the provided stage (e.g., v4.6.0-alpha1)"
@@ -80,9 +86,9 @@ usage() {
   echo "  --help              Display this help message"
   echo ""
   echo "Examples:"
-  echo "  $0 --version 4.6.0 --stage alpha0"
-  echo "  $0 --tag --stage alpha1"
-  echo "  $0 --tag"
+  echo "  $0 --version 4.6.0 --stage alpha0 --date 2025-04-15"
+  echo "  $0 --tag --stage alpha1 --date 2025-04-15"
+  echo "  $0 --tag --date 2025-04-15"
 }
 
 # --- Core Logic Functions ---
@@ -97,6 +103,10 @@ parse_arguments() {
       ;;
     --stage)
       STAGE="$2"
+      shift 2
+      ;;
+    --date)
+      DATE="$2"
       shift 2
       ;;
     --help)
@@ -137,6 +147,11 @@ validate_input() {
 
   if [ -n "$STAGE" ] && ! [[ $STAGE =~ ^[a-zA-Z]+[0-9]+$ ]]; then
     log "ERROR: Stage must be alphanumeric (e.g., alpha0, beta1, rc2)"
+    exit 1
+  fi
+
+  if [ -n "$DATE" ] && ! [[ $DATE =~ ^$DATE_PATTERN$ ]]; then
+    log "ERROR: Date must be in the format yyyy-mm-dd (e.g., 2025-04-15)"
     exit 1
   fi
 }
@@ -538,6 +553,96 @@ update_rendering_service_test_snap() {
   fi
 }
 
+# Function to convert date from yyyy-mm-dd to RPM format (e.g., "Thu Sep 04 2025")
+convert_date_to_rpm_format() {
+  local input_date="$1"
+  # Use date command to convert and format with English locale
+  LC_ALL=C date -d "$input_date" "+%a %b %d %Y" 2>/dev/null || {
+    log "ERROR: Invalid date format: $input_date"
+    exit 1
+  }
+}
+
+# Function to convert date from yyyy-mm-dd to Debian RFC 2822 format (e.g., "Thu, 04 Sep 2025 12:00:00 +0000")
+convert_date_to_deb_format() {
+  local input_date="$1"
+  # Use date command to convert and format with English locale
+  LC_ALL=C date -d "$input_date" "+%a, %d %b %Y 12:00:00 +0000" 2>/dev/null || {
+    log "ERROR: Invalid date format: $input_date"
+    exit 1
+  }
+}
+
+# Function to update RPM changelog
+update_rpm_changelog() {
+  if [ ! -f "$RPM_CHANGELOG" ]; then
+    log "WARNING: RPM changelog not found at $RPM_CHANGELOG. Skipping RPM changelog update."
+    return
+  fi
+
+  log "Updating RPM changelog..."
+
+  local rpm_date=$(convert_date_to_rpm_format "$DATE")
+  local changelog_entry="* $rpm_date support <info@wazuh.com> - $VERSION"
+  local more_info_entry="- More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
+
+  # Check if entry already exists
+  if grep -q "* .* support <info@wazuh.com> - $VERSION" "$RPM_CHANGELOG"; then
+    log "RPM changelog entry for version $VERSION already exists. Updating date..."
+    # Update existing entry date
+    sed -i "s/^\* .* support <info@wazuh.com> - $VERSION$/$changelog_entry/" "$RPM_CHANGELOG"
+    log "Successfully updated RPM changelog date for version $VERSION"
+  else
+    log "Adding new RPM changelog entry for version $VERSION..."
+    # Find the %changelog line and add new entry after it
+    sed -i "/^%changelog$/a\\
+$changelog_entry\\
+$more_info_entry" "$RPM_CHANGELOG"
+    log "Successfully added new RPM changelog entry for version $VERSION"
+  fi
+}
+
+# Function to update Debian changelog
+update_deb_changelog() {
+  if [ ! -f "$DEB_CHANGELOG" ]; then
+    log "WARNING: Debian changelog not found at $DEB_CHANGELOG. Skipping Debian changelog update."
+    return
+  fi
+
+  log "Updating Debian changelog..."
+
+  local deb_date=$(convert_date_to_deb_format "$DATE")
+  local package_version="$VERSION-1"
+  local changelog_header="wazuh-dashboard ($package_version) stable; urgency=low"
+  local more_info_entry="- More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
+  local maintainer_line="-- Wazuh, Inc <info@wazuh.com> $deb_date"
+
+  # Escape parentheses and dots for grep and sed patterns
+  local escaped_package_version=$(echo "$package_version" | sed 's/[().]/\\&/g')
+
+  # Check if entry already exists
+  if grep -q "wazuh-dashboard ($package_version)" "$DEB_CHANGELOG"; then
+    log "Debian changelog entry for version $VERSION already exists. Updating date..."
+    # Update existing entry date - use a more reliable sed approach
+    # Find the line with the version and then find the next maintainer line to update
+    sed -i "/wazuh-dashboard ($escaped_package_version)/,/^-- Wazuh, Inc/ s|^-- Wazuh, Inc <info@wazuh.com> .*|$maintainer_line|" "$DEB_CHANGELOG"
+    log "Successfully updated Debian changelog date for version $VERSION"
+  else
+    log "Adding new Debian changelog entry for version $VERSION..."
+    # Create new entry at the top of the file using a temporary file approach
+    {
+      echo "$changelog_header"
+      echo ""
+      echo "$more_info_entry"
+      echo ""
+      echo "$maintainer_line"
+      echo ""
+      cat "$DEB_CHANGELOG"
+    } > "${DEB_CHANGELOG}.tmp" && mv "${DEB_CHANGELOG}.tmp" "$DEB_CHANGELOG"
+    log "Successfully added new Debian changelog entry for version $VERSION"
+  fi
+}
+
 # --- Main Execution ---
 main() {
   # Initialize log file
@@ -577,6 +682,8 @@ main() {
   update_base_package_dockerfile
   update_readme_for_base_packages
   update_rendering_service_test_snap
+  update_rpm_changelog
+  update_deb_changelog
   update_changelog
 
   log "File modifications completed."
