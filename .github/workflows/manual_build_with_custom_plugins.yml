@@ -226,12 +226,11 @@ jobs:
         with:
           repository: ivmerk/wazuh-dashboard-custom-plugins
           ref: ${{ inputs.reference_custom_plugins }}
-          path: ./custom-plugins
+          path: ./src/plugins
           
-      - name: Copy custom plugins into dashboard
+      - name: Debug custom plugins into dashboard
         run: |
           set -euo pipefail
-          cp -R ../custom-plugins/* ./src/plugins/
           echo "Plugins after copy:"
           ls -al ./src/plugins    
 
