@@ -629,8 +629,8 @@ update_deb_changelog() {
   local deb_date=$(convert_date_to_deb_format "$DATE")
   local package_version="$VERSION-1"
   local changelog_header="wazuh-dashboard ($package_version) stable; urgency=low"
-  local more_info_entry="- More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
-  local maintainer_line="-- Wazuh, Inc <info@wazuh.com> $deb_date"
+  local more_info_entry="  * More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
+  local maintainer_line=" -- Wazuh, Inc <info@wazuh.com>  $deb_date"
 
   # Escape parentheses and dots for grep and sed patterns
   local escaped_package_version=$(echo "$package_version" | sed 's/[().]/\\&/g')
