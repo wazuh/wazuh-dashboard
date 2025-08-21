@@ -627,7 +627,7 @@ update_deb_changelog() {
   log "Updating Debian changelog..."
 
   local deb_date=$(convert_date_to_deb_format "$DATE")
-  local package_version="$VERSION-1"
+  local package_version="$VERSION-RELEASE"
   local changelog_header="wazuh-dashboard ($package_version) stable; urgency=low"
   local more_info_entry="  * More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
   local maintainer_line=" -- Wazuh, Inc <info@wazuh.com>  $deb_date"
