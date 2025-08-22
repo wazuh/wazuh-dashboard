@@ -17,7 +17,7 @@
 #   - Staging, upload, and checksum options.
 
 run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.id }}
-name: Build Wazuh dashboard package with plugins (on demand)
+name: (6.x) Build Wazuh dashboard package with plugins (on demand)
 
 on:
   workflow_dispatch:
