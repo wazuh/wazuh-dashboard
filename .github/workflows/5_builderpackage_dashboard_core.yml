@@ -8,7 +8,7 @@
 # - Customizable in architecture and reference (`branch/tag/commit`).
 # - Upload the final package with a structured name.
 
-name: (6.x) Build Wazuh dashboard core package (on demand)
+name: (5.x) Build Wazuh dashboard core package (on demand)
 
 on:
   workflow_call:
@@ -38,7 +38,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'ubuntu-24.04' || 'wz-linux-arm64' }}
+    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'ubuntu-latest' || 'wz-linux-arm64' }}
     name: Build
     defaults:
       run:
