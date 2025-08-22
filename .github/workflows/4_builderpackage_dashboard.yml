@@ -1,5 +1,23 @@
+# This workflow automates the build of the Wazuh Dashboard package along with
+# its plugins.
+#
+# This workflow:
+# - Download, build, package, test, and upload the Wazuh dashboard along
+#   with its plugins.
+# - Customizable through inputs to adapt to different environments
+#   (production, staging, various architectures).
+# - Ensure that each component is built with the exact reference provided and
+#   validated before the final packaging.
+#
+# - Allows customization of:
+#   - Operating system (`deb` or `rpm`)
+#   - Architecture (`amd64`, `x86_64`, `aarch64`, `arm64`)
+#   - Package revision
+#   - Plugin references (branches, tags, or commits)
+#   - Staging, upload, and checksum options.
+
 run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.id }}
-name: Build Wazuh dashboard with plugins
+name: (4.x) Build Wazuh dashboard package with plugins (on demand)
 
 on:
   workflow_dispatch:
@@ -31,12 +49,12 @@ on:
         type: string
         description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
         required: true
-        default: 'main'
+        default: '4.14.0'
       reference_wazuh_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
-        default: 'main'
+        default: '4.14.0'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -69,11 +87,11 @@ on:
       reference_security_plugins:
         type: string
         required: true
-        default: 'main'
+        default: '4.14.0'
       reference_wazuh_plugins:
         type: string
         required: true
-        default: 'main'
+        default: '4.14.0'
       is_stage:
         type: boolean
         required: true
@@ -227,7 +245,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@4.14.0
+    uses: wazuh/wazuh-dashboard/.github/workflows/4_builderpackage_dashboard_core.yml@4.14.0
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
@@ -237,7 +255,7 @@ jobs:
     name: Build plugins
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@4.14.0
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@4.14.0
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
@@ -246,7 +264,7 @@ jobs:
     name: Build security plugin
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@4.14.0
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@4.14.0
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
