@@ -139,6 +139,8 @@ sed -i -e "s|${old_category_notifications}|category:${category_explore}|" $(js-f
 # Replace app category to Index Management app
 sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|g" $(js-file "indexManagementDashboards" "plugin")
 
+assistant_dashboard_whitelabeling
+
 log
 log "Recreating plugin files"
 log
