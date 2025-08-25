@@ -110,6 +110,9 @@ sed -i -e "s|category:{id:\"opensearch\",label:_i18n.i18n.translate(\"opensearch
 # Replace app category to Alerting app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/alertingDashboards/target/public/alertingDashboards.plugin.js
 
+# Replace app category to Anomaly Detection app
+sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/anomalyDetectionDashboards/target/public/anomalyDetectionDashboards.plugin.js
+
 # Replace app category to Maps app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/customImportMapDashboards/target/public/customImportMapDashboards.plugin.js
 
@@ -127,6 +130,7 @@ log
 files_to_recreate=(
   ./plugins/reportsDashboards/target/public/reportsDashboards.plugin.js
   ./plugins/alertingDashboards/target/public/alertingDashboards.plugin.js
+  ./plugins/anomalyDetectionDashboards/target/public/anomalyDetectionDashboards.plugin.js
   ./plugins/customImportMapDashboards/target/public/customImportMapDashboards.plugin.js
   ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
   ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
