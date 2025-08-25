@@ -145,8 +145,8 @@ log
 
 # Generate compressed files
 files_to_recreate=(
-  $(js-file $plugin_name "chunk.10")
-  $(js-file $plugin_name "plugin")
+  $(js-file "assistantDashboards" "chunk.10")
+  $(js-file "assistantDashboards" "plugin")
   $(js-file "reportsDashboards" "plugin")
   $(js-file "alertingDashboards" "plugin")
   $(js-file "customImportMapDashboards" "plugin")
