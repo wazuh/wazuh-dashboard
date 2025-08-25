@@ -29,7 +29,6 @@ ExclusiveOS: linux
 %global PID_DIR /run/%{name}
 %global INSTALL_DIR /usr/share/%{name}
 %global DASHBOARD_FILE wazuh-dashboard.tar.gz
-%global PLUGINS_DIR %{INSTALL_DIR}/plugins
 %define _source_payload w9.gzdio
 %define _binary_payload w9.gzdio
 
@@ -135,35 +134,6 @@ if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
   runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" > /dev/null 2>&1
   runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" > /dev/null 2>&1
 fi
-
-ASSISTANT_DASHBOARD_PLUGIN_DIR="%{PLUGINS_DIR}/assistantDashboards"
-ASSISTANT_DASHBOARD_PLUGIN_TARGET_PUBLIC_DIR="${ASSISTANT_DASHBOARD_PLUGIN_DIR}/target/public"
-ASSISTANT_DASHBOARD_CHUNK_FILE="${ASSISTANT_DASHBOARD_PLUGIN_TARGET_PUBLIC_DIR}/assistantDashboards.chunk.10.js"
-ASSISTANT_DASHBOARD_PLUGIN_FILE="${ASSISTANT_DASHBOARD_PLUGIN_TARGET_PUBLIC_DIR}/assistantDashboards.plugin.js"
-
-OLD_IMAGE="base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMzAuODMzMyAzOS44NTlDMzEuODk2MiAzOS40Mzk4IDMxLjg2OCAzOC4xMTU5IDMxLjg2OCAzNy4wMjk0VjMyLjY2NjZIMzQuMjg1N0MzNy40NDE3IDMyLjY2NjYgNDAgMzAuMjUzOSA0MCAyNy4yNzc1VjcuMzg5MTRDND.*InVzZXJTcGFjZU9uVXNlIj4KICAgIDxzdG9wIHN0b3AtY29sb3I9IiMwMEEzRTAiLz4KICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzAwQTNFMCIgc3RvcC1vcGFjaXR5PSIwIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgo8L3N2Zz4="
-
-NEW_IMAGE="base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIKCSB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNTEyIDUxMjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8Zz4KCTxwYXRoIGZpbGw9IiMwMDZCQjQiIGQ9Ik00MDQuNSwyMS4yVjBoLTI5N0M0OC45LDAsMS40LDQ3LjUsMS40LDEwNi4xdjE2OS43YzAsNTguNiw0Ny41LDEwNi4xLDEwNi4xLDEwNi4xaDI0Ni45TDUxMC42LDUxMlYxMDYuMQoJCUM1MTAuNiw0Ny41LDQ2My4xLDAsNDA0LjUsMFYyMS4ydjIxLjJjMzUuMSwwLjEsNjMuNiwyOC41LDYzLjYsNjMuNnYzMTUuM2wtOTguNC04MkgxMDcuNWMtMzUuMS0wLjEtNjMuNi0yOC41LTYzLjYtNjMuNmwwLTE2OS43CgkJYzAuMS0zNS4xLDI4LjUtNjMuNiw2My42LTYzLjZoMjk3VjIxLjJ6IE00MDQuNSwxMjcuM0gxMjguN3Y0Mi40aDI3NS44VjEyNy4zeiBNNDA0LjUsMjEyLjFIMjEzLjZ2NDIuNGgxOTAuOVYyMTIuMXoiLz4KPC9nPgo8L3N2Zz4K"
-
-cp ${ASSISTANT_DASHBOARD_CHUNK_FILE}{,.bak}
-cp ${ASSISTANT_DASHBOARD_PLUGIN_FILE}{,.bak}
-
-mv ${ASSISTANT_DASHBOARD_CHUNK_FILE}.br{,.bak}
-mv ${ASSISTANT_DASHBOARD_CHUNK_FILE}.gz{,.bak}
-mv ${ASSISTANT_DASHBOARD_PLUGIN_FILE}.br{,.bak}
-mv ${ASSISTANT_DASHBOARD_PLUGIN_FILE}.gz{,.bak}
-
-sed -i -e "s|OpenSearch Assistant|Dashboard assistant|g" ${ASSISTANT_DASHBOARD_CHUNK_FILE}
-sed -i -e "s|OpenSearch Assistant|Dashboard assistant|g" ${ASSISTANT_DASHBOARD_PLUGIN_FILE}
-sed -i -e "s|he Dashboard assistant|he dashboard assistant|g" ${ASSISTANT_DASHBOARD_PLUGIN_FILE}
-
-sed -i -e "s|${OLD_IMAGE}|${NEW_IMAGE}|" ${ASSISTANT_DASHBOARD_PLUGIN_FILE}
-
-gzip -c -9 "${ASSISTANT_DASHBOARD_PLUGIN_FILE}" > "${ASSISTANT_DASHBOARD_PLUGIN_FILE}.gz"
-gzip -c -9 "${ASSISTANT_DASHBOARD_CHUNK_FILE}" > "${ASSISTANT_DASHBOARD_CHUNK_FILE}.gz"
-
-brotli -q 11 -f "${ASSISTANT_DASHBOARD_PLUGIN_FILE}" -o "${ASSISTANT_DASHBOARD_PLUGIN_FILE}.br"
-brotli -q 11 -f "${ASSISTANT_DASHBOARD_CHUNK_FILE}" -o "${ASSISTANT_DASHBOARD_CHUNK_FILE}.br"
 
 # -----------------------------------------------------------------------------
 
