@@ -139,19 +139,19 @@ category_label_indexer_management='defaultMessage:"Indexer management"'
 
 old_category_notifications='category:(_core$chrome=core.chrome)!==null&&_core$chrome!==void 0&&(_core$chrome=_core$chrome.navGroup)!==null&&_core$chrome!==void 0&&_core$chrome.getNavGroupEnabled()?undefined:_public.DEFAULT_APP_CATEGORIES.management'
 # Replace app category to Reporting app
-sed -i -e "s|category:{id:\"opensearch\",label:_i18n.i18n.translate(\"opensearch.reports.categoryName\",{defaultMessage:\"OpenSearch Plugins\"}),order:2e3}|category:${category_explore}|" ./plugins/reportsDashboards/target/public/reportsDashboards.plugin.js
+sed -i -e "s|category:{id:\"opensearch\",label:_i18n.i18n.translate(\"opensearch.reports.categoryName\",{defaultMessage:\"OpenSearch Plugins\"}),order:2e3}|category:${category_explore}|" $(js-file "reportsDashboards" "plugin")
 
 # Replace app category to Alerting app
-sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/alertingDashboards/target/public/alertingDashboards.plugin.js
+sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" $(js-file "alertingDashboards" "plugin")
 
 # Replace app category to Maps app
-sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/customImportMapDashboards/target/public/customImportMapDashboards.plugin.js
+sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" $(js-file "customImportMapDashboards" "plugin")
 
 # Replace app category to Notifications app
-sed -i -e "s|${old_category_notifications}|category:${category_explore}|" ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
+sed -i -e "s|${old_category_notifications}|category:${category_explore}|" $(js-file "notificationsDashboards" "plugin")
 
 # Replace app category to Index Management app
-sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|g" ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
+sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|g" $(js-file "indexManagementDashboards" "plugin")
 
 log
 log "Recreating plugin files"
@@ -159,11 +159,11 @@ log
 
 # Generate compressed files
 files_to_recreate=(
-  ./plugins/reportsDashboards/target/public/reportsDashboards.plugin.js
-  ./plugins/alertingDashboards/target/public/alertingDashboards.plugin.js
-  ./plugins/customImportMapDashboards/target/public/customImportMapDashboards.plugin.js
-  ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
-  ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
+  $(js-file "reportsDashboards" "plugin")
+  $(js-file "alertingDashboards" "plugin")
+  $(js-file "customImportMapDashboards" "plugin")
+  $(js-file "notificationsDashboards" "plugin")
+  $(js-file "indexManagementDashboards" "plugin")
 )
 
 for value in "${files_to_recreate[@]}"; do
