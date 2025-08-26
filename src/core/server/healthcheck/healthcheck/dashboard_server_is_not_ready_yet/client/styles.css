@@ -1,5 +1,3 @@
-/* eslint-disable @osd/eslint/require-license-header */
-export const styles = /* css */ `
 .text-danger {
   color: red;
 }
@@ -88,4 +86,3 @@ code.code {
 .padding-m {
   padding: 10px;
 }
-`;

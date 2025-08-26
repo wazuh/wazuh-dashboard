@@ -1,8 +1,7 @@
 import React from 'react';
-import { renderToString } from 'react-dom/server';
-import { styles } from './styles';
+import { renderToStaticMarkup } from 'react-dom/server';
 import Page from './page';
-import { SERVER_NOT_READY_ROUTE } from './server';
+import { SERVER_NOT_READY_SCRIPT_ROUTE, SERVER_NOT_READY_STYLES_ROUTE } from './server';
 
 interface NotReadyServerProps {
   appName: string;
@@ -10,37 +9,31 @@ interface NotReadyServerProps {
   serverBasePath: string;
 }
 
-const DashboardServerIsNotReadyYetComponent = ({
-  appName,
-  documentationTroubleshootingLink,
-  serverBasePath,
-}: NotReadyServerProps) => {
+const DashboardServerIsNotReadyYetComponent = (props: NotReadyServerProps) => {
   return (
     <html lang="en">
       <head>
-        <title>{appName}</title>
-        <style dangerouslySetInnerHTML={{ __html: styles }} />
-        <script src={`${serverBasePath}${SERVER_NOT_READY_ROUTE}`} defer></script>
+        <title>{props.appName}</title>
+        <link rel="stylesheet" href={`${props.serverBasePath}${SERVER_NOT_READY_STYLES_ROUTE}`} />
       </head>
       <body>
         <Page
-          appName={appName}
-          documentationTroubleshootingLink={documentationTroubleshootingLink}
+          appName={props.appName}
+          documentationTroubleshootingLink={props.documentationTroubleshootingLink}
         />
         <div id="root" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.__CONFIG = ${JSON.stringify({
-              appName,
-              documentationTroubleshootingLink,
-              serverBasePath,
-            })}`,
+            __html: /* javascript */ `
+              window.__CONFIG = ${JSON.stringify(props)}
+            `,
           }}
         />
+        <script src={`${props.serverBasePath}${SERVER_NOT_READY_SCRIPT_ROUTE}`}></script>
       </body>
     </html>
   );
 };
 
 export const dashboardServerIsNotReadyYet = (props: NotReadyServerProps) =>
-  renderToString(DashboardServerIsNotReadyYetComponent(props));
+  renderToStaticMarkup(DashboardServerIsNotReadyYetComponent(props));
