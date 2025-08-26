@@ -121,7 +121,7 @@ class UseCases {
     }
   }
 
-  static async runHealthCheckByName() {
+  static async runHealthCheckForCriticalTasks() {
     const params = new URLSearchParams();
     params.set(
       'name',
@@ -225,7 +225,7 @@ async function runHealthCheck() {
     'btn-run-failed-critical-checks'
   ));
   btn.disabled = true;
-  const healthCheckTasks = await UseCases.runHealthCheckByName();
+  const healthCheckTasks = await UseCases.runHealthCheckForCriticalTasks();
   updateContent(healthCheckTasks);
   btn.disabled = false;
 }
