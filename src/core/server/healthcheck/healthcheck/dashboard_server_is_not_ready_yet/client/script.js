@@ -4,9 +4,23 @@
 /**
  * @typedef {Object} Task
  * @property {string} name
- * @property {boolean} error
+ * @property {string} status
+ * @property {string} result
+ * @property {any} data
+ * @property {string} createdAt
+ * @property {string} startedAt
+ * @property {string} finishedAt
+ * @property {number} duration
+ * @property {string} error
  * @property {Object} _meta
  * @property {boolean} _meta.isCritical
+ * @property {boolean} _meta.isEnabled
+ */
+
+/**
+ * @typedef {Object} HealthCheckTasks
+ * @property {string} message
+ * @property {Task[]} tasks
  */
 
 /**
@@ -35,19 +49,19 @@ class HttpService {
   }
 
   /**
-   *
+   * @template T
    * @param {string} endpoint
-   * @returns
+   * @returns {Promise<T>}
    */
   get(endpoint) {
     return this.request(endpoint, 'GET');
   }
 
   /**
-   *
+   * @template T
    * @param {string} endpoint
    * @param {any} [payload]
-   * @returns
+   * @returns {Promise<T>}
    */
   post(endpoint, payload) {
     return this.request(endpoint, 'POST', payload);
@@ -67,7 +81,11 @@ class HttpService {
     }
   }
 
-  /** @private */
+  /**
+   * @template T
+   * @private
+   * @returns {Promise<T>}
+   */
   async request(
     /** @type {string} */ endpoint,
     /** @type {'GET' | 'POST' | 'PUT' | 'DELETE'} */ method,
@@ -95,12 +113,20 @@ class HttpService {
 
 const httpService = new HttpService();
 
-// Merge arrays
-function combineTaskArraysByKey(
-  /** @type {Task[]}  */ arr1,
-  /** @type {Task[]}  */ arr2,
-  /** @type {keyof Task}  */ key
-) {
+class UseCases {
+  static getHealthCheckTasks() {
+    return /** @type {Promise<HealthCheckTasks>} */ (httpService.get('/api/healthcheck/tasks'));
+  }
+}
+
+/**
+ * Combines two arrays of tasks by a specific key.
+ * @param {Task[]} arr1
+ * @param {Task[]} arr2
+ * @param {keyof Task} key
+ * @returns {Task[]}
+ */
+function combineTaskArraysByKey(arr1, arr2, key) {
   if (!Array.isArray(arr1)) arr1 = [];
   if (!Array.isArray(arr2)) arr2 = [];
 
@@ -172,7 +198,7 @@ function downloadHealthChecksAsJSONFile() {
 // Fetch health checks data
 async function fetchHealthCheck() {
   try {
-    const data = await httpService.get('/api/healthcheck/internal');
+    const data = await UseCases.getHealthCheckTasks();
     updateContent(data.tasks);
   } catch (error) {
     console.error('Failed to fetch health check:', error);
@@ -203,33 +229,36 @@ async function runHealthCheck() {
   }
 }
 
-// Function to update HTML content
+/**
+ * Function to update HTML content
+ * @param {Task[]} data
+ */
 function updateContent(data) {
   tasks = data;
-  const criticalErrors = data.filter(({ error, _meta }) => _meta && _meta.isCritical && error);
+  const criticalTasks = data.filter(({ error, _meta }) => _meta && _meta.isCritical && error);
 
-  const nonCriticalErrors = data.filter(
+  const nonCriticalTasks = data.filter(
     ({ error, _meta }) => (!_meta || (_meta && !_meta?.isCritical)) && error
   );
 
   let content = '';
-  if (criticalErrors.length > 0 || nonCriticalErrors.length > 0) {
+  if (criticalTasks.length > 0 || nonCriticalTasks.length > 0) {
     content += '<div style="height:20px"></div>';
     content += '<div class="d-flex d-ai-center d-gap-m">';
     content += '  <div>Some errors were found related to the health check</div>';
 
     if (tasks && tasks.length > 0) {
-      content += ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`;
+      content += /* html */ ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`;
     }
 
     content += '</div>';
   }
 
-  if (criticalErrors.length) {
+  if (criticalTasks.length) {
     content += '<div>';
     content += `   <div><span>There are some <span class="text-danger">critical errors</span> that require to be solved, ensure the problems are solved and run the failed critical checks: </span><button class="btn btn-run-failed-critical-checks" id="btn-run-failed-critical-checks" onclick="${runHealthCheck.name}()">Run failed critical checks</button></div>`;
     content += '  <div>';
-    criticalErrors.forEach((task) => {
+    criticalTasks.forEach((task) => {
       content += [
         '<p>Check [<span class="text-danger">',
         task.name,
@@ -242,12 +271,12 @@ function updateContent(data) {
     content += '</div>';
   }
 
-  if (nonCriticalErrors.length) {
+  if (nonCriticalTasks.length) {
     content += '<div>';
     content +=
       '  <div>There are some <span class="text-warn">minor errors</span>. Some features could require to solve these problems to work:</div>';
     content += '  <div>';
-    nonCriticalErrors.forEach((task) => {
+    nonCriticalTasks.forEach((task) => {
       content += [
         '<p>Check [<span class="text-warn">',
         task.name,
