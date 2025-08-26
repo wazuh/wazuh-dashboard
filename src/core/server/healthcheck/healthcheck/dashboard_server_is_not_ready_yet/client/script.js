@@ -9,12 +9,94 @@
  * @property {boolean} _meta.isCritical
  */
 
+/**
+ * @typedef {Object} FetchOptions
+ * @property {'GET' | 'POST' | 'PUT' | 'DELETE'} method
+ * @property {any} [body]
+ * @property {Record<string, string>} [headers]
+ */
+
 /** @type {Task[]} */
 let tasks = [];
 const FILENAME = 'healthcheck.json';
 
+/**
+ * Simple HTTP request wrapper
+ */
+class HttpService {
+  /**
+   * @private
+   * @type {string}
+   */
+  baseUrl;
+
+  constructor() {
+    this.baseUrl = window.location.origin + window.__CONFIG.serverBasePath;
+  }
+
+  /**
+   *
+   * @param {string} endpoint
+   * @returns
+   */
+  get(endpoint) {
+    return this.request(endpoint, 'GET');
+  }
+
+  /**
+   *
+   * @param {string} endpoint
+   * @param {any} [payload]
+   * @returns
+   */
+  post(endpoint, payload) {
+    return this.request(endpoint, 'POST', payload);
+  }
+
+  /**
+   * @private
+   * @param {string} endpoint
+   * @param {FetchOptions} options
+   */
+  fetch(endpoint, options) {
+    try {
+      return fetch(this.baseUrl + endpoint, options);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      return Promise.reject(err);
+    }
+  }
+
+  /** @private */
+  async request(
+    /** @type {string} */ endpoint,
+    /** @type {'GET' | 'POST' | 'PUT' | 'DELETE'} */ method,
+    /** @type {any} */ payload = undefined
+  ) {
+    /** @type {FetchOptions} */
+    const options = { method, body: payload };
+
+    if (payload) {
+      options.headers = { 'content-type': 'application/json' };
+    }
+
+    const response = await this.fetch(endpoint, options);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `[HTTP ERROR] Status: ${response.status} - ${response.statusText}. Response: ${errorText}`
+      );
+    }
+
+    return await response.json();
+  }
+}
+
+const httpService = new HttpService();
+
 // Merge arrays
-function mergeArraysByKey(
+function combineTaskArraysByKey(
   /** @type {Task[]}  */ arr1,
   /** @type {Task[]}  */ arr2,
   /** @type {keyof Task}  */ key
@@ -61,7 +143,7 @@ function mergeArraysByKey(
 /**
  * Download the health checks as a JSON file
  */
-function DownloadHealthChecksAsJSONFile() {
+function downloadHealthChecksAsJSONFile() {
   const btn = /** @type {HTMLButtonElement} */ (document.getElementById('btn-export-checks'));
   try {
     btn.disabled = true;
@@ -87,32 +169,10 @@ function DownloadHealthChecksAsJSONFile() {
   }
 }
 
-// http client wrapper
-async function httpClient(
-  /** @type {string} */ endpoint,
-  /** @type {'GET' | 'POST' | 'PUT' | 'DELETE'} */ method = 'GET',
-  /** @type {any} */ payload = undefined
-) {
-  const baseUrl = window.location.origin + window.__CONFIG.serverBasePath; // Automatically detects base URL injecting the basePath
-
-  const options = { method, body: payload };
-
-  if (payload) {
-    options.headers = { 'content-type': 'application/json' };
-  }
-  const response = await fetch(baseUrl + endpoint, options);
-
-  if (!response.ok) {
-    throw new Error('HTTP error! status: ' + response.status);
-  }
-
-  return await response.json();
-}
-
 // Fetch health checks data
 async function fetchHealthCheck() {
   try {
-    const data = await httpClient('/api/healthcheck/internal');
+    const data = await httpService.get('/api/healthcheck/internal');
     updateContent(data.tasks);
   } catch (error) {
     console.error('Failed to fetch health check:', error);
@@ -134,8 +194,8 @@ async function runHealthCheck() {
         .map(({ name }) => name)
         .toString()
     );
-    const data = await httpClient('/api/healthcheck/internal?' + params.toString(), 'POST');
-    updateContent(mergeArraysByKey(tasks || [], data.tasks, 'name'));
+    const data = await httpService.post('/api/healthcheck/internal?' + params.toString());
+    updateContent(combineTaskArraysByKey(tasks || [], data.tasks, 'name'));
   } catch (error) {
     console.error('Failed to run health check:', error);
   } finally {
@@ -159,7 +219,7 @@ function updateContent(data) {
     content += '  <div>Some errors were found related to the health check</div>';
 
     if (tasks && tasks.length > 0) {
-      content += ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${DownloadHealthChecksAsJSONFile.name}()">Export checks</button>`;
+      content += ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`;
     }
 
     content += '</div>';
