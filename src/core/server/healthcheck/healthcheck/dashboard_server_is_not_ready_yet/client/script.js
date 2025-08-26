@@ -54,7 +54,7 @@ class HttpService {
    * @returns {Promise<T>}
    */
   get(endpoint) {
-    return this.request(endpoint, 'GET');
+    return this.request('GET', endpoint);
   }
 
   /**
@@ -64,7 +64,7 @@ class HttpService {
    * @returns {Promise<T>}
    */
   post(endpoint, payload) {
-    return this.request(endpoint, 'POST', payload);
+    return this.request('POST', endpoint, payload);
   }
 
   /**
@@ -73,12 +73,7 @@ class HttpService {
    * @param {FetchOptions} options
    */
   fetch(endpoint, options) {
-    try {
-      return fetch(this.baseUrl + endpoint, options);
-    } catch (err) {
-      console.error('Fetch error:', err);
-      return Promise.reject(err);
-    }
+    return fetch(this.baseUrl + endpoint, options);
   }
 
   /**
@@ -87,8 +82,8 @@ class HttpService {
    * @returns {Promise<T>}
    */
   async request(
-    /** @type {string} */ endpoint,
     /** @type {'GET' | 'POST' | 'PUT' | 'DELETE'} */ method,
+    /** @type {string} */ endpoint,
     /** @type {any} */ payload = undefined
   ) {
     /** @type {FetchOptions} */
@@ -114,8 +109,37 @@ class HttpService {
 const httpService = new HttpService();
 
 class UseCases {
-  static getHealthCheckTasks() {
-    return /** @type {Promise<HealthCheckTasks>} */ (httpService.get('/api/healthcheck/internal'));
+  static async getHealthCheckTasks() {
+    try {
+      const response = await /** @type {Promise<HealthCheckTasks>} */ (httpService.get(
+        '/api/healthcheck/internal'
+      ));
+      return response.tasks;
+    } catch (err) {
+      console.error('Failed to get health check tasks:', err);
+      return [];
+    }
+  }
+
+  static async runHealthCheckByName() {
+    const params = new URLSearchParams();
+    params.set(
+      'name',
+      tasks
+        .filter(({ error, _meta }) => _meta && _meta.isCritical && error)
+        .map(({ name }) => name)
+        .toString()
+    );
+    try {
+      const response = await /** @type {Promise<HealthCheckTasks>} */ (httpService.post(
+        `/api/healthcheck/internal?${params.toString()}`
+      ));
+
+      return combineTaskArraysByKey(tasks || [], response.tasks, 'name');
+    } catch (err) {
+      console.error('Failed to run health check:', err);
+      return [];
+    }
   }
 }
 
@@ -195,38 +219,15 @@ function downloadHealthChecksAsJSONFile() {
   }
 }
 
-// Fetch health checks data
-async function fetchHealthCheck() {
-  try {
-    const data = await UseCases.getHealthCheckTasks();
-    updateContent(data.tasks);
-  } catch (error) {
-    console.error('Failed to fetch health check:', error);
-  }
-}
-
 // Run health checks data
 async function runHealthCheck() {
   const btn = /** @type {HTMLButtonElement}  */ (document.getElementById(
     'btn-run-failed-critical-checks'
   ));
-  try {
-    btn.disabled = true;
-    const params = new URLSearchParams();
-    params.set(
-      'name',
-      tasks
-        .filter(({ error, _meta }) => _meta && _meta.isCritical && error)
-        .map(({ name }) => name)
-        .toString()
-    );
-    const data = await httpService.post('/api/healthcheck/internal?' + params.toString());
-    updateContent(combineTaskArraysByKey(tasks || [], data.tasks, 'name'));
-  } catch (error) {
-    console.error('Failed to run health check:', error);
-  } finally {
-    btn.disabled = false;
-  }
+  btn.disabled = true;
+  const healthCheckTasks = await UseCases.runHealthCheckByName();
+  updateContent(healthCheckTasks);
+  btn.disabled = false;
 }
 
 /**
@@ -320,4 +321,6 @@ function updateContent(data) {
 }
 
 // Auto-call the function when the page loads
-window.addEventListener('load', fetchHealthCheck);
+window.addEventListener('load', () => {
+  UseCases.getHealthCheckTasks().then((tasks) => updateContent(tasks));
+});
