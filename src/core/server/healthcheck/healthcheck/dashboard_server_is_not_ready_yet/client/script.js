@@ -109,7 +109,7 @@ class HttpService {
 const httpService = new HttpService();
 
 class UseCases {
-  static async getHealthCheckTasks() {
+  static async retrieveHealthCheckTasks() {
     try {
       const response = await /** @type {Promise<HealthCheckTasks>} */ (httpService.get(
         '/api/healthcheck/internal'
@@ -121,7 +121,7 @@ class UseCases {
     }
   }
 
-  static async runHealthCheckForCriticalTasks() {
+  static async executeHealthCheckForCriticalTasks() {
     const params = new URLSearchParams();
     params.set(
       'name',
@@ -225,7 +225,7 @@ async function runHealthCheck() {
     'btn-run-failed-critical-checks'
   ));
   btn.disabled = true;
-  const healthCheckTasks = await UseCases.runHealthCheckForCriticalTasks();
+  const healthCheckTasks = await UseCases.executeHealthCheckForCriticalTasks();
   updateContent(healthCheckTasks);
   btn.disabled = false;
 }
@@ -322,5 +322,5 @@ function updateContent(data) {
 
 // Auto-call the function when the page loads
 window.addEventListener('load', () => {
-  UseCases.getHealthCheckTasks().then((tasks) => updateContent(tasks));
+  UseCases.retrieveHealthCheckTasks().then((tasks) => updateContent(tasks));
 });
