@@ -115,7 +115,7 @@ const httpService = new HttpService();
 
 class UseCases {
   static getHealthCheckTasks() {
-    return /** @type {Promise<HealthCheckTasks>} */ (httpService.get('/api/healthcheck/tasks'));
+    return /** @type {Promise<HealthCheckTasks>} */ (httpService.get('/api/healthcheck/internal'));
   }
 }
 
@@ -230,6 +230,34 @@ async function runHealthCheck() {
 }
 
 /**
+ * Maps each element of an array using a mapper function.
+ * @template T
+ * @param {T[]} arr
+ * @param {(item: T) => string} mapper
+ * @returns {string}
+ */
+function map(arr, mapper) {
+  if (!Array.isArray(arr) || typeof mapper !== 'function') {
+    throw new Error('Invalid arguments');
+  }
+  const result = [];
+  for (const item of arr) {
+    result.push(mapper(item));
+  }
+  return result.join('');
+}
+
+/**
+ * Returns trueValue if condition is true, otherwise falseValue.
+ * @param {boolean} condition
+ * @param {string} trueValue
+ * @param {string} [falseValue]
+ */
+function when(condition, trueValue, falseValue = '') {
+  return condition ? trueValue : falseValue;
+}
+
+/**
  * Function to update HTML content
  * @param {Task[]} data
  */
@@ -243,52 +271,49 @@ function updateContent(data) {
 
   let content = '';
   if (criticalTasks.length > 0 || nonCriticalTasks.length > 0) {
-    content += '<div style="height:20px"></div>';
-    content += '<div class="d-flex d-ai-center d-gap-m">';
-    content += '  <div>Some errors were found related to the health check</div>';
-
-    if (tasks && tasks.length > 0) {
-      content += /* html */ ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`;
-    }
-
-    content += '</div>';
+    content += /* html */ `
+      <div style="height:20px"></div>
+      <div class="d-flex d-ai-center d-gap-m">
+        <div>Some errors were found related to the health check</div>
+        ${when(
+          tasks && tasks.length > 0,
+          /* html */ ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`
+        )}
+      </div>
+    `;
   }
 
   if (criticalTasks.length) {
-    content += '<div>';
-    content += `   <div><span>There are some <span class="text-danger">critical errors</span> that require to be solved, ensure the problems are solved and run the failed critical checks: </span><button class="btn btn-run-failed-critical-checks" id="btn-run-failed-critical-checks" onclick="${runHealthCheck.name}()">Run failed critical checks</button></div>`;
-    content += '  <div>';
-    criticalTasks.forEach((task) => {
-      content += [
-        '<p>Check [<span class="text-danger">',
-        task.name,
-        '</span>]: ',
-        task.error,
-        '</p>',
-      ].join('');
-    });
-    content += '  </div>';
-    content += '</div>';
+    content += /* html */ `
+      <div>
+        <div>
+          <span>There are some <span class="text-danger">critical errors</span> that require to be solved, ensure the problems are solved and run the failed critical checks: </span>
+          <button class="btn btn-run-failed-critical-checks" id="btn-run-failed-critical-checks" onclick="${
+            runHealthCheck.name
+          }()">Run failed critical checks</button>
+        </div>
+        <div>
+          ${map(criticalTasks, (task) => {
+            return /* html */ `<p>Check [<span class="text-danger">${task.name}</span>]: ${task.error}</p>`;
+          })}
+        </div>
+      </div>
+    `;
   }
 
   if (nonCriticalTasks.length) {
-    content += '<div>';
-    content +=
-      '  <div>There are some <span class="text-warn">minor errors</span>. Some features could require to solve these problems to work:</div>';
-    content += '  <div>';
-    nonCriticalTasks.forEach((task) => {
-      content += [
-        '<p>Check [<span class="text-warn">',
-        task.name,
-        '</span>]: ',
-        task.error,
-        '</p>',
-      ].join('');
-    });
-    content += '  </div>';
-    content += '</div>';
+    content += /* html */ `
+      <div>
+        <div>There are some <span class="text-warn">minor errors</span>. Some features could require to solve these problems to work:</div>
+        <div>
+          ${map(nonCriticalTasks, (task) => {
+            return /* html */ `<p>Check [<span class="text-warn">${task.name}</span>]: ${task.error}</p>`;
+          })}
+        </div>
+      </div>
+    `;
   }
-  content += '<div>For more details, review the app logs.</div>';
+  content += /* html */ `<div>For more details, review the app logs.</div>`;
   const root = /** @type {HTMLDivElement} */ (document.getElementById('root'));
   // eslint-disable-next-line no-unsanitized/property
   root.innerHTML = content;
