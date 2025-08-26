@@ -1,7 +1,10 @@
 import React from 'react';
-import { NotReadyServerProps } from './types';
+import { NotReadyServerProps, OmitStrict } from './types';
 
-export default function Page({ appName, documentationTroubleshootingLink }: NotReadyServerProps) {
+export default function Page({
+  appName,
+  documentationTroubleshootingLink,
+}: OmitStrict<NotReadyServerProps, 'serverBasePath'>) {
   return (
     <>
       <p>{appName} server is not ready yet</p>

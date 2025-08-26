@@ -18,6 +18,7 @@ import { HealthCheck } from './health_check';
 import { HealthCheckConfigType } from './config';
 import { addRoutesNotReadyServer } from './routes';
 import { dashboardServerIsNotReadyYet } from './dashboard_server_is_not_ready_yet';
+import { configureNotReadyRoute } from './dashboard_server_is_not_ready_yet/server';
 
 function createSetup(ctx: HealthCheckService): HealthCheckServiceSetup {
   return {
@@ -67,6 +68,7 @@ export class HealthCheckService
     const appName = 'Wazuh dashboard';
 
     addRoutesNotReadyServer(server, { healthcheck: this.healthCheck, logger: this.logger });
+    configureNotReadyRoute(server);
 
     server.route({
       path: '/{p*}',
