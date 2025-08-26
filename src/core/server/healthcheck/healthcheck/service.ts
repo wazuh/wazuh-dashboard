@@ -65,9 +65,6 @@ export class HealthCheckService
 
   enhanceNotReadyServer(server: HttpServerSetup['server'], basePath: HttpServerSetup['basePath']) {
     const appName = 'Wazuh dashboard';
-    const documentationTroubleshootingLink = this.healthCheck.getConfig()
-      .server_not_ready_troubleshooting_link;
-    const serverBasePath = basePath.serverBasePath || '';
 
     addRoutesNotReadyServer(server, { healthcheck: this.healthCheck, logger: this.logger });
 
@@ -75,6 +72,9 @@ export class HealthCheckService
       path: '/{p*}',
       method: '*',
       handler: (_request: Request, h: ResponseToolkit) => {
+        const documentationTroubleshootingLink = this.healthCheck.getConfig()
+          .server_not_ready_troubleshooting_link;
+        const serverBasePath = basePath.serverBasePath || '';
         const html = `<!DOCTYPE html> ${dashboardServerIsNotReadyYet({
           appName,
           documentationTroubleshootingLink,
