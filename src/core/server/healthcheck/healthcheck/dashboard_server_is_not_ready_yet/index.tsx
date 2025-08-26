@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { styles } from "./styles";
+import { styles } from './styles';
+import Page from './page';
 
 interface NotReadyServerProps {
   appName: string;
@@ -17,12 +18,11 @@ const DashboardServerIsNotReadyYetComponent = ({
     <html lang="en">
       <head>
         <title>{appName}</title>
-      </head>
-      <style dangerouslySetInnerHTML={{ __html: styles }} />
-      <script
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{
-          __html: /* javascript */ `
+        <style dangerouslySetInnerHTML={{ __html: styles }} />
+        <script
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: /* javascript */ `
               let tasks;
 
               // Merge arrays
@@ -209,23 +209,14 @@ const DashboardServerIsNotReadyYetComponent = ({
               window.addEventListener('load', fetchHealthCheck);
               //# sourceURL=main.js
         `,
-        }}
-      />
+          }}
+        />
+      </head>
       <body>
-        <p>{appName} server is not ready yet</p>
-        <p>
-          If this message persists after a time of the initialization, this could be caused for some
-          problem. Review the app logs for more information.
-        </p>
-        {documentationTroubleshootingLink ? (
-          <div>
-            <a rel="noopener noreferrer" target="_blank" href={documentationTroubleshootingLink}>
-              Troubleshooting
-            </a>
-          </div>
-        ) : (
-          <></>
-        )}
+        <Page
+          appName={appName}
+          documentationTroubleshootingLink={documentationTroubleshootingLink}
+        />
         <div id="root" />
       </body>
     </html>
