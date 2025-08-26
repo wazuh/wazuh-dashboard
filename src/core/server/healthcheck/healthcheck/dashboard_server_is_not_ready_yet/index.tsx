@@ -216,6 +216,7 @@ const DashboardServerIsNotReadyYetComponent = ({
         <Page
           appName={appName}
           documentationTroubleshootingLink={documentationTroubleshootingLink}
+          serverBasePath={serverBasePath}
         />
         <div id="root" />
       </body>

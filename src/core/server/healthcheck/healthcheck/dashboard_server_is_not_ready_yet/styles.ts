@@ -1,3 +1,4 @@
+/* eslint-disable @osd/eslint/require-license-header */
 export const styles = /* css */ `
 .text-danger {
   color: red;
