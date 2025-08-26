@@ -17,7 +17,6 @@ const DashboardServerIsNotReadyYetComponent = ({
     <html lang="en">
       <head>
         <title>{appName}</title>
-        <link rel="stylesheet" href="${serverBasePath}/static/index.css" />
       </head>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <script
