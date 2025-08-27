@@ -1,7 +1,11 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import Page from './page';
-import { SERVER_NOT_READY_SCRIPT_ROUTE, SERVER_NOT_READY_STYLES_ROUTE } from './server';
+import {
+  SERVER_NOT_READY_RESET_STYLES_ROUTE,
+  SERVER_NOT_READY_SCRIPT_ROUTE,
+  SERVER_NOT_READY_STYLES_ROUTE,
+} from './server';
 
 interface NotReadyServerProps {
   appName: string;
@@ -15,6 +19,10 @@ const DashboardServerIsNotReadyYetComponent = (props: NotReadyServerProps) => {
       <head>
         <meta charSet="utf-8" />
         <title>{props.appName}</title>
+        <link
+          rel="stylesheet"
+          href={`${props.serverBasePath}${SERVER_NOT_READY_RESET_STYLES_ROUTE}`}
+        />
         <link rel="stylesheet" href={`${props.serverBasePath}${SERVER_NOT_READY_STYLES_ROUTE}`} />
       </head>
       <body>

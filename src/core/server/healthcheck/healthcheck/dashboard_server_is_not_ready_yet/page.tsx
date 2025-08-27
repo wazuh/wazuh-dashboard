@@ -1,5 +1,6 @@
 import React from 'react';
 import { NotReadyServerProps, OmitStrict } from './types';
+import WazuhDashboardLogo from "./components/wazuh-dashboard-logo";
 
 export default function Page({
   appName,
@@ -7,16 +8,14 @@ export default function Page({
 }: OmitStrict<NotReadyServerProps, 'serverBasePath'>) {
   return (
     <>
-      <p>{appName} server is not ready yet</p>
-      <p>
-        If this message persists after a time of the initialization, this could be caused for some
-        problem. Review the app logs for more information.
-      </p>
+      <div className="title"><WazuhDashboardLogo /> <span className="server-is">server is</span> <div className="not-ready">not ready yet</div></div>
       {documentationTroubleshootingLink ? (
         <div>
+          For more information, please visit the{' '}
           <a rel="noopener noreferrer" target="_blank" href={documentationTroubleshootingLink}>
             Troubleshooting
           </a>
+          {' '}documentation.
         </div>
       ) : null}
     </>

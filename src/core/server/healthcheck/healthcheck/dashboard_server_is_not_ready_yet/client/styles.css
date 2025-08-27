@@ -1,92 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 #root {
   margin: 4rem;
-}
-
-.text-danger {
-  color: red;
-}
-.text-warn {
-  color: #ff8c00;
-}
-.btn {
-  background-color: transparent;
-  color: #e57373; /* Light red */
-  border: 2px solid #e57373;
-  padding: 5px 10px;
-  font-size: 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-.btn:disabled,
-.btn[disabled] {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.btn-run-failed-critical-checks {
-  color: #e57373; /* Light red */
-  border: 2px solid #e57373;
-}
-.btn-run-failed-critical-checks:hover {
-  background-color: #e57373;
-  color: white;
-}
-.btn-run-failed-critical-checks:disabled,
-.btn-run-failed-critical-checks[disabled] {
-  background-color: #f8d7da; /* Light red background */
-  color: #a1a1a1; /* Muted text color */
-  border: 2px solid #f5c2c7; /* Soft border */
-}
-
-.btn-export {
-  color: #3595f9; /* Light red */
-  border: 2px solid #3595f9;
-}
-.btn-export:hover {
-  background-color: #3595f9;
-  color: white;
-}
-.btn-export:disabled,
-.btn-export[disabled] {
-  background-color: #f8d7da; /* Light red background */
-  color: #a1a1a1; /* Muted text color */
-  border: 2px solid #f5c2c7; /* Soft border */
-}
-
-pre.code,
-code.code {
-  background-color: #f5f5f5; /* light gray */
-  color: #333; /* dark text for contrast */
-  font-family: Consolas, Monaco, 'Courier New', monospace;
-  font-size: 14px;
-  padding: 10px;
-  border-radius: 5px;
-  overflow-x: auto;
-  display: block;
-  white-space: pre-wrap;
-}
-
-.d-flex {
   display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.d-jc-center {
-  justify-content: center;
+:root {
+  font-family: Inter;
+  font-size: 16px;
 }
 
-.d-ai-center {
+.title {
+  display: flex;
+  align-items: baseline;
+}
+
+.server-is {
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 50px;
+  padding-inline: 0.75rem;
+}
+
+.not-ready {
+  border-radius: 3px;
+  padding-left: 19px;
+  padding-right: 19px;
+  background-color: #ff0c29;
+  color: #ffffff;
+  line-height: 21px;
+  text-align: center;
+  font-weight: 500;
+  font-style: Bold;
+  font-size: 14px;
+  letter-spacing: -4%;
+  align-self: first baseline;
+}
+
+.card {
+  padding-block: 30px;
+  padding-inline: 34px;
+  border-radius: 5px;
+  border: 1px solid #e5e8e7;
+}
+
+.card-body {
+  display: flex;
+  justify-content: space-between;
+}
+
+.healthcheck-title {
+  font-size: 23px;
+  line-height: 50px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+}
+
+.button {
+  border-radius: 10px;
+  border-width: 1px;
+  padding-block: 3px;
+  padding-inline: 27px;
+  border: 1px solid #006bb4;
+  background-color: transparent;
+  text-align: center;
+  vertical-align: middle;
+  display: flex;
   align-items: center;
-}
-
-.d-gap-m {
-  gap: 10px;
-}
-
-.margin-m {
-  margin: 10px;
-}
-
-.padding-m {
-  padding: 10px;
+  justify-content: center;
+  gap: 0.75rem;
+  min-width: 262px;
 }
