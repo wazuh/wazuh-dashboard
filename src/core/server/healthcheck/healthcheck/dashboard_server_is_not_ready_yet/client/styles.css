@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400..700&display=swap');
 
 :root {
   font-family: Inter;
@@ -6,6 +6,11 @@
   --red: #ff0c29;
   --blue: #006bb4;
   --yellow: #FFA621;
+  --normal-weight: 400;
+  --light-bold: 500;
+  --semi-bold: 600;
+  --bold: 700;
+  font-weight: var(--normal-weight);
 }
 
 #root {
@@ -61,8 +66,7 @@
   color: #ffffff;
   line-height: 21px;
   text-align: center;
-  font-weight: 500;
-  font-style: Bold;
+  font-weight: var(--light-bold);
   font-size: 14px;
   letter-spacing: -4%;
   align-self: first baseline;
