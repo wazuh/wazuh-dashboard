@@ -143,6 +143,48 @@ class UseCases {
   }
 }
 
+class HealthCheckDocument {
+  static ROOT_ID = 'root';
+  static BTN_EXPORT_ID = 'btn-export';
+  static BTN_RUN_FAILED_CRITICAL_CHECKS_ID = 'btn-run-failed-critical-checks';
+
+  /**
+   * @template {HTMLElement} T
+   * @param {string} id
+   * @returns {T}
+   * @private
+   */
+  static getElementById(id) {
+    return /** @type {T} */ (document.getElementById(id));
+  }
+
+  static getRoot() {
+    return /** @type {HTMLDivElement} */ (this.getElementById(this.ROOT_ID));
+  }
+
+  /**
+   * Sets the content of the root element.
+   * @param {string} content
+   */
+  static setRootContent(content) {
+    const root = this.getRoot();
+    if (root) {
+      // eslint-disable-next-line no-unsanitized/property
+      root.innerHTML = content;
+    }
+  }
+
+  static getExportButton() {
+    return /** @type {HTMLButtonElement} */ (this.getElementById(this.BTN_EXPORT_ID));
+  }
+
+  static getRunFailedCriticalChecksButton() {
+    return /** @type {HTMLButtonElement}  */ (this.getElementById(
+      this.BTN_RUN_FAILED_CRITICAL_CHECKS_ID
+    ));
+  }
+}
+
 /**
  * Combines two arrays of tasks by a specific key.
  * @param {Task[]} arr1
@@ -194,7 +236,7 @@ function combineTaskArraysByKey(arr1, arr2, key) {
  * Download the health checks as a JSON file
  */
 function downloadHealthChecksAsJSONFile() {
-  const btn = /** @type {HTMLButtonElement} */ (document.getElementById('btn-export-checks'));
+  const btn = HealthCheckDocument.getExportButton();
   try {
     btn.disabled = true;
     const content = JSON.stringify({ checks: tasks, _meta: { server: 'not-ready' } }, null, 2);
@@ -221,9 +263,7 @@ function downloadHealthChecksAsJSONFile() {
 
 // Run health checks data
 async function runHealthCheck() {
-  const btn = /** @type {HTMLButtonElement}  */ (document.getElementById(
-    'btn-run-failed-critical-checks'
-  ));
+  const btn = HealthCheckDocument.getRunFailedCriticalChecksButton();
   btn.disabled = true;
   const healthCheckTasks = await UseCases.executeHealthCheckForCriticalTasks();
   renderHealthCheckSummary(healthCheckTasks);
@@ -301,7 +341,7 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
         <div>Some errors were found related to the health check</div>
         ${$if(
           tasks && tasks.length > 0,
-          /* html */ ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`
+          /* html */ ` <button class="btn ${HealthCheckDocument.BTN_EXPORT_ID}" id="${HealthCheckDocument.BTN_EXPORT_ID}" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`
         )}
       </div>`
     )}
@@ -312,9 +352,9 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       <div>
         <div>
           <span>There are some <span class="text-danger">critical errors</span> that require to be solved, ensure the problems are solved and run the failed critical checks: </span>
-          <button class="btn btn-run-failed-critical-checks" id="btn-run-failed-critical-checks" onclick="${
-            runHealthCheck.name
-          }()">Run failed critical checks</button>
+          <button class="btn ${HealthCheckDocument.BTN_RUN_FAILED_CRITICAL_CHECKS_ID}" id="${
+        HealthCheckDocument.BTN_RUN_FAILED_CRITICAL_CHECKS_ID
+      }" onclick="${runHealthCheck.name}()">Run failed critical checks</button>
         </div>
         <div>
           ${$map(criticalTasks, (task) => {
@@ -347,11 +387,10 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
  */
 function renderHealthCheckSummary(data) {
   tasks = data;
-  const root = /** @type {HTMLDivElement} */ (document.getElementById('root'));
   const criticalTasks = getCriticalTasks(tasks);
   const nonCriticalTasks = getNonCriticalTasks(tasks);
-  // eslint-disable-next-line no-unsanitized/property
-  root.innerHTML = buildHealthCheckReport(criticalTasks, nonCriticalTasks);
+  const content = buildHealthCheckReport(criticalTasks, nonCriticalTasks);
+  HealthCheckDocument.setRootContent(content);
 }
 
 // Auto-call the function when the page loads
