@@ -109,10 +109,13 @@ class HttpService {
 const httpService = new HttpService();
 
 class UseCases {
+  /** @private */
+  static INTERNAL_HEALTHCHECK_API_ENDPOINT = '/api/healthcheck/internal';
+
   static async retrieveHealthCheckTasks() {
     try {
       const response = await /** @type {Promise<HealthCheckTasks>} */ (httpService.get(
-        '/api/healthcheck/internal'
+        this.INTERNAL_HEALTHCHECK_API_ENDPOINT
       ));
       return response.tasks;
     } catch (err) {
@@ -125,14 +128,13 @@ class UseCases {
     const params = new URLSearchParams();
     params.set(
       'name',
-      tasks
-        .filter(({ error, _meta }) => _meta && _meta.isCritical && error)
+      getCriticalTasks(tasks)
         .map(({ name }) => name)
         .toString()
     );
     try {
       const response = await /** @type {Promise<HealthCheckTasks>} */ (httpService.post(
-        `/api/healthcheck/internal?${params.toString()}`
+        `${this.INTERNAL_HEALTHCHECK_API_ENDPOINT}?${params.toString()}`
       ));
 
       return combineTaskArraysByKey(tasks || [], response.tasks, 'name');
