@@ -37,6 +37,12 @@
   }
 }
 
+@media screen and (max-width: 425px) {
+  .title > div {
+    flex-direction: column;
+  }
+}
+
 .server-is {
   font-weight: 400;
   font-size: 20px;
@@ -100,6 +106,13 @@
   justify-content: center;
   gap: 0.75rem;
   min-width: 262px;
+  height: 54px;
+}
+
+@media screen and (max-width: 768px) {
+  .button {
+    min-width: 50px;
+  }
 }
 
 #btn-export {
