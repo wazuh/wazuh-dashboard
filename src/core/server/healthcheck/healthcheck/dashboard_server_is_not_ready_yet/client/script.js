@@ -13,7 +13,7 @@
  * @property {number} duration
  * @property {string} error
  * @property {Object} _meta
- * @property {boolean} _meta.isCritical
+ * @property {boolean} [_meta.isCritical]
  * @property {boolean} _meta.isEnabled
  */
 
@@ -403,6 +403,44 @@ class Components {
       </button>
     `;
   }
+
+  /**
+   * Render a health check item
+   * @param {Task} task
+   * @returns
+   */
+  static checkCriticalItem(task) {
+    return /* html */ `<p style="font-weight: bold;">Check [<span style="color: var(--red);">${task.name}</span>]: ${task.error}</p>`;
+  }
+
+  /**
+   *
+   * @param {Task[]} tasks
+   * @returns
+   */
+  static tableNonCriticalItems(tasks) {
+    return /* html */ `
+      <table>
+        <thead>
+          <tr style="text-align: left;">
+            <th>Minor Error</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${$map(
+            tasks,
+            (task) => /* html */ `
+            <tr>
+              <td>Check [<p style="color: var(--yellow); font-weight: 600;">${task.name}</p>]</td>
+              <td>${task.error}</td>
+            </tr>
+          `
+          )}
+        </tbody>
+      </table>
+    `;
+  }
 }
 
 /**
@@ -453,25 +491,21 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
         })}
       `,
       })}
-      ${Components.card({
-        children: /* html */ `
-          ${$map(criticalTasks, (task) => {
-            return /* html */ `<p style="font-weight: bold;">Check [<span style="color: var(--red);">${task.name}</span>]: ${task.error}</p>`;
-          })}
-        `,
-      })}
       `
     )}
 
     ${$if(
-      nonCriticalTasks.length > 0,
+      criticalTasks.length > 0 || nonCriticalTasks.length > 0,
       /* html */ `
-      <div>There are some <span class="text-warn">minor errors</span>. Some features could require to solve these problems to work:</div>
-      <div>
-        ${$map(nonCriticalTasks, (task) => {
-          return /* html */ `<p>Check [<span class="text-warn">${task.name}</span>]: ${task.error}</p>`;
-        })}
-      </div>
+      ${Components.card({
+        children: /* html */ `
+          <div>
+            ${$map(criticalTasks, (task) => Components.checkCriticalItem(task))}
+            <div>There are some <span style="color: var(--yellow); font-weight: 600;">minor errors</span>. Some features could require to solve these problems to work:</div>
+            ${Components.tableNonCriticalItems(nonCriticalTasks)}
+          </div>
+        `,
+      })}
       `
     )}
   `;
