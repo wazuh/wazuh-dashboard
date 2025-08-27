@@ -18,8 +18,7 @@
   margin: 4rem;
 }
 
-#root,
-#healthcheck-root {
+#root {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
