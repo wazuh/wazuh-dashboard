@@ -501,8 +501,13 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
         children: /* html */ `
           <div style="width: 100%;">
             ${$map(criticalTasks, (task) => Components.checkCriticalItem(task))}
-            <div style="margin-block: 2rem;">There are some <span style="color: var(--yellow); font-weight: var(--semi-bold);">minor errors</span>. Some features could require to solve these problems to work:</div>
-            ${Components.tableNonCriticalItems(nonCriticalTasks)}
+            ${$if(
+              nonCriticalTasks.length > 0,
+              /* html */ `
+                <div style="margin-block: 2rem;">There are some <span style="color: var(--yellow); font-weight: var(--semi-bold);">minor errors</span>. Some features could require to solve these problems to work:</div>
+                ${Components.tableNonCriticalItems(nonCriticalTasks)}
+              `
+            )}
           </div>
         `,
       })}
