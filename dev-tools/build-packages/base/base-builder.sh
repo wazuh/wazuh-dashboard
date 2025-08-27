@@ -122,6 +122,10 @@ sed -i -e "s|${old_category_notifications}|category:${category_explore}|" ./plug
 # Replace app category to Index Management app
 sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|g" ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
 
+# Add category icon to Observability plugin
+sed -i -e "s|const OBSERVABILITY_APP_CATEGORIES=Object.freeze({observability:{id:\"observability\",label:|const OBSERVABILITY_APP_CATEGORIES=Object.freeze({observability:{id:\"observability\",euiIconType:'searchProfilerApp',label:|" ./plugins/observabilityDashboards/target/public/observabilityDashboards.plugin.js
+
+
 log
 log "Recreating plugin files"
 log
@@ -134,6 +138,7 @@ files_to_recreate=(
   ./plugins/customImportMapDashboards/target/public/customImportMapDashboards.plugin.js
   ./plugins/notificationsDashboards/target/public/notificationsDashboards.plugin.js
   ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
+  ./plugins/observabilityDashboards/target/public/observabilityDashboards.plugin.js
 )
 
 for value in "${files_to_recreate[@]}"; do
