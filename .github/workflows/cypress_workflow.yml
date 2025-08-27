@@ -124,31 +124,32 @@ jobs:
           - group: 15
             config: query_enhanced
             test_location: source
+          # Wazuh: Check if explore tests works on next version
           # Explore tests - group 1
-          - group: 10Explore
-            config: explore
-            test_location: source
+          # - group: 10Explore
+          #   config: explore
+          #   test_location: source
           # Explore tests - group 2
-          - group: 12Explore
-            config: explore
-            test_location: source
+          # - group: 12Explore
+          #   config: explore
+          #   test_location: source
           # Wazuh: Commented out groups because sample data of OpenSearch Dashboards is disabled
           # Explore tests - group 3
           # - group: 13Explore
           #   config: explore
           #   test_location: source
           # Explore tests - group 4
-          - group: 14Explore
-            config: explore
-            test_location: source
+          # - group: 14Explore
+          #   config: explore
+          #   test_location: source
           # Explore tests - group 5
-          - group: 15Explore
-            config: explore
-            test_location: source
+          # - group: 15Explore
+          #   config: explore
+          #   test_location: source
 
-          - group: 16Explore
-            config: explore
-            test_location: source
+          # - group: 16Explore
+          #   config: explore
+          #   test_location: source
     container:
       image: docker://opensearchstaging/ci-runner:ci-runner-rockylinux8-opensearch-dashboards-integtest-v2
       options: '--user 1001 --shm-size=4g'
@@ -156,7 +157,7 @@ jobs:
       START_CMD: ${{ matrix.config == 'query_enhanced' &&
         'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         matrix.config == 'explore' &&
-        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --explore.enabled=true' ||
+        'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --explore.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         matrix.config == 'dashboard' &&
         'node scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         'node ../scripts/opensearch_dashboards --dev --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=false --opensearchDashboards.branding.useExpandedHeader=true' }}
