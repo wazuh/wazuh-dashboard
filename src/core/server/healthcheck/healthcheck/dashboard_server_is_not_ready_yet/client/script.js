@@ -258,17 +258,41 @@ function when(condition, trueValue, falseValue = '') {
   return condition ? trueValue : falseValue;
 }
 
+function filterErrorTasks() {
+  /**
+   *
+   * @param {Task[]} tasks
+   * @returns
+   */
+  return (tasks) => tasks.filter((task) => task.error);
+}
+
+/**
+ *
+ * @param {Task[]} tasks
+ * @returns
+ */
+function getCriticalTasks(tasks) {
+  return tasks.filter(filterErrorTasks).filter((task) => task._meta.isCritical);
+}
+
+/**
+ *
+ * @param {Task[]} tasks
+ * @returns
+ */
+function getNonCriticalTasks(tasks) {
+  return tasks.filter(filterErrorTasks).filter((task) => !task._meta || !task._meta?.isCritical);
+}
+
 /**
  * Function to update HTML content
  * @param {Task[]} data
  */
 function updateContent(data) {
   tasks = data;
-  const criticalTasks = data.filter(({ error, _meta }) => _meta && _meta.isCritical && error);
-
-  const nonCriticalTasks = data.filter(
-    ({ error, _meta }) => (!_meta || (_meta && !_meta?.isCritical)) && error
-  );
+  const criticalTasks = getCriticalTasks(tasks);
+  const nonCriticalTasks = getNonCriticalTasks(tasks);
 
   let content = '';
   if (criticalTasks.length > 0 || nonCriticalTasks.length > 0) {
