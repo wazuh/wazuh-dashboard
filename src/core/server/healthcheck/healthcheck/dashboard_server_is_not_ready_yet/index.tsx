@@ -17,11 +17,13 @@ const DashboardServerIsNotReadyYetComponent = (props: NotReadyServerProps) => {
         <link rel="stylesheet" href={`${props.serverBasePath}${SERVER_NOT_READY_STYLES_ROUTE}`} />
       </head>
       <body>
-        <Page
-          appName={props.appName}
-          documentationTroubleshootingLink={props.documentationTroubleshootingLink}
-        />
-        <div id="root" />
+        <div id="root">
+          <Page
+            appName={props.appName}
+            documentationTroubleshootingLink={props.documentationTroubleshootingLink}
+          />
+          <div id="healthcheck-root" />
+        </div>
         <script
           dangerouslySetInnerHTML={{
             __html: /* javascript */ `
