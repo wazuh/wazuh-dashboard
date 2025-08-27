@@ -237,7 +237,7 @@ async function runHealthCheck() {
  * @param {(item: T) => string} mapper
  * @returns {string}
  */
-function map(arr, mapper) {
+function $map(arr, mapper) {
   if (!Array.isArray(arr) || typeof mapper !== 'function') {
     throw new Error('Invalid arguments');
   }
@@ -254,7 +254,7 @@ function map(arr, mapper) {
  * @param {string} trueValue
  * @param {string} [falseValue]
  */
-function when(condition, trueValue, falseValue = '') {
+function $if(condition, trueValue, falseValue = '') {
   return condition ? trueValue : falseValue;
 }
 
@@ -293,20 +293,20 @@ function getNonCriticalTasks(tasks) {
  */
 function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
   return /* html */ `
-    ${when(
+    ${$if(
       criticalTasks.length > 0 || nonCriticalTasks.length > 0,
       /* html */ `
       <div style="height:20px"></div>
       <div class="d-flex d-ai-center d-gap-m">
         <div>Some errors were found related to the health check</div>
-        ${when(
+        ${$if(
           tasks && tasks.length > 0,
           /* html */ ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`
         )}
       </div>`
     )}
 
-    ${when(
+    ${$if(
       criticalTasks.length > 0,
       /* html */ `
       <div>
@@ -317,20 +317,20 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
           }()">Run failed critical checks</button>
         </div>
         <div>
-          ${map(criticalTasks, (task) => {
+          ${$map(criticalTasks, (task) => {
             return /* html */ `<p>Check [<span class="text-danger">${task.name}</span>]: ${task.error}</p>`;
           })}
         </div>
       </div>`
     )}
 
-    ${when(
+    ${$if(
       nonCriticalTasks.length > 0,
       /* html */ `
       <div>
         <div>There are some <span class="text-warn">minor errors</span>. Some features could require to solve these problems to work:</div>
         <div>
-          ${map(nonCriticalTasks, (task) => {
+          ${$map(nonCriticalTasks, (task) => {
             return /* html */ `<p>Check [<span class="text-warn">${task.name}</span>]: ${task.error}</p>`;
           })}
         </div>
