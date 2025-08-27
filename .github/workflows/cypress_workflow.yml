@@ -33,7 +33,7 @@ on:
 
 env:
   TEST_REPO: ${{ inputs.test_repo != '' && inputs.test_repo || 'opensearch-project/opensearch-dashboards-functional-test' }}
-  TEST_BRANCH: "${{ inputs.test_branch != '' && inputs.test_branch || github.base_ref }}"
+  TEST_BRANCH: "${{ inputs.test_branch }}"
   FTR_PATH: 'ftr'
   CYPRESS_BROWSER: 'chromium'
   CYPRESS_VISBUILDER_ENABLED: true
@@ -198,6 +198,15 @@ jobs:
           repository: ${{ env.SOURCE_REPO }}
           ref: '${{ env.SOURCE_BRANCH }}'
 
+      - name: Set TEST_BRANCH
+        run: |
+          if [ -n "${{ inputs.test_branch }}" ]; then
+            echo "TEST_BRANCH=${{ inputs.test_branch }}" >> $GITHUB_ENV
+          else
+            VERSION=$(jq -r '.version' package.json)
+            echo "TEST_BRANCH=$VERSION" >> $GITHUB_ENV
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -221,7 +230,7 @@ jobs:
         with:
           path: ${{ env.FTR_PATH }}
           repository: ${{ env.TEST_REPO }}
-          ref: '${{ env.OPENSEARCH_VERSION }}'
+          ref: '${{ env.TEST_BRANCH }}'
           clean: true
 
       - name: Setup spec files by input
