@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
+:root {
+  font-family: Inter;
+  font-size: 16px;
+  --red: #ff0c29;
+  --blue: #006bb4;
+  --yellow: #FFA621;
+}
+
 #root {
   margin: 4rem;
 }
@@ -9,11 +17,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-}
-
-:root {
-  font-family: Inter;
-  font-size: 16px;
 }
 
 .title {
@@ -54,7 +57,7 @@
   border-radius: 3px;
   padding-left: 19px;
   padding-right: 19px;
-  background-color: #ff0c29;
+  background-color: var(--red);
   color: #ffffff;
   line-height: 21px;
   text-align: center;
@@ -116,10 +119,10 @@
 }
 
 #btn-export {
-  border-color: #006bb4;
+  border-color: var(--blue);
 }
 
 #btn-run-failed-critical-checks {
-  border-color: #ff0c29;
-  color: #ff0c29;
+  border-color: var(--red);
+  color: var(--red);
 }

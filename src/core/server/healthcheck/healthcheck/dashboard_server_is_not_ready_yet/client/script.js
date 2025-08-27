@@ -453,11 +453,13 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
         })}
       `,
       })}
-      <div>
-        ${$map(criticalTasks, (task) => {
-          return /* html */ `<p>Check [<span class="text-danger">${task.name}</span>]: ${task.error}</p>`;
-        })}
-      </div>
+      ${Components.card({
+        children: /* html */ `
+          ${$map(criticalTasks, (task) => {
+            return /* html */ `<p style="font-weight: bold;">Check [<span style="color: var(--red);">${task.name}</span>]: ${task.error}</p>`;
+          })}
+        `,
+      })}
       `
     )}
 
