@@ -10,6 +10,7 @@
   --light-bold: 500;
   --semi-bold: 600;
   --bold: 700;
+  --font-size-lg: 22px;
   font-weight: var(--normal-weight);
 }
 

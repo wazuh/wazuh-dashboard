@@ -410,7 +410,7 @@ class Components {
    * @returns
    */
   static checkCriticalItem(task) {
-    return /* html */ `<p style="font-weight: var(--bold);">Check [<span style="color: var(--red);">${task.name}</span>]: ${task.error}</p>`;
+    return /* html */ `<p style="font-weight: var(--bold); font-size: var(--font-size-lg);">Check [<span style="color: var(--red);">${task.name}</span>]: ${task.error}</p>`;
   }
 
   /**
@@ -501,7 +501,7 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
         children: /* html */ `
           <div>
             ${$map(criticalTasks, (task) => Components.checkCriticalItem(task))}
-            <div>There are some <span style="color: var(--yellow); font-weight: var(--semi-bold);">minor errors</span>. Some features could require to solve these problems to work:</div>
+            <div style="margin-bottom: 2rem;">There are some <span style="color: var(--yellow); font-weight: var(--semi-bold);">minor errors</span>. Some features could require to solve these problems to work:</div>
             ${Components.tableNonCriticalItems(nonCriticalTasks)}
           </div>
         `,
