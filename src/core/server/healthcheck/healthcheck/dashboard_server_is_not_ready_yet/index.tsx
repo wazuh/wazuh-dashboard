@@ -13,6 +13,7 @@ const DashboardServerIsNotReadyYetComponent = (props: NotReadyServerProps) => {
   return (
     <html lang="en">
       <head>
+        <meta charSet="utf-8" />
         <title>{props.appName}</title>
         <link rel="stylesheet" href={`${props.serverBasePath}${SERVER_NOT_READY_STYLES_ROUTE}`} />
       </head>
@@ -31,7 +32,7 @@ const DashboardServerIsNotReadyYetComponent = (props: NotReadyServerProps) => {
             `,
           }}
         />
-        <script src={`${props.serverBasePath}${SERVER_NOT_READY_SCRIPT_ROUTE}`}></script>
+        <script src={`${props.serverBasePath}${SERVER_NOT_READY_SCRIPT_ROUTE}`} />
       </body>
     </html>
   );
