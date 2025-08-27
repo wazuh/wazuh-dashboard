@@ -226,7 +226,7 @@ async function runHealthCheck() {
   ));
   btn.disabled = true;
   const healthCheckTasks = await UseCases.executeHealthCheckForCriticalTasks();
-  updateContent(healthCheckTasks);
+  renderHealthCheckSummary(healthCheckTasks);
   btn.disabled = false;
 }
 
@@ -286,15 +286,13 @@ function getNonCriticalTasks(tasks) {
 }
 
 /**
- * Function to update HTML content
- * @param {Task[]} data
+ *
+ * @param {Task[]} criticalTasks
+ * @param {Task[]} nonCriticalTasks
+ * @returns
  */
-function updateContent(data) {
-  tasks = data;
-  const criticalTasks = getCriticalTasks(tasks);
-  const nonCriticalTasks = getNonCriticalTasks(tasks);
-
-  const content = /* html */ `
+function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
+  return /* html */ `
     ${when(
       criticalTasks.length > 0 || nonCriticalTasks.length > 0,
       /* html */ `
@@ -341,12 +339,22 @@ function updateContent(data) {
     )}
     <div>For more details, review the app logs.</div>
   `;
+}
+
+/**
+ * Function to update HTML content
+ * @param {Task[]} data
+ */
+function renderHealthCheckSummary(data) {
+  tasks = data;
   const root = /** @type {HTMLDivElement} */ (document.getElementById('root'));
+  const criticalTasks = getCriticalTasks(tasks);
+  const nonCriticalTasks = getNonCriticalTasks(tasks);
   // eslint-disable-next-line no-unsanitized/property
-  root.innerHTML = content;
+  root.innerHTML = buildHealthCheckReport(criticalTasks, nonCriticalTasks);
 }
 
 // Auto-call the function when the page loads
 window.addEventListener('load', () => {
-  UseCases.retrieveHealthCheckTasks().then((tasks) => updateContent(tasks));
+  UseCases.retrieveHealthCheckTasks().then((tasks) => renderHealthCheckSummary(tasks));
 });
