@@ -5,7 +5,7 @@
   font-size: 16px;
   --red: #ff0c29;
   --blue: #006bb4;
-  --yellow: #FFA621;
+  --yellow: #ffa621;
   --normal-weight: 400;
   --light-bold: 500;
   --semi-bold: 600;
@@ -130,4 +130,26 @@
 #btn-run-failed-critical-checks {
   border-color: var(--red);
   color: var(--red);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+tr {
+  text-align: left;
+}
+
+th {
+  border-bottom: 1px solid #ddd;
+}
+
+td {
+  border-bottom: 1px solid #eee;
+}
+
+th,
+td {
+  padding: 22px 16px;
 }

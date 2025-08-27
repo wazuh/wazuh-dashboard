@@ -422,7 +422,7 @@ class Components {
     return /* html */ `
       <table>
         <thead>
-          <tr style="text-align: left;">
+          <tr>
             <th>Minor Error</th>
             <th>Details</th>
           </tr>
@@ -499,9 +499,9 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       /* html */ `
       ${Components.card({
         children: /* html */ `
-          <div>
+          <div style="width: 100%;">
             ${$map(criticalTasks, (task) => Components.checkCriticalItem(task))}
-            <div style="margin-bottom: 2rem;">There are some <span style="color: var(--yellow); font-weight: var(--semi-bold);">minor errors</span>. Some features could require to solve these problems to work:</div>
+            <div style="margin-block: 2rem;">There are some <span style="color: var(--yellow); font-weight: var(--semi-bold);">minor errors</span>. Some features could require to solve these problems to work:</div>
             ${Components.tableNonCriticalItems(nonCriticalTasks)}
           </div>
         `,
