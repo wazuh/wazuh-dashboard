@@ -294,9 +294,10 @@ function updateContent(data) {
   const criticalTasks = getCriticalTasks(tasks);
   const nonCriticalTasks = getNonCriticalTasks(tasks);
 
-  let content = '';
-  if (criticalTasks.length > 0 || nonCriticalTasks.length > 0) {
-    content += /* html */ `
+  const content = /* html */ `
+    ${when(
+      criticalTasks.length > 0 || nonCriticalTasks.length > 0,
+      /* html */ `
       <div style="height:20px"></div>
       <div class="d-flex d-ai-center d-gap-m">
         <div>Some errors were found related to the health check</div>
@@ -304,12 +305,12 @@ function updateContent(data) {
           tasks && tasks.length > 0,
           /* html */ ` <button class="btn btn-export-checks" id="btn-export-checks" onclick="${downloadHealthChecksAsJSONFile.name}()">Export checks</button>`
         )}
-      </div>
-    `;
-  }
+      </div>`
+    )}
 
-  if (criticalTasks.length) {
-    content += /* html */ `
+    ${when(
+      criticalTasks.length > 0,
+      /* html */ `
       <div>
         <div>
           <span>There are some <span class="text-danger">critical errors</span> that require to be solved, ensure the problems are solved and run the failed critical checks: </span>
@@ -322,12 +323,12 @@ function updateContent(data) {
             return /* html */ `<p>Check [<span class="text-danger">${task.name}</span>]: ${task.error}</p>`;
           })}
         </div>
-      </div>
-    `;
-  }
+      </div>`
+    )}
 
-  if (nonCriticalTasks.length) {
-    content += /* html */ `
+    ${when(
+      nonCriticalTasks.length > 0,
+      /* html */ `
       <div>
         <div>There are some <span class="text-warn">minor errors</span>. Some features could require to solve these problems to work:</div>
         <div>
@@ -336,9 +337,10 @@ function updateContent(data) {
           })}
         </div>
       </div>
-    `;
-  }
-  content += /* html */ `<div>For more details, review the app logs.</div>`;
+    `
+    )}
+    <div>For more details, review the app logs.</div>
+  `;
   const root = /** @type {HTMLDivElement} */ (document.getElementById('root'));
   // eslint-disable-next-line no-unsanitized/property
   root.innerHTML = content;
