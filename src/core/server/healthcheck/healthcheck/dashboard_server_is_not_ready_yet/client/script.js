@@ -351,6 +351,18 @@ class Icons {
       </picture>
     `;
   }
+
+  static wrench() {
+    return /* html */ `
+    <picture>
+      <img
+        width="52"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFIAAABaCAYAAAArfwH2AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAPiSURBVHhe7Zy9axRBGMZX/wlzdmKvcodgqSlUuKjYWihCImppYach2llYqiQB0cJW/DgwFtFSkAS1F7uc/hW6T24WJ5M97+t53znD84OQuUB2dn/7vLMzc5fs+11SiInZH76LCZFIEhJJQiJJSCQJiSQhkSQkkoREkpBIEhJJQiJJSCQJiSQhkSQkkoREkpBIEhJJYmpEvu28C63BbGx+Ca3pIavIre7PYmX1WXH8xGwp8n346WBWVp8X5y9e2v7daSGbSEi4UMpYHlNGt7wJ+N1pEeouEim8fvPW2AJTYqE4di5cRWJsQwotxjgIxQ3KlU43kXiY4EItgcw3nbUsMl1EIoFL9x+EVz1azWPbX5PSaMzsOE5V6t4yzUVCYppEXPiTRw/Dq8k4WIq8e+d2cW3+SvhJDyTTc5pkLjJN4lz7LE1iBWS222d2yEQy074tMRWJ8sIFVSCJi2V6LIDMhVJkWuZeMs1EYiqSTnFQgtakfaC8PUrcTCRWHzFIIlJjDfqIU49UjrJqGhczkfHaGeWGsdEL9BWX+H+byHQDYq59OrT8aDWPhlYvldYyTURubH4LrR7NKB1e4CkeY13eRiL/3n2U2LBjY/VgGPQ1zJoafXqWt8lnyLEtVoG5HaYldWCiPukFQla/eSmmX/HM4fOn9dDiQ09kzh2YQVieG11kPAEHjcaB0PIn7Ts9Nyb00kapxmtrzOn6TX0Y4xY2LfqNwZg9xCubVy9fmM1l6SJRPthzrPiXSGs8RZo8tWO63V+h5Y9n33SRuOMot4qNza+h5c9WItIqjcAkkfEJ53yKxyss6+HFRKT38qyOdJnaah4JLRtMRHovz+pI+7ReppqVdrw8Qzo8U4m+4v5GWaaOi4lIsDB/ObR6pPuTlqR9pedigZlIpCDdNEjHLQvq0hifhxVmIkGahOUyKfFFssGx03csPdIITEUiCXXv7FnIrJOIvj3SCExFAjzB44uxkIm5at175/227yxw+Z8WuNB7NfIwSUbpjftExXE7nbVd71ZiZfW6XFd74vbPQarU7N5mmynOlakdNT3ppm1FDonATSTolyCAUhz2Exi4IXVDAxJu9QGEQZiPkTEoYSQPFxtvbEwKjoVj5pIIXEVWIDlIH+OJWpVyrj3PiiwiAWvJZr30G5ZsIvcaEklCIklIJAmJJCGRJCSShESSkEgSEklCIkm4bqPtZZRIEhJJImtpL33gfJRl8ZT/n5+kZBU5+/Rx8fHH9/BqPE4eOlysX70RXuVDpU1CIklo+kNCiSQhkSQkkoREkpBIEhJJQiJJSCQJiSQhkSQkkoREkpBICkXxB/8+yoZ/03zeAAAAAElFTkSuQmCC"
+        alt="Wrench Icon"
+      />
+    </picture>
+    `;
+  }
 }
 
 class Components {
@@ -430,7 +442,10 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       criticalTasks.length > 0,
       /* html */ `${Components.card({
         children: /* html */ `
-        <div>There are some <b>critical errors that require to be solved</b>,<br /> ensure the problems are solved and run the failed critical checks:</div>
+        <div style="display: flex; gap: 0.25rem;">
+          ${Icons.wrench()}
+          <div>There are some <b>critical errors that require to be solved</b>,<br /> ensure the problems are solved and run the failed critical checks:</div>
+        </div>
         ${Components.button({
           id: HealthCheckDocument.BTN_RUN_FAILED_CRITICAL_CHECKS_ID,
           text: 'Run failed critical checks',
