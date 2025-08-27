@@ -35,16 +35,16 @@
   border: 2px solid #f5c2c7; /* Soft border */
 }
 
-.btn-export-checks {
+.btn-export {
   color: #3595f9; /* Light red */
   border: 2px solid #3595f9;
 }
-.btn-export-checks:hover {
+.btn-export:hover {
   background-color: #3595f9;
   color: white;
 }
-.btn-export-checks:disabled,
-.btn-export-checks[disabled] {
+.btn-export:disabled,
+.btn-export[disabled] {
   background-color: #f8d7da; /* Light red background */
   color: #a1a1a1; /* Muted text color */
   border: 2px solid #f5c2c7; /* Soft border */

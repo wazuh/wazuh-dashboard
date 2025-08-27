@@ -239,9 +239,9 @@ function downloadHealthChecksAsJSONFile() {
   const btn = HealthCheckDocument.getExportButton();
   try {
     btn.disabled = true;
-    const content = JSON.stringify({ checks: tasks, _meta: { server: 'not-ready' } }, null, 2);
+    const content = JSON.stringify({ checks: tasks, _meta: { server: 'not-ready' } });
     // Normalize content into a Blob
-    const blob = new Blob([String(content)], { type: 'application/json' });
+    const blob = new Blob([content], { type: 'application/json' });
 
     // Create an object URL and anchor element
     const url = URL.createObjectURL(blob);
