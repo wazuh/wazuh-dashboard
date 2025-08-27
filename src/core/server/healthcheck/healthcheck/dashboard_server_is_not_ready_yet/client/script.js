@@ -428,13 +428,16 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
 
     ${$if(
       criticalTasks.length > 0,
-      /* html */ `
-      <div>
-        <span>There are some <span class="text-danger">critical errors</span> that require to be solved, ensure the problems are solved and run the failed critical checks: </span>
-        <button class="btn ${HealthCheckDocument.BTN_RUN_FAILED_CRITICAL_CHECKS_ID}" id="${
-        HealthCheckDocument.BTN_RUN_FAILED_CRITICAL_CHECKS_ID
-      }" onclick="${runHealthCheck.name}()">Run failed critical checks</button>
-      </div>
+      /* html */ `${Components.card({
+        children: /* html */ `
+        <div>There are some <b>critical errors that require to be solved</b>,<br /> ensure the problems are solved and run the failed critical checks:</div>
+        ${Components.button({
+          id: HealthCheckDocument.BTN_RUN_FAILED_CRITICAL_CHECKS_ID,
+          text: 'Run failed critical checks',
+          onclick: runHealthCheck.name,
+        })}
+      `,
+      })}
       <div>
         ${$map(criticalTasks, (task) => {
           return /* html */ `<p>Check [<span class="text-danger">${task.name}</span>]: ${task.error}</p>`;

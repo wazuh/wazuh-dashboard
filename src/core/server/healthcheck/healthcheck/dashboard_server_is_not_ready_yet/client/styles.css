@@ -2,9 +2,13 @@
 
 #root {
   margin: 4rem;
+}
+
+#root,
+#healthcheck-root {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 :root {
@@ -15,6 +19,22 @@
 .title {
   display: flex;
   align-items: baseline;
+}
+
+.title > div {
+  display: flex;
+  align-items: baseline;
+}
+
+@media screen and (max-width: 768px) {
+  .title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .server-is.server-is {
+    padding-inline-start: 0;
+  }
 }
 
 .server-is {
@@ -49,6 +69,13 @@
 .card-body {
   display: flex;
   justify-content: space-between;
+  gap: 1.5rem;
+}
+
+@media screen and (max-width: 768px) {
+  .card-body {
+    flex-direction: column;
+  }
 }
 
 .healthcheck-title {
@@ -59,11 +86,12 @@
 }
 
 .button {
+  cursor: pointer;
   border-radius: 10px;
   border-width: 1px;
   padding-block: 3px;
   padding-inline: 27px;
-  border: 1px solid #006bb4;
+  border: 1px solid;
   background-color: transparent;
   text-align: center;
   vertical-align: middle;
@@ -72,4 +100,13 @@
   justify-content: center;
   gap: 0.75rem;
   min-width: 262px;
+}
+
+#btn-export {
+  border-color: #006bb4;
+}
+
+#btn-run-failed-critical-checks {
+  border-color: #ff0c29;
+  color: #ff0c29;
 }

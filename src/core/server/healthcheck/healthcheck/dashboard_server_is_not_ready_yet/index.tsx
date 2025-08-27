@@ -27,10 +27,7 @@ const DashboardServerIsNotReadyYetComponent = (props: NotReadyServerProps) => {
       </head>
       <body>
         <div id="root">
-          <Page
-            appName={props.appName}
-            documentationTroubleshootingLink={props.documentationTroubleshootingLink}
-          />
+          <Page documentationTroubleshootingLink={props.documentationTroubleshootingLink} />
           <div id="healthcheck-root" />
         </div>
         <script
