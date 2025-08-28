@@ -4,8 +4,8 @@
 /**
  * @typedef {Object} Task
  * @property {string} name
- * @property {string} status
- * @property {string} result
+ * @property {StatusValues} status
+ * @property {ResultValues} result
  * @property {any} data
  * @property {string} createdAt
  * @property {string} startedAt
@@ -187,6 +187,63 @@ class HealthCheckDocument {
   }
 }
 
+class Status {
+  /** @typedef {typeof Status.Values[keyof typeof Status.Values]} StatusValues */
+
+  static Values = {
+    NOT_STARTED: /** @type {'not_started'} */ ('not_started'),
+    RUNNING: /** @type {'running'} */ ('running'),
+    FINISHED: /** @type {'finished'} */ ('finished'),
+  };
+
+  /**
+   * Checks if the given status is finished.
+   * @param {StatusValues} status
+   * @returns {status is 'finished'}
+   */
+  static isFinished(status) {
+    return status === Status.Values.FINISHED;
+  }
+}
+
+class Result {
+  /** @typedef {typeof Result.Values[keyof typeof Result.Values]} ResultValues */
+
+  static Values = {
+    GREEN: /** @type {'green'} */ ('green'),
+    YELLOW: /** @type {'yellow'} */ ('yellow'),
+    RED: /** @type {'red'} */ ('red'),
+    GRAY: /** @type {'gray'} */ ('gray'),
+  };
+
+  /**
+   * Checks if the given value is a success.
+   * @param {ResultValues} value
+   * @returns {value is 'green'}
+   */
+  static isSuccess(value) {
+    return value === Result.Values.GREEN;
+  }
+
+  /**
+   * Checks if the given value is a failure.
+   * @param {ResultValues} value
+   * @returns {value is 'red' | 'yellow'}
+   */
+  static isFailed(value) {
+    return value === Result.Values.RED || value === Result.Values.YELLOW;
+  }
+
+  /**
+   * Checks if the given value is unknown.
+   * @param {ResultValues} value
+   * @returns {value is 'gray'}
+   */
+  static isUnknown(value) {
+    return value === Result.Values.GRAY;
+  }
+}
+
 /**
  * Combines two arrays of tasks by a specific key.
  * @param {Task[]} arr1
@@ -300,13 +357,17 @@ function $if(condition, trueValue, falseValue = '') {
   return condition ? trueValue : falseValue;
 }
 
-function filterErrorTasks() {
+function filterEnabledFinishedFailedTasks() {
   /**
    *
    * @param {Task[]} tasks
    * @returns
    */
-  return (tasks) => tasks.filter((task) => task.error);
+  return (tasks) =>
+    tasks.filter(
+      ({ _meta, status, result }) =>
+        _meta.isEnabled && Status.isFinished(status) && !Result.isSuccess(result)
+    );
 }
 
 /**
@@ -315,7 +376,7 @@ function filterErrorTasks() {
  * @returns
  */
 function getCriticalTasks(tasks) {
-  return tasks.filter(filterErrorTasks).filter((task) => task._meta.isCritical);
+  return tasks.filter(filterEnabledFinishedFailedTasks).filter(({ _meta }) => _meta.isCritical);
 }
 
 /**
@@ -324,7 +385,7 @@ function getCriticalTasks(tasks) {
  * @returns
  */
 function getNonCriticalTasks(tasks) {
-  return tasks.filter(filterErrorTasks).filter((task) => !task._meta || !task._meta?.isCritical);
+  return tasks.filter(filterEnabledFinishedFailedTasks).filter(({ _meta }) => !_meta.isCritical);
 }
 
 class Icons {

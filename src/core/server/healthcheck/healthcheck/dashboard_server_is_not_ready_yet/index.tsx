@@ -1,6 +1,5 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import Page from './page';
 import {
   SERVER_NOT_READY_RESET_STYLES_ROUTE,
   SERVER_NOT_READY_SCRIPT_ROUTE,
