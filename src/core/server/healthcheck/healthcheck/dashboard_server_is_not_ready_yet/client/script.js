@@ -667,7 +667,7 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       criticalTasks.length > 0,
       /* html */ `${Components.card({
         children: /* html */ `
-        <div style="display: flex; gap: 0.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.25rem;">
           ${Icons.wrench}
           <div>There are some <b>critical errors that require to be solved</b>,<br /> ensure the problems are solved and run the failed critical checks:</div>
         </div>

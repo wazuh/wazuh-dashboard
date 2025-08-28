@@ -144,6 +144,19 @@ code {
   color: var(--text);
 }
 
+/* Normalize icons so they align with adjacent text */
+picture {
+  /* Make picture participate as a flex container to center its content
+     even when the parent flex item is stretched by align-items: stretch */
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Remove inline-image baseline gap that makes icons look lower */
+picture > img {
+  display: block;
+}
+
 .button {
   cursor: pointer;
   border-radius: 10px;
