@@ -4,8 +4,8 @@
 /**
  * @typedef {Object} Task
  * @property {string} name
- * @property {StatusValues} status
- * @property {ResultValues} result
+ * @property {StatusValuesType} status
+ * @property {ResultValuesType} result
  * @property {any} data
  * @property {string} createdAt
  * @property {string} startedAt
@@ -188,9 +188,13 @@ class HealthCheckDocument {
 }
 
 class Status {
-  /** @typedef {typeof Status.Values[keyof typeof Status.Values]} StatusValues */
+  /** @typedef {typeof Status.StatusValues[keyof typeof Status.StatusValues]} StatusValuesType */
 
-  static Values = {
+  /**
+   * @private
+   * @enum {string}
+   */
+  static StatusValues = {
     NOT_STARTED: /** @type {'not_started'} */ ('not_started'),
     RUNNING: /** @type {'running'} */ ('running'),
     FINISHED: /** @type {'finished'} */ ('finished'),
@@ -198,49 +202,52 @@ class Status {
 
   /**
    * Checks if the given status is finished.
-   * @param {StatusValues} status
+   * @param {string} status
    * @returns {status is 'finished'}
    */
   static isFinished(status) {
-    return status === Status.Values.FINISHED;
+    return status === Status.StatusValues.FINISHED;
   }
 }
 
 class Result {
-  /** @typedef {typeof Result.Values[keyof typeof Result.Values]} ResultValues */
+  /** @typedef {typeof Result.ResultValues[keyof typeof Result.ResultValues]} ResultValuesType */
 
-  static Values = {
+  /**
+   * @private
+   * @enum {string}
+   */
+  static ResultValues = {
     GREEN: /** @type {'green'} */ ('green'),
-    YELLOW: /** @type {'yellow'} */ ('yellow'),
     RED: /** @type {'red'} */ ('red'),
     GRAY: /** @type {'gray'} */ ('gray'),
   };
 
   /**
    * Checks if the given value is a success.
-   * @param {ResultValues} value
+   * @param {string} value
    * @returns {value is 'green'}
    */
   static isSuccess(value) {
-    return value === Result.Values.GREEN;
+    return value === Result.ResultValues.GREEN;
   }
 
   /**
    * Checks if the given value is a failure.
-   * @param {ResultValues} value
+   * @param {string} value
    * @returns {value is 'red' | 'yellow'}
    */
   static isFailed(value) {
-    return value === Result.Values.RED || value === Result.Values.YELLOW;
+    return value === Result.ResultValues.RED;
   }
 
   /**
    * Checks if the given value is unknown.
-   * @param {ResultValues} value
+   * @param {string} value
    * @returns {value is 'gray'}
    */
   static isUnknown(value) {
-    return value === Result.Values.GRAY;
+    return value === Result.ResultValues.GRAY;
   }
 }
 
