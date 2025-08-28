@@ -534,7 +534,7 @@ class Components {
    * @returns
    */
   static checkCriticalItem(task) {
-    return /* html */ `<p style="font-weight: var(--bold); font-size: var(--font-size-lg);">Check [<span style="color: var(--red);">${task.name}</span>]: ${task.error}</p>`;
+    return /* html */ `<p style="font-weight: var(--bold); font-size: var(--font-size-lg);">Check [<code style="color: var(--red);">${task.name}</code>]: ${task.error}</p>`;
   }
 
   /**
@@ -556,7 +556,7 @@ class Components {
             tasks,
             (task) => /* html */ `
             <tr>
-              <td>Check [<span style="color: var(--yellow); font-weight: var(--semi-bold);">${task.name}</span>]</td>
+              <td>Check [<code style="color: var(--yellow); font-weight: var(--semi-bold);">${task.name}</code>]</td>
               <td>${task.error}</td>
             </tr>
           `
