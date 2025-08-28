@@ -53,6 +53,7 @@ export interface InjectedMetadataParams {
     version: string;
     buildNumber: number;
     branch: string;
+    wazuhVersion: string;
     basePath: string;
     serverBasePath: string;
     category?: AppCategory;
@@ -160,6 +161,16 @@ export class InjectedMetadataService {
       getKeyboardShortcuts: () => {
         return this.state.keyboardShortcuts;
       },
+
+      // Wazuh
+      getWazuhVersion: () => {
+        return this.state.wazuhVersion;
+      },
+
+      // Wazuh
+      getWazuhDocVersion: () => {
+        return this.state.wazuhVersion?.split('.').slice(0, 2).join('.') || 'current';
+      },
     };
   }
 }
@@ -198,6 +209,9 @@ export interface InjectedMetadataSetup {
   getKeyboardShortcuts: () => {
     enabled: boolean;
   };
+  // Wazuh
+  getWazuhVersion: () => string;
+  getWazuhDocVersion: () => string;
 }
 
 /** @internal */

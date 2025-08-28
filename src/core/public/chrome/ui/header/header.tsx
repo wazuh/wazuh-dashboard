@@ -134,6 +134,7 @@ export interface HeaderProps {
   globalSearchCommands?: GlobalSearchCommand[];
   globalBanner$?: Observable<ChromeGlobalBanner | undefined>;
   keyboardShortcut?: KeyboardShortcutStart;
+  darkmode: boolean; // Wazuh
 }
 
 const hasValue = (value: any) => {
@@ -523,6 +524,7 @@ export function Header({
         opensearchDashboardsDocLink={opensearchDashboardsDocLink}
         opensearchDashboardsVersion={opensearchDashboardsVersion}
         surveyLink={survey}
+        darkmode={observables.darkmode}
       />
     </EuiHeaderSectionItem>
   );
