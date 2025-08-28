@@ -296,3 +296,12 @@ td {
 tbody tr:nth-child(odd) {
   background: color-mix(in oklab, var(--bg-alt) 50%, var(--bg));
 }
+
+/* Highlight table row on hover */
+tbody tr {
+  transition: background-color 160ms ease;
+}
+
+tbody tr:hover {
+  background: color-mix(in oklab, var(--blue) 12%, var(--bg-alt));
+}
