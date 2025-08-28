@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Victor+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 
 :root {
   font-family: Inter;
@@ -22,6 +23,24 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+code {
+  font-family: 'Victor Mono', monospace;
+  /*
+  * font-size = maximum of:
+  * - 14px (minimum)
+  * - (container's text size) - 0.25rem
+  * Where:
+  * - 1em = parent's font-size
+  * - 0.25rem = 25% of the root font-size (≈4px if :root=16px)
+  * Example: if parent is 16px, calc(1em - 0.25rem) ≈ 12px → result is 14px.
+  *          if parent is 20px, calc(...) ≈ 16px → result is 16px.
+   */
+  font-size: max(14px, calc(1em - 0.25rem));
+  background-color: #f5f5f5;
+  padding: 0px 8px;
+  border-radius: 4px;
 }
 
 .title {
