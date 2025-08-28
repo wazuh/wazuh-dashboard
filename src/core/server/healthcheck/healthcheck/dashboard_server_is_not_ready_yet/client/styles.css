@@ -135,6 +135,11 @@ code {
   height: 54px;
 }
 
+.button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media screen and (max-width: 768px) {
   .button {
     min-width: 50px;
@@ -148,6 +153,47 @@ code {
 #btn-run-failed-critical-checks {
   border-color: var(--red);
   color: var(--red);
+}
+
+/* Lightweight spinner for running state */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Notice banners */
+.notice {
+  padding: 12px 16px;
+  border: 1px solid #e5e8e7;
+  border-left-width: 4px;
+  border-radius: 4px;
+  background-color: #f9fbfe;
+}
+
+.notice--info {
+  border-left-color: var(--blue);
+}
+
+.notice--success {
+  border-left-color: #2ea44f; /* green */
+  background-color: #f2fbf6;
+}
+
+.notice__content {
+  line-height: 1.4;
 }
 
 table {

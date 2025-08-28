@@ -32,6 +32,8 @@
 
 /** @type {Task[]} */
 let tasks = [];
+/** Indicates if the healthcheck run is in progress */
+let isRunning = false;
 const FILENAME = 'healthcheck.json';
 
 /**
@@ -330,10 +332,22 @@ function downloadHealthChecksAsJSONFile() {
 // Run health checks data
 async function runHealthCheck() {
   const btn = HealthCheckDocument.getRunFailedCriticalChecksButton();
-  btn.disabled = true;
-  const healthCheckTasks = await UseCases.executeHealthCheckForCriticalTasks();
-  renderHealthCheckSummary(healthCheckTasks);
-  btn.disabled = false;
+  if (btn) btn.disabled = true;
+  isRunning = true;
+  // Re-render immediately to reflect running state
+  renderHealthCheckSummary(tasks);
+  try {
+    const healthCheckTasks = await UseCases.executeHealthCheckForCriticalTasks();
+    isRunning = false;
+    renderHealthCheckSummary(healthCheckTasks);
+  } catch (e) {
+    console.error(e);
+    isRunning = false;
+    renderHealthCheckSummary(tasks);
+  } finally {
+    const latestBtn = HealthCheckDocument.getRunFailedCriticalChecksButton();
+    if (latestBtn) latestBtn.disabled = false;
+  }
 }
 
 /**
@@ -515,16 +529,33 @@ class Components {
    *  onclick?: string,
    *  icon?: string,
    *  iconPosition?: 'left' | 'right',
+   *  disabled?: boolean,
    * }} param0
    * @returns
    */
-  static button({ id, text, onclick, icon = '', iconPosition = 'right' }) {
+  static button({ id, text, onclick, icon = '', iconPosition = 'right', disabled = false }) {
     return /* html */ `
-      <button class="button" id="${id}" ${onclick ? `onclick="${onclick}()"` : ''}>
+      <button class="button" id="${id}" ${disabled ? 'disabled' : ''} ${
+      onclick ? `onclick=\"${onclick}()\"` : ''
+    }>
         ${$if(iconPosition === 'left', icon)}
         ${text}
         ${$if(iconPosition === 'right', icon)}
       </button>
+    `;
+  }
+
+  /**
+   * Simple notice banner
+   * @param {{ type: 'info' | 'success', message: string }} param0
+   * @returns {string}
+   */
+  static notice({ type, message }) {
+    const typeClass = type === 'success' ? 'notice--success' : 'notice--info';
+    return /* html */ `
+      <div class="notice ${typeClass}">
+        <div class="notice__content">${message}</div>
+      </div>
     `;
   }
 
@@ -583,6 +614,22 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       </div>
     </div>
     ${$if(
+      isRunning,
+      Components.notice({
+        type: 'info',
+        message:
+          'Running failed critical checks… This may take a few seconds. The button will be re-enabled when finished.',
+      })
+    )}
+    ${$if(
+      !isRunning && Array.isArray(tasks) && tasks.length > 0 && criticalTasks.length === 0,
+      Components.notice({
+        type: 'success',
+        message:
+          'No critical errors remain. In about ~30 seconds, you can reload this page and you should be redirected to the application login.',
+      })
+    )}
+    ${$if(
       window.__CONFIG.documentationTroubleshootingLink !== undefined &&
         window.__CONFIG.documentationTroubleshootingLink.length > 0,
       /* html */ `<div>
@@ -626,8 +673,11 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
         </div>
         ${Components.button({
           id: HealthCheckDocument.BTN_RUN_FAILED_CRITICAL_CHECKS_ID,
-          text: 'Run failed critical checks',
+          text: isRunning ? 'Running failed critical checks…' : 'Run failed critical checks',
           onclick: runHealthCheck.name,
+          icon: $if(isRunning, /* html */ `<span class="spinner" aria-hidden="true"></span>`),
+          iconPosition: 'left',
+          disabled: isRunning,
         })}
       `,
       })}
