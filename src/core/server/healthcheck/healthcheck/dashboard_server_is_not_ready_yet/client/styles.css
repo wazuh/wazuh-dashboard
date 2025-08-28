@@ -2,11 +2,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Victor+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 
 :root {
-  font-family: Inter;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    'Apple Color Emoji', 'Segoe UI Emoji';
   font-size: 16px;
+  color-scheme: light;
+  /* Brand */
   --red: #ff0c29;
   --blue: #006bb4;
   --yellow: #ffa621;
+  /* Neutrals */
+  --text: #1f2937;
+  --muted: #6b7280;
+  --bg: #ffffff;
+  --bg-alt: #f6f8fb;
+  --border: #e5e8e7;
+  /* Typography */
   --normal-weight: 400;
   --light-bold: 500;
   --semi-bold: 600;
@@ -15,8 +25,18 @@
   font-weight: var(--normal-weight);
 }
 
+* {
+  box-sizing: border-box;
+}
+
+body {
+  color: var(--text);
+  background: var(--bg);
+}
+
 #root {
-  margin: 4rem;
+  margin: 4rem auto;
+  max-width: 1440px;
 }
 
 #root {
@@ -38,14 +58,17 @@ code {
   *          if parent is 20px, calc(...) ≈ 16px → result is 16px.
    */
   font-size: max(14px, calc(1em - 0.25rem));
-  background-color: #f5f5f5;
+  background-color: var(--bg-alt);
   padding: 0px 8px;
   border-radius: 4px;
+  white-space: break-spaces;
+  word-break: break-word;
 }
 
 .title {
   display: flex;
   align-items: baseline;
+  gap: 0.5rem;
 }
 
 .title > div {
@@ -75,6 +98,7 @@ code {
   font-size: 20px;
   line-height: 50px;
   padding-inline: 0.75rem;
+  color: var(--muted);
 }
 
 .not-ready {
@@ -87,7 +111,7 @@ code {
   text-align: center;
   font-weight: var(--light-bold);
   font-size: 14px;
-  letter-spacing: -4%;
+  letter-spacing: -0.02em;
   align-self: first baseline;
 }
 
@@ -95,7 +119,9 @@ code {
   padding-block: 30px;
   padding-inline: 34px;
   border-radius: 5px;
-  border: 1px solid #e5e8e7;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .card-body {
@@ -113,8 +139,9 @@ code {
 .healthcheck-title {
   font-size: 23px;
   line-height: 50px;
-  letter-spacing: 0%;
+  letter-spacing: normal;
   vertical-align: middle;
+  color: var(--text);
 }
 
 .button {
@@ -133,6 +160,8 @@ code {
   gap: 0.75rem;
   min-width: 262px;
   height: 54px;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, transform 60ms ease;
 }
 
 .button[disabled] {
@@ -148,11 +177,37 @@ code {
 
 #btn-export {
   border-color: var(--blue);
+  color: var(--blue);
 }
 
 #btn-run-failed-critical-checks {
   border-color: var(--red);
   color: var(--red);
+}
+
+.button:hover:not([disabled]) {
+  background: var(--bg-alt);
+}
+
+#btn-export:hover:not([disabled]) {
+  background: var(--blue);
+  color: #ffffff;
+  border-color: var(--blue);
+}
+
+#btn-run-failed-critical-checks:hover:not([disabled]) {
+  background: var(--red);
+  color: #ffffff;
+  border-color: var(--red);
+}
+
+.button:active:not([disabled]) {
+  transform: translateY(0.5px);
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06), 0 0 0 2px currentColor;
 }
 
 /* Lightweight spinner for running state */
@@ -177,10 +232,11 @@ code {
 /* Notice banners */
 .notice {
   padding: 12px 16px;
-  border: 1px solid #e5e8e7;
+  border: 1px solid var(--border);
   border-left-width: 4px;
   border-radius: 4px;
-  background-color: #f9fbfe;
+  background-color: var(--bg-alt);
+  color: var(--text);
 }
 
 .notice--info {
@@ -189,11 +245,21 @@ code {
 
 .notice--success {
   border-left-color: #2ea44f; /* green */
-  background-color: #f2fbf6;
+  background-color: color-mix(in oklab, #2ea44f 12%, var(--bg-alt));
 }
 
 .notice__content {
   line-height: 1.4;
+}
+
+/* Links */
+a {
+  color: var(--blue);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 
 table {
@@ -206,14 +272,27 @@ tr {
 }
 
 th {
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-weight: var(--semi-bold);
 }
 
 td {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
 }
 
 th,
 td {
   padding: 22px 16px;
+}
+
+th,
+td {
+  vertical-align: top;
+  word-break: break-word;
+}
+
+tbody tr:nth-child(odd) {
+  background: color-mix(in oklab, var(--bg-alt) 50%, var(--bg));
 }
