@@ -360,14 +360,13 @@ function $if(condition, trueValue, falseValue = '') {
 function filterEnabledFinishedFailedTasks() {
   /**
    *
-   * @param {Task[]} tasks
+   * @param {Task} task
    * @returns
    */
-  return (tasks) =>
-    tasks.filter(
-      ({ _meta, status, result }) =>
-        _meta.isEnabled && Status.isFinished(status) && !Result.isSuccess(result)
-    );
+  return (task) => {
+    const { _meta, status, result } = task;
+    return _meta.isEnabled && Status.isFinished(status) && !Result.isSuccess(result);
+  };
 }
 
 /**
@@ -376,7 +375,7 @@ function filterEnabledFinishedFailedTasks() {
  * @returns
  */
 function getCriticalTasks(tasks) {
-  return tasks.filter(filterEnabledFinishedFailedTasks).filter(({ _meta }) => _meta.isCritical);
+  return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ _meta }) => _meta.isCritical);
 }
 
 /**
@@ -385,7 +384,7 @@ function getCriticalTasks(tasks) {
  * @returns
  */
 function getNonCriticalTasks(tasks) {
-  return tasks.filter(filterEnabledFinishedFailedTasks).filter(({ _meta }) => !_meta.isCritical);
+  return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ _meta }) => !_meta.isCritical);
 }
 
 class Icons {
