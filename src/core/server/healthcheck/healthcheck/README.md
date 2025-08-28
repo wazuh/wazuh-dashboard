@@ -184,6 +184,55 @@ The backend service registers routes to manage the related data:
 
 - `POST /api/healthcheck/internal`: allow to run info of the checks. This allows to use the `name` query parameter to get specific checks.
 
+## Definitions and rules
+
+* **Task / individual check**
+
+  * status (only `not_started`, `in_progress`, or `finished`)
+  * result (only `green`, `red`, or `gray`)
+
+    * `green`: OK
+    * `red`: failed
+    * `gray`: unknown / not executed (typically because `status != "finished"`)
+  * **Failed** ⟶ when `result == "red"` (and `status` is `finished`).
+  * `isCritical` is **independent** of `result`: it indicates whether the check is critical or not, **not** whether it failed.
+
+    * A check can be `red` and **critical** or `red` and **non-critical**.
+    * `true` = **critical**; `false` or absent = **non-critical**.
+  * When a task is considered “failed”
+
+    * `failed` ⇢ `isEnabled == true` and `status == "finished"` and `result == "red"`.
+    * Criticality does **not** affect whether it is failed; it only affects the **summary**.
+
+* **Check summary (aggregate of the set of tasks)**
+
+  * `result` can be: `red`, `yellow`, `green` or `gray`.
+  * **Red** in the summary when there is **at least one critical task with `result == "red"`**.
+  * **Yellow** appears **only in the summary** when there are **no critical failures** and there is **some non-critical task** with `result == "red"`.
+  * **Green** in the summary when all tasks are **finished** and the critical ones are `green`.
+  * **Gray** in any other case (e.g., all `gray` or no tasks enabled).
+  * The summary does **not** have `isCritical` (because it is already inferred from the tasks).
+
+### Answers to the doubts
+
+1. **“For a task to be considered *failed*, must it be different from `green` and `gray`; that is `red` or `yellow`?”**
+   **No.** In an **individual task**, *failed* is **only** `red`. `Yellow` does **not** exist at the task level, only in the **summary**.
+
+2. **“If `result` is `red`, doesn’t that already imply it’s critical and `isCritical` is redundant?”**
+   **No.** `red` indicates **failure**; `isCritical` indicates **criticality**. Both are needed: the summary uses that combination to decide whether to show **`red`** (critical failure) or **`yellow`** (non-critical failure).
+
+### Quick table
+
+| Level         | Possible `result` values         | `yellow`? | When is it *failed*?       |
+| ------------- | -------------------------------- | --------- | -------------------------- |
+| Task / Check  | `red`, `green`, `gray`           | No        | Only if `result == red`    |
+| Check Summary | `red`, `yellow`, `green`, `gray` | Yes       | N/A (aggregate state only) |
+
+### Conclusion:
+- The `yellow` result is **only used in the summary**, never for individual tasks.
+- The `isCritical` property is **not redundant** with `result`; both are required to determine the overall status.
+
+
 # Notes
 
 - The list of enabled checks are listed in a `info` log in the app logs. This can be used to know the check task names to create a regular expression to filter the enabled checks.
