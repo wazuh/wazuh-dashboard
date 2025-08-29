@@ -351,10 +351,12 @@ tbody tr:hover {
   box-shadow: var(--shadow-md);
 }
 
-/* Staggered appearance of cards when multiple blocks render */
-#root > .card:nth-of-type(1) { animation-delay: 80ms; }
-#root > .card:nth-of-type(2) { animation-delay: 140ms; }
-#root > .card:nth-of-type(3) { animation-delay: 200ms; }
+/* Sequential delay for cards: consistent effect, staggered start */
+#root > .card:nth-of-type(1) { animation-delay: 0ms; }
+#root > .card:nth-of-type(2) { animation-delay: 120ms; }
+#root > .card:nth-of-type(3) { animation-delay: 240ms; }
+#root > .card:nth-of-type(4) { animation-delay: 360ms; }
+#root > .card:nth-of-type(5) { animation-delay: 480ms; }
 
 /* Stagger table rows a bit for readability */
 tbody tr:nth-child(1) { animation-delay: 40ms; }
