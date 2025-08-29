@@ -415,7 +415,8 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   .healthcheck-title,
   .notice,
   tbody tr,
-  .critical-item {
+  .critical-item,
+  .noncritical-item {
     animation: none !important;
   }
   .button { transition: none !important; }
@@ -503,3 +504,76 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
 .critical-list > .critical-item:nth-child(6) { animation-delay: 400ms; }
 .critical-list > .critical-item:nth-child(7) { animation-delay: 480ms; }
 .critical-list > .critical-item:nth-child(8) { animation-delay: 560ms; }
+
+/* Non-critical items list */
+.noncritical-list {
+  display: grid;
+  gap: 10px;
+}
+
+.noncritical-item {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--yellow);
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--yellow) 6%, var(--bg));
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+  animation: fadeInUp 260ms ease-out both;
+}
+
+.noncritical-item__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.noncritical-item__icon svg,
+.noncritical-item__icon picture,
+.noncritical-item__icon img {
+  width: 20px;
+  height: 20px;
+  color: var(--yellow);
+}
+
+.noncritical-item__title {
+  font-weight: var(--semi-bold);
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.noncritical-item__name {
+  color: var(--yellow);
+}
+
+.noncritical-item__msg { margin-top: 4px; }
+
+.badge--minor {
+  background: var(--yellow);
+  color: #1f1f1f;
+}
+
+.noncritical-item__meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.noncritical-item__meta .meta-key {
+  color: var(--text);
+  font-weight: var(--semi-bold);
+}
+
+/* Sequential delay for non-critical list */
+.noncritical-list > .noncritical-item:nth-child(1) { animation-delay: 0ms; }
+.noncritical-list > .noncritical-item:nth-child(2) { animation-delay: 60ms; }
+.noncritical-list > .noncritical-item:nth-child(3) { animation-delay: 120ms; }
+.noncritical-list > .noncritical-item:nth-child(4) { animation-delay: 180ms; }
+.noncritical-list > .noncritical-item:nth-child(5) { animation-delay: 240ms; }
+.noncritical-list > .noncritical-item:nth-child(6) { animation-delay: 300ms; }
+.noncritical-list > .noncritical-item:nth-child(7) { animation-delay: 360ms; }
+.noncritical-list > .noncritical-item:nth-child(8) { animation-delay: 420ms; }

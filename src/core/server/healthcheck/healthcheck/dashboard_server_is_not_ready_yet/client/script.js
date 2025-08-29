@@ -515,6 +515,24 @@ class Icons {
     `;
   }
 
+  static get warning() {
+    return /* html */ `
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path d="M12 9v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="17" r="1.25" fill="currentColor"/>
+      </svg>
+    `;
+  }
+
   static get wazuhDashboard() {
     return /* html */ `
       <svg
@@ -674,25 +692,41 @@ class Components {
    */
   static tableNonCriticalItems(tasks) {
     return /* html */ `
-      <table>
-        <thead>
-          <tr>
-            <th>Minor Error</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${$map(
-            tasks,
-            (task) => /* html */ `
-            <tr>
-              <td>Check [<code style="color: var(--yellow); font-weight: var(--semi-bold);">${task.name}</code>]</td>
-              <td>${task.error}</td>
-            </tr>
-          `
-          )}
-        </tbody>
-      </table>
+      <div class="noncritical-list" role="list">
+        ${$map(tasks, (task) => {
+          const created = formatDateTime(task.createdAt);
+          const finished = formatDateTime(task.finishedAt);
+          const duration = formatDuration(task.duration);
+          return /* html */ `
+              <div class="noncritical-item" role="listitem" aria-label="minor check item">
+                <div class="noncritical-item__header">
+                  <span class="noncritical-item__icon" aria-hidden="true">${Icons.warning}</span>
+                  <div class="noncritical-item__text">
+                    <div class="noncritical-item__title">
+                      Check [<code class="noncritical-item__name">${task.name}</code>]
+                      <span class="badge badge--minor">Minor</span>
+                    </div>
+                    <div class="noncritical-item__msg">${task.error || 'No details provided'}</div>
+                  </div>
+                </div>
+                <div class="noncritical-item__meta">
+                  ${$if(
+                    Boolean(created),
+                    /* html */ `<div><span class="meta-key">Created:</span> <time>${created}</time></div>`
+                  )}
+                  ${$if(
+                    Boolean(finished),
+                    /* html */ `<div><span class="meta-key">Finished:</span> <time>${finished}</time></div>`
+                  )}
+                  ${$if(
+                    task.duration != null,
+                    /* html */ `<div><span class="meta-key">Duration:</span> ${duration}</div>`
+                  )}
+                </div>
+              </div>
+            `;
+        })}
+      </div>
     `;
   }
 }
