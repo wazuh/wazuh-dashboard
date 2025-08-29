@@ -353,23 +353,47 @@ tbody tr:hover {
 }
 
 /* Sequential delay for cards: consistent effect, staggered start */
-#root > .card:nth-of-type(1) { animation-delay: 0ms; }
-#root > .card:nth-of-type(2) { animation-delay: 120ms; }
-#root > .card:nth-of-type(3) { animation-delay: 240ms; }
-#root > .card:nth-of-type(4) { animation-delay: 360ms; }
-#root > .card:nth-of-type(5) { animation-delay: 480ms; }
+#root > .card:nth-of-type(1) {
+  animation-delay: 0ms;
+}
+#root > .card:nth-of-type(2) {
+  animation-delay: 120ms;
+}
+#root > .card:nth-of-type(3) {
+  animation-delay: 240ms;
+}
+#root > .card:nth-of-type(4) {
+  animation-delay: 360ms;
+}
+#root > .card:nth-of-type(5) {
+  animation-delay: 480ms;
+}
 
 /* Stagger table rows a bit for readability */
-tbody tr:nth-child(1) { animation-delay: 40ms; }
-tbody tr:nth-child(2) { animation-delay: 80ms; }
-tbody tr:nth-child(3) { animation-delay: 120ms; }
-tbody tr:nth-child(4) { animation-delay: 160ms; }
-tbody tr:nth-child(5) { animation-delay: 200ms; }
+tbody tr:nth-child(1) {
+  animation-delay: 40ms;
+}
+tbody tr:nth-child(2) {
+  animation-delay: 80ms;
+}
+tbody tr:nth-child(3) {
+  animation-delay: 120ms;
+}
+tbody tr:nth-child(4) {
+  animation-delay: 160ms;
+}
+tbody tr:nth-child(5) {
+  animation-delay: 200ms;
+}
 
 /* Keyframes */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeInUp {
@@ -422,7 +446,9 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   }
   .button,
   .critical-item,
-  .noncritical-item { transition: none !important; }
+  .noncritical-item {
+    transition: none !important;
+  }
 }
 
 /* Critical items list */
@@ -521,14 +547,30 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
 }
 
 /* Sequential delay for list items inside the card */
-.critical-list > .critical-item:nth-child(1) { animation-delay: 0ms; }
-.critical-list > .critical-item:nth-child(2) { animation-delay: 80ms; }
-.critical-list > .critical-item:nth-child(3) { animation-delay: 160ms; }
-.critical-list > .critical-item:nth-child(4) { animation-delay: 240ms; }
-.critical-list > .critical-item:nth-child(5) { animation-delay: 320ms; }
-.critical-list > .critical-item:nth-child(6) { animation-delay: 400ms; }
-.critical-list > .critical-item:nth-child(7) { animation-delay: 480ms; }
-.critical-list > .critical-item:nth-child(8) { animation-delay: 560ms; }
+.critical-list > .critical-item:nth-child(1) {
+  animation-delay: 0ms;
+}
+.critical-list > .critical-item:nth-child(2) {
+  animation-delay: 80ms;
+}
+.critical-list > .critical-item:nth-child(3) {
+  animation-delay: 160ms;
+}
+.critical-list > .critical-item:nth-child(4) {
+  animation-delay: 240ms;
+}
+.critical-list > .critical-item:nth-child(5) {
+  animation-delay: 320ms;
+}
+.critical-list > .critical-item:nth-child(6) {
+  animation-delay: 400ms;
+}
+.critical-list > .critical-item:nth-child(7) {
+  animation-delay: 480ms;
+}
+.critical-list > .critical-item:nth-child(8) {
+  animation-delay: 560ms;
+}
 
 /* Non-critical items list */
 .noncritical-list {
@@ -589,7 +631,9 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   overflow-wrap: anywhere;
 }
 
-.noncritical-item__msg { margin-top: 4px; }
+.noncritical-item__msg {
+  margin-top: 4px;
+}
 
 .badge--minor {
   background: var(--yellow);
@@ -611,11 +655,27 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
 }
 
 /* Sequential delay for non-critical list */
-.noncritical-list > .noncritical-item:nth-child(1) { animation-delay: 0ms; }
-.noncritical-list > .noncritical-item:nth-child(2) { animation-delay: 60ms; }
-.noncritical-list > .noncritical-item:nth-child(3) { animation-delay: 120ms; }
-.noncritical-list > .noncritical-item:nth-child(4) { animation-delay: 180ms; }
-.noncritical-list > .noncritical-item:nth-child(5) { animation-delay: 240ms; }
-.noncritical-list > .noncritical-item:nth-child(6) { animation-delay: 300ms; }
-.noncritical-list > .noncritical-item:nth-child(7) { animation-delay: 360ms; }
-.noncritical-list > .noncritical-item:nth-child(8) { animation-delay: 420ms; }
+.noncritical-list > .noncritical-item:nth-child(1) {
+  animation-delay: 0ms;
+}
+.noncritical-list > .noncritical-item:nth-child(2) {
+  animation-delay: 60ms;
+}
+.noncritical-list > .noncritical-item:nth-child(3) {
+  animation-delay: 120ms;
+}
+.noncritical-list > .noncritical-item:nth-child(4) {
+  animation-delay: 180ms;
+}
+.noncritical-list > .noncritical-item:nth-child(5) {
+  animation-delay: 240ms;
+}
+.noncritical-list > .noncritical-item:nth-child(6) {
+  animation-delay: 300ms;
+}
+.noncritical-list > .noncritical-item:nth-child(7) {
+  animation-delay: 360ms;
+}
+.noncritical-list > .noncritical-item:nth-child(8) {
+  animation-delay: 420ms;
+}
