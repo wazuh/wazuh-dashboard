@@ -192,7 +192,7 @@ picture > img {
   }
 }
 
-#btn-export {
+#btn-download {
   border-color: var(--blue);
   color: var(--blue);
 }
@@ -206,7 +206,7 @@ picture > img {
   background: var(--bg-alt);
 }
 
-#btn-export:hover:not([disabled]) {
+#btn-download:hover:not([disabled]) {
   background: var(--blue);
   color: #ffffff;
   border-color: var(--blue);

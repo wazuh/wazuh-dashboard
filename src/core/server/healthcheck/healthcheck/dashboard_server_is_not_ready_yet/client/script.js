@@ -149,7 +149,7 @@ class UseCases {
 
 class HealthCheckDocument {
   static ROOT_ID = 'root';
-  static BTN_EXPORT_ID = 'btn-export';
+  static BTN_EXPORT_ID = 'btn-download';
   static BTN_RUN_FAILED_CRITICAL_CHECKS_ID = 'btn-run-failed-critical-checks';
 
   /**
