@@ -419,7 +419,9 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   .noncritical-item {
     animation: none !important;
   }
-  .button { transition: none !important; }
+  .button,
+  .critical-item,
+  .noncritical-item { transition: none !important; }
 }
 
 /* Critical items list */
@@ -436,6 +438,17 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   padding: 12px 14px;
   box-shadow: var(--shadow-sm);
   animation: fadeInUp 260ms ease-out both;
+  transition: background-color 160ms ease, box-shadow 160ms ease, transform 80ms ease;
+}
+
+.critical-item:hover {
+  background: color-mix(in oklab, var(--red) 8%, var(--bg-alt));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.critical-item:active {
+  transform: translateY(0);
 }
 
 .critical-item__header {
@@ -519,6 +532,17 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   padding: 12px 14px;
   box-shadow: var(--shadow-sm);
   animation: fadeInUp 260ms ease-out both;
+  transition: background-color 160ms ease, box-shadow 160ms ease, transform 80ms ease;
+}
+
+.noncritical-item:hover {
+  background: color-mix(in oklab, var(--yellow) 10%, var(--bg-alt));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.noncritical-item:active {
+  transform: translateY(0);
 }
 
 .noncritical-item__header {
