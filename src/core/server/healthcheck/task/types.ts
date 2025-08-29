@@ -10,6 +10,7 @@ export interface TaskDefinition {
   run: (ctx: any) => any;
   // Define the order to execute the task. Multiple tasks can take the same order and they will be executed in parallel
   order?: number;
+  isCritical?: boolean;
   // Other metafields
   [key: string]: any;
 }
