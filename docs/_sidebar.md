@@ -48,6 +48,7 @@
       - [Embeddable](../src/plugins/embeddable/README.md)
       - [Explore](../src/plugins/explore/README.md)
       - [Expressions](../src/plugins/expressions/README.md)
+      - [Healthcheck](../src/plugins/healthcheck/README.md)
       - [Home](../src/plugins/home/README.md)
       - index_pattern_management
         - public
