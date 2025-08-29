@@ -156,6 +156,11 @@ picture > img {
   display: block;
 }
 
+/* Normalize inline SVG icons inside buttons */
+.button svg {
+  display: block;
+}
+
 .button {
   cursor: pointer;
   border-radius: 10px;
