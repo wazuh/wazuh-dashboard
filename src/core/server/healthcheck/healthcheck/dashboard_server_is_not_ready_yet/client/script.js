@@ -408,6 +408,48 @@ function getNonCriticalTasks(tasks) {
   return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ _meta }) => !_meta.isCritical);
 }
 
+/**
+ * Format ISO date or numeric timestamps to a short, readable string
+ * @param {string | number | undefined} value
+ */
+function formatDateTime(value) {
+  if (!value) return '';
+  try {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return String(value);
+    return date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  } catch {
+    return String(value);
+  }
+}
+
+/**
+ * Format duration in milliseconds to a compact human string
+ * @param {number | undefined} ms
+ */
+function formatDuration(ms) {
+  if (ms == null || isNaN(ms)) return '';
+  const totalMs = Math.max(0, Math.floor(ms));
+  const s = Math.floor(totalMs / 1000);
+  const msR = totalMs % 1000;
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const parts = [];
+  if (h) parts.push(`${h}h`);
+  if (m) parts.push(`${m}m`);
+  if (sec || (!h && !m)) parts.push(`${sec}s`);
+  if (!h && !m && msR) parts.push(`${msR}ms`);
+  return parts.join(' ');
+}
+
 class Icons {
   static get healthCheck() {
     return /* html */ `
@@ -593,7 +635,36 @@ class Components {
    * @returns
    */
   static checkCriticalItem(task) {
-    return /* html */ `<p style="font-weight: var(--bold); font-size: var(--font-size-lg);">Check [<code style="color: var(--red);">${task.name}</code>]: ${task.error}</p>`;
+    const created = formatDateTime(task.createdAt);
+    const finished = formatDateTime(task.finishedAt);
+    const duration = formatDuration(task.duration);
+    return /* html */ `
+      <div class="critical-item" role="listitem" aria-label="critical check item">
+        <div class="critical-item__header">
+          <div class="critical-item__text">
+            <div class="critical-item__title">
+              Check [<code class="critical-item__name">${task.name}</code>]
+              <span class="badge badge--critical">Critical</span>
+            </div>
+            <div class="critical-item__msg">${task.error || 'No details provided'}</div>
+          </div>
+        </div>
+        <div class="critical-item__meta">
+          ${$if(
+            Boolean(created),
+            /* html */ `<div><span class="meta-key">Created:</span> <time>${created}</time></div>`
+          )}
+          ${$if(
+            Boolean(finished),
+            /* html */ `<div><span class="meta-key">Finished:</span> <time>${finished}</time></div>`
+          )}
+          ${$if(
+            task.duration != null,
+            /* html */ `<div><span class="meta-key">Duration:</span> ${duration}</div>`
+          )}
+        </div>
+      </div>
+    `;
   }
 
   /**
@@ -718,7 +789,9 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       ${Components.card({
         children: /* html */ `
           <div style="width: 100%;">
-            ${$map(criticalTasks, (task) => Components.checkCriticalItem(task))}
+            <div class="critical-list" role="list">
+              ${$map(criticalTasks, (task) => Components.checkCriticalItem(task))}
+            </div>
             ${$if(
               nonCriticalTasks.length > 0,
               /* html */ `

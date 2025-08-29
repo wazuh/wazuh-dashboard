@@ -414,8 +414,92 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   .card,
   .healthcheck-title,
   .notice,
-  tbody tr {
+  tbody tr,
+  .critical-item {
     animation: none !important;
   }
   .button { transition: none !important; }
 }
+
+/* Critical items list */
+.critical-list {
+  display: grid;
+  gap: 12px;
+}
+
+.critical-item {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--red);
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--red) 4%, var(--bg));
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+  animation: fadeInUp 260ms ease-out both;
+}
+
+.critical-item__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.critical-item__icon picture,
+.critical-item__icon svg,
+.critical-item__icon img {
+  width: 22px;
+  height: 22px;
+}
+
+.critical-item__title {
+  font-weight: var(--bold);
+  font-size: var(--font-size-lg);
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.critical-item__name {
+  color: var(--red);
+}
+
+.critical-item__msg {
+  margin-top: 6px;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.badge--critical {
+  background: var(--red);
+  color: #fff;
+}
+
+.critical-item__meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.critical-item__meta .meta-key {
+  color: var(--text);
+  font-weight: var(--semi-bold);
+}
+
+/* Sequential delay for list items inside the card */
+.critical-list > .critical-item:nth-child(1) { animation-delay: 0ms; }
+.critical-list > .critical-item:nth-child(2) { animation-delay: 80ms; }
+.critical-list > .critical-item:nth-child(3) { animation-delay: 160ms; }
+.critical-list > .critical-item:nth-child(4) { animation-delay: 240ms; }
+.critical-list > .critical-item:nth-child(5) { animation-delay: 320ms; }
+.critical-list > .critical-item:nth-child(6) { animation-delay: 400ms; }
+.critical-list > .critical-item:nth-child(7) { animation-delay: 480ms; }
+.critical-list > .critical-item:nth-child(8) { animation-delay: 560ms; }
