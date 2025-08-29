@@ -23,6 +23,10 @@
   --bold: 700;
   --font-size-lg: 22px;
   font-weight: var(--normal-weight);
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
 }
 
 * {
@@ -114,6 +118,8 @@ code {
   align-self: first baseline;
   /* Subtle breathing glow to draw attention */
   animation: pulseGlow 2s ease-in-out infinite;
+  /* Base depth without conflicting with animated box-shadow */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
 }
 
 .card {
@@ -122,9 +128,13 @@ code {
   border-radius: 5px;
   border: 1px solid var(--border);
   background: var(--bg);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
   /* Fade/slide in when mounted */
   animation: fadeInUp 320ms ease-out both;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .card-body {
@@ -185,6 +195,7 @@ picture > img {
   height: 54px;
   transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease,
     box-shadow 160ms ease, transform 60ms ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .button[disabled] {
@@ -262,6 +273,7 @@ picture > img {
   color: var(--text);
   /* Slide down + fade on appear */
   animation: slideDownFade 260ms ease-out both;
+  box-shadow: var(--shadow-sm);
 }
 
 .notice--info {
@@ -336,7 +348,7 @@ tbody tr:hover {
 /* Slight lift and glow on buttons */
 .button:hover:not([disabled]) {
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
 }
 
 /* Staggered appearance of cards when multiple blocks render */
