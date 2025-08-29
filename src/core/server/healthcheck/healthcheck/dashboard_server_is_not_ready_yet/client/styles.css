@@ -47,7 +47,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding-inline: 4rem; /* 16px side margins */
+  padding-inline: 4rem;
 }
 
 code {
@@ -477,10 +477,16 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Allow badge/code to wrap on narrow screens instead of squashing text */
+  flex-wrap: wrap;
 }
 
 .critical-item__name {
   color: var(--red);
+  /* Avoid per-letter vertical stacking on small widths */
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .critical-item__msg {
@@ -571,10 +577,16 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Allow badge/code to wrap on narrow screens instead of squashing text */
+  flex-wrap: wrap;
 }
 
 .noncritical-item__name {
   color: var(--yellow);
+  /* Avoid per-letter vertical stacking on small widths */
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .noncritical-item__msg { margin-top: 4px; }
