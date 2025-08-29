@@ -47,6 +47,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  padding-inline: 4rem; /* 16px side margins */
 }
 
 code {
