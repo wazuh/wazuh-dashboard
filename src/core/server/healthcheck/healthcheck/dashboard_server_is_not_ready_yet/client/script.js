@@ -533,6 +533,24 @@ class Icons {
     `;
   }
 
+  static get alertCircle() {
+    return /* html */ `
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+        <path d="M12 7v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <circle cx="12" cy="16.5" r="1.25" fill="currentColor" />
+      </svg>
+    `;
+  }
+
   static get wazuhDashboard() {
     return /* html */ `
       <svg
@@ -659,6 +677,7 @@ class Components {
     return /* html */ `
       <div class="critical-item" role="listitem" aria-label="critical check item">
         <div class="critical-item__header">
+          <span class="critical-item__icon" aria-hidden="true">${Icons.alertCircle}</span>
           <div class="critical-item__text">
             <div class="critical-item__title">
               Check [<code class="critical-item__name">${task.name}</code>]

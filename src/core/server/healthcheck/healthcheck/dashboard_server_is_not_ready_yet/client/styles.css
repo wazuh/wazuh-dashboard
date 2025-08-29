@@ -464,6 +464,11 @@ tbody tr:nth-child(5) { animation-delay: 200ms; }
   height: 22px;
 }
 
+/* Color SVG-based icons in critical items */
+.critical-item__icon svg {
+  color: var(--red);
+}
+
 .critical-item__title {
   font-weight: var(--bold);
   font-size: var(--font-size-lg);
