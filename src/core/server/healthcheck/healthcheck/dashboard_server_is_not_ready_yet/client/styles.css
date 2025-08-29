@@ -112,6 +112,8 @@ code {
   font-size: 14px;
   letter-spacing: -0.02em;
   align-self: first baseline;
+  /* Subtle breathing glow to draw attention */
+  animation: pulseGlow 2s ease-in-out infinite;
 }
 
 .card {
@@ -121,6 +123,8 @@ code {
   border: 1px solid var(--border);
   background: var(--bg);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  /* Fade/slide in when mounted */
+  animation: fadeInUp 320ms ease-out both;
 }
 
 .card-body {
@@ -141,6 +145,8 @@ code {
   letter-spacing: normal;
   vertical-align: middle;
   color: var(--text);
+  /* Smooth appearance in header area */
+  animation: fadeIn 300ms ease-out both;
 }
 
 /* Normalize icons so they align with adjacent text */
@@ -254,6 +260,8 @@ picture > img {
   border-radius: 4px;
   background-color: var(--bg-alt);
   color: var(--text);
+  /* Slide down + fade on appear */
+  animation: slideDownFade 260ms ease-out both;
 }
 
 .notice--info {
@@ -317,8 +325,83 @@ tbody tr:nth-child(odd) {
 /* Highlight table row on hover */
 tbody tr {
   transition: background-color 160ms ease;
+  /* Animate in table rows */
+  animation: fadeIn 260ms ease-out both;
 }
 
 tbody tr:hover {
   background: color-mix(in oklab, var(--blue) 12%, var(--bg-alt));
+}
+
+/* Slight lift and glow on buttons */
+.button:hover:not([disabled]) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* Staggered appearance of cards when multiple blocks render */
+#root > .card:nth-of-type(1) { animation-delay: 80ms; }
+#root > .card:nth-of-type(2) { animation-delay: 140ms; }
+#root > .card:nth-of-type(3) { animation-delay: 200ms; }
+
+/* Stagger table rows a bit for readability */
+tbody tr:nth-child(1) { animation-delay: 40ms; }
+tbody tr:nth-child(2) { animation-delay: 80ms; }
+tbody tr:nth-child(3) { animation-delay: 120ms; }
+tbody tr:nth-child(4) { animation-delay: 160ms; }
+tbody tr:nth-child(5) { animation-delay: 200ms; }
+
+/* Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 12, 41, 0.35);
+  }
+  70% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 8px rgba(255, 12, 41, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 12, 41, 0);
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .not-ready,
+  .card,
+  .healthcheck-title,
+  .notice,
+  tbody tr {
+    animation: none !important;
+  }
+  .button { transition: none !important; }
 }
