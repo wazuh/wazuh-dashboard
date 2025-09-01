@@ -12,31 +12,31 @@ import { getHealthFromStatus } from './services/health';
 const statusChecksExplain = {
   green: (
     <FormattedMessage
-      id="core.healthcheck.status_info.green"
+      id="healthcheck.status_info.green"
       defaultMessage="Status: green. This indicates that the verification has been performed correctly."
     />
   ),
   yellow: (
     <FormattedMessage
-      id="core.healthcheck.status_info.yellow"
+      id="healthcheck.status_info.yellow"
       defaultMessage="Status: yellow. This indicates that the verification had some problem but it could work."
     />
   ),
   red: (
     <FormattedMessage
-      id="core.healthcheck.status_info.red"
+      id="healthcheck.status_info.red"
       defaultMessage="Status: red. This indicates that the verification had some error."
     />
   ),
   gray: (
     <FormattedMessage
-      id="core.healthcheck.status_info.gray"
+      id="healthcheck.status_info.gray"
       defaultMessage="Status: gray. This indicates that the verification has been disabled."
     />
   ),
   null: (
     <FormattedMessage
-      id="core.healthcheck.status_info.gray"
+      id="healthcheck.status_info.gray"
       defaultMessage="Status: gray. This indicates that the verification has been disabled."
     />
   ),

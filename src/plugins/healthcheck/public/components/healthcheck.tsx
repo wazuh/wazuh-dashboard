@@ -6,7 +6,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { i18n } from '@osd/i18n';
 import { FormattedMessage, I18nProvider } from '@osd/i18n/react';
-import { EuiFlexGroup, EuiFlexItem, EuiText, EuiHorizontalRule } from '@elastic/eui';
+import { EuiFlexGroup, EuiFlexItem, EuiText, EuiHorizontalRule, EuiBadge } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { groupBy } from 'lodash';
 import { TaskInfo } from 'src/core/common/healthcheck';
@@ -19,6 +19,7 @@ import { TASK } from '../constants';
 import { getHealthCheck } from '../dashboards_services';
 import { formatDate } from './services/time';
 import { getCore } from '../dashboards_services';
+import { getHealthFromStatus } from './services/health';
 
 export const HealthCheck = () => {
   const core = getCore();
@@ -48,7 +49,7 @@ export const HealthCheck = () => {
     getConfig().then(() => {
       fetch().catch();
     });
-  }, []);
+  }, [fetch, getConfig]);
 
   const filterCheck = (check: TaskInfo, _index: number, _arr: TaskInfo[]) => {
     return filterChecks.length > 0 ? filterChecks.some(({ id }) => checkFilters[id](check)) : true;
@@ -71,10 +72,10 @@ export const HealthCheck = () => {
       >
         <EuiFlexItem grow={false}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'right' }}>
-            <HealthIcon status={status} />
             <EuiText>
               <h3>
-                <FormattedMessage id="core.healthcheck.title" defaultMessage="Health check" />
+                <FormattedMessage id="healthcheck.statusTitle" defaultMessage="Status is " />
+                <EuiBadge color={getHealthFromStatus(status)}>{status}</EuiBadge>
               </h3>
             </EuiText>
             <div style={{ marginLeft: '4px' }}>

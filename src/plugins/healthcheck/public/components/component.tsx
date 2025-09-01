@@ -90,7 +90,7 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
     <EuiToolTip
       content={
         <FormattedMessage
-          id="core.healthcheck.status.tooltip"
+          id="healthcheck.status.tooltip"
           defaultMessage="Health check status: {status}"
           values={{
             status,
@@ -129,7 +129,7 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
             <HealthIcon status={status} />
             <EuiText>
               <h3>
-                <FormattedMessage id="core.healthcheck.title" defaultMessage="Health check" />
+                <FormattedMessage id="healthcheck.title" defaultMessage="Health check" />
               </h3>
             </EuiText>
             <div style={{ marginLeft: '4px' }}>
@@ -162,7 +162,7 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
               <EuiToolTip
                 content={
                   <FormattedMessage
-                    id="core.healthcheck.run.only_failed"
+                    id="healthcheck.run.only_failed"
                     defaultMessage="Run failed checks"
                   />
                 }
@@ -186,7 +186,7 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
               <EuiToolTip
                 content={
                   <FormattedMessage
-                    id="core.healthcheck.run.enabled"
+                    id="healthcheck.run.enabled"
                     defaultMessage="Run enabled checks"
                   />
                 }

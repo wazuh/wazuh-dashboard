@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import {
-  EuiButtonIcon,
+  EuiButtonEmpty,
   EuiToolTip,
   EuiPopover,
   EuiContextMenuPanel,
@@ -94,26 +94,27 @@ export const ButtonFilterChecksCheck = ({
       content={
         filters?.length ? (
           <FormattedMessage
-            id="core.healthcheck.filter.tooltip_has_applied_filters"
+            id="healthcheck.filter.tooltip_has_applied_filters"
             defaultMessage="Filter visible checks. There are applied filters."
           />
         ) : (
           <FormattedMessage
-            id="core.healthcheck.filter.tooltip"
+            id="healthcheck.filter.tooltip"
             defaultMessage="Filter visible checks"
           />
         )
       }
       position="bottom"
     >
-      <EuiButtonIcon
+      <EuiButtonEmpty
         iconType="filter"
         onClick={() => setIsPopoverOpen((state) => !state)}
-        iconSize="l"
         aria-label="Filter visible checks"
         isSelected={isPopoverOpen}
         color={filters?.length ? 'warning' : 'primary'}
-      />
+      >
+        Filter
+      </EuiButtonEmpty>
     </EuiToolTip>
   );
   return (
@@ -133,13 +134,13 @@ export const ButtonFilterChecksCheck = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <EuiText>
                 <h3>
-                  <FormattedMessage id="core.healthcheck.filter.title" defaultMessage="Filters" />
+                  <FormattedMessage id="healthcheck.filter.title" defaultMessage="Filters" />
                 </h3>
               </EuiText>
               <EuiToolTip
                 content={
                   <FormattedMessage
-                    id="core.healthcheck.filter.title.tooltip"
+                    id="healthcheck.filter.title.tooltip"
                     defaultMessage="If any selected filter matches with the check, this will be filtered. This only affects to the visible checks."
                   />
                 }
