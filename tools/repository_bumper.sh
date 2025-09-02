@@ -363,7 +363,7 @@ update_changelog() {
   # It looks for the block starting with "pluginPlatform": { and ending with }
   # Within that block, it finds the line starting with "version": "..." and extracts the value.
   # This is significantly less reliable than using jq.
-  log "Attempting to extract .version from $VERSION_FILE using sed (Note: This is fragile)"
+  log "Attempting to extract .version from $PACKAGE_JSON using sed (Note: This is fragile)"
   # Extract OpenSearch Dashboards version from package.json (first occurrence of "version")
   OPENSEARCH_VERSION=$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
   if [ -z "$OPENSEARCH_VERSION" ] || [ "$OPENSEARCH_VERSION" == "null" ]; then
@@ -396,7 +396,7 @@ update_changelog() {
    # Create the new entry directly in the changelog using sed
     local temp_file=$(mktemp)
     head -n 4 "$changelog_file" >"$temp_file"
-    printf "\n## Wazuh v%s - OpenSearch Dashboards %s - Revision %s\n\n### Added\n\n- Support for Wazuh %s\n\n" "$VERSION" "$OPENSEARCH_VERSION" "$REVISION" "$VERSION" >>"$temp_file"
+    printf "## Wazuh dashboard v%s - OpenSearch Dashboards %s - Revision %s\n\n### Added\n\n- Support for Wazuh %s\n\n" "$VERSION" "$OPENSEARCH_VERSION" "$REVISION" "$VERSION" >>"$temp_file"
     tail -n +5 "$changelog_file" >>"$temp_file"
 
     mv "$temp_file" "$changelog_file" || {
