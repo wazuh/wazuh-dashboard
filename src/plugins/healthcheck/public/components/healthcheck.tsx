@@ -13,13 +13,12 @@ import { TaskInfo } from 'src/core/common/healthcheck';
 import { useMount } from 'react-use';
 import { ButtonExportHealthCheck } from './export_checks';
 import { HealthIcon } from './health_icon';
-import { CheckDetails } from './check_details';
 import { ButtonFilterChecksCheck, CheckFilters, checkFilters } from './filter_checks';
 import { TASK } from '../constants';
 import { getHealthCheck } from '../dashboards_services';
-import { formatDate } from './services/time';
 import { getCore } from '../dashboards_services';
 import { getHealthFromStatus } from './services/health';
+import { GroupByResult } from './group_by_result';
 
 export const HealthCheck = () => {
   const core = getCore();
@@ -57,6 +56,18 @@ export const HealthCheck = () => {
 
   const filteredChecks = checks.filter(filterCheck);
   const filteredChecksGroupByResult = groupBy(filteredChecks, 'result');
+
+  const filteredChecksResultRed = filteredChecks.filter(
+    (check) => check.result === TASK.RUN_RESULT.RED && check._meta?.isCritical
+  );
+  const filteredChecksResultYellow = filteredChecks.filter(
+    (check) =>
+      (check.result === TASK.RUN_RESULT.RED && !check._meta?.isCritical) ||
+      check.result === TASK.RUN_RESULT.YELLOW
+  );
+  const filteredChecksResultGreen = filteredChecks.filter(
+    (check) => check.result === TASK.RUN_RESULT.GREEN
+  );
 
   const checksGroupByResult = useMemo(() => {
     return groupBy(checks, 'result');
@@ -109,16 +120,21 @@ export const HealthCheck = () => {
       </EuiFlexGroup>
       <EuiHorizontalRule margin="xs" />
       <EuiFlexGroup direction="column" gutterSize="xs" responsive={false}>
-        {filteredChecks.map((check: TaskInfo) => (
-          <EuiFlexItem key={check.name}>
-            <div>
-              <CheckDetails
-                check={check}
-                formatDate={(date: string) => formatDate(core.uiSettings, date)}
-              />
-            </div>
+        {filteredChecksResultGreen.length > 0 && (
+          <EuiFlexItem>
+            <GroupByResult result={TASK.RUN_RESULT.GREEN} checks={filteredChecksResultGreen} />
           </EuiFlexItem>
-        ))}
+        )}
+        {filteredChecksResultYellow.length > 0 && (
+          <EuiFlexItem>
+            <GroupByResult result={TASK.RUN_RESULT.YELLOW} checks={filteredChecksResultYellow} />
+          </EuiFlexItem>
+        )}
+        {filteredChecksResultRed.length > 0 && (
+          <EuiFlexItem>
+            <GroupByResult result={TASK.RUN_RESULT.RED} checks={filteredChecksResultRed} />
+          </EuiFlexItem>
+        )}
       </EuiFlexGroup>
     </div>
   );
