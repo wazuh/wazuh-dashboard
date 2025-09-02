@@ -57,8 +57,8 @@ log
 
 mkdir -p applications
 mkdir -p base
-packages_list=(app base security)
-packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin")
+packages_list=(app base security ml)
+packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "ML Commons plugin")
 
 for i in "${!packages_list[@]}"; do
   package_var="${packages_list[$i]}"
