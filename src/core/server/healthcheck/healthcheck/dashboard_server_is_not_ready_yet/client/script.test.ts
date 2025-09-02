@@ -147,4 +147,108 @@ describe('client script: server not ready page', () => {
     // Button gets re-enabled after operation
     expect(exportBtn.disabled).toBe(false);
   });
+
+  it('shows running feedback then success notice when no critical errors remain', async () => {
+    // Initial tasks: one critical failed, one minor failed
+    const initialTasks = [
+      {
+        name: 'critical:1',
+        status: 'finished',
+        result: 'red',
+        error: 'Critical error',
+        createdAt: '2024-01-01T00:00:00Z',
+        finishedAt: '2024-01-01T00:00:02Z',
+        duration: 2000,
+        _meta: { isCritical: true, isEnabled: true },
+      },
+      {
+        name: 'minor:1',
+        status: 'finished',
+        result: 'red',
+        error: 'Minor error',
+        _meta: { isCritical: false, isEnabled: true },
+      },
+    ];
+
+    // After running, the critical task succeeds (no critical errors remain)
+    const postTasks = [
+      {
+        name: 'critical:1',
+        status: 'finished',
+        result: 'green',
+        _meta: { isCritical: true, isEnabled: true },
+      },
+    ];
+
+    const okResp = (tasks: any[]) =>
+      ({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({ message: 'ok', tasks }),
+      } as any);
+
+    let resolvePost: (value: any) => void;
+    const postPromise = new Promise((res) => {
+      resolvePost = res;
+    });
+
+    const fetchMock = jest.fn((url: string, options: any) => {
+      if (options && options.method === 'GET') {
+        return Promise.resolve(okResp(initialTasks));
+      }
+      if (options && options.method === 'POST') {
+        return postPromise as any; // resolve later
+      }
+      throw new Error('Unexpected fetch call');
+    });
+    (global as any).fetch = fetchMock;
+
+    // Load script as a global script (not CommonJS) so onclick handlers can resolve
+    const fs = require('fs');
+    const path = require('path');
+    const scriptPath = path.resolve(__dirname, './script.js');
+    const source = fs.readFileSync(scriptPath, 'utf8');
+    (window as any).eval(source);
+
+    // Trigger initial load (GET tasks)
+    window.dispatchEvent(new Event('load'));
+    await new Promise((r) => setTimeout(r, 0));
+
+    // Run the critical checks via global function (equivalent to clicking the button)
+    expect(typeof (window as any).runHealthCheck).toBe('function');
+    (window as any).runHealthCheck();
+
+    // While POST is pending: shows running feedback and disables the button
+    const runningText = 'Running failed critical checks…';
+    const rootWhileRunning = document.getElementById('root')!;
+    expect(rootWhileRunning.innerHTML).toContain(runningText);
+    const btnWhileRunning = document.getElementById(
+      'btn-run-failed-critical-checks'
+    ) as HTMLButtonElement;
+    expect(btnWhileRunning).toBeTruthy();
+    expect(btnWhileRunning.disabled).toBe(true);
+
+    // Resolve the POST request with updated tasks (critical now green)
+    resolvePost!(okResp(postTasks));
+    await new Promise((r) => setTimeout(r, 0));
+
+    // Expect success notice about no critical errors remaining
+    const root = document.getElementById('root')!;
+    expect(root.innerHTML).toContain('No critical errors remain');
+    expect(root.innerHTML).toContain('In about ~30 seconds, you can reload this page');
+
+    // When no critical errors remain, the run button section is hidden
+    const runBtn = document.getElementById(
+      'btn-run-failed-critical-checks'
+    ) as HTMLButtonElement | null;
+    expect(runBtn).toBeNull();
+
+    // POST was called to the proper endpoint with the critical name param
+    const calls = fetchMock.mock.calls;
+    const postCall = calls.find((c: any[]) => (c[1] || {}).method === 'POST');
+    expect(postCall).toBeTruthy();
+    expect(postCall![0]).toContain('/api/healthcheck/internal?');
+    expect(postCall![0]).toContain('name=critical%3A1');
+  });
 });
