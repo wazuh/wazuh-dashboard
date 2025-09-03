@@ -254,7 +254,7 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@main
+    uses: wazuh/wazuh-dashboard/.github/workflows/build_base.yml@9.99.9
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
@@ -264,7 +264,7 @@ jobs:
     name: Build plugins
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@main
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/manual-build.yml@9.99.9
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
 
@@ -273,7 +273,7 @@ jobs:
     name: Build security plugin
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@main
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/manual-build.yml@9.99.9
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
@@ -282,7 +282,7 @@ jobs:
     name: Build reporting plugin
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-dashboard-reporting/.github/workflows/5_builderpackage_reporting_plugin.yml@main
+    uses: wazuh/wazuh-dashboard-reporting/.github/workflows/5_builderpackage_reporting_plugin.yml@9.99.9
     with:
       reference: ${{ inputs.reference_report_plugins }}
 
