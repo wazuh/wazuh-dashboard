@@ -102,8 +102,8 @@ jobs:
             script_params="--tag"
           fi
 
-          if [[ -n "$DATE" ]]; then
-            script_params+=" --date ${DATE}"
+          if [[ -n "$date" ]]; then
+            script_params+=" --date ${date}"
           fi
 
           issue_number=$(echo "${{ inputs.issue-link }}" | awk -F'/' '{print $NF}')
