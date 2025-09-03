@@ -27,11 +27,11 @@ Example:
 
 ```bash
 bash run-docker-compose.sh \
-    --app 4.14.0 \
-    --base 4.14.0 \
-    --security 4.14.0 \
+    --app 9.99.9 \
+    --base 9.99.9 \
+    --security 9.99.9 \
     --arm \
     --node-version 18.19.0
 ```
 
-This example will create a packages folder that inside will have the packages divided by repository of the 4.14.0 branch of each one.
+This example will create a packages folder that inside will have the packages divided by repository of the 9.99.9 branch of each one.
