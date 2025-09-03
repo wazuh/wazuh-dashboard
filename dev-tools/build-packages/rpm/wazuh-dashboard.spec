@@ -411,6 +411,8 @@ rm -fr %{buildroot}
 %attr(644, root, root) "/etc/systemd/system/wazuh-dashboard.service"
 
 %changelog
+* Wed Nov 11 2026 support <info@wazuh.com> - 9.99.12
+- More info: https://documentation.wazuh.com/current/release-notes/release-9-99-12.html
 * [2025-09-03 15:56:49] ERROR: Invalid date format: 9999-99-99 support <info@wazuh.com> - 9.99.11
 - More info: https://documentation.wazuh.com/current/release-notes/release-9-99-11.html
 * Thu Sep 04 2025 support <info@wazuh.com> - 4.13.0
