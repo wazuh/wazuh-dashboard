@@ -294,12 +294,19 @@ jobs:
     name: Build ML Commons plugin
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@4.14.0
+    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@bug/wazuh-dashboard-871-fix-package-building-worklfows
     with:
       reference: ${{ inputs.reference_ml_commons_plugin }}
 
   build-package:
-    needs: [setup-variables, build-main-plugins, build-base, build-security-plugin, build-ml-commons-plugin]
+    needs:
+      [
+        setup-variables,
+        build-main-plugins,
+        build-base,
+        build-security-plugin,
+        build-ml-commons-plugin,
+      ]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
