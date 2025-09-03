@@ -200,7 +200,7 @@ jobs:
           fi
           WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
           WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
-          WAZUH_ML_COMMONS_PLUGIN=wazuh-ml-commons-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_ml_commons_plugin }} | sed 's/\//-/g').zip
+          WAZUH_ML_COMMONS_PLUGIN=ml-commons-dashboards_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_ml_commons_plugin }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
