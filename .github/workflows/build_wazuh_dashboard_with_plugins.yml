@@ -291,3 +291,12 @@ jobs:
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/output/${{ needs.setup-variables.outputs.PACKAGE_NAME }}
           retention-days: 30
           overwrite: true
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.setup-variables.outputs.VERSION }}
+          name: Wazuh Dashboard ${{ needs.setup-variables.outputs.VERSION }}
+          files: ${{ github.workspace }}/artifacts/output/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
