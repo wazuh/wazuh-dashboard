@@ -167,7 +167,7 @@ help() {
     echo "    -a, --app <url/path>          Set the location of the .zip file containing the Wazuh plugin."
     echo "    -b, --base <url/path>         Set the location of the .tar.gz file containing the base wazuh-dashboard build."
     echo "    -s, --security <url/path>     Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
-    echo "    -l, --ml <url/path>           Set the location of the .zip file containing the wazuh-dashboard-ml-commons plugin."
+    echo "    -m, --ml <url/path>           Set the location of the .zip file containing the wazuh-dashboard-ml-commons plugin."
     echo "        --all-platforms           Build for all platforms."
     echo "        --deb                     Build for deb."
     echo "        --rpm                     Build for rpm."
