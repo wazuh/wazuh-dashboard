@@ -81,6 +81,7 @@ import {
   setupSearchUseCase,
 } from './application/components/usecase_overview/search_use_case_setup';
 import { DEFAULT_NAV_GROUPS } from '../../../core/public';
+import ruTranslations from '../translations/ru-RU.json';
 
 export interface HomePluginStartDependencies {
   data: DataPublicPluginStart;
@@ -116,6 +117,10 @@ export class HomePublicPlugin
     core: CoreSetup<HomePluginStartDependencies>,
     { urlForwarding, usageCollection, contentManagement }: HomePluginSetupDependencies
   ): HomePublicPluginSetup {
+    i18n.addTranslation({
+      locale: 'ru-RU',
+      messages: ruTranslations.messages || ruTranslations,
+    });
     const setCommonService = async (
       homeOpenSearchDashboardsServices?: Partial<HomeOpenSearchDashboardsServices>
     ) => {
