@@ -36,7 +36,7 @@ on:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
-        default: '4.14.0'
+        default: 'main'
       reference_ml_commons_plugin:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-ml-commons repository to build the ML Commons plugin'
@@ -82,7 +82,7 @@ on:
       reference_ml_commons_plugin:
         type: string
         required: true
-        default: '4.14.0'
+        default: 'main'
       is_stage:
         type: boolean
         required: true

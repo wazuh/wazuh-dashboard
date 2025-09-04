@@ -294,7 +294,7 @@ jobs:
     name: Build ML Commons plugin
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@bug/wazuh-dashboard-871-fix-package-building-worklfows
+    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@4.14.0
     with:
       reference: ${{ inputs.reference_ml_commons_plugin }}
 
@@ -366,7 +366,7 @@ jobs:
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
-            -ml file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/ml-commons-package.zip \
+            -m file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/ml-commons-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}}-${{needs.setup-variables.outputs.ML_COMMONS_SHA}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
