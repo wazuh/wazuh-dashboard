@@ -9,7 +9,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Support for Wazuh 4.14.0
 - Added Observability and Anomaly Detection plugins to default installation [#843](https://github.com/wazuh/wazuh-dashboard/pull/843)
 
-## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 05
+## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 07
 
 ### Added
 
