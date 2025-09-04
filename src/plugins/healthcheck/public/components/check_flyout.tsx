@@ -2,11 +2,10 @@
  * Copyright Wazuh
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useState } from 'react';
+import React from 'react';
 import {
   EuiText,
-  EuiToolTip,
-  EuiBadge,
+  EuiCallOut,
   EuiFlexItem,
   EuiFlexGroup,
   EuiSpacer,
@@ -16,16 +15,16 @@ import {
   EuiFlyoutBody,
   EuiFlyoutFooter,
   EuiButton,
-  EuiButtonEmpty,
   EuiHorizontalRule,
   EuiLink,
 } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
 import { TaskInfo } from 'src/core/common/healthcheck';
 
-interface CheckDetailsProps {
+interface CheckFlyoutProps {
   check: TaskInfo;
   formatDate: (date: string) => string;
+  setIsFlyoutVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 import wazuh from '../../../../../package.json';
@@ -33,52 +32,43 @@ import wazuh from '../../../../../package.json';
 export const WAZUH_MAJOR = wazuh.wazuh.version.split('.')[0];
 export const WAZUH_MINOR = wazuh.wazuh.version.split('.')[1];
 
-export const CheckDetails = ({ check, formatDate }: CheckDetailsProps) => {
-  const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
-
+export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyoutProps) => {
   const { name, duration, startedAt, finishedAt, error, _meta } = check;
 
-  const colorCallOut = {
-    green: { color: 'success', iconType: 'check' },
-    yellow: { color: 'warning', iconType: 'alert' },
-    red: { color: 'danger', iconType: 'cross' },
-    gray: { color: 'primary', iconType: 'question' },
-  };
-
-  let nameCheck = (
-    <EuiButtonEmpty
-      size="s"
-      contentProps={{ style: { justifyContent: 'flex-start' } }}
-      onClick={() => setIsFlyoutVisible(!isFlyoutVisible)}
-    >
-      <EuiText color={_meta?.isEnabled ? 'default' : 'subdued'} size="m">
-        Check [ <span style={{ color: check.result }}>{name}</span> ]{' '}
-        <EuiBadge color={colorCallOut[check.result].color}>
-          {_meta?.isCritical ? 'Critical' : 'Minor'}
-        </EuiBadge>
+  const callOut = (
+    <EuiCallOut iconType="help">
+      <EuiText>
+        <FormattedMessage
+          id="healthcheck.check.details.troubleshooting"
+          defaultMessage="For troubleshooting, you can check the following documentation: "
+        />
+        <EuiLink
+          href={`https://documentation.wazuh.com/${WAZUH_MAJOR}.${WAZUH_MINOR}/user-manual/wazuh-dashboard/troubleshooting.html`}
+          external
+        >
+          <FormattedMessage
+            id="healthcheck.check.details.troubleshooting.linkTroubleshooting"
+            defaultMessage="wazuh-dashboard - troubleshooting"
+          />
+        </EuiLink>
       </EuiText>
-    </EuiButtonEmpty>
+      {!_meta.isEnabled && (
+        <>
+          <EuiHorizontalRule />
+          <EuiText>
+            <FormattedMessage
+              id="healthcheck.status.disabledExplain"
+              defaultMessage="Disabled. This does not run on initial or scheduled executions."
+            />
+          </EuiText>
+        </>
+      )}
+    </EuiCallOut>
   );
 
-  if (!_meta?.isEnabled) {
-    nameCheck = (
-      <EuiToolTip
-        content={
-          <FormattedMessage
-            id="healthcheck.status.disabledExplain"
-            defaultMessage="Disabled. This does not run on initial or scheduled executions."
-          />
-        }
-        position="bottom"
-      >
-        {nameCheck}
-      </EuiToolTip>
-    );
-  }
-
-  const flyout = (
+  return (
     <EuiFlyout
-      type="overlay"
+      type="push"
       size="s"
       side="right"
       onClose={() => setIsFlyoutVisible(false)}
@@ -93,7 +83,7 @@ export const CheckDetails = ({ check, formatDate }: CheckDetailsProps) => {
           />
         </EuiTitle>
       </EuiFlyoutHeader>
-      <EuiFlyoutBody>
+      <EuiFlyoutBody banner={callOut}>
         <EuiFlexGroup direction="column">
           {error && (
             <EuiFlexItem>
@@ -140,33 +130,11 @@ export const CheckDetails = ({ check, formatDate }: CheckDetailsProps) => {
               </EuiFlexItem>
             </EuiFlexGroup>
           </EuiFlexItem>
-          <EuiHorizontalRule />
-          <EuiFlexItem>
-            <EuiText size="m" color="default">
-              <FormattedMessage
-                id="healthcheck.check.details.troubleshooting"
-                defaultMessage="For troubleshooting, you can check the following documentation: "
-              />
-              <EuiLink
-                href={`https://documentation.wazuh.com/${WAZUH_MAJOR}.${WAZUH_MINOR}/user-manual/wazuh-dashboard/troubleshooting.html`}
-                external
-              >
-                wazuh-dashboard - troubleshooting
-              </EuiLink>
-            </EuiText>
-          </EuiFlexItem>
         </EuiFlexGroup>
       </EuiFlyoutBody>
       <EuiFlyoutFooter>
         <EuiButton onClick={() => setIsFlyoutVisible(false)}>Close</EuiButton>
       </EuiFlyoutFooter>
     </EuiFlyout>
-  );
-
-  return (
-    <>
-      {nameCheck}
-      {isFlyoutVisible && flyout}
-    </>
   );
 };

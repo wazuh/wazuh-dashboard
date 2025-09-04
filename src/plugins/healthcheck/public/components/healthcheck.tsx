@@ -18,7 +18,7 @@ import { TASK } from '../constants';
 import { getHealthCheck } from '../dashboards_services';
 import { getCore } from '../dashboards_services';
 import { getHealthFromStatus } from './services/health';
-import { GroupByResult } from './group_by_result';
+import { ChecksTable } from './checks_table';
 
 export const HealthCheck = () => {
   const core = getCore();
@@ -57,18 +57,6 @@ export const HealthCheck = () => {
   const filteredChecks = checks.filter(filterCheck);
   const filteredChecksGroupByResult = groupBy(filteredChecks, 'result');
 
-  const filteredChecksResultRed = filteredChecks.filter(
-    (check) => check.result === TASK.RUN_RESULT.RED && check._meta?.isCritical
-  );
-  const filteredChecksResultYellow = filteredChecks.filter(
-    (check) =>
-      (check.result === TASK.RUN_RESULT.RED && !check._meta?.isCritical) ||
-      check.result === TASK.RUN_RESULT.YELLOW
-  );
-  const filteredChecksResultGreen = filteredChecks.filter(
-    (check) => check.result === TASK.RUN_RESULT.GREEN
-  );
-
   const checksGroupByResult = useMemo(() => {
     return groupBy(checks, 'result');
   }, [checks]);
@@ -90,7 +78,12 @@ export const HealthCheck = () => {
               </h3>
             </EuiText>
             <div style={{ marginLeft: '4px' }}>
-              {[TASK.RUN_RESULT.GREEN, TASK.RUN_RESULT.RED, TASK.RUN_RESULT.GRAY].map((result) => {
+              {[
+                TASK.RUN_RESULT.GREEN,
+                TASK.RUN_RESULT.YELLOW,
+                TASK.RUN_RESULT.RED,
+                TASK.RUN_RESULT.GRAY,
+              ].map((result) => {
                 const groupedByResult = checksGroupByResult[result]?.length;
                 const filteredCheckByResult = filteredChecksGroupByResult?.[result]?.length ?? 0;
                 if (groupedByResult) {
@@ -119,23 +112,7 @@ export const HealthCheck = () => {
         </EuiFlexItem>
       </EuiFlexGroup>
       <EuiHorizontalRule margin="xs" />
-      <EuiFlexGroup direction="column" gutterSize="xs" responsive={false}>
-        {filteredChecksResultGreen.length > 0 && (
-          <EuiFlexItem>
-            <GroupByResult result={TASK.RUN_RESULT.GREEN} checks={filteredChecksResultGreen} />
-          </EuiFlexItem>
-        )}
-        {filteredChecksResultYellow.length > 0 && (
-          <EuiFlexItem>
-            <GroupByResult result={TASK.RUN_RESULT.YELLOW} checks={filteredChecksResultYellow} />
-          </EuiFlexItem>
-        )}
-        {filteredChecksResultRed.length > 0 && (
-          <EuiFlexItem>
-            <GroupByResult result={TASK.RUN_RESULT.RED} checks={filteredChecksResultRed} />
-          </EuiFlexItem>
-        )}
-      </EuiFlexGroup>
+      <ChecksTable checks={filteredChecks} />
     </div>
   );
 

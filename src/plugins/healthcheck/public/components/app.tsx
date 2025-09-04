@@ -23,7 +23,7 @@ export const HealtcheckApp = ({ basename, notifications, http, navigation }: Hea
     <Router basename={basename}>
       <I18nProvider>
         <>
-          <EuiPage restrictWidth="1000px">
+          <EuiPage>
             <EuiPageBody>
               <HealthCheck />
             </EuiPageBody>
