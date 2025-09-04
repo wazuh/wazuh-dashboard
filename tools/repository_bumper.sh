@@ -640,7 +640,7 @@ update_deb_changelog() {
     log "Debian changelog entry for version $VERSION already exists. Updating date..."
     # Update existing entry date
     # Find the line with the version and then find the next maintainer line to update
-    sed -i "/wazuh-dashboard ($escaped_package_version)/,/^-- Wazuh, Inc/ s|^-- Wazuh, Inc <info@wazuh.com> .*|$maintainer_line|" "$DEB_CHANGELOG"
+    sed -i "/wazuh-dashboard ($escaped_package_version)/,/^ *-- Wazuh, Inc/ s|^ *-- Wazuh, Inc <info@wazuh.com> .*|$maintainer_line|" "$DEB_CHANGELOG"
     log "Successfully updated Debian changelog date for version $VERSION"
   else
     log "Adding new Debian changelog entry for version $VERSION..."
