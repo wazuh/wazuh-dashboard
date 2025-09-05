@@ -60,6 +60,16 @@ on:
         description: 'Branch/tag/commit of the wazuh-dashboard-reporting repository to build the main plugins'
         required: true
         default: 'main'
+      reference_ml_commons_plugins:
+        type: string
+        description: 'Branch/tag/commit of the wazuh-dashboard-ml-commons repository to build the ML plugin'
+        required: true
+        default: 'main'
+      # reference_security_analytics_plugins:
+      #   type: string
+      #   description: 'Branch/tag/commit of the wazuh-dashboard-security-analytics repository to build the Security Analytics plugin'
+      #   required: true
+      #   default: 'main'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -101,6 +111,14 @@ on:
         type: string
         required: true
         default: 'main'
+      reference_ml_commons_plugins:
+        type: string
+        required: true
+        default: 'main'
+      # reference_security_analytics_plugins:
+      #   type: string
+      #   required: true
+      #   default: 'main'
       is_stage:
         type: boolean
         required: true
@@ -130,6 +148,8 @@ jobs:
       PLUGINS_SHA: ${{ steps.setup-variables.outputs.PLUGINS_SHA }}
       SECURITY_SHA: ${{ steps.setup-variables.outputs.SECURITY_SHA }}
       REPORTING_SHA: ${{ steps.setup-variables.outputs.REPORTING_SHA }}
+      ML_COMMONS_SHA: ${{ steps.setup-variables.outputs.ML_COMMONS_SHA }}
+      SECURITY_ANALYTICS_SHA: ${{ steps.setup-variables.outputs.SECURITY_ANALYTICS_SHA }}
       PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
       WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
       WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
@@ -137,6 +157,8 @@ jobs:
       WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
       WAZUH_PLUGINS_CHECK_UPDATES: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
       WAZUH_REPORT_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_REPORT_PLUGIN }}
+      WAZUH_ML_COMMONS_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_ML_COMMONS_PLUGIN }}
+      WAZUH_SECURITY_ANALYTICS_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_ANALYTICS_PLUGIN }}
       PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
       ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
     steps:
@@ -155,12 +177,14 @@ jobs:
           git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboard-plugins.git wzdp
           cd wzdp
           echo "WAZUH_PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Get SHA of wazuh-security-dashboards-plugin
         id: get-security-sha
         run: |
           git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/wazuh/wazuh-security-dashboards-plugin.git wzsp
           cd wzsp
           echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Get SHA of wazuh-dashboard-reporting
         id: get-reporting-sha
         run: |
@@ -168,11 +192,19 @@ jobs:
           cd wzrp
           echo "WAZUH_REPORTING_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org'
+      - name: Get SHA of wazuh-dashboard-ml-commons
+        id: get-ml-sha
+        run: |
+          git clone -b ${{ inputs.reference_ml_commons_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboard-ml-commons.git mlc
+          cd mlc
+          echo "ML_COMMONS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Get SHA of wazuh-dashboard-security-analytics
+        id: get-security-analytics-sha
+        run: |
+          git clone -b ${{ inputs.reference_ml_commons_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboard-security-analytics.git wzsa
+          cd wzsa
+          echo "WAZUH_SECURITY_ANALYTICS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Setup variables
         id: setup-variables
@@ -199,6 +231,8 @@ jobs:
           PLUGINS_SHA=${{steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA}}
           SECURITY_SHA=${{steps.get-security-sha.outputs.WAZUH_SECURITY_SHA}}
           REPORTING_SHA=${{steps.get-reporting-sha.outputs.WAZUH_REPORTING_SHA}}
+          ML_COMMONS_SHA=${{steps.get-ml-sha.outputs.ML_COMMONS_SHA}}
+          SECURITY_ANALYTICS_SHA=${{steps.get-security-analytics-sha.outputs.WAZUH_SECURITY_ANALYTICS_SHA}}
           if [ "${{ inputs.is_stage }}" = "true" ]; then
             PRODUCTION=--production
           else
@@ -206,6 +240,8 @@ jobs:
           fi
           WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
           WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+          WAZUH_ML_COMMONS_PLUGIN=ml-commons-dashboards_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_ml_commons_plugins }} | sed 's/\//-/g').zip
+          WAZUH_SECURITY_ANALYTICS_PLUGIN=security-analytics-dashboards_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_ml_commons_plugins }} | sed 's/\//-/g').zip
           WAZUH_REPORT_PLUGIN=reports-dashboards_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_report_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
@@ -214,13 +250,13 @@ jobs:
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}.deb
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}-${ML_COMMONS_SHA}-${SECURITY_ANALYTICS_SHA}.deb
             fi
           else
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}.rpm
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}-${ML_COMMONS_SHA}-${SECURITY_ANALYTICS_SHA}.rpm
             fi
           fi
           if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
@@ -235,9 +271,13 @@ jobs:
           echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
           echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
+          echo "ML_COMMONS_SHA=$ML_COMMONS_SHA" >> $GITHUB_OUTPUT
+          echo "SECURITY_ANALYTICS_SHA=$SECURITY_ANALYTICS_SHA" >> $GITHUB_OUTPUT
           echo "REPORTING_SHA=$REPORTING_SHA" >> $GITHUB_OUTPUT
           echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
           echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
+          echo "WAZUH_ML_COMMONS_PLUGIN=$WAZUH_ML_COMMONS_PLUGIN" >> $GITHUB_OUTPUT
+          echo "WAZUH_SECURITY_ANALYTICS_PLUGIN=$WAZUH_SECURITY_ANALYTICS_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_REPORT_PLUGIN=$WAZUH_REPORT_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
@@ -304,8 +344,35 @@ jobs:
     with:
       reference: ${{ inputs.reference_report_plugins }}
 
+  build-ml-commons-plugin:
+    needs: [validate-job]
+    name: Build ml commons plugin
+    permissions:
+      pull-requests: write
+    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/5_builderpackage_ml_commons_plugin.yml@main
+    with:
+      reference: ${{ inputs.reference_ml_commons_plugins }}
+
+  build-security-analytics-plugin:
+    needs: [validate-job]
+    name: Build security analytics plugin
+    permissions:
+      pull-requests: write
+    uses: wazuh/wazuh-dashboard-security-analytics/.github/workflows/5_builderpackage_security_analytics_plugin.yml@main
+    with:
+      reference: ${{ inputs.reference_ml_commons_plugins }}
+
   build-package:
-    needs: [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
+    needs:
+      [
+        setup-variables,
+        build-main-plugins,
+        build-base,
+        build-security-plugin,
+        build-report-plugin,
+        build-ml-commons-plugin,
+        build-security-analytics-plugin,
+      ]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     name: Generate packages
     steps:
@@ -350,13 +417,25 @@ jobs:
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_REPORT_PLUGIN }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
+      - name: Download ml commons plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_ML_COMMONS_PLUGIN }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-plugin
+      - name: Download security analytics plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_ANALYTICS_PLUGIN }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-plugin
 
       - name: Zip plugins
         run: |
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-plugin
 
       - name: Build package
         run: |
@@ -365,9 +444,11 @@ jobs:
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
+            -ml file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/ml-commons-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             -rp file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/report-package.zip \
-            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}}-${{needs.setup-variables.outputs.REPORTING_SHA}} \
+            -sa file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-analytics-package.zip \
+            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}}-${{needs.setup-variables.outputs.REPORTING_SHA}}-${{needs.setup-variables.outputs.ML_COMMONS_SHA}}-${{needs.setup-variables.outputs.SECURITY_ANALYTICS_SHA}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Upload artifact
