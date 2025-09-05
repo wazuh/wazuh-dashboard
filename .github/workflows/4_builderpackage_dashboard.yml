@@ -55,6 +55,11 @@ on:
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
         default: '4.14.0'
+      reference_ml_commons_plugin:
+        type: string
+        description: 'Branch/tag/commit of the wazuh-dashboard-ml-commons repository to build the ML Commons plugin'
+        required: true
+        default: '4.14.0'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -92,6 +97,10 @@ on:
         type: string
         required: true
         default: '4.14.0'
+      reference_ml_commons_plugin:
+        type: string
+        required: true
+        default: '4.14.0'
       is_stage:
         type: boolean
         required: true
@@ -120,8 +129,10 @@ jobs:
       COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
       PLUGINS_SHA: ${{ steps.setup-variables.outputs.PLUGINS_SHA }}
       SECURITY_SHA: ${{ steps.setup-variables.outputs.SECURITY_SHA }}
+      ML_COMMONS_SHA: ${{ steps.setup-variables.outputs.ML_COMMONS_SHA }}
       PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
       WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+      WAZUH_ML_COMMONS_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_ML_COMMONS_PLUGIN }}
       WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
       WAZUH_PLUGINS_WAZUH: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
       WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
@@ -150,6 +161,12 @@ jobs:
           git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/wazuh/wazuh-security-dashboards-plugin.git wzsp
           cd wzsp
           echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Get SHA of wazuh-dashboard-ml-commons
+        id: get-ml-commons-sha
+        run: |
+          git clone -b ${{ inputs.reference_ml_commons_plugin }} --single-branch https://github.com/wazuh/wazuh-dashboard-ml-commons.git wzml
+          cd wzml
+          echo "ML_COMMONS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Setup variables
         id: setup-variables
@@ -175,6 +192,7 @@ jobs:
           COMMIT_SHA=$(git rev-parse --short HEAD)
           PLUGINS_SHA=${{steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA}}
           SECURITY_SHA=${{steps.get-security-sha.outputs.WAZUH_SECURITY_SHA}}
+          ML_COMMONS_SHA=${{steps.get-ml-commons-sha.outputs.ML_COMMONS_SHA}}
           if [ "${{ inputs.is_stage }}" = "true" ]; then
             PRODUCTION=--production
           else
@@ -182,6 +200,7 @@ jobs:
           fi
           WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
           WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+          WAZUH_ML_COMMONS_PLUGIN=ml-commons-dashboards_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_ml_commons_plugin }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
           WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
@@ -189,13 +208,13 @@ jobs:
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.deb
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${ML_COMMONS_SHA}.deb
             fi
           else
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.rpm
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${ML_COMMONS_SHA}.rpm
             fi
           fi
           if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
@@ -210,8 +229,10 @@ jobs:
           echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
           echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
+          echo "ML_COMMONS_SHA=$ML_COMMONS_SHA" >> $GITHUB_OUTPUT
           echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
           echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
+          echo "WAZUH_ML_COMMONS_PLUGIN=$WAZUH_ML_COMMONS_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_CORE=$WAZUH_PLUGINS_CORE" >> $GITHUB_OUTPUT
@@ -268,8 +289,24 @@ jobs:
     with:
       reference: ${{ inputs.reference_security_plugins }}
 
+  build-ml-commons-plugin:
+    needs: [validate-job]
+    name: Build ML Commons plugin
+    permissions:
+      pull-requests: write
+    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@4.14.0
+    with:
+      reference: ${{ inputs.reference_ml_commons_plugin }}
+
   build-package:
-    needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
+    needs:
+      [
+        setup-variables,
+        build-main-plugins,
+        build-base,
+        build-security-plugin,
+        build-ml-commons-plugin,
+      ]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
@@ -293,6 +330,11 @@ jobs:
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+      - name: Download ml commons plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_ML_COMMONS_PLUGIN }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-plugin
 
       - name: Download main plugin's artifact
         uses: actions/download-artifact@v4
@@ -314,6 +356,7 @@ jobs:
         run: |
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
 
       - name: Build package
@@ -323,8 +366,9 @@ jobs:
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
+            -m file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/ml-commons-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
-            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
+            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}}-${{needs.setup-variables.outputs.ML_COMMONS_SHA}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Upload artifact
