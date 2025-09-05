@@ -7,6 +7,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Added
 
 - Support for Wazuh 5.0.0
+- Health check service [#811](https://github.com/wazuh/wazuh-dashboard/pull/811)
 
 ### Removed
 
