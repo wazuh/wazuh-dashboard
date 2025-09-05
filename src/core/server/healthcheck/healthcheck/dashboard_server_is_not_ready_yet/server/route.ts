@@ -1,4 +1,8 @@
-/* eslint-disable @osd/eslint/require-license-header */
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import path from 'node:path';
 import { HttpServerSetup } from 'opensearch-dashboards/server/http/http_server';
 import {
