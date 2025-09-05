@@ -1,5 +1,3 @@
-import './index.scss';
-
 import { HealtcheckPlugin } from './plugin';
 
 // This exports static code and TypeScript types,
