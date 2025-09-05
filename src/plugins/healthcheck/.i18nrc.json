@@ -1,0 +1,7 @@
+{
+  "prefix": "healtcheck",
+  "paths": {
+    "healtcheck": "."
+  },
+  "translations": ["translations/ja-JP.json"]
+}
