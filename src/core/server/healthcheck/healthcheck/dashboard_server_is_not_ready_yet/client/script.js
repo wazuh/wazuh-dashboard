@@ -781,7 +781,7 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       Components.notice({
         type: 'success',
         message:
-          'No critical errors remain. In about ~30 seconds, you can reload this page and you should be redirected to the application login.',
+          'No critical errors remain. In about 30 seconds, you can reload this page and you should be redirected to the application.',
       })
     )}
     ${$if(
