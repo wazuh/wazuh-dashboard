@@ -52,7 +52,11 @@ export class Task implements ITask {
       this.result = TASK.RUN_RESULT.GREEN;
     } catch (error_) {
       error = error_;
-      this.result = TASK.RUN_RESULT.RED;
+      if (this._meta.isCritical) {
+        this.result = TASK.RUN_RESULT.RED;
+      } else {
+        this.result = TASK.RUN_RESULT.YELLOW;
+      }
       this.error = error_.message;
     } finally {
       this.status = TASK.RUN_STATUS.FINISHED;
