@@ -5,42 +5,9 @@
 
 import React from 'react';
 import { EuiHealth, EuiToolTip } from '@elastic/eui';
-import { FormattedMessage } from 'react-intl';
 import { TaskInfo } from 'src/core/common/healthcheck';
 import { getHealthFromStatus } from './services/health';
-
-const statusChecksExplain = {
-  green: (
-    <FormattedMessage
-      id="healthcheck.status_info.green"
-      defaultMessage="Status: green. This indicates that the verification has been performed correctly."
-    />
-  ),
-  yellow: (
-    <FormattedMessage
-      id="healthcheck.status_info.yellow"
-      defaultMessage="Status: yellow. This indicates that the verification had some problem but it could work."
-    />
-  ),
-  red: (
-    <FormattedMessage
-      id="healthcheck.status_info.red"
-      defaultMessage="Status: red. This indicates that the verification had some error."
-    />
-  ),
-  gray: (
-    <FormattedMessage
-      id="healthcheck.status_info.gray"
-      defaultMessage="Status: gray. This indicates that the verification has been disabled."
-    />
-  ),
-  null: (
-    <FormattedMessage
-      id="healthcheck.status_info.gray"
-      defaultMessage="Status: gray. This indicates that the verification has been disabled."
-    />
-  ),
-};
+import { STATUS_CHECKS_EXPLAIN } from '../constants';
 
 export const HealthIcon = ({
   children,
@@ -50,8 +17,10 @@ export const HealthIcon = ({
   children?: React.ReactNode;
   tooltip?: React.ReactNode;
   status: TaskInfo['result'];
-}) => (
-  <EuiToolTip content={tooltip || statusChecksExplain[status]} position="bottom">
-    <EuiHealth color={getHealthFromStatus(status)}>{children}</EuiHealth>
-  </EuiToolTip>
-);
+}) => {
+  return (
+    <EuiToolTip content={tooltip || STATUS_CHECKS_EXPLAIN[status]} position="bottom">
+      <EuiHealth color={getHealthFromStatus(status)}>{children}</EuiHealth>
+    </EuiToolTip>
+  );
+};

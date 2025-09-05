@@ -15,11 +15,9 @@ import {
   EuiFlyoutBody,
   EuiFlyoutFooter,
   EuiButton,
-  EuiHorizontalRule,
-  EuiLink,
 } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
-import { TaskInfo } from 'src/core/common/healthcheck';
+import { TaskInfo } from '../../../../../core/common/healthcheck';
 
 interface CheckFlyoutProps {
   check: TaskInfo;
@@ -27,42 +25,17 @@ interface CheckFlyoutProps {
   setIsFlyoutVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-import wazuh from '../../../../../package.json';
-
-export const WAZUH_MAJOR = wazuh.wazuh.version.split('.')[0];
-export const WAZUH_MINOR = wazuh.wazuh.version.split('.')[1];
-
 export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyoutProps) => {
   const { name, duration, startedAt, finishedAt, error, _meta } = check;
 
-  const callOut = (
+  const callOut = !_meta.isEnabled && (
     <EuiCallOut iconType="help">
       <EuiText>
         <FormattedMessage
-          id="healthcheck.check.details.troubleshooting"
-          defaultMessage="For troubleshooting, you can check the following documentation: "
+          id="healthcheck.status.disabledExplain"
+          defaultMessage="Disabled. This does not run on initial or scheduled executions."
         />
-        <EuiLink
-          href={`https://documentation.wazuh.com/${WAZUH_MAJOR}.${WAZUH_MINOR}/user-manual/wazuh-dashboard/troubleshooting.html`}
-          external
-        >
-          <FormattedMessage
-            id="healthcheck.check.details.troubleshooting.linkTroubleshooting"
-            defaultMessage="wazuh-dashboard - troubleshooting"
-          />
-        </EuiLink>
       </EuiText>
-      {!_meta.isEnabled && (
-        <>
-          <EuiHorizontalRule />
-          <EuiText>
-            <FormattedMessage
-              id="healthcheck.status.disabledExplain"
-              defaultMessage="Disabled. This does not run on initial or scheduled executions."
-            />
-          </EuiText>
-        </>
-      )}
     </EuiCallOut>
   );
 
