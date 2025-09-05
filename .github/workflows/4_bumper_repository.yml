@@ -87,11 +87,13 @@ jobs:
           VERSION: ${{ inputs.version }}
           STAGE: ${{ inputs.stage }}
           TAG: ${{ inputs.tag }}
+          DATE: ${{ inputs.date }}
         run: |
           script_params=""
           version=${{ env.VERSION }}
           stage=${{ env.STAGE }}
           tag=${{ env.TAG }}
+          date=${{ env.DATE }}
 
           # Both version and stage provided
           if [[ -n "$version" && -n "$stage" && "$tag" != "true" ]]; then
@@ -102,8 +104,8 @@ jobs:
             script_params="--tag"
           fi
 
-          if [[ -n "$DATE" ]]; then
-            script_params+=" --date ${DATE}"
+          if [[ -n "$date" ]]; then
+            script_params+=" --date ${date}"
           fi
 
           issue_number=$(echo "${{ inputs.issue-link }}" | awk -F'/' '{print $NF}')
