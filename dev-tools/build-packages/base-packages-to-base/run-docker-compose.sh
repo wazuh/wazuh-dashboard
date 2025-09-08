@@ -3,6 +3,7 @@
 export WAZUH_DASHBOARD_PLUGINS_BRANCH=""
 export WAZUH_DASHBOARD_BRANCH=""
 export WAZUH_SECURITY_PLUGIN_BRANCH=""
+export WAZUH_DASHBOARD_ML_COMMONS_BRANCH=""
 export ARCHITECTURE="amd"
 export NODE_VERSION="18.19.0"
 
@@ -10,6 +11,7 @@ export NODE_VERSION="18.19.0"
 run_docker_compose() {
   echo "WAZUH_DASHBOARD_PLUGINS_BRANCH: $WAZUH_DASHBOARD_PLUGINS_BRANCH"
   echo "WAZUH_SECURITY_PLUGIN_BRANCH: $WAZUH_SECURITY_PLUGIN_BRANCH"
+  echo "WAZUH_DASHBOARD_ML_COMMONS_BRANCH: $WAZUH_DASHBOARD_ML_COMMONS_BRANCH"
   echo "WAZUH_DASHBOARD_BRANCH: $WAZUH_DASHBOARD_BRANCH"
   echo "ARCHITECTURE: $ARCHITECTURE"
   echo "NODE_VERSION: $NODE_VERSION"
@@ -22,6 +24,7 @@ help() {
   echo "    -a, --app <url/path>          Set the Wazuh plugin branch."
   echo "    -b, --base <url/path>         Set the wazuh-dashboard branch."
   echo "    -s, --security <url/path>     Set the wazuh-security-dashboards-plugin branch."
+  echo "    -m, --ml <url/path>           Set the wazuh-dashboard-ml-commons branch."
   echo "    --arm                         [Optional] Build for arm64 instead of x64."
   echo "    --node-version <version>      [Optional] Set the node version."
   echo "    -h, --help                    Show this help."
@@ -48,6 +51,14 @@ main() {
     "-s" | "--security")
       if [ -n "${2}" ]; then
         WAZUH_SECURITY_PLUGIN_BRANCH="${2}"
+        shift 2
+      else
+        help 0
+      fi
+      ;;
+    "-m" | "--ml")
+      if [ -n "${2}" ]; then
+        WAZUH_DASHBOARD_ML_COMMONS_BRANCH="${2}"
         shift 2
       else
         help 0
@@ -81,8 +92,8 @@ main() {
     esac
   done
 
-  if [ -z "$WAZUH_DASHBOARD_PLUGINS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_BRANCH" ] | [ -z "$WAZUH_SECURITY_PLUGIN_BRANCH" ]; then
-    echo "You must specify the app, base, security."
+  if [ -z "$WAZUH_DASHBOARD_PLUGINS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_BRANCH" ] | [ -z "$WAZUH_SECURITY_PLUGIN_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_ML_COMMONS_BRANCH" ]; then
+    echo "You must specify the app, base, security, ml."
     help 1
   fi
 
