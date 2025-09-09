@@ -225,6 +225,7 @@ class Result {
   static ResultValues = {
     GREEN: /** @type {'green'} */ ('green'),
     RED: /** @type {'red'} */ ('red'),
+    YELLOW: /** @type {'yellow'} */ ('yellow'),
     GRAY: /** @type {'gray'} */ ('gray'),
   };
 
@@ -242,8 +243,17 @@ class Result {
    * @param {string} value
    * @returns {value is 'red' | 'yellow'}
    */
-  static isFailed(value) {
+  static isCritical(value) {
     return value === Result.ResultValues.RED;
+  }
+
+  /**
+   * Checks if the given value is a warning.
+   * @param {string} value
+   * @returns {value is 'yellow'}
+   */
+  static isNotCritical(value) {
+    return value === Result.ResultValues.YELLOW;
   }
 
   /**
@@ -399,7 +409,9 @@ function filterEnabledFinishedFailedTasks() {
  * @returns
  */
 function getCriticalTasks(tasks) {
-  return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ _meta }) => _meta.isCritical);
+  return tasks
+    .filter(filterEnabledFinishedFailedTasks())
+    .filter(({ result }) => Result.isCritical(result));
 }
 
 /**
@@ -408,7 +420,9 @@ function getCriticalTasks(tasks) {
  * @returns
  */
 function getNonCriticalTasks(tasks) {
-  return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ _meta }) => !_meta.isCritical);
+  return tasks
+    .filter(filterEnabledFinishedFailedTasks())
+    .filter(({ result }) => Result.isNotCritical(result));
 }
 
 /**
