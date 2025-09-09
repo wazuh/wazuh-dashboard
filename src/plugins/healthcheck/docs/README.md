@@ -34,7 +34,7 @@ Welcome to the complete documentation for the Wazuh Dashboard Health Check Plugi
 
 ### For Users
 
-1. Access Wazuh Dashboard
+1. Access Wazuh dashboard
 2. Navigate to **Dashboard Management > Health check**
 3. Consult the [User Guide](./USER_GUIDE.md) for details
 
@@ -99,5 +99,3 @@ When reporting an issue, include:
 
 **Found something not covered in this documentation?**  
 Please open an issue on GitHub or contribute with documentation improvements.
-
-_Thank you for using the Wazuh Dashboard Health Check Plugin!_

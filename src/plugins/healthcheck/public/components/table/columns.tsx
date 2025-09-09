@@ -1,14 +1,23 @@
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React from 'react';
-import { EuiBadge, EuiBasicTableProps, EuiButtonIcon, EuiText } from '@elastic/eui';
+import { EuiBadge, EuiBasicTableProps, EuiButtonIcon, EuiText, EuiToolTip } from '@elastic/eui';
 import { i18n } from '@osd/i18n';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
 import { getHealthFromStatus } from '../services/health';
-import { Result } from '../../constants';
+import { Result, STATUS_CHECK_EXPLAIN } from '../../constants';
 
 const renderStatus = (result: Result) => {
   const health = getHealthFromStatus(result);
 
-  return <EuiBadge color={health}>{result}</EuiBadge>;
+  return (
+    <EuiToolTip content={STATUS_CHECK_EXPLAIN[result]}>
+      <EuiBadge color={health}>{result}</EuiBadge>
+    </EuiToolTip>
+  );
 };
 
 export const tableColumns = (

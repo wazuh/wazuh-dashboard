@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Wazuh Dashboard Health Check Plugin provides a visual interface to monitor the health status of various Wazuh system components. It allows system administrators to quickly identify issues and verify that all services are functioning correctly.
+The Wazuh dashboard Health Check Plugin provides a visual interface to monitor the health status of various Wazuh system components. It allows system administrators to quickly identify issues and verify that all services are functioning correctly.
 
 ## Key Features
 
@@ -14,7 +14,7 @@ The Wazuh Dashboard Health Check Plugin provides a visual interface to monitor t
 
 ## Accessing Health Check
 
-1. Log in to Wazuh Dashboard
+1. Log in to Wazuh dashboard
 2. In the side navigation menu, look for the "Dashboard Management" section
 3. Click on "Health check"
 

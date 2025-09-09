@@ -73,10 +73,11 @@ export const HealthCheck = () => {
                   href={`https://documentation.wazuh.com/${WAZUH_MAJOR}.${WAZUH_MINOR}/user-manual/wazuh-dashboard/troubleshooting.html`}
                   external
                   target="_blank"
+                  style={{ fontWeight: 400 }}
                 >
                   <FormattedMessage
                     id="healthcheck.check.details.troubleshooting.linkTroubleshooting"
-                    defaultMessage="Documentation"
+                    defaultMessage="Troubleshooting"
                   />
                 </EuiLink>
               </EuiButtonEmpty>

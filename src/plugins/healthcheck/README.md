@@ -1,6 +1,6 @@
 # Health Check Plugin
 
-A Wazuh Dashboard plugin for monitoring system health.
+A Wazuh dashboard plugin for monitoring system health.
 
 ## Description
 
@@ -27,9 +27,9 @@ The Health Check Plugin provides a visual interface for monitoring the health st
 
 ## Installation
 
-This plugin comes included with Wazuh Dashboard. To access:
+This plugin comes included with Wazuh dashboard. To access:
 
-1. Log in to Wazuh Dashboard
+1. Log in to Wazuh dashboard
 2. Navigate to **Dashboard Management** > **Health check**
 
 ## Support

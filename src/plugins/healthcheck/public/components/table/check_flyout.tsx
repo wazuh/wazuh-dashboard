@@ -18,6 +18,7 @@ import {
 } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
+import { getHealthFromStatus } from '../services/health';
 
 interface CheckFlyoutProps {
   check: TaskInfo;
@@ -26,7 +27,7 @@ interface CheckFlyoutProps {
 }
 
 export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyoutProps) => {
-  const { name, duration, startedAt, finishedAt, error, _meta } = check;
+  const { name, duration, startedAt, finishedAt, error, _meta, result, status } = check;
 
   const callOut = !_meta.isEnabled && (
     <EuiCallOut iconType="help">
@@ -61,12 +62,46 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
           {error && (
             <EuiFlexItem>
               <EuiText size="m">
-                <p>{error}</p>
+                <FormattedMessage id="healthcheck.check.details.error" defaultMessage="Error:" />
               </EuiText>
+              <EuiSpacer size="s" />
+              <EuiCallOut size="s" color={getHealthFromStatus(result)}>
+                <p>{error}</p>
+              </EuiCallOut>
             </EuiFlexItem>
           )}
-          <EuiSpacer size="xs" />
+          <EuiSpacer />
           <EuiFlexItem>
+            <EuiFlexGroup>
+              <EuiFlexItem>
+                <EuiText size="m" color="default">
+                  <FormattedMessage
+                    id="healthcheck.check.details._meta.isEnabled"
+                    defaultMessage="Enabled: {isEnabled}"
+                    values={{ isEnabled: _meta.isEnabled ? 'Yes' : 'No' }}
+                  />
+                </EuiText>
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <EuiText size="m" color="default">
+                  <FormattedMessage
+                    id="healthcheck.check.details._meta.isCritical"
+                    defaultMessage="Critical: {isCritical}"
+                    values={{ isCritical: _meta.isCritical ? 'Yes' : 'No' }}
+                  />
+                </EuiText>
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <EuiText size="m" color="default">
+                  <FormattedMessage
+                    id="healthcheck.check.details.status"
+                    defaultMessage="Status: {status}"
+                    values={{ status }}
+                  />
+                </EuiText>
+              </EuiFlexItem>
+            </EuiFlexGroup>
+            <EuiSpacer />
             <EuiFlexGroup>
               <EuiFlexItem>
                 <EuiText size="m" color="default">

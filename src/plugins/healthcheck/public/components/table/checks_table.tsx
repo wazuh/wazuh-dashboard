@@ -72,8 +72,8 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
     }
   };
 
-  const onChangeQuery = ({ queryInput }) => {
-    setQuery(queryInput);
+  const onChangeQuery = ({ query: searchQuery }) => {
+    setQuery(searchQuery);
   };
 
   const filters: EuiSearchBarProps['filters'] = [
@@ -83,19 +83,27 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
       items: [
         {
           value: TASK.RUN_RESULT.GREEN,
-          name: TASK.RUN_RESULT.GREEN,
-        },
-        {
-          value: TASK.RUN_RESULT.RED,
-          name: TASK.RUN_RESULT.RED,
+          name:
+            TASK.RUN_RESULT.GREEN.charAt(0).toUpperCase() +
+            TASK.RUN_RESULT.GREEN.slice(1).toLowerCase(),
         },
         {
           value: TASK.RUN_RESULT.YELLOW,
-          name: TASK.RUN_RESULT.YELLOW,
+          name:
+            TASK.RUN_RESULT.YELLOW.charAt(0).toUpperCase() +
+            TASK.RUN_RESULT.YELLOW.slice(1).toLowerCase(),
+        },
+        {
+          value: TASK.RUN_RESULT.RED,
+          name:
+            TASK.RUN_RESULT.RED.charAt(0).toUpperCase() +
+            TASK.RUN_RESULT.RED.slice(1).toLowerCase(),
         },
         {
           value: TASK.RUN_RESULT.GRAY,
-          name: TASK.RUN_RESULT.GRAY,
+          name:
+            TASK.RUN_RESULT.GRAY.charAt(0).toUpperCase() +
+            TASK.RUN_RESULT.GRAY.slice(1).toLowerCase(),
         },
       ],
     },
@@ -103,16 +111,16 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
       type: 'field_value_toggle_group',
       field: '_meta.isCritical',
       items: [
-        { name: 'Is Critical', value: true },
-        { name: 'Is Not Critical', value: false },
+        { name: 'Critical', value: true },
+        { name: 'Non-critical', value: false },
       ],
     },
     {
       type: 'field_value_toggle_group',
       field: '_meta.isEnabled',
       items: [
-        { name: 'Is Enabled', value: true },
-        { name: 'Is Not Enabled', value: false },
+        { name: 'Enabled', value: true },
+        { name: 'Disabled', value: false },
       ],
     },
   ];

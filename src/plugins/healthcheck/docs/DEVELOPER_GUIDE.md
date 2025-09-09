@@ -2,7 +2,7 @@
 
 ## Technical Description
 
-The Health Check Plugin is a Wazuh Dashboard plugin that implements an interface for monitoring system health. It's built using the OpenSearch Dashboards plugin architecture and follows React and TypeScript development best practices.
+The Health Check Plugin is a Wazuh dashboard plugin that implements an interface for monitoring system health. It's built using the OpenSearch Dashboards plugin architecture and follows React and TypeScript development best practices.
 
 ## Plugin Architecture
 
