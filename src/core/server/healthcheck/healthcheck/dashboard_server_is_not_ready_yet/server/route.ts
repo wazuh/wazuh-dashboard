@@ -10,6 +10,7 @@ import {
   SERVER_NOT_READY_RESET_STYLES_ROUTE,
   SERVER_NOT_READY_SCRIPT_ROUTE,
   SERVER_NOT_READY_STYLES_ROUTE,
+  SERVER_NOT_READY_FONTS_ROUTE,
 } from './constants';
 import { dashboardServerIsNotReadyYet } from '..';
 
@@ -52,6 +53,22 @@ export const configureDashboardServerIsNotReadyRoutes = (
     method: 'get',
     handler: {
       file: path.join(__dirname, '../client/styles.css'),
+    },
+  });
+
+  // Serve embedded fonts for the not-ready page from the existing app assets
+  // Using a directory handler allows relative CSS urls like
+  //   url('fonts/source_sans_3/SourceSans3-Regular.ttf.woff2')
+  // to resolve under `${serverBasePath}${SERVER_NOT_READY_FONTS_ROUTE}`
+  server.route({
+    path: `${SERVER_NOT_READY_FONTS_ROUTE}/{path*}`,
+    method: 'get',
+    handler: {
+      directory: {
+        path: path.join(__dirname, '../../../../core_app/assets/fonts'),
+        redirectToSlash: false,
+        index: false,
+      },
     },
   });
 

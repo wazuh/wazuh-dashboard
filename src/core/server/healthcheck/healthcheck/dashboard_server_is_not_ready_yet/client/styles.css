@@ -1,7 +1,131 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400..700&family=Victor+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+/* Local fonts: use the embedded fonts already shipped with the app.
+   These files are served by the healthcheck server under
+   /healthcheck/public/server_not_ready/fonts/... and referenced relatively
+   so they also work when a server base path is configured. */
+
+/* UI font: Inter UI (local, embedded) */
+@font-face {
+  font-family: 'Inter UI';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Inter UI'),
+    local('Inter-UI-Regular'),
+    url('fonts/inter_ui/Inter-UI-Regular.woff2') format('woff2'),
+    url('fonts/inter_ui/Inter-UI-Regular.woff') format('woff');
+}
+@font-face {
+  font-family: 'Inter UI';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Inter UI Italic'),
+    local('Inter-UI-Italic'),
+    url('fonts/inter_ui/Inter-UI-Italic.woff2') format('woff2'),
+    url('fonts/inter_ui/Inter-UI-Italic.woff') format('woff');
+}
+@font-face {
+  font-family: 'Inter UI';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    local('Inter UI Medium'),
+    local('Inter-UI-Medium'),
+    url('fonts/inter_ui/Inter-UI-Medium.woff2') format('woff2'),
+    url('fonts/inter_ui/Inter-UI-Medium.woff') format('woff');
+}
+@font-face {
+  font-family: 'Inter UI';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    local('Inter UI Semibold'),
+    local('Inter-UI-SemiBold'),
+    url('fonts/inter_ui/Inter-UI-SemiBold.woff2') format('woff2'),
+    url('fonts/inter_ui/Inter-UI-SemiBold.woff') format('woff');
+}
+@font-face {
+  font-family: 'Inter UI';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    local('Inter UI Semibold Italic'),
+    local('Inter-UI-SemiBoldItalic'),
+    url('fonts/inter_ui/Inter-UI-SemiBoldItalic.woff2') format('woff2'),
+    url('fonts/inter_ui/Inter-UI-SemiBoldItalic.woff') format('woff');
+}
+@font-face {
+  font-family: 'Inter UI';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Inter UI Bold'),
+    local('Inter-UI-Bold'),
+    url('fonts/inter_ui/Inter-UI-Bold.woff2') format('woff2'),
+    url('fonts/inter_ui/Inter-UI-Bold.woff') format('woff');
+}
+@font-face {
+  font-family: 'Inter UI';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Inter UI Bold Italic'),
+    local('Inter-UI-BoldItalic'),
+    url('fonts/inter_ui/Inter-UI-BoldItalic.woff2') format('woff2'),
+    url('fonts/inter_ui/Inter-UI-BoldItalic.woff') format('woff');
+}
+
+/* Monospace font: Roboto Mono (local TTF) */
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Roboto Mono'),
+    local('RobotoMono-Regular'),
+    url('fonts/roboto_mono/RobotoMono-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Roboto Mono Italic'),
+    local('RobotoMono-Italic'),
+    url('fonts/roboto_mono/RobotoMono-Italic.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Roboto Mono Bold'),
+    local('RobotoMono-Bold'),
+    url('fonts/roboto_mono/RobotoMono-Bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Roboto Mono Bold Italic'),
+    local('RobotoMono-BoldItalic'),
+    url('fonts/roboto_mono/RobotoMono-BoldItalic.ttf') format('truetype');
+}
 
 :root {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+  font-family: 'Inter UI', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
     'Apple Color Emoji', 'Segoe UI Emoji';
   font-size: 16px;
   color-scheme: light;
@@ -50,7 +174,8 @@ body {
 }
 
 code {
-  font-family: 'Victor Mono', monospace;
+  font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
   /*
   * font-size = maximum of:
   * - 14px (minimum)
