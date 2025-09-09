@@ -5,7 +5,6 @@
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { HttpServerSetup } from 'opensearch-dashboards/server/http/http_server';
-import { Request, ResponseToolkit } from '@hapi/hapi';
 import { CoreService } from '../../../types';
 import { CoreContext } from '../../core_context';
 import { Logger } from '../../logging';
@@ -17,7 +16,6 @@ import {
 import { HealthCheck } from './health_check';
 import { HealthCheckConfigType } from './config';
 import { addRoutesNotReadyServer } from './routes';
-import { dashboardServerIsNotReadyYet } from './dashboard_server_is_not_ready_yet';
 import { configureDashboardServerIsNotReadyRoutes } from './dashboard_server_is_not_ready_yet/server';
 
 function createSetup(ctx: HealthCheckService): HealthCheckServiceSetup {
@@ -65,29 +63,11 @@ export class HealthCheckService
   }
 
   enhanceNotReadyServer(server: HttpServerSetup['server'], basePath: HttpServerSetup['basePath']) {
-    const appName = 'Wazuh dashboard';
-
     addRoutesNotReadyServer(server, { healthcheck: this.healthCheck, logger: this.logger });
-    configureDashboardServerIsNotReadyRoutes(server);
-
-    server.route({
-      path: '/{p*}',
-      method: '*',
-      handler: (_request: Request, h: ResponseToolkit) => {
-        const documentationTroubleshootingLink = this.healthCheck.getConfig()
-          .server_not_ready_troubleshooting_link;
-        const serverBasePath = basePath.serverBasePath || '';
-        const html = `<!DOCTYPE html> ${dashboardServerIsNotReadyYet({
-          appName,
-          documentationTroubleshootingLink,
-          serverBasePath,
-        })}`;
-        // If server is not ready yet, because plugins or core can perform
-        // long running tasks (build assets, saved objects migrations etc.)
-        // we should let client know that and ask to retry after 30 seconds.
-        // Wazuh
-        return h.response(html).type('text/html').code(503).header('Retry-After', '30').takeover();
-      },
+    configureDashboardServerIsNotReadyRoutes(server, {
+      documentationTroubleshootingLink: this.healthCheck.getConfig()
+        .server_not_ready_troubleshooting_link,
+      serverBasePath: basePath.serverBasePath,
     });
   }
 }

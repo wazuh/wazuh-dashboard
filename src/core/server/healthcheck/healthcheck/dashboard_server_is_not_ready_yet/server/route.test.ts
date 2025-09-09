@@ -15,9 +15,11 @@ describe('configureDashboardServerIsNotReadyRoutes', () => {
   it('registers static asset routes for script and styles', () => {
     const server = { route: jest.fn() } as any;
 
-    configureDashboardServerIsNotReadyRoutes(server);
+    // Provide required options as per current route signature
+    configureDashboardServerIsNotReadyRoutes(server, { serverBasePath: '' });
 
-    expect(server.route).toHaveBeenCalledTimes(3);
+    // One catch-all HTML route + three static asset routes
+    expect(server.route).toHaveBeenCalledTimes(4);
 
     const calls = server.route.mock.calls.map((c: any[]) => c[0]);
 
