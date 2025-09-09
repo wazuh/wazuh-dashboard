@@ -269,6 +269,7 @@ jobs:
           VERSION=${{ needs.get-outputs-plugins.outputs.VERSION }}
           VERSION_OPENSEARCH=${{ needs.get-outputs-plugins.outputs.VERSION_OPENSEARCH }}
           REVISION=${{ needs.get-outputs-plugins.outputs.REVISION }}
+          ALL_COMMIT_SHAS=$(git rev-parse --short HEAD)-${{needs.get-outputs-plugins.outputs.WAZUH_PLUGINS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_REPORTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_ML_COMMONS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA}}
           # Check the corresponding previous version to be used in the upgrade test
           sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
@@ -294,13 +295,13 @@ jobs:
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}-${ML_COMMONS_SHA}-${SECURITY_ANALYTICS_SHA}.deb
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${ALL_COMMIT_SHAS}.deb
             fi
           else
             if [ "${{ inputs.is_stage }}" = "true" ]; then
               PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}-${REPORTING_SHA}-${ML_COMMONS_SHA}-${SECURITY_ANALYTICS_SHA}.rpm
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${ALL_COMMIT_SHAS}.rpm
             fi
           fi
           if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
@@ -313,7 +314,7 @@ jobs:
           echo "VERSION_OPENSEARCH=$VERSION_OPENSEARCH" >> $GITHUB_OUTPUT
           echo "PREVIOUS=$PREVIOUS" >> $GITHUB_OUTPUT
           echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
-          echo "ALL_COMMIT_SHAS=$(git rev-parse --short HEAD)-${{needs.get-outputs-plugins.outputs.WAZUH_PLUGINS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_REPORTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_ML_COMMONS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA}}" >> $GITHUB_OUTPUT
+          echo "ALL_COMMIT_SHAS=$ALL_COMMIT_SHAS" >> $GITHUB_OUTPUT
           echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
           echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
