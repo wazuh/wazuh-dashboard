@@ -1,7 +1,9 @@
 alertingDashboards
+anomalyDetectionDashboards
 assistantDashboards
 customImportMapDashboards
 ganttChartDashboards
 indexManagementDashboards
 notificationsDashboards
+observabilityDashboards
 reportsDashboards

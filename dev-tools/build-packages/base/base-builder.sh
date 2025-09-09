@@ -77,8 +77,8 @@ log
 
 mkdir -p applications
 mkdir -p base
-packages_list=(app base security)
-packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin")
+packages_list=(app base security ml)
+packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "ML Commons plugin")
 
 for i in "${!packages_list[@]}"; do
   package_var="${packages_list[$i]}"
@@ -130,6 +130,9 @@ sed -i -e "s|category:{id:\"opensearch\",label:_i18n.i18n.translate(\"opensearch
 # Replace app category to Alerting app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" $(js-file "alertingDashboards" "plugin")
 
+# Replace app category to Anomaly Detection app
+sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/anomalyDetectionDashboards/target/public/anomalyDetectionDashboards.plugin.js
+
 # Replace app category to Maps app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" $(js-file "customImportMapDashboards" "plugin")
 
@@ -141,19 +144,25 @@ sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|
 
 assistant_dashboard_whitelabeling
 
+# Add category icon to Observability plugin and change order in the main menu
+sed -i -e "s|const OBSERVABILITY_APP_CATEGORIES=Object.freeze({observability:{id:\"observability\",label:external_osdSharedDeps_OsdI18n_[\"i18n\"].translate(\"core.ui.observabilityNavList.label\",{defaultMessage:\"Observability\"}),order:shared[\"Jb\"]}}|const OBSERVABILITY_APP_CATEGORIES=Object.freeze({observability:{id:\"observability\",euiIconType:'searchProfilerApp',label:external_osdSharedDeps_OsdI18n_[\"i18n\"].translate(\"core.ui.observabilityNavList.label\",{defaultMessage:\"Observability\"}),order:550}}|" ./plugins/observabilityDashboards/target/public/observabilityDashboards.plugin.js
+
+
 log
 log "Recreating plugin files"
 log
 
 # Generate compressed files
 files_to_recreate=(
+  $(js-file "anomalyDetectionDashboards" "plugin")
+  $(js-file "alertingDashboards" "plugin")
   $(js-file "assistantDashboards" "chunk.10")
   $(js-file "assistantDashboards" "plugin")
-  $(js-file "reportsDashboards" "plugin")
-  $(js-file "alertingDashboards" "plugin")
   $(js-file "customImportMapDashboards" "plugin")
-  $(js-file "notificationsDashboards" "plugin")
   $(js-file "indexManagementDashboards" "plugin")
+  $(js-file "notificationsDashboards" "plugin")
+  $(js-file "observabilityDashboards" "plugin")
+  $(js-file "reportsDashboards" "plugin")
 )
 
 for value in "${files_to_recreate[@]}"; do
