@@ -123,7 +123,7 @@ sed -i -e "s|${old_category_notifications}|category:${category_explore}|" ./plug
 sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|g" ./plugins/indexManagementDashboards/target/public/indexManagementDashboards.plugin.js
 
 # Add category icon to Observability plugin and change order in the main menu
-sed -i -e "s|const OBSERVABILITY_APP_CATEGORIES=Object.freeze({observability:{id:\"observability\",label:external_osdSharedDeps_OsdI18n_[\"i18n\"].translate(\"core.ui.observabilityNavList.label\",{defaultMessage:\"Observability\"}),order:shared[\"Jb\"]}}|const OBSERVABILITY_APP_CATEGORIES=Object.freeze({observability:{id:\"observability\",euiIconType:'searchProfilerApp',label:external_osdSharedDeps_OsdI18n_[\"i18n\"].translate(\"core.ui.observabilityNavList.label\",{defaultMessage:\"Observability\"}),order:550}}|" ./plugins/observabilityDashboards/target/public/observabilityDashboards.plugin.js
+sed -i 's|const OBSERVABILITY_APP_CATEGORIES=Object\.freeze({observability:{id:"observability",label:external_osdSharedDeps_OsdI18n_\["i18n"\]\.translate("core\.ui\.observabilityNavList\.label",{defaultMessage:"Observability"}),order:shared\["Jb"\]}});|const OBSERVABILITY_APP_CATEGORIES=Object.freeze({observability:{id:"observability",euiIconType:"searchProfilerApp",label:external_osdSharedDeps_OsdI18n_["i18n"].translate("core.ui.observabilityNavList.label",{defaultMessage:"Observability"}),order:550}});|' ./plugins/observabilityDashboards/target/public/observabilityDashboards.plugin.js
 
 
 log
