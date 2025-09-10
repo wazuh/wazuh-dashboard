@@ -34,7 +34,7 @@ bash run-docker-compose.sh \
     --base main \
     --security main \
     --ml main \
-    --sa main \
+    --securityAnalytics main \
     --reporting main \
     --arm \
     --node-version 20.18.3
