@@ -10,10 +10,11 @@ import {
   EuiContextMenuPanel,
   EuiHeaderSectionItemButton,
   EuiHealth,
-  EuiButtonIcon,
   EuiPopover,
   EuiToolTip,
   EuiText,
+  EuiSpacer,
+  EuiLink,
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
@@ -98,13 +99,16 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
             status,
           }}
         />
-        <EuiToolTip position="bottom" content="View more details">
-          <EuiButtonIcon
-            href="/app/healthcheck"
-            iconType="iInCircle"
-            aria-label="Health check status"
-          />
-        </EuiToolTip>
+      </EuiText>
+      <EuiSpacer size="s" />
+      <EuiText>
+        <FormattedMessage
+          id="core.healthcheck.status.goToHealthCheckApp"
+          defaultMessage="Go to {link} App to see more details."
+          values={{
+            link: <EuiLink href="/app/healthcheck">Health Check</EuiLink>,
+          }}
+        />
       </EuiText>
     </div>
   );

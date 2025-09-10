@@ -15,6 +15,9 @@ import {
   EuiFlyoutBody,
   EuiFlyoutFooter,
   EuiButton,
+  EuiDescriptionList,
+  EuiDescriptionListTitle,
+  EuiDescriptionListDescription,
 } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
@@ -72,75 +75,105 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
           )}
           <EuiSpacer />
           <EuiFlexItem>
-            <EuiFlexGroup>
-              <EuiFlexItem>
-                <EuiText size="m" color="default">
-                  <FormattedMessage
-                    id="healthcheck.check.details._meta.isEnabled"
-                    defaultMessage="Enabled: {isEnabled}"
-                    values={{ isEnabled: _meta.isEnabled ? 'Yes' : 'No' }}
-                  />
-                </EuiText>
-              </EuiFlexItem>
-              <EuiFlexItem>
-                <EuiText size="m" color="default">
-                  <FormattedMessage
-                    id="healthcheck.check.details._meta.isCritical"
-                    defaultMessage="Critical: {isCritical}"
-                    values={{ isCritical: _meta.isCritical ? 'Yes' : 'No' }}
-                  />
-                </EuiText>
-              </EuiFlexItem>
-              <EuiFlexItem>
-                <EuiText size="m" color="default">
-                  <FormattedMessage
-                    id="healthcheck.check.details.status"
-                    defaultMessage="Status: {status}"
-                    values={{ status }}
-                  />
-                </EuiText>
-              </EuiFlexItem>
-            </EuiFlexGroup>
-            <EuiSpacer />
-            <EuiFlexGroup>
-              <EuiFlexItem>
-                <EuiText size="m" color="default">
-                  <FormattedMessage
-                    id="healthcheck.check.details.startedAt"
-                    defaultMessage="Created: {startedAt}"
-                    values={{
-                      startedAt: startedAt ? formatDate(startedAt) : '-',
-                    }}
-                  />
-                </EuiText>
-              </EuiFlexItem>
-              <EuiFlexItem>
-                <EuiText size="m" color="default">
-                  <FormattedMessage
-                    id="healthcheck.check.details.finishedAt"
-                    defaultMessage="Finished: {finishedAt}"
-                    values={{
-                      finishedAt: finishedAt ? formatDate(finishedAt) : '-',
-                    }}
-                  />
-                </EuiText>
-              </EuiFlexItem>
-              <EuiFlexItem>
-                <EuiText size="m" color="default">
-                  <FormattedMessage
-                    id="healthcheck.check.details.duration"
-                    defaultMessage="Duration: {duration}s"
-                    values={{
-                      duration: duration || '-',
-                    }}
-                  />
-                </EuiText>
-              </EuiFlexItem>
-            </EuiFlexGroup>
+            <EuiDescriptionList type="responsiveColumn">
+              <EuiDescriptionListTitle>
+                <FormattedMessage
+                  id="healthcheck.check.details._meta.isEnabled"
+                  defaultMessage="Enabled:"
+                />
+              </EuiDescriptionListTitle>
+
+              <EuiDescriptionListDescription>
+                <FormattedMessage
+                  id="healthcheck.check.details._meta.isEnabledValue"
+                  defaultMessage="{isEnabled}"
+                  values={{ isEnabled: _meta.isEnabled ? 'Yes' : 'No' }}
+                />
+              </EuiDescriptionListDescription>
+
+              <EuiDescriptionListTitle>
+                <FormattedMessage
+                  id="healthcheck.check.details._meta.isCritical"
+                  defaultMessage="Critical:"
+                />
+              </EuiDescriptionListTitle>
+
+              <EuiDescriptionListDescription>
+                <FormattedMessage
+                  id="healthcheck.check.details._meta.isCriticalValue"
+                  defaultMessage="{isCritical}"
+                  values={{ isCritical: _meta.isCritical ? 'Yes' : 'No' }}
+                />
+              </EuiDescriptionListDescription>
+
+              <EuiDescriptionListTitle>
+                <FormattedMessage id="healthcheck.check.details.status" defaultMessage="Status:" />
+              </EuiDescriptionListTitle>
+              <EuiDescriptionListDescription>
+                <FormattedMessage
+                  id="healthcheck.check.details.statusValue"
+                  defaultMessage="{status}"
+                  values={{ status }}
+                />
+              </EuiDescriptionListDescription>
+
+              <EuiDescriptionListTitle>
+                <FormattedMessage id="healthcheck.check.details.result" defaultMessage="Result:" />
+              </EuiDescriptionListTitle>
+              <EuiDescriptionListDescription>
+                <FormattedMessage
+                  id="healthcheck.check.details.resultValue"
+                  defaultMessage="{result}"
+                  values={{ result }}
+                />
+              </EuiDescriptionListDescription>
+
+              <EuiDescriptionListTitle>
+                <FormattedMessage
+                  id="healthcheck.check.details.startedAt"
+                  defaultMessage="Created:"
+                />
+              </EuiDescriptionListTitle>
+              <EuiDescriptionListDescription>
+                <FormattedMessage
+                  id="healthcheck.check.details.startedAtValue"
+                  defaultMessage="{startedAt}"
+                  values={{ startedAt: startedAt ? formatDate(startedAt) : '-' }}
+                />
+              </EuiDescriptionListDescription>
+
+              <EuiDescriptionListTitle>
+                <FormattedMessage
+                  id="healthcheck.check.details.finishedAt"
+                  defaultMessage="Finished:"
+                />
+              </EuiDescriptionListTitle>
+              <EuiDescriptionListDescription>
+                <FormattedMessage
+                  id="healthcheck.check.details.finishedAtValue"
+                  defaultMessage="{finishedAt}"
+                  values={{ finishedAt: finishedAt ? formatDate(finishedAt) : '-' }}
+                />
+              </EuiDescriptionListDescription>
+
+              <EuiDescriptionListTitle>
+                <FormattedMessage
+                  id="healthcheck.check.details.duration"
+                  defaultMessage="Duration:"
+                />
+              </EuiDescriptionListTitle>
+              <EuiDescriptionListDescription>
+                <FormattedMessage
+                  id="healthcheck.check.details.durationValue"
+                  defaultMessage="{duration}s"
+                  values={{ duration: duration || '-' }}
+                />
+              </EuiDescriptionListDescription>
+            </EuiDescriptionList>
           </EuiFlexItem>
         </EuiFlexGroup>
       </EuiFlyoutBody>
-      <EuiFlyoutFooter>
+      <EuiFlyoutFooter style={{ backgroundColor: 'transparent' }}>
         <EuiButton onClick={() => setIsFlyoutVisible(false)}>Close</EuiButton>
       </EuiFlyoutFooter>
     </EuiFlyout>
