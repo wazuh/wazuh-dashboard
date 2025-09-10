@@ -122,12 +122,10 @@ jobs:
           aws-region: ${{ secrets.CI_AWS_REGION }}
 
   # This job retrieves the necessary information about the plugins to be used in the build process.
-  # if need to add more forked plugins:
+  # if need to add more plugins:
   # - Add them to the matrix (name: <plugin-name>, packageName: <plugin-package-name>, repository: <plugin-repo-url>, outputNamePackge: <plugin-output-name>, outputSHA: <plugin-output-sha>)
+  #   - If need to add more plugins from the wazuh-dashboard-plugins repo, outputSHA can be omitted because it will be retrieved from the main plugin
   # - Add them to the outputs section (NAME_PLUGIN_... and WAZUH_..._SHA)
-  # If need to add more plugins from the wazuh-dashboard-plugins repo:
-  # - Add them to the run step (to generate the names in the 3 conditionals)
-  # - Add them to the outputs (NAME_PLUGIN_...)
   get-outputs-plugins:
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     name: get-outputs-plugins
@@ -157,11 +155,19 @@ jobs:
             repository: https://github.com/wazuh/wazuh-security-dashboards-plugin.git
             outputNamePackage: NAME_PLUGIN_SECURITY # this is for the output name of the plugin
             outputSHA: WAZUH_SECURITY_SHA # this is for the output sha of the plugin
-          - name: plugins
-            packageName: wazuh-dashboard-plugins
+          - name: plugins-main
+            packageName: wazuh-dashboard-plugins_wazuh
             repository: https://github.com/wazuh/wazuh-dashboard-plugins.git
-            outputNamePackage: WAZUH_PLUGINS_PLUGIN # this not used in this case because all three names are generated in the run step, if we need to add more plugins in this repo we add more on the run step
+            outputNamePackage: NAME_PLUGIN_WAZUH
             outputSHA: WAZUH_PLUGINS_SHA
+          - name: plugins-core
+            packageName: wazuh-dashboard-plugins_core
+            repository: https://github.com/wazuh/wazuh-dashboard-plugins.git
+            outputNamePackage: NAME_PLUGIN_CORE
+          - name: plugins-check-updates
+            packageName: wazuh-dashboard-plugins_wazuh-check-updates
+            repository: https://github.com/wazuh/wazuh-dashboard-plugins.git
+            outputNamePackage: NAME_PLUGIN_CHECK_UPDATES
           - name: reporting
             packageName: wazuh-dashboard-reporting
             repository: https://github.com/wazuh/wazuh-dashboard-reporting.git
@@ -206,13 +212,7 @@ jobs:
             echo "No plugin reference provided, using github.ref_name: ${{ github.ref_name }}"
             REFERENCE="${{ github.ref_name }}"
             SHA=$(git ls-remote $REPOSITORY "$REFERENCE" | cut -f1 | cut -c1-7)
-            if [ "${{matrix.plugin.name}}" == 'plugins' ]; then
-              NAME_PLUGIN_WAZUH=wazuh-dashboard-plugins_wazuh_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
-              NAME_PLUGIN_CORE=wazuh-dashboard-plugins_wazuh-core_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
-              NAME_PLUGIN_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
-            else 
-              PACKAGE_NAME=${{matrix.plugin.packageName}}_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
-            fi
+            PACKAGE_NAME=${{matrix.plugin.packageName}}_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
           else
             echo "Using reference: $REFERENCE"
             SHA=$(git ls-remote $REPOSITORY "$REFERENCE" | cut -f1 | cut -c1-7)
@@ -221,27 +221,16 @@ jobs:
               REFERENCE="${{ github.ref_name }}"
               SHA=$(git ls-remote $REPOSITORY $REFERENCE | cut -f1 | cut -c1-7)
             fi
-            if [ "${{matrix.plugin.name}}" == 'plugins' ]; then
-              NAME_PLUGIN_WAZUH=wazuh-dashboard-plugins_wazuh_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
-              NAME_PLUGIN_CORE=wazuh-dashboard-plugins_wazuh-core_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
-              NAME_PLUGIN_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
-            else 
-              PACKAGE_NAME=${{matrix.plugin.packageName}}_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
-            fi
+            PACKAGE_NAME=${{matrix.plugin.packageName}}_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
           fi
           if [ -z "$SHA" ]; then
             echo "Reference ${{ github.ref_name }} not found, check if the repository exists and the reference is correct."
             exit 1
           fi
-
-          if [ "${{matrix.plugin.name}}" == 'plugins' ]; then
-            echo "NAME_PLUGIN_WAZUH=$NAME_PLUGIN_WAZUH" >> $GITHUB_OUTPUT
-            echo "NAME_PLUGIN_CORE=$NAME_PLUGIN_CORE" >> $GITHUB_OUTPUT
-            echo "NAME_PLUGIN_CHECK_UPDATES=$NAME_PLUGIN_CHECK_UPDATES" >> $GITHUB_OUTPUT
-          else 
-            echo "${{matrix.plugin.outputNamePackage}}=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "${{matrix.plugin.outputNamePackage}}=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          if [ -n "${{ matrix.plugin.outputSHA}}" ]; then
+            echo "${{matrix.plugin.outputSHA}}=$SHA" >> $GITHUB_OUTPUT
           fi
-          echo "${{matrix.plugin.outputSHA}}=$SHA" >> $GITHUB_OUTPUT
 
   setup-variables:
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
