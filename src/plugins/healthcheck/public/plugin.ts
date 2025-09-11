@@ -1,4 +1,8 @@
-import { i18n } from '@osd/i18n';
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   AppMountParameters,
   CoreSetup,
@@ -9,6 +13,7 @@ import {
 import { HealtcheckPluginSetup, HealtcheckPluginStart, AppPluginStartDependencies } from './types';
 import { PLUGIN_ID, PLUGIN_NAME } from '../common';
 import { setCore, setHealthCheck } from './dashboards_services';
+import { mountButton } from './components/button_header/mount_button';
 
 export class HealtcheckPlugin implements Plugin<HealtcheckPluginSetup, HealtcheckPluginStart> {
   public setup(core: CoreSetup): HealtcheckPluginSetup {
@@ -33,6 +38,8 @@ export class HealtcheckPlugin implements Plugin<HealtcheckPluginSetup, Healtchec
   public start(core: CoreStart): HealtcheckPluginStart {
     setHealthCheck(core.healthCheck);
     setCore(core);
+
+    mountButton(core);
 
     return {};
   }

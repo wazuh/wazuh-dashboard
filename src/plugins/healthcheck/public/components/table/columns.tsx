@@ -4,21 +4,11 @@
  */
 
 import React from 'react';
-import { EuiBadge, EuiBasicTableProps, EuiButtonIcon, EuiText, EuiToolTip } from '@elastic/eui';
+import { EuiBasicTableProps, EuiButtonIcon, EuiText } from '@elastic/eui';
 import { i18n } from '@osd/i18n';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
-import { getHealthFromStatus } from '../services/health';
-import { Result, STATUS_CHECK_EXPLAIN } from '../../constants';
-
-const renderStatus = (result: Result) => {
-  const health = getHealthFromStatus(result);
-
-  return (
-    <EuiToolTip content={STATUS_CHECK_EXPLAIN[result]}>
-      <EuiBadge color={health}>{result}</EuiBadge>
-    </EuiToolTip>
-  );
-};
+import { RESULT } from '../../constants';
+import { BadgeResults } from '../utils/badge_results';
 
 export const tableColumns = (
   openFlyout: (item?: TaskInfo<{ isCritical: boolean; isEnabled: boolean }> | null) => void
@@ -56,7 +46,7 @@ export const tableColumns = (
       defaultMessage: 'Result',
     }),
     width: '100px',
-    render: (result: string) => renderStatus(result as Result),
+    render: (result: RESULT) => <BadgeResults result={result} />,
   },
   {
     field: 'status',

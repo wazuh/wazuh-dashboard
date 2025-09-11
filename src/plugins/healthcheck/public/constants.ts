@@ -29,7 +29,7 @@ export const TASK = {
   },
 } as const;
 
-export type Result = 'green' | 'yellow' | 'red' | 'gray';
+export type RESULT = 'green' | 'yellow' | 'red' | 'gray';
 
 export const STATUS_CHECKS_EXPLAIN = {
   green: i18n.translate('healthcheck.status.green', {

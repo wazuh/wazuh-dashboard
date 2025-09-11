@@ -1,14 +1,19 @@
-import { EuiBadge, EuiText, EuiToolTip } from '@elastic/eui';
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React from 'react';
+import { EuiText } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
 import { groupBy } from 'lodash';
-import { getHealthFromStatus } from './services/health';
-import { TASK, STATUS_CHECKS_EXPLAIN, Result } from '../constants';
+import { TASK, RESULT } from '../constants';
 import { HealthIcon } from './health_icon';
 import { TaskInfo } from '../../../../core/common/healthcheck';
+import { BadgeResults } from './utils/badge_results';
 
 interface TitleViewProps {
-  status: Result;
+  status: RESULT;
   checks: Array<TaskInfo<{ isCritical: boolean; isEnabled: boolean }>>;
 }
 
@@ -20,9 +25,7 @@ export const TitleView = ({ status, checks }: TitleViewProps) => {
       <EuiText>
         <h3>
           <FormattedMessage id="healthcheck.statusTitle" defaultMessage="Status is " />
-          <EuiToolTip content={STATUS_CHECKS_EXPLAIN[status]}>
-            <EuiBadge color={getHealthFromStatus(status)}>{status}</EuiBadge>
-          </EuiToolTip>
+          <BadgeResults result={status} />
         </h3>
       </EuiText>
       <div style={{ marginLeft: '4px' }}>

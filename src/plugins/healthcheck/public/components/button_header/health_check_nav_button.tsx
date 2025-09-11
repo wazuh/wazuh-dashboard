@@ -13,35 +13,43 @@ import {
   EuiPopover,
   EuiToolTip,
   EuiText,
-  EuiSpacer,
   EuiLink,
+  EuiBadge,
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
-import { HealthCheckConfig } from 'src/core/common/healthcheck';
-import { getHealthFromStatus } from './services/health';
-import { HealthCheckServiceStart, HealthCheckServiceStartDeps } from '../types';
-import { HealthCheckStatus } from '../service';
+import { HealthCheckConfig, HealthCheckStatus } from 'src/core/common/healthcheck';
+import { HealthCheckServiceStart } from 'opensearch-dashboards/public/healthcheck';
+import { CoreStart } from 'opensearch-dashboards/public';
+import { getHealthFromStatus } from '../services/health';
+import { RedirectAppLinks } from '../../../../opensearch_dashboards_react/public';
+import { getCore } from '../../dashboards_services';
+import { PLUGIN_NAME } from '../../../common';
+import { BadgeResults } from '../utils/badge_results';
 
 export interface HealthCheckNavButtonProps {
-  coreStart: HealthCheckServiceStartDeps;
+  coreStart: CoreStart;
   status$: BehaviorSubject<HealthCheckStatus>;
   fetch: HealthCheckServiceStart['client']['internal']['fetch'];
-  run: HealthCheckServiceStart['client']['internal']['run'];
   getConfig: () => Promise<HealthCheckConfig>;
-  formatDate: (date: string) => string;
 }
-export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
+export const HealthCheckNavButton = ({
+  getConfig,
+  fetch,
+  coreStart,
+  status$,
+}: HealthCheckNavButtonProps) => {
   const [isPopoverOpen, setPopoverOpen] = useState<boolean>(false);
-  const { status } = useObservable(props.status$, props.status$.getValue());
+  const { status } = useObservable(status$, status$.getValue());
   const updateInterval = useRef<Subscription>();
+  const core = getCore();
 
   useEffect(() => {
-    props.getConfig().then((config) => {
-      props.fetch().catch();
+    getConfig().then((config) => {
+      fetch().catch();
       const intervalConfig = config?.interval;
       if (interval) {
-        updateInterval.current = interval(intervalConfig).subscribe(() => props.fetch());
+        updateInterval.current = interval(intervalConfig).subscribe(() => fetch());
       }
     });
 
@@ -49,7 +57,7 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isPlacedInLeftNav = props.coreStart.uiSettings.get('home:useNewHomePage');
+  const isPlacedInLeftNav = coreStart.uiSettings.get('home:useNewHomePage');
 
   const overallStatusIndicator = (
     <EuiHealth
@@ -90,27 +98,31 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
   );
 
   const contextMenuPanel = (
-    <div style={{ maxWidth: '400px' }}>
-      <EuiText>
-        <FormattedMessage
-          id="core.healthcheck.status.contextMenu"
-          defaultMessage="Health check status: {status} "
-          values={{
-            status,
-          }}
-        />
+    <EuiContextMenuPanel>
+      <EuiText textAlign="center">
+        <h3>
+          <FormattedMessage
+            id="core.healthcheck.status.contextMenu"
+            defaultMessage="Health check status: "
+          />
+          <BadgeResults result={status} />
+        </h3>
+
+        <p>
+          <FormattedMessage
+            id="core.healthcheck.status.goToHealthCheckApp"
+            defaultMessage="For more details, go to the {link}"
+            values={{
+              link: (
+                <RedirectAppLinks application={core.application}>
+                  <EuiLink href="healthcheck">{PLUGIN_NAME}</EuiLink>
+                </RedirectAppLinks>
+              ),
+            }}
+          />
+        </p>
       </EuiText>
-      <EuiSpacer size="s" />
-      <EuiText>
-        <FormattedMessage
-          id="core.healthcheck.status.goToHealthCheckApp"
-          defaultMessage="Go to {link} App to see more details."
-          values={{
-            link: <EuiLink href="/app/healthcheck">Health Check</EuiLink>,
-          }}
-        />
-      </EuiText>
-    </div>
+    </EuiContextMenuPanel>
   );
 
   const popover = (
@@ -123,9 +135,9 @@ export const HealthCheckNavButton = (props: HealthCheckNavButtonProps) => {
       closePopover={() => {
         setPopoverOpen(false);
       }}
-      panelPaddingSize="s"
+      panelPaddingSize="m"
     >
-      <EuiContextMenuPanel>{contextMenuPanel}</EuiContextMenuPanel>
+      {contextMenuPanel}
     </EuiPopover>
   );
 
