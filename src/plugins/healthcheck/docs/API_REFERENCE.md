@@ -2,7 +2,7 @@
 
 ## Overview
 
-This documentation describes the APIs and interfaces available in the Health Check Plugin for developers who need to integrate with or extend the functionality.
+This documentation describes the APIs and interfaces available in the Health Check plugin for developers who need to integrate with or extend the functionality.
 
 ## Client APIs (Frontend)
 
