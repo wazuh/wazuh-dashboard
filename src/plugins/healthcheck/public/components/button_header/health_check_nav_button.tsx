@@ -71,7 +71,7 @@ export const HealthCheckNavButton = ({
     <EuiToolTip
       content={
         <FormattedMessage
-          id="core.healthcheck.status.tooltip"
+          id="healthcheck.status.tooltip"
           defaultMessage="Health check status: {status}"
           values={{
             status,
@@ -102,7 +102,7 @@ export const HealthCheckNavButton = ({
       <EuiText textAlign="center">
         <h3>
           <FormattedMessage
-            id="core.healthcheck.status.contextMenu"
+            id="healthcheck.status.contextMenu"
             defaultMessage="Health check status: "
           />
           <BadgeResults result={status} />
@@ -110,7 +110,7 @@ export const HealthCheckNavButton = ({
 
         <p>
           <FormattedMessage
-            id="core.healthcheck.status.goToHealthCheckApp"
+            id="healthcheck.status.goToHealthCheckApp"
             defaultMessage="For more details, go to the {link}"
             values={{
               link: (
