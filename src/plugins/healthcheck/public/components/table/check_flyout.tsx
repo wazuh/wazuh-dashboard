@@ -153,9 +153,6 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
           </EuiFlexItem>
         </EuiFlexGroup>
       </EuiFlyoutBody>
-      <EuiFlyoutFooter style={{ backgroundColor: 'transparent' }}>
-        <EuiButton onClick={() => setIsFlyoutVisible(false)}>Close</EuiButton>
-      </EuiFlyoutFooter>
     </EuiFlyout>
   );
 };
