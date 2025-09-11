@@ -1,6 +1,6 @@
 # Health Check Plugin Documentation
 
-Welcome to the complete documentation for the Wazuh Dashboard Health Check Plugin. This documentation is organized by audience and use type.
+Welcome to the complete documentation for the Wazuh dashboard Health Check plugin. This documentation is organized by audience and use type.
 
 ## 📚 Documentation Index
 
