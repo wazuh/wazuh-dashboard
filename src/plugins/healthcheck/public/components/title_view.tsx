@@ -25,7 +25,7 @@ export const TitleView = ({ status, checks }: TitleViewProps) => {
       <EuiText>
         <h3>
           <FormattedMessage id="healthcheck.statusTitle" defaultMessage="Status is " />
-          <BadgeResults result={status} />
+          <BadgeResults result={status} isEnabled={checks.some((check) => check._meta.isEnabled)} />
         </h3>
       </EuiText>
       <div style={{ marginLeft: '4px' }}>
@@ -35,10 +35,10 @@ export const TitleView = ({ status, checks }: TitleViewProps) => {
           TASK.RUN_RESULT.RED,
           TASK.RUN_RESULT.GRAY,
         ].map((result) => {
-          const CheckByResult = checksGroupByResult?.[result]?.length ?? 0;
+          const CheckByResult = checksGroupByResult?.[result.value]?.length ?? 0;
           if (CheckByResult > 0) {
             return (
-              <HealthIcon key={result} status={result}>
+              <HealthIcon key={result.value} status={result.value}>
                 {CheckByResult}
               </HealthIcon>
             );

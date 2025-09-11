@@ -4,6 +4,7 @@
  */
 
 import React, { FunctionComponent, useEffect, useState } from 'react';
+import { i18n } from '@osd/i18n';
 import { EuiBasicTable, EuiSearchBar, EuiSearchBarProps } from '@elastic/eui';
 import { isEqual } from 'lodash';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
@@ -59,28 +60,20 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
       field: 'result',
       items: [
         {
-          value: TASK.RUN_RESULT.GREEN,
-          name:
-            TASK.RUN_RESULT.GREEN.charAt(0).toUpperCase() +
-            TASK.RUN_RESULT.GREEN.slice(1).toLowerCase(),
+          value: TASK.RUN_RESULT.GREEN.value,
+          name: TASK.RUN_RESULT.GREEN.label,
         },
         {
-          value: TASK.RUN_RESULT.YELLOW,
-          name:
-            TASK.RUN_RESULT.YELLOW.charAt(0).toUpperCase() +
-            TASK.RUN_RESULT.YELLOW.slice(1).toLowerCase(),
+          value: TASK.RUN_RESULT.YELLOW.value,
+          name: TASK.RUN_RESULT.YELLOW.label,
         },
         {
-          value: TASK.RUN_RESULT.RED,
-          name:
-            TASK.RUN_RESULT.RED.charAt(0).toUpperCase() +
-            TASK.RUN_RESULT.RED.slice(1).toLowerCase(),
+          value: TASK.RUN_RESULT.RED.value,
+          name: TASK.RUN_RESULT.RED.label,
         },
         {
-          value: TASK.RUN_RESULT.GRAY,
-          name:
-            TASK.RUN_RESULT.GRAY.charAt(0).toUpperCase() +
-            TASK.RUN_RESULT.GRAY.slice(1).toLowerCase(),
+          value: TASK.RUN_RESULT.GRAY.value,
+          name: TASK.RUN_RESULT.GRAY.label,
         },
       ],
     },
@@ -88,16 +81,25 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
       type: 'field_value_toggle_group',
       field: '_meta.isCritical',
       items: [
-        { name: 'Critical', value: true },
-        { name: 'Non-critical', value: false },
+        {
+          name: i18n.translate('healthcheck.critical', { defaultMessage: 'Critical' }),
+          value: true,
+        },
+        {
+          name: i18n.translate('healthcheck.nonCritical', { defaultMessage: 'Non-critical' }),
+          value: false,
+        },
       ],
     },
     {
       type: 'field_value_toggle_group',
       field: '_meta.isEnabled',
       items: [
-        { name: 'Enabled', value: true },
-        { name: 'Disabled', value: false },
+        { name: i18n.translate('healthcheck.enabled', { defaultMessage: 'Enabled' }), value: true },
+        {
+          name: i18n.translate('healthcheck.disabled', { defaultMessage: 'Disabled' }),
+          value: false,
+        },
       ],
     },
   ];

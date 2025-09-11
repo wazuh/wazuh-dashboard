@@ -40,7 +40,7 @@ export const HealthCheckNavButton = ({
   status$,
 }: HealthCheckNavButtonProps) => {
   const [isPopoverOpen, setPopoverOpen] = useState<boolean>(false);
-  const { status } = useObservable(status$, status$.getValue());
+  const { status, checks } = useObservable(status$, status$.getValue());
   const updateInterval = useRef<Subscription>();
   const core = getCore();
 
@@ -105,10 +105,10 @@ export const HealthCheckNavButton = ({
             id="healthcheck.status.contextMenu"
             defaultMessage="Health check status: "
           />
-          <BadgeResults result={status} />
+          <BadgeResults result={status} isEnabled={checks.some((check) => check._meta.isEnabled)} />
         </h3>
 
-        <p>
+        <span>
           <FormattedMessage
             id="healthcheck.status.goToHealthCheckApp"
             defaultMessage="For more details, go to the {link}"
@@ -120,7 +120,7 @@ export const HealthCheckNavButton = ({
               ),
             }}
           />
-        </p>
+        </span>
       </EuiText>
     </EuiContextMenuPanel>
   );

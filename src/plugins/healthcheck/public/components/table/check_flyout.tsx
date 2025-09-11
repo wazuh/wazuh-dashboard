@@ -69,17 +69,19 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
       <EuiFlyoutBody banner={callOut}>
         <EuiFlexGroup direction="column">
           {error && (
-            <EuiFlexItem>
-              <EuiText size="m">
-                <FormattedMessage id="healthcheck.check.details.error" defaultMessage="Error:" />
-              </EuiText>
-              <EuiSpacer size="s" />
-              <EuiCallOut size="s" color={getHealthFromStatus(result)}>
-                <p>{error}</p>
-              </EuiCallOut>
-            </EuiFlexItem>
+            <>
+              <EuiFlexItem>
+                <EuiText size="m">
+                  <FormattedMessage id="healthcheck.check.details.error" defaultMessage="Error:" />
+                </EuiText>
+                <EuiSpacer size="s" />
+                <EuiCallOut size="s" color={getHealthFromStatus(result)}>
+                  <p>{error}</p>
+                </EuiCallOut>
+              </EuiFlexItem>
+              <EuiSpacer />
+            </>
           )}
-          <EuiSpacer />
           <EuiFlexItem>
             <EuiDescriptionList type="responsiveColumn">
               <EuiDescriptionListTitle>
@@ -115,7 +117,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                 <FormattedMessage id="healthcheck.check.details.result" defaultMessage="Result:" />
               </EuiDescriptionListTitle>
               <EuiDescriptionListDescription>
-                <BadgeResults result={result} />
+                <BadgeResults result={result} isEnabled={_meta.isEnabled} />
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>

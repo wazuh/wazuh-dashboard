@@ -46,7 +46,9 @@ export const tableColumns = (
       defaultMessage: 'Result',
     }),
     width: '100px',
-    render: (result: RESULT) => <BadgeResults result={result} />,
+    render: (result: RESULT, item: TaskInfo<{ isCritical: boolean; isEnabled: boolean }>) => (
+      <BadgeResults result={result} isEnabled={item._meta.isEnabled} />
+    ),
   },
   {
     field: 'status',
