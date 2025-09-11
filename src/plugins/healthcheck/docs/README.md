@@ -79,7 +79,7 @@ When reporting an issue, include:
 
 1. **Detailed description** of the problem
 2. **Steps to reproduce** the error
-3. **Wazuh Dashboard version**
+3. **Wazuh dashboard version**
 4. **Relevant logs** (if available)
 5. **Screenshots** (if applicable)
 
