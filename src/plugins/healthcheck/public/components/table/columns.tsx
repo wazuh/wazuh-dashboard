@@ -17,7 +17,10 @@ export const tableColumns = (
     render: (item: TaskInfo<{ isCritical: boolean; isEnabled: boolean }>) => (
       <EuiButtonIcon
         iconType="inspect"
-        aria-label="View details"
+        aria-label={i18n.translate(
+          'healthcheck.statusPage.statusTable.columns.inspectButtonAriaLabel',
+          { defaultMessage: 'Inspect' }
+        )}
         onClick={() => openFlyout(item)}
       />
     ),
