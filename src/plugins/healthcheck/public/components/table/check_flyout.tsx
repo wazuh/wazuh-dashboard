@@ -13,8 +13,6 @@ import {
   EuiFlyoutHeader,
   EuiTitle,
   EuiFlyoutBody,
-  EuiFlyoutFooter,
-  EuiButton,
   EuiDescriptionList,
   EuiDescriptionListTitle,
   EuiDescriptionListDescription,

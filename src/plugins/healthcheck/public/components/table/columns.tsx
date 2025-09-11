@@ -63,13 +63,9 @@ export const tableColumns = (
     truncateText: true,
     render: (error: string) => {
       if (!error) {
-        return 'Is healthy';
+        return '-';
       }
-      return (
-        <>
-          <span className="eui-textTruncate">{error}</span>
-        </>
-      );
+      return <span className="eui-textTruncate">{error}</span>;
     },
   },
 ];
