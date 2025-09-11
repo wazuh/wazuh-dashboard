@@ -22,9 +22,10 @@ import {
 import { FormattedMessage } from 'react-intl';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
 import { getHealthFromStatus } from '../services/health';
+import { BadgeResults } from '../utils/badge_results';
 
 interface CheckFlyoutProps {
-  check: TaskInfo;
+  check: TaskInfo<{ isEnabled: boolean; isCritical: boolean }>;
   formatDate: (date: string) => string;
   setIsFlyoutVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -42,6 +43,13 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
       </EuiText>
     </EuiCallOut>
   );
+
+  const responseYesOrNo = (value: boolean) =>
+    value ? (
+      <FormattedMessage id="healthcheck.yes" defaultMessage="Yes" />
+    ) : (
+      <FormattedMessage id="healthcheck.no" defaultMessage="No" />
+    );
 
   return (
     <EuiFlyout
@@ -84,11 +92,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
               </EuiDescriptionListTitle>
 
               <EuiDescriptionListDescription>
-                <FormattedMessage
-                  id="healthcheck.check.details._meta.isEnabledValue"
-                  defaultMessage="{isEnabled}"
-                  values={{ isEnabled: _meta.isEnabled ? 'Yes' : 'No' }}
-                />
+                {responseYesOrNo(_meta.isEnabled)}
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>
@@ -99,47 +103,31 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
               </EuiDescriptionListTitle>
 
               <EuiDescriptionListDescription>
-                <FormattedMessage
-                  id="healthcheck.check.details._meta.isCriticalValue"
-                  defaultMessage="{isCritical}"
-                  values={{ isCritical: _meta.isCritical ? 'Yes' : 'No' }}
-                />
+                {responseYesOrNo(_meta.isCritical)}
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>
                 <FormattedMessage id="healthcheck.check.details.status" defaultMessage="Status:" />
               </EuiDescriptionListTitle>
               <EuiDescriptionListDescription>
-                <FormattedMessage
-                  id="healthcheck.check.details.statusValue"
-                  defaultMessage="{status}"
-                  values={{ status }}
-                />
+                <p>{status}</p>
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>
                 <FormattedMessage id="healthcheck.check.details.result" defaultMessage="Result:" />
               </EuiDescriptionListTitle>
               <EuiDescriptionListDescription>
-                <FormattedMessage
-                  id="healthcheck.check.details.resultValue"
-                  defaultMessage="{result}"
-                  values={{ result }}
-                />
+                <BadgeResults result={result} />
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>
                 <FormattedMessage
                   id="healthcheck.check.details.startedAt"
-                  defaultMessage="Created:"
+                  defaultMessage="Started:"
                 />
               </EuiDescriptionListTitle>
               <EuiDescriptionListDescription>
-                <FormattedMessage
-                  id="healthcheck.check.details.startedAtValue"
-                  defaultMessage="{startedAt}"
-                  values={{ startedAt: startedAt ? formatDate(startedAt) : '-' }}
-                />
+                <p>{startedAt ? formatDate(startedAt) : '-'}</p>
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>
@@ -149,11 +137,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                 />
               </EuiDescriptionListTitle>
               <EuiDescriptionListDescription>
-                <FormattedMessage
-                  id="healthcheck.check.details.finishedAtValue"
-                  defaultMessage="{finishedAt}"
-                  values={{ finishedAt: finishedAt ? formatDate(finishedAt) : '-' }}
-                />
+                <p>{finishedAt ? formatDate(finishedAt) : '-'}</p>
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>
@@ -163,11 +147,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                 />
               </EuiDescriptionListTitle>
               <EuiDescriptionListDescription>
-                <FormattedMessage
-                  id="healthcheck.check.details.durationValue"
-                  defaultMessage="{duration}s"
-                  values={{ duration: duration || '-' }}
-                />
+                <p>{duration ? `${duration}s` : '-'}</p>
               </EuiDescriptionListDescription>
             </EuiDescriptionList>
           </EuiFlexItem>
