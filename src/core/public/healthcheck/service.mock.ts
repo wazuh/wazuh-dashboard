@@ -19,5 +19,6 @@ export const healthCheckServiceMock = {
         run: jest.fn(),
       },
     },
+    getConfig: jest.fn(),
   }),
 };

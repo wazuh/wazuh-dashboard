@@ -6,7 +6,6 @@
 import { BehaviorSubject } from 'rxjs';
 import { get } from 'lodash';
 import { TaskInfo } from 'src/core/common/healthcheck';
-import { mount } from './ui/mount';
 import { HealthCheckServiceStartDeps } from './types';
 import { TASK } from './constants';
 
@@ -111,17 +110,6 @@ export class HealthcheckService {
         }
       },
     };
-
-    // Mount UI button
-    if (core.healthCheckConfig.enabled) {
-      mount({
-        coreStart: core,
-        status$: this.status$,
-        fetch: deps.client.internal.fetch,
-        run: deps.client.internal.run,
-        getConfig: async () => core.healthCheckConfig,
-      });
-    }
 
     return deps;
   }

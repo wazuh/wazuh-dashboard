@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { EuiButtonIcon, EuiToolTip } from '@elastic/eui';
+import { EuiButtonEmpty, EuiToolTip } from '@elastic/eui';
 import { FormattedMessage } from '@osd/i18n/react';
 import { HealthCheckStatus } from 'src/core/common/healthcheck';
 import { useAsyncAction } from './hook/use_async_action';
@@ -49,10 +49,10 @@ interface ButtonExportHealthCheckProps {
 }
 
 export const ButtonExportHealthCheck = ({ data }: ButtonExportHealthCheckProps) => {
-  const action = useAsyncAction(() =>
+  const action = useAsyncAction((exportData: HealthCheckStatus) =>
     downloadFile(
       'healthcheck.json',
-      JSON.stringify({ ...data, _meta: { server: 'ready' } }, null, 2),
+      JSON.stringify({ ...exportData, _meta: { server: 'ready' } }, null, 2),
       'application/json'
     )
   );
@@ -60,19 +60,20 @@ export const ButtonExportHealthCheck = ({ data }: ButtonExportHealthCheckProps) 
     <EuiToolTip
       content={
         <FormattedMessage
-          id="core.healthcheck.export_healthcheck"
+          id="healthcheck.export_healthcheck"
           defaultMessage="Export health check data"
         />
       }
       position="bottom"
     >
-      <EuiButtonIcon
+      <EuiButtonEmpty
         iconType="exportAction"
-        onClick={action.run}
+        onClick={() => action.run(data)}
         isDisabled={action.running}
-        iconSize="l"
         aria-label="Export health check data"
-      />
+      >
+        Export
+      </EuiButtonEmpty>
     </EuiToolTip>
   );
 };

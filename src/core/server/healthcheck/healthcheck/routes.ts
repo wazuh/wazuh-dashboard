@@ -196,20 +196,21 @@ export function addRoutesReadyServer(
     handlerGetTasks.bind({ healthcheck, logger })
   );
 
+  // Under discussion whether to leave or remove the option to run the checks.
   // Run the internal health check tasks
-  router.post(
-    {
-      path: '/internal',
-      validate: {
-        query: schema.maybe(
-          schema.object({
-            name: validateTaskList,
-          })
-        ),
-      },
-    },
-    handlerRunTasks.bind({ healthcheck, logger })
-  );
+  // router.post(
+  //   {
+  //     path: '/internal',
+  //     validate: {
+  //       query: schema.maybe(
+  //         schema.object({
+  //           name: validateTaskList,
+  //         })
+  //       ),
+  //     },
+  //   },
+  //   handlerRunTasks.bind({ healthcheck, logger })
+  // );
 }
 
 // Routers not-ready server

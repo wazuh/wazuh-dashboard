@@ -133,7 +133,7 @@ describe('PluginsService', () => {
       savedObjects: savedObjectsServiceMock.createStartContract(),
       fatalErrors: fatalErrorsServiceMock.createStartContract(),
       workspaces: workspacesServiceMock.createStartContract(),
-      healthCheck: healthCheckServiceMock.createStartContract(),
+      healthCheck: healthCheckServiceMock.createStartContract() as any, // TODO: fix in healthcheck mock
     };
     mockStartContext = {
       ...mockStartDeps,
