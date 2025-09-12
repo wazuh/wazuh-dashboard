@@ -3,10 +3,12 @@
 # Default values
 NODE_VERSION="20.18.3"
 OPENSEARCH_DASHBOARD_VERSION="3.2.0.0"
-WAZUH_DASHBOARD_BRANCH="migrate-main-to-3.2.0"
-WAZUH_DASHBOARD_SECURITY_BRANCH="migrate-main-to-3.2.0.0"
-WAZUH_DASHBOARD_REPORTING_BRANCH="migrate-main-to-3.2.0.0"
-WAZUH_DASHBOARD_PLUGINS_BRANCH="migrate-main-to-3.2.0"
+WAZUH_DASHBOARD_BRANCH="main"
+WAZUH_DASHBOARD_SECURITY_BRANCH="main"
+WAZUH_DASHBOARD_REPORTING_BRANCH="main"
+WAZUH_DASHBOARD_PLUGINS_BRANCH="main"
+WAZUH_DASHBOARD_ML_COMMONS_BRANCH="main"
+WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH="main"
 TAG="3.2.0-5.0.0"
 PUSH=false
 
@@ -22,6 +24,8 @@ OPTIONS:
     -s, --security-branch           Wazuh Dashboard Security branch (default: $WAZUH_DASHBOARD_SECURITY_BRANCH)
     -r, --reporting-branch          Wazuh Dashboard Reporting branch (default: $WAZUH_DASHBOARD_REPORTING_BRANCH)
     -p, --plugins-branch            Wazuh Dashboard Plugins branch (default: $WAZUH_DASHBOARD_PLUGINS_BRANCH)
+    -ml, --ml-commons-branch         Wazuh Dashboard ML Commons branch (default: $WAZUH_DASHBOARD_ML_COMMONS_BRANCH)
+    -sa, --security-analytics-branch  Wazuh Dashboard Security Analytics branch (default: $WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH)
     -t, --tag                       Image tag (default: $TAG)
     --push                          Push image to registry
     -h, --help                      Show this help
@@ -60,6 +64,14 @@ while [[ $# -gt 0 ]]; do
             WAZUH_DASHBOARD_PLUGINS_BRANCH="$2"
             shift 2
             ;;
+        -ml|--ml-commons-branch)
+            WAZUH_DASHBOARD_ML_COMMONS_BRANCH="$2"
+            shift 2
+            ;;
+        -sa|--security-analytics-branch)
+            WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH="$2"
+            shift 2
+            ;;
         -t|--tag)
             TAG="$2"
             shift 2
@@ -88,6 +100,8 @@ echo "Wazuh Dashboard Branch: $WAZUH_DASHBOARD_BRANCH"
 echo "Security Branch: $WAZUH_DASHBOARD_SECURITY_BRANCH"
 echo "Reporting Branch: $WAZUH_DASHBOARD_REPORTING_BRANCH"
 echo "Plugins Branch: $WAZUH_DASHBOARD_PLUGINS_BRANCH"
+echo "ML Commons Branch: $WAZUH_DASHBOARD_ML_COMMONS_BRANCH"
+echo "Security Analytics Branch: $WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH"
 echo "Tag: quay.io/wazuh/osd-dev:$TAG"
 echo "Push: $PUSH"
 echo "==========================="
@@ -105,6 +119,8 @@ BUILDX_ARGS=(
     --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH="$WAZUH_DASHBOARD_SECURITY_BRANCH"
     --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH="$WAZUH_DASHBOARD_REPORTING_BRANCH"
     --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH="$WAZUH_DASHBOARD_PLUGINS_BRANCH"
+    --build-arg WAZUH_DASHBOARD_ML_COMMONS_BRANCH="$WAZUH_DASHBOARD_ML_COMMONS_BRANCH"
+    --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH="$WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH"
     -t quay.io/wazuh/osd-dev:"$TAG"
     -f wzd.dockerfile
 )
