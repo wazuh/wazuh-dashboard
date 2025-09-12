@@ -6,7 +6,7 @@
 import React from 'react';
 import { EuiHealth, EuiToolTip } from '@elastic/eui';
 import { TaskInfo } from 'src/core/common/healthcheck';
-import { getHealthFromStatus } from './services/health';
+import { mapTaskStatusToHealthColor } from './services/health';
 import { STATUS_CHECKS_EXPLAIN } from '../constants';
 
 export const HealthIcon = ({
@@ -20,7 +20,7 @@ export const HealthIcon = ({
 }) => {
   return (
     <EuiToolTip content={tooltip || STATUS_CHECKS_EXPLAIN[status]} position="bottom">
-      <EuiHealth color={getHealthFromStatus(status)}>{children}</EuiHealth>
+      <EuiHealth color={mapTaskStatusToHealthColor(status)}>{children}</EuiHealth>
     </EuiToolTip>
   );
 };

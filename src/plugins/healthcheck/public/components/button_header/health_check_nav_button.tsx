@@ -21,7 +21,7 @@ import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { HealthCheckConfig, HealthCheckStatus } from 'src/core/common/healthcheck';
 import { HealthCheckServiceStart } from 'opensearch-dashboards/public/healthcheck';
 import { CoreStart } from 'opensearch-dashboards/public';
-import { getHealthFromStatus } from '../services/health';
+import { mapTaskStatusToHealthColor } from '../services/health';
 import { RedirectAppLinks } from '../../../../opensearch_dashboards_react/public';
 import { getCore } from '../../dashboards_services';
 import { PLUGIN_NAME } from '../../../common';
@@ -61,7 +61,7 @@ export const HealthCheckNavButton = ({
 
   const overallStatusIndicator = (
     <EuiHealth
-      color={getHealthFromStatus(status)}
+      color={mapTaskStatusToHealthColor(status)}
       onClick={() => setPopoverOpen((prevState) => !prevState)}
     />
   );

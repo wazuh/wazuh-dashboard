@@ -21,8 +21,9 @@ import { getCore } from '../dashboards_services';
 import { ChecksTable } from './table/checks_table';
 import { TitleView } from './title_view';
 import { WAZUH_MAJOR, WAZUH_MINOR } from '../constants';
+import { HealthCheckErrorBoundary } from './common/error_boundary/error_boundary';
 
-export const HealthCheck = () => {
+export const HealthCheckContent = () => {
   const core = getCore();
 
   useMount(() => {
@@ -51,7 +52,7 @@ export const HealthCheck = () => {
     });
   }, [fetch, getConfig]);
 
-  const contextMenuPanel = (
+  return (
     <div>
       <EuiFlexGroup
         gutterSize="xs"
@@ -89,6 +90,14 @@ export const HealthCheck = () => {
       <ChecksTable checks={checks} />
     </div>
   );
+};
 
-  return <I18nProvider>{contextMenuPanel}</I18nProvider>;
+export const HealthCheck = () => {
+  return (
+    <I18nProvider>
+      <HealthCheckErrorBoundary>
+        <HealthCheckContent />
+      </HealthCheckErrorBoundary>
+    </I18nProvider>
+  );
 };

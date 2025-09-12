@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { EuiBadge, EuiToolTip } from '@elastic/eui';
-import { getHealthFromStatus } from '../services/health';
+import { mapTaskStatusToHealthColor } from '../services/health';
 import { RESULT, STATUS_CHECK_EXPLAIN, TASK } from '../../constants';
 
 interface BadgeResultsProps {
@@ -14,7 +14,7 @@ interface BadgeResultsProps {
 }
 
 export const BadgeResults = ({ result, isEnabled }: BadgeResultsProps) => {
-  const health = getHealthFromStatus(result);
+  const health = mapTaskStatusToHealthColor(result);
 
   if (!isEnabled && result === TASK.RUN_RESULT.GRAY.value) {
     return (

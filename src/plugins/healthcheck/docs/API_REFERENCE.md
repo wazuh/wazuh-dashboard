@@ -66,14 +66,14 @@ interface CheckInfo {
 
 ### Utility Functions
 
-#### getHealthFromStatus()
+#### mapTaskStatusToHealthColor()
 
 Maps health status to UI color.
 
 ```typescript
-import { getHealthFromStatus } from './services/health';
+import { mapTaskStatusToHealthColor } from './services/health';
 
-const healthColor = getHealthFromStatus('green'); // returns 'success'
+const healthColor = mapTaskStatusToHealthColor('green'); // returns 'success'
 ```
 
 **Status Mapping:**

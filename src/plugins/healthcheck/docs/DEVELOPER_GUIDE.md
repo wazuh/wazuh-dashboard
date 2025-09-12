@@ -97,15 +97,15 @@ export const HealthCheck = () => {
 #### Health Service (services/health.ts)
 
 ```typescript
-const mapStatusHealth = {
+const taskStatusColorMapping = {
   green: 'success',
   yellow: 'warning',
   red: 'danger',
   gray: 'subdued',
 };
 
-export function getHealthFromStatus(status: TaskInfo['result']) {
-  return (status && mapStatusHealth[status]) || mapStatusHealth.gray;
+export function mapTaskStatusToHealthColor(status: TaskInfo['result']) {
+  return (status && taskStatusColorMapping[status]) || taskStatusColorMapping.gray;
 }
 ```
 

@@ -19,7 +19,7 @@ import {
 } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
-import { getHealthFromStatus } from '../services/health';
+import { mapTaskStatusToHealthColor } from '../services/health';
 import { BadgeResults } from '../utils/badge_results';
 
 interface CheckFlyoutProps {
@@ -75,7 +75,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                   <FormattedMessage id="healthcheck.check.details.error" defaultMessage="Error:" />
                 </EuiText>
                 <EuiSpacer size="s" />
-                <EuiCallOut size="s" color={getHealthFromStatus(result)}>
+                <EuiCallOut size="s" color={mapTaskStatusToHealthColor(result)}>
                   <p>{error}</p>
                 </EuiCallOut>
               </EuiFlexItem>
