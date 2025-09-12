@@ -163,7 +163,7 @@ The task has the following data related to the execution:
 interface InitializationTaskRunData {
   name: string;
   status: 'not_started' | 'running' | 'finished';
-  result: 'green' | 'red' | null;
+  result: 'green' | 'yellow' | 'red' | 'gray' | null;
   createdAt: string | null;
   startedAt: string | null;
   finishedAt: string | null;
@@ -183,6 +183,54 @@ The backend service registers routes to manage the related data:
 - `GET /api/healthcheck/internal`: allow to retrieve the run info of the checks. This allows to use the `name` query parameter to get specific checks.
 
 - `POST /api/healthcheck/internal`: allow to run info of the checks. This allows to use the `name` query parameter to get specific checks.
+
+## Definitions and rules
+
+* **Task / individual check**
+
+  * status (only `not_started`, `in_progress`, or `finished`)
+  * result (one of `green`, `yellow`, `red`, or `gray`)
+
+    * `green`: OK
+    * `red`: failed — critical
+    * `yellow`: failed — non‑critical
+    * `gray`: unknown / not executed (typically because `status != "finished"`)
+  * **Failed** ⟶ when `status == "finished"` and `result` is `red` or `yellow`.
+  * `isCritical` remains a task metadata that classifies the check. In the "server is not ready yet" UI, the distinction critical/non‑critical is derived from the `result` color: `red` = critical failure, `yellow` = non‑critical failure.
+    * `true` = **critical**; `false` or absent = **non-critical**.
+  * When a task is considered “failed”
+
+    * `failed` ⇢ `isEnabled == true` and `status == "finished"` and `result == "red"`.
+    * Criticality does **not** affect whether it is failed; it only affects the **summary**.
+
+* **Check summary (aggregate of the set of tasks)**
+
+  * `result` can be: `red`, `yellow`, `green` or `gray`.
+  * **Red** in the summary when there is **at least one critical task with `result == "red"`**.
+  * **Yellow** in the summary when there are **no critical failures** and there is **at least one non‑critical failed task** (`result == "yellow"`).
+  * **Green** in the summary when all tasks are **finished** and the critical ones are `green`.
+  * **Gray** in any other case (e.g., all `gray` or no tasks enabled).
+  * The summary does **not** have `isCritical` (because it is already inferred from the tasks).
+
+### Answers to the doubts
+
+1. **“For a task to be considered *failed*, must it be different from `green` and `gray`; that is `red` or `yellow`?”**
+   **Yes.** In an **individual task**, a task is considered *failed* when `status == "finished"` and `result` is `red` (**critical failure**) or `yellow` (**non‑critical failure**).
+
+2. **“If `result` is `red`, doesn’t that already imply it’s critical and `isCritical` is redundant?”**
+   In the "server is not ready yet" UI, the `result` color encodes the *criticality of a failure*: `red` = critical, `yellow` = non‑critical. The `isCritical` field, however, still exists in the task metadata and can be used by services or other UIs; when a task succeeds (`green`), it may still be classified as critical or not by metadata even though the color is not conveying that distinction.
+
+### Quick table
+
+| Level         | Possible `result` values         | `yellow`? | When is it *failed*?                   |
+| ------------- | -------------------------------- | --------- | -------------------------------------- |
+| Task / Check  | `red`, `yellow`, `green`, `gray` | Yes       | If `result` is `red` or `yellow`       |
+| Check Summary | `red`, `yellow`, `green`, `gray` | Yes       | N/A (aggregate state only)             |
+
+### Conclusion:
+- The `yellow` result is supported at the task level to represent **non‑critical failures**, and it also appears in the summary when there are no critical failures.
+- The `isCritical` property remains part of the task metadata. In the not‑ready UI, criticality of failures is conveyed via `result` color (`red` vs `yellow`).
+
 
 # Notes
 
