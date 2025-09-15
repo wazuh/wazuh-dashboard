@@ -46,7 +46,9 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => {
               {error.message}
               {error.stack && (
                 <>
-                  {'\n\nStack trace:'}
+                  {i18n.translate('healthcheck.errorBoundary.stackTrace', {
+                    defaultMessage: '\n\nStack trace:',
+                  })}
                   {error.stack}
                 </>
               )}

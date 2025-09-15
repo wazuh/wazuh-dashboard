@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { EuiText } from '@elastic/eui';
+import { EuiText, EuiFlexGroup, EuiFlexItem } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
 import { groupBy } from 'lodash';
 import { TASK, RESULT } from '../constants';
@@ -21,14 +21,19 @@ export const TitleView = ({ status, checks }: TitleViewProps) => {
   const checksGroupByResult = groupBy(checks, 'result');
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'right' }}>
-      <EuiText>
-        <h3>
-          <FormattedMessage id="healthcheck.statusTitle" defaultMessage="Status is " />
-          <BadgeResults result={status} isEnabled={checks.some((check) => check._meta.isEnabled)} />
-        </h3>
-      </EuiText>
-      <div style={{ marginLeft: '4px' }}>
+    <EuiFlexGroup alignItems="center" justifyContent="flexStart">
+      <EuiFlexItem grow={false}>
+        <EuiText>
+          <h3>
+            <FormattedMessage id="healthcheck.statusTitle" defaultMessage="Status is " />
+            <BadgeResults
+              result={status}
+              isEnabled={checks.some((check) => check._meta.isEnabled)}
+            />
+          </h3>
+        </EuiText>
+      </EuiFlexItem>
+      <EuiFlexItem grow={false} style={{ marginLeft: '4px' }}>
         {[
           TASK.RUN_RESULT.GREEN,
           TASK.RUN_RESULT.YELLOW,
@@ -45,7 +50,7 @@ export const TitleView = ({ status, checks }: TitleViewProps) => {
           }
           return null;
         })}
-      </div>
-    </div>
+      </EuiFlexItem>
+    </EuiFlexGroup>
   );
 };
