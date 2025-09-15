@@ -7,7 +7,7 @@ import React, { ReactNode } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { i18n } from '@osd/i18n';
 import { FormattedMessage } from '@osd/i18n/react';
-import { EuiEmptyPrompt, EuiCodeBlock, EuiSpacer, EuiCallOut } from '@elastic/eui';
+import { EuiEmptyPrompt, EuiCodeBlock, EuiSpacer, EuiCallOut, EuiText } from '@elastic/eui';
 
 interface ErrorFallbackProps {
   error: Error;
@@ -42,14 +42,23 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => {
             color="danger"
             iconType="alert"
           >
-            <EuiCodeBlock language="text" fontSize="s" paddingSize="s">
+            <EuiCodeBlock
+              language="text"
+              fontSize="s"
+              paddingSize="s"
+              isCopyable
+              style={{ textAlign: 'left' }}
+            >
               {error.message}
               {error.stack && (
                 <>
+                  <EuiSpacer size="m" />
                   {i18n.translate('healthcheck.errorBoundary.stackTrace', {
-                    defaultMessage: '\n\nStack trace:',
+                    defaultMessage: 'Stack trace:',
                   })}
-                  {error.stack}
+                  <EuiText size="s" style={{ marginLeft: '20px' }}>
+                    {error.stack}
+                  </EuiText>
                 </>
               )}
             </EuiCodeBlock>
