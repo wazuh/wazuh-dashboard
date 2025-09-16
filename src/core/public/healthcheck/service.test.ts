@@ -5,14 +5,11 @@
 
 import { first } from 'rxjs/operators';
 import { HealthcheckService } from './service';
-import { mount as mountUI } from './ui/mount';
 import { HealthCheckConfig } from 'src/core/common/healthcheck';
 import { httpServiceMock } from '../http/http_service.mock';
 import { notificationServiceMock } from '../notifications/notifications_service.mock';
 import { chromeServiceMock } from '../chrome/chrome_service.mock';
 import { uiSettingsServiceMock } from '../ui_settings/ui_settings_service.mock';
-
-jest.mock('./ui/mount', () => ({ mount: jest.fn() }));
 
 const initialChecks = [
   { name: 'task:1', result: 'green', status: 'finished', _meta: {} },
@@ -37,8 +34,6 @@ describe('HealthcheckService', () => {
     };
 
     service.start(core);
-
-    expect(mountUI).toBeCalledTimes(1);
   });
 
   it('fetch-run', async () => {

@@ -8,10 +8,11 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 5.0.0
 - Health check service [#811](https://github.com/wazuh/wazuh-dashboard/pull/811) [#866](https://github.com/wazuh/wazuh-dashboard/pull/866)
+- Added Health Check plugin [#870](https://github.com/wazuh/wazuh-dashboard/pull/870)
 
 ### Removed
 
-- Removed creation of /usr/lib/.build-id/* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
+- Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
 
 ## Wazuh dashboard v4.14.0 - OpenSearch Dashboards 2.19.2 - Revision 00
 
@@ -139,4 +140,3 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Changed default logos and main menu app categories [141](https://github.com/wazuh/wazuh-dashboard/pull/141)
 - Changed default value of useExpandedHeader to false [#247](https://github.com/wazuh/wazuh-dashboard/pull/247)
 - Changed build number to match the Wazuh standard [#284](https://github.com/wazuh/wazuh-dashboard/pull/284)
- 

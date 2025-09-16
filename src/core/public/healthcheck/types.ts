@@ -31,4 +31,5 @@ export interface HealthCheckServiceStart {
       run: (tasknames?: string[]) => Promise<HealthCheckStatus>;
     };
   };
+  getConfig: () => Promise<HealthCheckConfig>;
 }
