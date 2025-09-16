@@ -1,4 +1,4 @@
-name: Repository bumper
+name: (5.x) Repository bumper
 run-name: Bump ${{ github.ref_name }} (${{ inputs.id }})
 
 on:
@@ -11,6 +11,11 @@ on:
         type: string
       stage:
         description: 'Version stage (e.g. alpha0)'
+        default: ''
+        required: false
+        type: string
+      date:
+        description: 'Version release date (yyyy-mm-dd, e.g. 2025-04-13)'
         default: ''
         required: false
         type: string
@@ -95,6 +100,10 @@ jobs:
             script_params="--stage ${stage} --tag"
           elif [[ -z "$version" && -z "$stage" && "$tag" == "true" ]]; then
             script_params="--tag"
+          fi
+
+          if [[ -n "$DATE" ]]; then
+            script_params+=" --date ${DATE}"
           fi
 
           issue_number=$(echo "${{ inputs.issue-link }}" | awk -F'/' '{print $NF}')
