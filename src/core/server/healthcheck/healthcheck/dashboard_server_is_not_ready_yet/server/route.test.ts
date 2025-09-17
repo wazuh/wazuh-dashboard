@@ -16,7 +16,10 @@ describe('configureDashboardServerIsNotReadyRoutes', () => {
     const server = { route: jest.fn() } as any;
 
     // Provide required options as per current route signature
-    configureDashboardServerIsNotReadyRoutes(server, { serverBasePath: '' });
+    configureDashboardServerIsNotReadyRoutes(server, {
+      getTroubleshootingLink: () => 'https://example.healthcheck-docs.com',
+      serverBasePath: '',
+    });
 
     // One catch-all HTML route + three static asset routes
     expect(server.route).toHaveBeenCalledTimes(4);
