@@ -21,7 +21,7 @@ export const TitleView = ({ status, checks }: TitleViewProps) => {
   const checksGroupByResult = groupBy(checks, 'result');
 
   return (
-    <EuiFlexGroup alignItems="center" justifyContent="flexStart">
+    <EuiFlexGroup alignItems="center" justifyContent="flexStart" gutterSize="s" responsive={false}>
       <EuiFlexItem grow={false}>
         <EuiText>
           <h3>
@@ -33,24 +33,24 @@ export const TitleView = ({ status, checks }: TitleViewProps) => {
           </h3>
         </EuiText>
       </EuiFlexItem>
-      <EuiFlexItem grow={false} style={{ marginLeft: '4px' }}>
-        {[
-          TASK.RUN_RESULT.GREEN,
-          TASK.RUN_RESULT.YELLOW,
-          TASK.RUN_RESULT.RED,
-          TASK.RUN_RESULT.GRAY,
-        ].map((result) => {
-          const CheckByResult = checksGroupByResult?.[result.value]?.length ?? 0;
-          if (CheckByResult > 0) {
-            return (
+      {[
+        TASK.RUN_RESULT.GREEN,
+        TASK.RUN_RESULT.YELLOW,
+        TASK.RUN_RESULT.RED,
+        TASK.RUN_RESULT.GRAY,
+      ].map((result) => {
+        const CheckByResult = checksGroupByResult?.[result.value]?.length ?? 0;
+        if (CheckByResult > 0) {
+          return (
+            <EuiFlexItem grow={false}>
               <HealthIcon key={result.value} status={result.value}>
                 {CheckByResult}
               </HealthIcon>
-            );
-          }
-          return null;
-        })}
-      </EuiFlexItem>
+            </EuiFlexItem>
+          );
+        }
+        return null;
+      })}
     </EuiFlexGroup>
   );
 };
