@@ -14,7 +14,6 @@ import {
   EuiToolTip,
   EuiText,
   EuiLink,
-  EuiBadge,
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
@@ -115,7 +114,9 @@ export const HealthCheckNavButton = ({
             values={{
               link: (
                 <RedirectAppLinks application={core.application}>
-                  <EuiLink href={`/app/${PLUGIN_ID}`}>{PLUGIN_NAME}</EuiLink>
+                  <EuiLink href={getCore().application.getUrlForApp(PLUGIN_ID)}>
+                    {PLUGIN_NAME}
+                  </EuiLink>
                 </RedirectAppLinks>
               ),
             }}
