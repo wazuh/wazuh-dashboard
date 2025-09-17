@@ -7,7 +7,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Added
 
 - Support for Wazuh 4.14.0
-- Added Observability and Anomaly Detection plugins to default installation [#843](https://github.com/wazuh/wazuh-dashboard/pull/843) [#905](https://github.com/wazuh/wazuh-dashboard/pull/905) [#909](https://github.com/wazuh/wazuh-dashboard/pull/909)
+- Added Anomaly Detection plugins to default installation [#843](https://github.com/wazuh/wazuh-dashboard/pull/843) [#905](https://github.com/wazuh/wazuh-dashboard/pull/905) [#909](https://github.com/wazuh/wazuh-dashboard/pull/909) [#913](https://github.com/wazuh/wazuh-dashboard/pull/913)
 - Added ML Commons plugin to default installation [#875](https://github.com/wazuh/wazuh-dashboard/pull/875)
 - Added Assistant Dashboards plugin to default installation [#821](https://github.com/wazuh/wazuh-dashboard/pull/821)
 
