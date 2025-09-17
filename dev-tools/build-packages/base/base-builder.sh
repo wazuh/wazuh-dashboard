@@ -144,10 +144,6 @@ sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|
 
 assistant_dashboard_whitelabeling
 
-# Add category icon to Observability plugin and change order in the main menu
-sed -i 's|const OBSERVABILITY_APP_CATEGORIES=Object\.freeze({observability:{id:"observability",label:external_osdSharedDeps_OsdI18n_\["i18n"\]\.translate("core\.ui\.observabilityNavList\.label",{defaultMessage:"Observability"}),order:shared\["Jb"\]}});|const OBSERVABILITY_APP_CATEGORIES=Object.freeze({observability:{id:"observability",euiIconType:"searchProfilerApp",label:external_osdSharedDeps_OsdI18n_["i18n"].translate("core.ui.observabilityNavList.label",{defaultMessage:"Observability"}),order:150}});|' ./plugins/observabilityDashboards/target/public/observabilityDashboards.plugin.js
-
-
 log
 log "Recreating plugin files"
 log
@@ -161,7 +157,6 @@ files_to_recreate=(
   $(js-file "customImportMapDashboards" "plugin")
   $(js-file "indexManagementDashboards" "plugin")
   $(js-file "notificationsDashboards" "plugin")
-  $(js-file "observabilityDashboards" "plugin")
   $(js-file "reportsDashboards" "plugin")
 )
 
