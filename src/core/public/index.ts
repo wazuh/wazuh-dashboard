@@ -103,6 +103,7 @@ import {
 import { Branding } from '../types';
 import { WorkspacesStart, WorkspacesSetup } from './workspace';
 import { KeyboardShortcutSetup, KeyboardShortcutStart } from './keyboard_shortcut';
+import { HealthCheckServiceSetup, HealthCheckServiceStart } from './healthcheck';
 
 export type { Logos } from '../common';
 export { PackageInfo, EnvironmentMode } from '../server/types';
@@ -291,6 +292,9 @@ export interface CoreSetup<TPluginsStart extends object = object, TStart = unkno
   workspaces: WorkspacesSetup;
   /** {@link KeyboardShortcutsSetup} */
   keyboardShortcut: KeyboardShortcutSetup;
+  // Wazuh
+  /** {@link HealthCheckServiceSetup} */
+  healthCheck: HealthCheckServiceSetup;
 }
 
 /**
@@ -349,6 +353,9 @@ export interface CoreStart {
   workspaces: WorkspacesStart;
   /** {@link KeyboardShortcutStart} */
   keyboardShortcut?: KeyboardShortcutStart;
+  // Wazuh
+  /** {@link HealthCheckServiceStart} */
+  healthCheck: HealthCheckServiceStart;
 }
 
 export {

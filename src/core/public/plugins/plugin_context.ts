@@ -124,6 +124,8 @@ export function createPluginSetupContext<
     getStartServices: () => plugin.startDependencies,
     workspaces: deps.workspaces,
     keyboardShortcut: deps.keyboardShortcut,
+    // Wazuh
+    healthCheck: deps.healthCheck,
   };
 }
 
@@ -179,5 +181,7 @@ export function createPluginStartContext<
     fatalErrors: deps.fatalErrors,
     workspaces: deps.workspaces,
     keyboardShortcut: deps.keyboardShortcut,
+    // Wazuh
+    healthCheck: deps.healthCheck,
   };
 }

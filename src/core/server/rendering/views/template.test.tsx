@@ -8,6 +8,8 @@ import { injectedMetadataServiceMock } from '../../../public/mocks';
 import { httpServiceMock } from '../../http/http_service.mock';
 import { Template } from './template';
 import { renderWithIntl } from 'test_utils/enzyme_helpers';
+// Wazuh
+import { healthCheckConfig } from 'opensearch-dashboards/server/healthcheck/healthcheck/health_check.mock';
 
 const http = httpServiceMock.createStartContract();
 const injectedMetadata = injectedMetadataServiceMock.createSetupContract();
@@ -58,6 +60,8 @@ function mockProps() {
       branding: injectedMetadata.getBranding(),
       survey: injectedMetadata.getSurvey(),
       keyboardShortcuts: injectedMetadata.getKeyboardShortcuts(),
+      // Wazuh
+      healthCheck: healthCheckConfig,
     },
   };
 }

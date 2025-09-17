@@ -49,6 +49,8 @@ const createSetupContractMock = () => {
     getKeyboardShortcuts: jest.fn(),
     getWazuhVersion: jest.fn(),
     getWazuhDocVersion: jest.fn(),
+    // Wazuh
+    getHealthCheck: jest.fn(),
   };
   setupContract.getCspConfig.mockReturnValue({ warnLegacyBrowsers: true });
   setupContract.getOpenSearchDashboardsVersion.mockReturnValue('opensearchDashboardsVersion');
