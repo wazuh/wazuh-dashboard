@@ -55,6 +55,8 @@ import { RenderingService } from './rendering';
 import { SavedObjectsService } from './saved_objects';
 import { UiSettingsService } from './ui_settings';
 import { WorkspacesService } from './workspace';
+// Wazuh
+import { HealthcheckService } from './healthcheck';
 
 interface Params {
   rootDomElement: HTMLElement;
@@ -108,6 +110,8 @@ export class CoreSystem {
   private readonly context: ContextService;
   private readonly integrations: IntegrationsService;
   private readonly coreApp: CoreApp;
+  // Wazuh
+  private readonly healthCheck: HealthcheckService;
 
   private readonly rootDomElement: HTMLElement;
   private readonly coreContext: CoreContext;
@@ -141,6 +145,8 @@ export class CoreSystem {
     this.application = new ApplicationService();
     this.integrations = new IntegrationsService();
     this.workspaces = new WorkspacesService();
+    // Wazuh
+    this.healthCheck = new HealthcheckService();
 
     this.coreContext = { coreId: Symbol('core'), env: injectedMetadata.env };
 
@@ -164,6 +170,8 @@ export class CoreSystem {
       const uiSettings = this.uiSettings.setup({ http, injectedMetadata });
       const notifications = this.notifications.setup({ uiSettings });
       const workspaces = this.workspaces.setup();
+      // Wazuh
+      const healthCheck = this.healthCheck.setup();
 
       const pluginDependencies = this.plugins.getOpaqueIds();
       const context = this.context.setup({
@@ -183,6 +191,8 @@ export class CoreSystem {
         notifications,
         uiSettings,
         workspaces,
+        // Wazuh
+        healthCheck,
       };
 
       // Services that do not expose contracts at setup
@@ -239,6 +249,15 @@ export class CoreSystem {
         workspaces,
       });
 
+      // Wazuh
+      const healthCheck = await this.healthCheck.start({
+        chrome,
+        uiSettings,
+        http,
+        notifications,
+        healthCheckConfig: injectedMetadata.getHealthCheck(),
+      });
+
       this.coreApp.start({ application, http, notifications, uiSettings });
 
       application.registerMountContext(this.coreContext.coreId, 'core', () => ({
@@ -268,6 +287,8 @@ export class CoreSystem {
         uiSettings,
         fatalErrors,
         workspaces,
+        // Wazuh
+        healthCheck,
       };
 
       await this.plugins.start(core);
@@ -312,6 +333,8 @@ export class CoreSystem {
 
   public stop() {
     this.plugins.stop();
+    // Wazuh
+    this.healthCheck.stop();
     this.coreApp.stop();
     this.notifications.stop();
     this.http.stop();
