@@ -24,7 +24,7 @@ import { CoreStart } from 'opensearch-dashboards/public';
 import { mapTaskStatusToHealthColor } from '../services/health';
 import { RedirectAppLinks } from '../../../../opensearch_dashboards_react/public';
 import { getCore } from '../../dashboards_services';
-import { PLUGIN_NAME } from '../../../common';
+import { PLUGIN_ID, PLUGIN_NAME } from '../../../common';
 import { BadgeResults } from '../utils/badge_results';
 
 export interface HealthCheckNavButtonProps {
@@ -115,7 +115,7 @@ export const HealthCheckNavButton = ({
             values={{
               link: (
                 <RedirectAppLinks application={core.application}>
-                  <EuiLink href="healthcheck">{PLUGIN_NAME}</EuiLink>
+                  <EuiLink href={`/app/${PLUGIN_ID}`}>{PLUGIN_NAME}</EuiLink>
                 </RedirectAppLinks>
               ),
             }}
