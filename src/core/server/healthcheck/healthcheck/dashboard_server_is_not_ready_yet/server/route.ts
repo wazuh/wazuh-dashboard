@@ -17,9 +17,9 @@ import { dashboardServerIsNotReadyYet } from '..';
 export const configureDashboardServerIsNotReadyRoutes = (
   server: HttpServerSetup['server'],
   {
-    documentationTroubleshootingLink,
+    getTroubleshootingLink,
     serverBasePath = '',
-  }: { documentationTroubleshootingLink?: string; serverBasePath: string }
+  }: { getTroubleshootingLink: () => string; serverBasePath: string }
 ) => {
   const appName = 'Wazuh dashboard';
 
@@ -29,7 +29,7 @@ export const configureDashboardServerIsNotReadyRoutes = (
     handler: (_request: Request, h: ResponseToolkit) => {
       const html = `<!DOCTYPE html> ${dashboardServerIsNotReadyYet({
         appName,
-        documentationTroubleshootingLink,
+        documentationTroubleshootingLink: getTroubleshootingLink(),
         serverBasePath,
       })}`;
       // If server is not ready yet, because plugins or core can perform

@@ -65,8 +65,9 @@ export class HealthCheckService
   enhanceNotReadyServer(server: HttpServerSetup['server'], basePath: HttpServerSetup['basePath']) {
     addRoutesNotReadyServer(server, { healthcheck: this.healthCheck, logger: this.logger });
     configureDashboardServerIsNotReadyRoutes(server, {
-      documentationTroubleshootingLink: this.healthCheck.getConfig()
-        .server_not_ready_troubleshooting_link,
+      getTroubleshootingLink: () => {
+        return this.healthCheck.getConfig().server_not_ready_troubleshooting_link;
+      },
       serverBasePath: basePath.serverBasePath,
     });
   }
