@@ -71,10 +71,6 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
           value: TASK.RUN_RESULT.RED.value,
           name: TASK.RUN_RESULT.RED.label,
         },
-        {
-          value: TASK.RUN_RESULT.GRAY.value,
-          name: TASK.RUN_RESULT.GRAY.label,
-        },
       ],
     },
     {
