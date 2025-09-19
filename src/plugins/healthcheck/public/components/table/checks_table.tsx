@@ -79,20 +79,6 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
     },
     {
       type: 'field_value_toggle_group',
-      field: '_meta.isCritical',
-      items: [
-        {
-          name: i18n.translate('healthcheck.critical', { defaultMessage: 'Critical' }),
-          value: true,
-        },
-        {
-          name: i18n.translate('healthcheck.nonCritical', { defaultMessage: 'Non-critical' }),
-          value: false,
-        },
-      ],
-    },
-    {
-      type: 'field_value_toggle_group',
       field: '_meta.isEnabled',
       items: [
         { name: i18n.translate('healthcheck.enabled', { defaultMessage: 'Enabled' }), value: true },
