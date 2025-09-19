@@ -181,6 +181,7 @@ export class HealthCheck extends TaskManager {
     } else {
       this.logger.info(`Disabled health check due to no enabled checks.`);
       this._enabled = false;
+      return;
     }
 
     // Define props to task items
