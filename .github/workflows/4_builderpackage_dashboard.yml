@@ -294,7 +294,7 @@ jobs:
     name: Build ML Commons plugin
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@4.14.0
+    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@4.14.1
     with:
       reference: ${{ inputs.reference_ml_commons_plugin }}
 
