@@ -154,7 +154,6 @@ files_to_recreate=(
   $(js-file "customImportMapDashboards" "plugin")
   $(js-file "indexManagementDashboards" "plugin")
   $(js-file "notificationsDashboards" "plugin")
-  $(js-file "reportsDashboards" "plugin")
 )
 
 for value in "${files_to_recreate[@]}"; do
