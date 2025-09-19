@@ -114,8 +114,8 @@ main() {
     esac
   done
 
-  if [ -z "$WAZUH_DASHBOARD_PLUGINS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_BRANCH" ] | [ -z "$WAZUH_SECURITY_PLUGIN_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_ML_COMMONS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH" ]; then
-    echo "You must specify the app, base, security, ml, and securityAnalytics."
+  if [ -z "$WAZUH_DASHBOARD_PLUGINS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_BRANCH" ] | [ -z "$WAZUH_SECURITY_PLUGIN_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_REPORTING_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_ML_COMMONS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH" ]; then
+    echo "You must specify the app, base, security, reporting, ml, and securityAnalytics."
     help 1
   fi
 

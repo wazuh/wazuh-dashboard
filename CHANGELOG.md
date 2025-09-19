@@ -29,9 +29,11 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Added
 
 - Support for Wazuh 4.14.0
-- Added Observability and Anomaly Detection plugins to default installation [#843](https://github.com/wazuh/wazuh-dashboard/pull/843)
+- Added Anomaly Detection plugins to default installation [#843](https://github.com/wazuh/wazuh-dashboard/pull/843) [#905](https://github.com/wazuh/wazuh-dashboard/pull/905) [#909](https://github.com/wazuh/wazuh-dashboard/pull/909) [#913](https://github.com/wazuh/wazuh-dashboard/pull/913)
+- Added ML Commons plugin to default installation [#875](https://github.com/wazuh/wazuh-dashboard/pull/875)
+- Added Assistant Dashboards plugin to default installation [#821](https://github.com/wazuh/wazuh-dashboard/pull/821)
 
-## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 07
+## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 08
 
 ### Added
 
@@ -44,7 +46,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 ### Changed
 
-- Reduced default session and cookie expiration to 15 minutes for the Wazuh security plugin [#749](https://github.com/wazuh/wazuh-dashboard/issues/749)[#321](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/321)
+- Reduced default session and cookie expiration to 15 minutes for the Wazuh security plugin [#749](https://github.com/wazuh/wazuh-dashboard/issues/749) [#321](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/321)
 
 ## Wazuh dashboard v4.12.0 - OpenSearch Dashboards 2.19.1 - Revision 03
 
