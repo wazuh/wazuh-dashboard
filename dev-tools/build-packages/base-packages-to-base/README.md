@@ -20,6 +20,7 @@ The inputs are the following:
 - `-a`, `--app`: Set the `wazuh-dashboard-plugins` branch.
 - `-b`, `--base`: Set the `wazuh-dashboard` branch.
 - `-s`, `--security`: Set the `wazuh-security-dashboards-plugin` branch.
+- `-ml`, `--ml`: Set the `wazuh-dashboards-ml-commons` branch.
 - `--node-version`: [Optional] Set the node version.
 - `--arm`: [Optional] Build for arm64 instead of x64.
 
@@ -30,6 +31,7 @@ bash run-docker-compose.sh \
     --app 4.14.1 \
     --base 4.14.1 \
     --security 4.14.1 \
+    --ml 4.14.1 \
     --arm \
     --node-version 18.19.0
 ```

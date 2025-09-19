@@ -287,7 +287,7 @@ update_package_json() {
     local modified=false
     # Update version and revision in package.json
     # "wazuh": {
-    #   "version": "4.14.0",
+    #   "version": "4.14.1",
     #   "revision": "00"
     # },
     # Update version and revision in package.json using the structure above
