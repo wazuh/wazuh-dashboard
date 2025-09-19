@@ -124,6 +124,7 @@ jobs:
       REPORTING_SHA: ${{ steps.setup-variables.outputs.REPORTING_SHA }}
       PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
       WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+      WAZUH_ML_COMMONS_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_ML_COMMONS_PLUGIN }}
       WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
       WAZUH_PLUGINS_WAZUH: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
       WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
@@ -240,6 +241,7 @@ jobs:
           echo "REPORTING_SHA=$REPORTING_SHA" >> $GITHUB_OUTPUT
           echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
           echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
+          echo "WAZUH_ML_COMMONS_PLUGIN=$WAZUH_ML_COMMONS_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_REPORT_PLUGIN=$WAZUH_REPORT_PLUGIN" >> $GITHUB_OUTPUT
           echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
@@ -348,6 +350,11 @@ jobs:
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+      - name: Download ml commons plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup-variables.outputs.WAZUH_ML_COMMONS_PLUGIN }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-plugin
 
       - name: Download main plugin's artifact
         uses: actions/download-artifact@v4
