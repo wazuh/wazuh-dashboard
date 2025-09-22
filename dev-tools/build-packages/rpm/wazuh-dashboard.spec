@@ -78,8 +78,8 @@ mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
 mkdir -p %{buildroot}%{INSTALL_DIR}/config
 
 # Install post-install merge helper
-cp ${RPM_BUILD_DIR}/wazuh-dashboard/dev-tools/build-packages/config/merge_opensearch_yml.sh %{buildroot}%{INSTALL_DIR}/bin/merge-opensearch-yml
-chmod 0750 %{buildroot}%{INSTALL_DIR}/bin/merge-opensearch-yml
+cp %{buildroot}%{INSTALL_DIR}/etc/services/merge_opensearch_yml.sh %{buildroot}%{CONFIG_DIR}/merge_opensearch_yml.sh
+chmod 0750 %{buildroot}%{CONFIG_DIR}/merge_opensearch_yml.sh
 
 cp %{buildroot}%{INSTALL_DIR}/etc/services/wazuh-dashboard.service %{buildroot}/etc/systemd/system/wazuh-dashboard.service
 cp %{buildroot}%{INSTALL_DIR}/etc/services/default %{buildroot}/etc/default/wazuh-dashboard
@@ -141,8 +141,8 @@ if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
 fi
 
 # Merge any new default settings from packaged opensearch_dashboards.yml
-if [ -x %{INSTALL_DIR}/bin/merge-opensearch-yml ]; then
-  %{INSTALL_DIR}/bin/merge-opensearch-yml --config-dir "%{CONFIG_DIR}" >/dev/null 2>&1 || true
+if [ -x %{CONFIG_DIR}/merge_opensearch_yml.sh ]; then
+  %{CONFIG_DIR}/merge_opensearch_yml.sh --config-dir "%{CONFIG_DIR}" >/dev/null 2>&1 || true
 fi
 
 # -----------------------------------------------------------------------------
@@ -217,7 +217,7 @@ rm -fr %{buildroot}
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 
 %attr(440, %{USER}, %{GROUP}) %{INSTALL_DIR}/VERSION.json
-%attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}/bin/merge-opensearch-yml
+%attr(750, %{USER}, %{GROUP}) %{CONFIG_DIR}/merge_opensearch_yml.sh
 %dir %attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/core"
