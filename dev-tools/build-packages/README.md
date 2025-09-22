@@ -60,3 +60,23 @@ bash build-packages.sh \
 Starting with this change, the packages include a post-install step that checks for a new packaged `opensearch_dashboards.yml` left by the package manager on upgrade (for example, `/etc/wazuh-dashboard/opensearch_dashboards.yml.rpmnew` on RPM systems or `/etc/wazuh-dashboard/opensearch_dashboards.yml.dpkg-dist` on Debian systems). Any top-level settings present in the new file but missing in the active configuration are appended to `/etc/wazuh-dashboard/opensearch_dashboards.yml`, preserving existing user values. After merging, the temporary new file is removed.
 
 Helper script: `/usr/share/wazuh-dashboard/bin/merge-opensearch-yml`.
+
+Behavior details
+- Without `yq` installed: Adds only missing top-level keys (and entire top-level blocks) from the packaged file. Existing keys are never overwritten.
+- With `yq` installed (recommended): Performs a deep, additive merge that adds only missing nested keys under existing structures. For example, if the package adds:
+  
+  uiSettings:
+    overrides:
+      "home:useNewHomePage": true
+  
+  and the user already has `uiSettings:` but not `overrides` or the nested flag, the script will add only the missing nested fields.
+
+Notes
+- Commented-out lines are ignored (they don’t count as “existing settings”).
+- The script doesn’t overwrite existing values; it only adds missing ones.
+- Resulting file ownership is `wazuh-dashboard:wazuh-dashboard` with mode `0640`.
+
+Testing
+- Bats tests live under `dev-tools/build-packages/tests/`.
+- Run them via: `dev-tools/build-packages/tests/run-bats.sh`.
+- Deep-merge tests are skipped automatically if `yq` is not found in `PATH`.

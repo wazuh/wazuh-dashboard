@@ -1,0 +1,6 @@
+# comment line should be ignored
+server.host: 0.0.0.0
+new.setting: true
+another.setting: 123
+YML
+output=$(bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR" 2>&1); status=$?; printf "status=%s\n%s\n" "$status" "$output"; ls -la "$CONFIG_DIR"; echo '---'; cat "$OPENSEARCH_DASHBOARD_YML"'

@@ -20,6 +20,7 @@ existing.key: value
 YML
 
   run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  echo "$output"
   [ "$status" -eq 0 ]
   [ -f "$OPENSEARCH_DASHBOARD_YML" ]
   # unchanged content
@@ -39,7 +40,7 @@ new.setting: true
 another.setting: 123
 YML
 
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
   # Active should include the new keys appended once
@@ -48,7 +49,7 @@ YML
   run grep -Fx "another.setting: 123" "$OPENSEARCH_DASHBOARD_YML"
   [ "$status" -eq 0 ]
   # Idempotent: running again doesn't duplicate
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ $(grep -Fc "new.setting: true" "$OPENSEARCH_DASHBOARD_YML") -eq 1 ]
   # Permissions set to 0640
@@ -67,7 +68,7 @@ existing.key: 2
 new.key: abc
 YML
 
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
   # existing.key should remain 1
@@ -89,7 +90,7 @@ YML
 added.key: yes
 YML
 
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-new" ]
   run grep -Fx "added.key: yes" "$OPENSEARCH_DASHBOARD_YML"
@@ -116,7 +117,7 @@ i18n.locale: en
 newsfeed.enabled: false
 YML
 
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
 
@@ -154,11 +155,28 @@ YML
 telemetry.enabled: false
 YML
 
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
   # Key appears only once
   [ $(grep -c '^telemetry\.enabled:' "$OPENSEARCH_DASHBOARD_YML") -eq 1 ]
+}
+
+@test "commented-out existing key should still be added as active setting" {
+  # User has the key commented; should not count as existing
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+# new.default.one: 42
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" <<'YML'
+new.default.one: 42
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
+  run grep -Fx "new.default.one: 42" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
 }
 
 @test "partial overlap: multiple defaults provided, only absent keys added" {
@@ -174,7 +192,7 @@ logging.dest: stdout
 i18n.locale: en
 YML
 
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
 
@@ -187,6 +205,126 @@ YML
   run grep -Fx "logging.dest: stdout" "$OPENSEARCH_DASHBOARD_YML"
   [ "$status" -eq 0 ]
   run grep -Fx "i18n.locale: en" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+}
+
+@test "nested block default (.rpmnew): copy entire block when top-level key missing" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+server.host: 0.0.0.0
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+uiSettings:
+  overrides:
+    "home:useNewHomePage": true
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+  # Full block appended preserving indentation and quoted key
+  run grep -Fx "uiSettings:" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+  run grep -Fx "  overrides:" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+  run grep -Fx "    \"home:useNewHomePage\": true" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+}
+
+@test "nested block present in active: do not duplicate top-level key" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+uiSettings:
+  overrides:
+    "home:useNewHomePage": true
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" <<'YML'
+uiSettings:
+  overrides:
+    "home:useNewHomePage": true
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
+  # Only one top-level uiSettings key remains
+  [ $(grep -c '^uiSettings:' "$OPENSEARCH_DASHBOARD_YML") -eq 1 ]
+}
+
+@test "deep merge with yq: add missing nested block under existing top-level" {
+  if ! command -v yq >/dev/null 2>&1 || ! yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null; then
+    skip "requires yq for deep merge"
+  fi
+
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+uiSettings:
+  # user has no overrides yet
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" <<'YML'
+uiSettings:
+  overrides:
+    "home:useNewHomePage": true
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
+  run grep -Fx "  overrides:" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+  run grep -Fx "    \"home:useNewHomePage\": true" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+}
+
+@test "deep merge with yq: add missing leaf under existing nested object" {
+  if ! command -v yq >/dev/null 2>&1 || ! yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null; then
+    skip "requires yq for deep merge"
+  fi
+
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+uiSettings:
+  overrides:
+    "some:otherFlag": false
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+uiSettings:
+  overrides:
+    "home:useNewHomePage": true
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+  run grep -Fx "    \"some:otherFlag\": false" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+  run grep -Fx "    \"home:useNewHomePage\": true" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+}
+
+@test "deep merge with yq: no change if nested leaf already present" {
+  if ! command -v yq >/dev/null 2>&1 || ! yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null; then
+    skip "requires yq for deep merge"
+  fi
+
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+uiSettings:
+  overrides:
+    "home:useNewHomePage": true
+YML
+
+  cp "$OPENSEARCH_DASHBOARD_YML" "$OPENSEARCH_DASHBOARD_YML.copy"
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-new" <<'YML'
+uiSettings:
+  overrides:
+    "home:useNewHomePage": true
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-new" ]
+  run diff -u "$OPENSEARCH_DASHBOARD_YML.copy" "$OPENSEARCH_DASHBOARD_YML"
   [ "$status" -eq 0 ]
 }
 
