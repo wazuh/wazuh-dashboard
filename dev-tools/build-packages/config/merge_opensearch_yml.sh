@@ -1,9 +1,7 @@
 #!/bin/sh
-# Merge new default settings from a packaged opensearch_dashboards.yml
-# into the active /etc/wazuh-dashboard/opensearch_dashboards.yml, only
-# adding keys that do not already exist. Supports deep additive merge
-# when Mike Farah yq v4+ is available; otherwise falls back to
-# top-level block append.
+# Merge new default settings from a packaged opensearch_dashboards.yml into the active
+# /etc/wazuh-dashboard/opensearch_dashboards.yml, only adding keys that do not already exist. Supports deep additive
+# merge when Mike Farah yq v4+ is available; otherwise falls back to top-level block append.
 
 set -e
 
@@ -16,7 +14,9 @@ while [ $# -gt 0 ]; do
       CONFIG_DIR="$2"; shift 2;;
     --help|-h)
       echo "Usage: $0 [--config-dir /etc/wazuh-dashboard]"; exit 0;;
-    *) shift;;
+    *)
+      # ignore unknown
+      shift;;
   esac
 done
 
@@ -26,7 +26,10 @@ TARGET_PATH="${CONFIG_DIR}/${TARGET_FILE}"
 CANDIDATES="${TARGET_PATH}.rpmnew ${TARGET_PATH}.dpkg-dist ${TARGET_PATH}.dpkg-new ${TARGET_PATH}.ucf-dist"
 NEW_PATH=""
 for f in $CANDIDATES; do
-  if [ -f "$f" ]; then NEW_PATH="$f"; break; fi
+  if [ -f "$f" ]; then
+    NEW_PATH="$f"
+    break
+  fi
 done
 
 # Nothing to do if there is no pending new config file or target is missing
