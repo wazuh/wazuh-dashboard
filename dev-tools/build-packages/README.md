@@ -77,6 +77,8 @@ Notes
 - Resulting file ownership is `wazuh-dashboard:wazuh-dashboard` with mode `0640`.
 
 Testing
+- Containerized tests: no local deps required.
+  - Build and run with Docker Compose: `dev-tools/build-packages/tests/run-bats.sh`
+  - This uses `tests/Dockerfile` and `tests/test.yml` to provide bats, yq, and jq in a container.
 - Bats tests live under `dev-tools/build-packages/tests/`.
-- Run them via: `dev-tools/build-packages/tests/run-bats.sh`.
-- Deep-merge tests are skipped automatically if `yq` is not found in `PATH`.
+- Deep-merge runs using the container’s `yq` and `jq`.

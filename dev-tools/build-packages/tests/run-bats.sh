@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+set -euo pipefail
 
-if ! command -v bats >/dev/null 2>&1; then
-  echo "bats not found. Install with one of:" >&2
-  echo "  - Homebrew: brew install bats-core" >&2
-  echo "  - npm: npm i -g bats" >&2
-  echo "  - GitHub: https://github.com/bats-core/bats-core" >&2
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+COMPOSE_FILE="$ROOT_DIR/tests/test.yml"
+
+# Detect docker compose
+if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+  COMPOSE=(docker compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE=(docker-compose)
+else
+  echo "Docker Compose is required (docker compose or docker-compose)." >&2
   exit 127
 fi
 
-exec bats "$ROOT_DIR/tests" "$@"
-
+"${COMPOSE[@]}" -f "$COMPOSE_FILE" build --pull
+"${COMPOSE[@]}" -f "$COMPOSE_FILE" run --rm tests bats tests/merge_opensearch_yml.bats "$@"
