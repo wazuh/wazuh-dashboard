@@ -44,6 +44,11 @@ configure)
         runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" >/dev/null 2>&1
         runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" >/dev/null 2>&1
     fi
+
+    # Merge any new default settings from packaged opensearch_dashboards.yml
+    if [ -x "${INSTALLATION_DIR}/bin/merge-opensearch-yml" ]; then
+        "${INSTALLATION_DIR}/bin/merge-opensearch-yml" --config-dir "${CONFIG_DIR}" >/dev/null 2>&1 || true
+    fi
     ;;
 
 abort-upgrade | abort-remove | abort-deconfigure) ;;

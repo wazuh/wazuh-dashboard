@@ -62,6 +62,7 @@ sed -i 's/OSD_USE_NODE_JS_FILE_PATH/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_U
 
 mkdir -p %{buildroot}%{CONFIG_DIR}
 mkdir -p %{buildroot}%{INSTALL_DIR}
+mkdir -p %{buildroot}%{INSTALL_DIR}/bin
 mkdir -p %{buildroot}/etc/systemd/system
 mkdir -p %{buildroot}%{_initrddir}
 mkdir -p %{buildroot}/etc/default
@@ -75,6 +76,10 @@ mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
 # Set custom welcome styles
 
 mkdir -p %{buildroot}%{INSTALL_DIR}/config
+
+# Install post-install merge helper
+cp ${RPM_BUILD_DIR}/wazuh-dashboard/dev-tools/build-packages/config/merge_opensearch_yml.sh %{buildroot}%{INSTALL_DIR}/bin/merge-opensearch-yml
+chmod 0750 %{buildroot}%{INSTALL_DIR}/bin/merge-opensearch-yml
 
 cp %{buildroot}%{INSTALL_DIR}/etc/services/wazuh-dashboard.service %{buildroot}/etc/systemd/system/wazuh-dashboard.service
 cp %{buildroot}%{INSTALL_DIR}/etc/services/default %{buildroot}/etc/default/wazuh-dashboard
@@ -133,6 +138,11 @@ if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
   runuser %{USER} --shell="/bin/bash" --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore create" > /dev/null 2>&1
   runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" > /dev/null 2>&1
   runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" > /dev/null 2>&1
+fi
+
+# Merge any new default settings from packaged opensearch_dashboards.yml
+if [ -x %{INSTALL_DIR}/bin/merge-opensearch-yml ]; then
+  %{INSTALL_DIR}/bin/merge-opensearch-yml --config-dir "%{CONFIG_DIR}" >/dev/null 2>&1 || true
 fi
 
 # -----------------------------------------------------------------------------
@@ -207,6 +217,7 @@ rm -fr %{buildroot}
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 
 %attr(440, %{USER}, %{GROUP}) %{INSTALL_DIR}/VERSION.json
+%attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}/bin/merge-opensearch-yml
 %dir %attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/core"

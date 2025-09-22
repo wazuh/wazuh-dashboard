@@ -54,3 +54,9 @@ bash build-packages.sh \
     --security file:///home/user/packages/security-package.zip \
     --revision 2 --deb --silent
 ```
+
+## Post-install config merging
+
+Starting with this change, the packages include a post-install step that checks for a new packaged `opensearch_dashboards.yml` left by the package manager on upgrade (for example, `/etc/wazuh-dashboard/opensearch_dashboards.yml.rpmnew` on RPM systems or `/etc/wazuh-dashboard/opensearch_dashboards.yml.dpkg-dist` on Debian systems). Any top-level settings present in the new file but missing in the active configuration are appended to `/etc/wazuh-dashboard/opensearch_dashboards.yml`, preserving existing user values. After merging, the temporary new file is removed.
+
+Helper script: `/usr/share/wazuh-dashboard/bin/merge-opensearch-yml`.
