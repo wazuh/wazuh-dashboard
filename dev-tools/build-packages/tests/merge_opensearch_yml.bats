@@ -252,7 +252,7 @@ YML
 }
 
 @test "deep merge with yq: add missing nested block under existing top-level" {
-  if ! command -v yq >/dev/null 2>&1 || ! yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null; then
+  if ! command -v yq >/dev/null 2>&1; then
     skip "requires yq for deep merge"
   fi
 
@@ -277,7 +277,7 @@ YML
 }
 
 @test "deep merge with yq: add missing leaf under existing nested object" {
-  if ! command -v yq >/dev/null 2>&1 || ! yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null; then
+  if ! command -v yq >/dev/null 2>&1; then
     skip "requires yq for deep merge"
   fi
 
@@ -303,7 +303,7 @@ YML
 }
 
 @test "deep merge with yq: no change if nested leaf already present" {
-  if ! command -v yq >/dev/null 2>&1 || ! yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null; then
+  if ! command -v yq >/dev/null 2>&1; then
     skip "requires yq for deep merge"
   fi
 
