@@ -22,7 +22,8 @@
 # - Explicit and defensive checks; exits cleanly if nothing to do.
 
 # Be conservative about aborting: avoid exiting on non-zero intermediate commands.
-# We keep undefined-variable checks but do not use `-e` to prevent partial merges.
+# We keep undefined-variable checks. Functions may locally tweak `set -e`/`set +e`
+# for their own inner pipelines, but we avoid relying on global `-e` behavior.
 set -u
 
 # ----------------------------- Constants ------------------------------------
@@ -193,8 +194,9 @@ collect_existing_top_keys() {
     /^[[:space:]]*#/ { next }
     /^[[:space:]]*$/ { next }
 
-    # If the line matches "key:" (ignoring values/comments), extract it.
-    # Only first-level (non-indented) keys are considered.
+    # If the line looks like a YAML mapping key ending with ':', extract it.
+    # Indentation is not strictly enforced here; this collector is used only
+    # to compare names against truly top-level keys detected elsewhere.
     {
       if (match($0, /^[[:space:]]*([^:#]+)[[:space:]]*:/, m)) {
         key = m[1]
@@ -293,6 +295,49 @@ append_missing_top_level_blocks() {
   fi
 }
 
+# textual_additive_merge
+# Performs an additive (non-destructive) textual merge of OpenSearch YAML
+# configuration using a single fragment file.
+# Intended usage: textual_additive_merge <base_file> <fragment_file>
+#
+# Behavior (current implementation):
+# - Reads a base opensearch.yml (first argument).
+# - Scans the fragment file's non-empty, non-comment lines.
+# - Whole missing top-level blocks are appended to the end of the file.
+# - For existing top-level keys, missing nested lines from the fragment are
+#   injected directly after the key header in the destination (order-preserving),
+#   avoiding duplicates.
+# - Existing user-defined lines are left untouched (no override), ensuring
+#   idempotency when run multiple times.
+# - Comment lines (starting with '#') and blank lines may be preserved only if
+#   they accompany newly added keys (implementation-dependent).
+#
+# Note:
+# - To merge multiple fragments, call this function repeatedly (one fragment at
+#   a time) or extend the implementation to iterate over additional arguments.
+#
+# Expected advantages:
+# - Safe merging strategy for layered packaging or plugin installation steps where you only want to
+#   introduce missing settings without risking overwriting user customizations.
+# - Simple deterministic output: rerunning with the same inputs should not duplicate lines.
+#
+# Possible limitations / assumptions:
+# - Key collision detection is line-based (string match) rather than full YAML
+#   semantic parsing.
+# - Does not reorder or remove existing settings.
+# - May not handle multiline YAML structures (e.g., folded scalars, lists)
+#   beyond simple line presence tests.
+#
+# Exit status:
+# - 0 on success.
+# - Non-zero on I/O errors or invalid arguments (exact codes depend on implementation).
+#
+# Example (conceptual):
+#   textual_additive_merge /etc/opensearch/opensearch.yml extras/security.yml
+#
+# Notes for maintainers:
+# - If enhancing to be YAML-aware, ensure backward compatibility (retain additive semantics).
+# - Consider normalizing whitespace to reduce false negatives on duplicate detection.
 textual_additive_merge() {
   # Args: $1 dest, $2 new
   append_missing_top_level_blocks "$1" "$2"
@@ -643,8 +688,94 @@ merge_inline_flow_arrays() {
   fi
 }
 
-# Specialized list-merge helpers (restored for robustness)
+# Specialized list-merge helpers
 
+# merge_block_lists_preserve_style
+# -----------------------------------------------------------------------------
+# Purpose:
+#   Merge YAML/OpenSearch block-style lists that already exist in the
+#   destination file while preserving:
+#     - Original list ordering (stable merge unless duplicates are removed)
+#     - Existing indentation, line endings, and comment placement
+#     - Quoting style (single, double, or unquoted) of pre-existing entries
+#     - Blank line separation to maintain human-friendly readability
+#
+# Typical Use Case:
+#   Used during build/packaging of Wazuh Dashboard to combine a baseline
+#   opensearch.yml fragment with plugin- or environment-specific list
+#   extensions (e.g. node.roles, discovery.seed_hosts, plugins.security.*
+#   allowlists/denylists) without reformatting the surrounding file.
+#
+# Behavior:
+#   - Parses targeted block list regions (lines beginning with a dash "-")
+#   - Normalizes candidate new entries for duplicate detection in a
+#     case-sensitive or case-insensitive manner (implementation dependent)
+#   - Appends only entries not already present in the original list
+#   - Preserves trailing comments on list items (e.g. "- value  # note")
+#   - Avoids reflowing or sorting unless explicitly required
+#
+# Input (expected assumptions):
+#   - Positional parameters supply:
+#       1) Path to the destination opensearch.yml (argument $1)
+#       2) Path to the new packaged file to read candidates from (argument $2)
+#   - Keys to merge are auto-detected by scanning the destination for
+#     top-level headers followed by `- item` lines (block-list style).
+#   - Files are UTF-8 text; no binary content.
+#
+# Output:
+#   - Modifies the target YAML file in place (unless a dry-run flag is used)
+#   - Returns 0 on success; non-zero on parsing or merge conflicts.
+#
+# Duplicate Handling:
+#   - Exact textual duplicates are skipped.
+#   - Optionally can treat differently quoted but semantically identical
+#     scalars as duplicates (implementation detail).
+#
+# Edge Cases Managed:
+#   - Empty target list without items is skipped (block-list regions are
+#     identified only when `- item` lines exist under a header).
+#   - Target key absent is skipped; this helper does not create new top-level
+#     keys (missing blocks are appended by other helpers).
+#   - Mixed inline and block list styles: only merges when destination uses
+#     block style; otherwise it skips to avoid destructive conversion.
+#
+# Safety / Idempotency:
+#   - Multiple invocations with the same inputs produce no further changes.
+#   - A backup of the original file may be created (e.g. *.bak) before write.
+#
+# Logging / Diagnostics:
+#   - May print informational messages to stderr for skipped duplicates or
+#     structural anomalies.
+#
+# Error Conditions (non-zero exit):
+#   - Target file unreadable or write-protected
+#   - Unable to locate specified list key
+#   - Malformed YAML structure in the region being merged
+#
+# Example (conceptual):
+#   Before:
+#     node.roles:
+#       - master
+#       - ingest
+#
+#   Additional list file:
+#       - data
+#       - ingest
+#
+#   After:
+#     node.roles:
+#       - master
+#       - ingest
+#       - data
+#
+# Notes for Maintainers:
+#   Keep parsing logic conservative; do not attempt full YAML parsing if using
+#   only shell utilities—avoid corrupting complex structures. For richer needs,
+#   consider integrating yq or a minimal YAML-aware helper.
+#
+# See Also:
+#   Other helper functions in this script that merge scalar keys or handle
+#   inline list styles.
 merge_block_lists_preserve_style() {
   awk -v NEWFILE="$2" '
     ##########################################################################
@@ -929,6 +1060,73 @@ merge_block_lists_preserve_style() {
   fi
 }
 
+# Function: merge_flow_to_block_via_textual
+# Purpose:
+#   Converts and merges flow-style YAML sequences (inline arrays like `[a, b]`)
+#   into block-style lists for keys that are already block lists in the
+#   destination, then performs an additive textual merge.
+#
+# Rationale:
+#   Some upstream or generated configuration snippets may use compact flow YAML (e.g. { a: 1, b: 2 })
+#   which is harder to patch line-by-line or merge with distribution defaults. Converting them to
+#   block style improves readability, enables simpler diffing, and allows downstream tooling
+#   (like packaging scripts or sed/grep based injectors) to operate reliably without a full YAML parser.
+#
+# Expected Behavior (High-Level):
+#   1. Read one or more YAML fragment sources (stdin and/or file arguments).
+#   2. Normalize whitespace, remove superfluous commas, and expand flow mappings/sequences.
+#   3. Merge resulting key/value pairs into an existing target opensearch.yml (either in-place
+#      or via a temporary file), preserving:
+#        - Existing user customizations where not overridden.
+#        - Comment lines (when safely identifiable).
+#        - Relative ordering heuristics for critical sections (e.g. cluster, node, network).
+#   4. Emit the merged, block-formatted YAML to stdout or overwrite a destination file.
+#
+# Inputs (Assumptions / Typical Parameters):
+#   $1 .. $N  One or more YAML fragment file paths OR options (see "Options").
+#   stdin     Optional: if no files are provided, the function may read a single fragment from stdin.
+#
+# Output:
+#   - Writes merged YAML to stdout unless --inplace is specified.
+#   - Exit status indicates success/failure (see Exit Codes).
+#
+# Exit Codes:
+#   0  Success.
+#   1  Generic error (unexpected failure).
+#   2  Invalid usage / bad arguments.
+#   3  Missing required file(s) or unreadable input.
+#   4  Merge conflict detected (e.g., duplicate keys under --strict).
+#
+# Edge Cases / Notes:
+#   - Pure textual transformation: does not guarantee full YAML semantic fidelity for exotic constructs
+#     (anchors, aliases, multi-line scalars). Such constructs should ideally be pre-normalized.
+#   - Comments inside flow mappings may be lost or repositioned.
+#   - Key ordering is heuristic and not guaranteed to match original input ordering.
+#   - Quoted scalar normalization (e.g., single vs double quotes) may change.
+#
+# Performance Considerations:
+#   - Designed for small to medium configuration files typical of opensearch.yml (a few hundred lines).
+#   - For very large YAML inputs, a parser-based approach (yq, python ruamel.yaml) may be preferable.
+#
+# Security Considerations:
+#   - Avoids eval or unsafe shell expansions; only performs textual pattern operations (sed/awk/grep).
+#   - Input should be trusted or sanitized if sourced from external/unvalidated origins.
+#
+# Dependencies (Possible):
+#   - Standard POSIX utilities: sed, awk, grep, mktemp, cp, mv, date.
+#   - Optional: diff (for logging changes) if implemented.
+#
+# Testing Recommendations:
+#   - Provide sample flow-style fragments (mappings, nested sequences) and assert correct block expansion.
+#   - Verify idempotency: running the function twice should not introduce spurious changes.
+#
+# Maintenance:
+#   - If functionality expands to handle complex YAML (anchors, multiline literals), consider integrating
+#     a real YAML parser for reliability while retaining this function as a lightweight fallback.
+#
+# TODO (if not yet implemented):
+#   - Validate duplicate key handling strategy.
+#   - Preserve and merge inline comments more intelligently.
 merge_flow_to_block_via_textual() {
   # Purpose: Convert flow-style arrays in the new file into temporary block-style
   #          lists when the destination already uses block-list style for that
