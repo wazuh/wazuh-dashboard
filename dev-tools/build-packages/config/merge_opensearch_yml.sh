@@ -392,12 +392,12 @@ merge_inline_flow_arrays() {
     function escape_re(s,    t) {
       t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t
     }
-    function collect_top_keys(file,    l,k) {
-      while ((getline l < file) > 0) {
-        if (l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue
-        if (l ~ /^[^[:space:]#][^:]*:/) {
-          k=l; sub(/:.*/, "", k); gsub(/[[:space:]]+$/, "", k);
-          keys[++keysN] = k
+    function collect_top_keys(file,    line,key_name) {
+      while ((getline line < file) > 0) {
+        if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
+        if (line ~ /^[^[:space:]#][^:]*:/) {
+          key_name=line; sub(/:.*/, "", key_name); gsub(/[[:space:]]+$/, "", key_name);
+          keys[++keysN] = key_name
         }
       }
       close(file)
@@ -735,53 +735,53 @@ merge_block_lists_preserve_style "$TARGET_PATH" "$NEW_PATH"
 # elements under the corresponding block keys and reuse the textual additive
 # injector to append them.
 merge_flow_to_block_via_textual() {
-  inj="$TMP_DIR/block_injections.yml"
-  : > "$inj"
-  awk -v DST="$1" -v SRC="$2" -v OUT="$inj" '
-    function trim(s){ sub(/^([[:space:]]|\r)+/,"",s); sub(/([[:space:]]|\r)+$/,"",s); return s }
-    function esc(s){ t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t }
+  BLOCK_INJECTIONS_FILE="$TMP_DIR/block_injections.yml"
+  : > "$BLOCK_INJECTIONS_FILE"
+  awk -v DEST_PATH="$1" -v SRC_PATH="$2" -v OUTPUT_PATH="$BLOCK_INJECTIONS_FILE" '
+    function trim(text){ sub(/^([[:space:]]|\r)+/,"",text); sub(/([[:space:]]|\r)+$/,"",text); return text }
+    function escape_regex(text){ gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", text); return text }
     # Load destination block-list keys
     BEGIN {
-      while((getline l < DST)>0){ d[++DN]=l }
-      close(DST)
-      for(i=1;i<=DN;i++){
-        l=d[i]
-        if(match(l,/^([^[:space:]#][^:]*):[[:space:]]*$/,m)){
-          k=m[1]
+      while((getline dest_line < DEST_PATH)>0){ dest_lines[++dest_count]=dest_line }
+      close(DEST_PATH)
+      for(i=1;i<=dest_count;i++){
+        line=dest_lines[i]
+        if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*$/,m)){
+          key_name=m[1]
           # check next significant line starts with dash
-          for(j=i+1;j<=DN;j++){
-            if(d[j] ~ /^[[:space:]]*#/ || d[j] ~ /^[[:space:]]*$/) continue
-            if(d[j] ~ /^[[:space:]]*-\s+/){ blk[k]=1 } 
+          for(j=i+1;j<=dest_count;j++){
+            if(dest_lines[j] ~ /^[[:space:]]*#/ || dest_lines[j] ~ /^[[:space:]]*$/) continue
+            if(dest_lines[j] ~ /^[[:space:]]*-\s+/){ is_block_key[key_name]=1 }
             break
           }
         }
       }
-      # Parse flow arrays from SRC and emit blocks for keys that are block in DST
-      while((getline l < SRC)>0){ s[++SN]=l }
-      close(SRC)
-      for(i=1;i<=SN;i++){
-        l=s[i]
-        if(match(l,/^([^[:space:]#][^:]*):[[:space:]]*\[/,m)){
-          key=m[1]
-          if(!(key in blk)) continue
+      # Parse flow arrays from SRC and emit blocks for keys that are block in DEST
+      while((getline src_line < SRC_PATH)>0){ src_lines[++src_count]=src_line }
+      close(SRC_PATH)
+      for(i=1;i<=src_count;i++){
+        line=src_lines[i]
+        if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*\[/,m)){
+          key_name=m[1]
+          if(!(key_name in is_block_key)) continue
           # capture until closing ]
-          buf=l; depth=gsub(/\[/,"[",l)-gsub(/\]/,"]",l)
-          while(depth>0 && i<SN){ i++; ln=s[i]; buf=buf ln; depth+=gsub(/\[/,"[",ln)-gsub(/\]/,"]",ln) }
-          sub(/^[^\[]*\[/,"[",buf); sub(/^\[/, "", buf); sub(/].*$/, "", buf)
-          n=split(buf, t, /,/)
-          if(n>0){
-            print key ":" >> OUT
-            for(k2=1;k2<=n;k2++){ tok=trim(t[k2]); if(tok!="") print "  - " tok >> OUT }
+          buffer=line; depth=gsub(/\[/,"[",line)-gsub(/\]/,"]",line)
+          while(depth>0 && i<src_count){ i++; ln=src_lines[i]; buffer=buffer ln; depth+=gsub(/\[/,"[",ln)-gsub(/\]/,"]",ln) }
+          sub(/^[^\[]*\[/,"[",buffer); sub(/^\[/, "", buffer); sub(/].*$/, "", buffer)
+          tokens_count=split(buffer, tokens, /,/)
+          if(tokens_count>0){
+            print key_name ":" >> OUTPUT_PATH
+            for(k=1;k<=tokens_count;k++){ token=trim(tokens[k]); if(token!="") print "  - " token >> OUTPUT_PATH }
           }
         }
       }
     }
   ' /dev/null
-  if [ -s "$inj" ]; then
+  if [ -s "$BLOCK_INJECTIONS_FILE" ]; then
     # Reuse textual additive merger to append only missing lines under blocks
-    TMP_PKG_NEW="$TMP_DIR/new.blockified.yml"
-    cp "$inj" "$TMP_PKG_NEW"
-    textual_additive_merge "$TARGET_PATH" "$TMP_PKG_NEW"
+    BLOCKIFIED_NEW_FILE="$TMP_DIR/new.blockified.yml"
+    cp "$BLOCK_INJECTIONS_FILE" "$BLOCKIFIED_NEW_FILE"
+    textual_additive_merge "$TARGET_PATH" "$BLOCKIFIED_NEW_FILE"
   fi
 }
 
