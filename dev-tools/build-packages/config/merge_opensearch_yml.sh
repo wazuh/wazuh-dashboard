@@ -140,23 +140,6 @@ detect_new_config_path() {
   echo ""
 }
 
-detect_yq_variant() {
-  # Determine which yq variant is available for choosing the merge strategy.
-  # Echo to stdout one of: farah | legacy | none
-  # - farah: Mike Farah yq v4+, supports powerful YAML expressions and *d merge.
-  # - legacy: another yq (or wrapper) present, no compatibility guarantees.
-  # - none: no yq available; use conservative fallback.
-  if command -v yq >/dev/null 2>&1; then
-    if yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null 2>&1; then
-      echo "farah"
-      return 0
-    fi
-    echo "legacy"
-    return 0
-  fi
-  echo "none"
-}
-
 # create_tmp_workspace
 #   Create a temporary directory for intermediate files (patch, append, json,
 #   etc.) and export paths as global variables. Removed in `cleanup` via trap.
@@ -302,13 +285,6 @@ append_missing_top_level_blocks() {
   fi
 }
 
-merge_with_yq_v4() {
-  # Use textual additive merge (append missing top-level blocks and inject
-  # missing lines inside existing blocks) to avoid dependency on specific
-  # yq query syntax and keep formatting stable.
-  textual_additive_merge "$1" "$2"
-}
-
 textual_additive_merge() {
   # Args: $1 dest, $2 new
   append_missing_top_level_blocks "$1" "$2"
@@ -382,71 +358,6 @@ textual_additive_merge() {
   fi
 }
 
-merge_with_yq_legacy() {
-  # Deep additive merge usando Python (PyYAML), sin sobrescribir valores
-  # existentes y agregando solo claves faltantes de forma recursiva.
-  py="${TMP_DIR}/legacy_merge.py"
-  cat > "$py" <<'PY'
-import sys, yaml
-from typing import Any
-
-dest, newf = sys.argv[1], sys.argv[2]
-
-def load_yaml(path: str) -> Any:
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            data = yaml.safe_load(f)
-            return {} if data is None else data
-    except FileNotFoundError:
-        return {}
-
-def add_missing(o: Any, n: Any) -> Any:
-    if isinstance(o, dict) and isinstance(n, dict):
-        for k, v in n.items():
-            if k not in o:
-                o[k] = v
-            else:
-                o[k] = add_missing(o[k], v)
-        return o
-    # If destination is null and new is a mapping, adopt new mapping
-    if o is None and isinstance(n, dict):
-        return n
-    # If destination is not a dict (scalar or list), keep it as is
-    return o
-
-old = load_yaml(dest)
-new = load_yaml(newf)
-merged = add_missing(old, new)
-
-with open(dest, 'w', encoding='utf-8') as f:
-    yaml.safe_dump(merged, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
-PY
-  if command -v python3 >/dev/null 2>&1; then
-    python3 "$py" "$1" "$2" || true
-    ensure_permissions "$1"
-    log_info "[legacy-merge] Resulting YAML (head):"
-    sed -n '1,80p' "$1" 1>&2 || true
-  else
-    # Fallback to textual additive if python3 not available
-    textual_additive_merge "$1" "$2"
-  fi
-}
-
-fallback_append_only() {
-  # Fallback without yq: append only missing top-level blocks.
-  # No deep merges; deliberately conservative to avoid touching user values.
-  #
-  # Args:
-  #   $1: destination file
-  #   $2: new file
-  append_missing_top_level_blocks "$1" "$2"
-  if [ -s "$ADDED_KEYS_FILE" ]; then
-    log_info "Merged new default keys into $1:" ; sed 's/^/  - /' "$ADDED_KEYS_FILE" 1>&2 || true
-  else
-    log_info "No missing top-level blocks to append."
-  fi
-}
-
 # ------------------------------ Main ----------------------------------------
 CONFIG_DIR="$DEFAULT_CONFIG_DIR"
 TARGET_FILE="$DEFAULT_TARGET_FILE"
@@ -474,17 +385,10 @@ fi
 create_tmp_workspace
 trap cleanup EXIT INT TERM HUP
 
-YQ_VARIANT=$(detect_yq_variant)
-
 # Backup the destination file before any modification
 backup_config_file "$TARGET_PATH"
 
-case "$YQ_VARIANT" in
-  farah)
-    merge_with_yq_v4 "$TARGET_PATH" "$NEW_PATH" ;;
-  legacy|none)
-    textual_additive_merge "$TARGET_PATH" "$NEW_PATH" ;;
-esac
+textual_additive_merge "$TARGET_PATH" "$NEW_PATH"
 
 # Always remove the packaged new config file once handled (idempotent)
 if [ -f "$NEW_PATH" ]; then
