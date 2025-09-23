@@ -324,77 +324,87 @@ merge_with_yq_legacy() {
   #   $2: new file
   append_missing_top_level_blocks "$1" "$2"
 
-  # Only attempt nested patching if nothing was appended (i.e., keys exist already)
-  if [ ! -s "$APPEND_FILE" ] && command -v jq >/dev/null 2>&1; then
-    yq '.' "$1" > "$OLD_JSON" 2>/dev/null || true
-    yq '.' "$2" > "$NEW_JSON" 2>/dev/null || true
-    if [ -s "$OLD_JSON" ] && [ -s "$NEW_JSON" ]; then
-      MISSING_NESTED=$(jq -s '[ (.[1]|paths(scalars)) as $p | select(((.[0]|keys)|index($p[0])) and ((.[0]|getpath($p)? // null) == null)) ] | length' "$OLD_JSON" "$NEW_JSON" 2>/dev/null || echo 0)
-      if [ "${MISSING_NESTED:-0}" -gt 0 ] 2>/dev/null; then
-  # Special case: `uiSettings` (textual additive merge without overwriting).
-        if grep -q '^uiSettings:' "$1" && grep -q '^uiSettings:' "$2"; then
-            # Extract the `uiSettings` block from the new file without header.
-          awk \
-            '# Extract the `uiSettings` block without its header; stop at the
-             # next top-level key.
-             /^uiSettings:[[:space:]]*$/ { flag = 1; next } \
-             /^[^[:space:]#][^:]*:[[:space:]]*/ { if (flag) { exit } } \
-             flag { print }' \
-            "$2" > "$TMP_DIR/ui_block.new"
-          if [ -s "$TMP_DIR/ui_block.new" ]; then
-            # Insert missing lines from the new `uiSettings` block right after
-            # the header in the destination, avoiding duplicates.
+  # Only attempt additive textual merge if nothing was appended yet (i.e.,
+  # the top-level keys already exist). This step is generic for any
+  # top-level block and does not depend on specific names.
+  if [ ! -s "$APPEND_FILE" ]; then
+        # Generic additive textual merge for all top-level blocks
+        collect_existing_top_keys "$2" "$TMP_DIR/new_top_keys.txt"
+        while IFS= read -r key; do
+          # Only process keys that exist in destination as well
+          if grep -q "^${key}:[[:space:]]*" "$1"; then
+            key_re=$(printf '%s' "$key" | sed -E 's/([][(){}.^$|*+?\\])/\\\\\1/g')
+
+            # Extract block (without the header) from the new file
             awk \
-              -v tmpfile="$TMP_DIR/ui_block.new" \
+              -v key="$key_re" \
               '
-              # Indicator whether we already injected the new block
-              BEGIN { printed = 0 }
+              $0 ~ "^" key ":[[:space:]]*$" { flag = 1; next }
+              /^[^[:space:]#][^:]*:[[:space:]]*/ { if (flag) { exit } }
+              flag { print }
+              ' "$2" > "$TMP_DIR/block.new"
 
-              # On `uiSettings:` header, print it and enter UI mode
-              /^uiSettings:[[:space:]]*$/ {
-                print
-                ui = 1
-                next
+            if [ -s "$TMP_DIR/block.new" ]; then
+              # Insert any missing lines from new block just after the header in dest
+          awk \
+            -v key="$key_re" \
+            -v tmpfile="$TMP_DIR/block.new" \
+            -v dest="$1" \
+            '
+            # Build a set of all lines present in destination to avoid duplicates
+            BEGIN {
+              injected = 0
+              while ((getline l < dest) > 0) {
+                file_has[l] = 1
               }
+              close(dest)
+            }
 
-              # At the next top-level key, if UI mode active and not printed,
-              # insert missing lines from new block (avoid duplicates via grep)
-              /^[^[:space:]#][^:]*:[[:space:]]*/ {
-                if (ui && !printed) {
-                  while ((getline line < tmpfile) > 0) {
-                    if (line != "" && system("grep -Fqx \"" line "\" \"" FILENAME "\"") != 0) {
-                      print line
-                    }
+            # When we hit the block header, mark that we are inside target block
+            $0 ~ "^" key ":[[:space:]]*$" {
+              print
+              intarget = 1
+              next
+            }
+
+            # At the next top-level key, if we are in target block and not yet
+            # injected, append only the lines that are not already present
+            /^[^[:space:]#][^:]*:[[:space:]]*/ {
+              if (intarget && !injected) {
+                while ((getline line < tmpfile) > 0) {
+                  if (line != "" && !(line in file_has)) {
+                    print line
                   }
-                  close(tmpfile)
-                  printed = 1
-                  ui = 0
                 }
+                close(tmpfile)
+                injected = 1
+                intarget = 0
               }
+            }
 
-              # Default: print lines
-              { print }
+            # Default: forward the current line unchanged
+            { print }
 
-              # If file ends and we still have pending lines, append them
-              END {
-                if (ui && !printed) {
-                  while ((getline line < tmpfile) > 0) {
-                    if (line != "" && system("grep -Fqx \"" line "\" \"" FILENAME "\"") != 0) {
-                      print line
-                    }
+            # If file ended while still inside the block, perform pending insert
+            END {
+              if (intarget && !injected) {
+                while ((getline line < tmpfile) > 0) {
+                  if (line != "" && !(line in file_has)) {
+                    print line
                   }
-                  close(tmpfile)
                 }
+                close(tmpfile)
               }
-            ' "$1" > "$TMP_DIR/target.with.ui.yml" 2>/dev/null || true
-            if [ -s "$TMP_DIR/target.with.ui.yml" ]; then
-              mv "$TMP_DIR/target.with.ui.yml" "$1"
-              ensure_permissions "$1"
+            }
+          ' "$1" > "$TMP_DIR/target.tmp" 2>/dev/null || true
+
+              if [ -s "$TMP_DIR/target.tmp" ]; then
+                mv "$TMP_DIR/target.tmp" "$1"
+                ensure_permissions "$1"
+              fi
             fi
           fi
-        fi
-      fi
-    fi
+        done < "$TMP_DIR/new_top_keys.txt"
   fi
 }
 
