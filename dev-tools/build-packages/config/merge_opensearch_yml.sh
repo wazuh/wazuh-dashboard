@@ -425,67 +425,151 @@ merge_inline_flow_arrays() {
       close(filePath)
     }
 
-    function parse_array_for_key(file, key, rawA, normA,    l,cap,depth,buf,t,i,tok,n,key_re) {
-      delete rawA; delete normA; rawA[0]=0
-      key_re = escapeLiteralToAwkRegexPattern(key)
-      cap=0; depth=0; buf=""
-      while ((getline l < file) > 0) {
-        if (!cap) {
-          if (doesLineStartFlowStyleArrayForKey(l, key_re)) {
-            cap=1
-            sub(/^[^\[]*\[/, "[", l)
-            depth += gsub(/\[/, "[", l)
-            depth -= gsub(/\]/, "]", l)
-            sub(/^\[/, "", l)
-            buf = buf l
-            if (depth == 0) break
-          }
-        } else {
-          depth += gsub(/\[/, "[", l)
-          depth -= gsub(/\]/, "]", l)
-          buf = buf l
-          if (depth == 0) break
+    function parse_array_for_key(filePath,
+                   targetKeyName,
+                   destinationRawTokenArray,
+                   destinationNormalizedTokenMap,
+                   currentLineText,
+                   captureActiveFlag,
+                   bracketDepthCounter,
+                   accumulatedBuffer,
+                   splitTokenArray,
+                   tokenIndex,
+                   tokenValue,
+                   tokenCount,
+                   escapedKeyRegexPattern) {
+      delete destinationRawTokenArray
+      delete destinationNormalizedTokenMap
+      destinationRawTokenArray[0] = 0
+
+      escapedKeyRegexPattern = escapeLiteralToAwkRegexPattern(targetKeyName)
+      captureActiveFlag = 0
+      bracketDepthCounter = 0
+      accumulatedBuffer = ""
+
+      while ((getline currentLineText < filePath) > 0) {
+      if (!captureActiveFlag) {
+        if (doesLineStartFlowStyleArrayForKey(currentLineText, escapedKeyRegexPattern)) {
+        captureActiveFlag = 1
+        sub(/^[^\[]*\[/, "[", currentLineText)
+        bracketDepthCounter += gsub(/\[/, "[", currentLineText)
+        bracketDepthCounter -= gsub(/\]/, "]", currentLineText)
+        sub(/^\[/, "", currentLineText)
+        accumulatedBuffer = accumulatedBuffer currentLineText
+        if (bracketDepthCounter == 0) break
         }
+      } else {
+        bracketDepthCounter += gsub(/\[/, "[", currentLineText)
+        bracketDepthCounter -= gsub(/\]/, "]", currentLineText)
+        accumulatedBuffer = accumulatedBuffer currentLineText
+        if (bracketDepthCounter == 0) break
       }
-      close(file)
-      sub(/].*$/, "", buf)
-      n = split(buf, t, /,/)  # comma-separated tokens
-      for (i=1; i<=n; i++) {
-        tok = trim(t[i]); if (tok == "") continue
-        rawA[++rawA[0]] = tok
-        normA[unquote(tok)] = 1
+      }
+      close(filePath)
+
+      sub(/].*$/, "", accumulatedBuffer)
+      tokenCount = split(accumulatedBuffer, splitTokenArray, /,/)
+
+      for (tokenIndex = 1; tokenIndex <= tokenCount; tokenIndex++) {
+      tokenValue = trim(splitTokenArray[tokenIndex])
+      if (tokenValue == "") continue
+      destinationRawTokenArray[++destinationRawTokenArray[0]] = tokenValue
+      destinationNormalizedTokenMap[unquote(tokenValue)] = 1
       }
     }
-    function parse_block_for_key(file, key, rawA, normA,    l,cap,buf,key_re,depth,lines,N,i,mt) {
-      delete rawA; delete normA; rawA[0]=0
-      key_re = escapeLiteralToAwkRegexPattern(key)
-      N=0; while((getline l < file)>0){ lines[++N]=l } close(file)
-      # find header strictly 'key:'
-      s=0; for(i=1;i<=N;i++){ if(lines[i] ~ ("^" key_re ":[[:space:]]*$")){ s=i; break } }
-      if(!s) return
-      # ensure next non-empty/comment starts with '-'
-      isBlock=0; for(i=s+1;i<=N;i++){ if(lines[i] ~ /^[[:space:]]*#/ || lines[i] ~ /^[[:space:]]*$/) continue; if(lines[i] ~ /^[[:space:]]*-\s+/){ isBlock=1; break } else { break } }
-      if(!isBlock) return
-      # read until next top key
-      e=N; for(i=s+1;i<=N;i++){ if(lines[i] ~ /^[^[:space:]#][^:]*:[[:space:]]*/){ e=i-1; break } }
-      for(i=s+1;i<=e;i++){ l=lines[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue; if(match(l,/^([[:space:]]*)-\s*(.*)$/,mt)){ tok=mt[2]; rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } }
+
+    function parse_block_for_key(filePath,
+                   targetKeyName,
+                   destinationRawTokenArray,
+                   destinationNormalizedTokenMap,
+                   currentLineText,
+                   captureActiveFlag,
+                   accumulatedBuffer,
+                   escapedKeyRegexPattern,
+                   bracketDepthCounter,
+                   fileLineArray,
+                   totalLineCount,
+                   lineIndex,
+                   matchGroupsArray,
+                   headerStartLineIndex,
+                   isBlockStyleFlag,
+                   blockEndLineIndex,
+                   tokenValue) {
+      delete destinationRawTokenArray
+      delete destinationNormalizedTokenMap
+      destinationRawTokenArray[0] = 0
+
+      escapedKeyRegexPattern = escapeLiteralToAwkRegexPattern(targetKeyName)
+      totalLineCount = 0
+      while ((getline currentLineText < filePath) > 0) {
+      fileLineArray[++totalLineCount] = currentLineText
+      }
+      close(filePath)
+
+      headerStartLineIndex = 0
+      for (lineIndex = 1; lineIndex <= totalLineCount; lineIndex++) {
+      if (fileLineArray[lineIndex] ~ ("^" escapedKeyRegexPattern ":[[:space:]]*$")) {
+        headerStartLineIndex = lineIndex
+        break
+      }
+      }
+      if (!headerStartLineIndex) return
+
+      isBlockStyleFlag = 0
+      for (lineIndex = headerStartLineIndex + 1; lineIndex <= totalLineCount; lineIndex++) {
+      if (fileLineArray[lineIndex] ~ /^[[:space:]]*#/ || fileLineArray[lineIndex] ~ /^[[:space:]]*$/) continue
+      if (fileLineArray[lineIndex] ~ /^[[:space:]]*-\s+/) {
+        isBlockStyleFlag = 1
+        break
+      } else {
+        break
+      }
+      }
+      if (!isBlockStyleFlag) return
+
+      blockEndLineIndex = totalLineCount
+      for (lineIndex = headerStartLineIndex + 1; lineIndex <= totalLineCount; lineIndex++) {
+      if (fileLineArray[lineIndex] ~ /^[^[:space:]#][^:]*:[[:space:]]*/) {
+        blockEndLineIndex = lineIndex - 1
+        break
+      }
+      }
+
+      for (lineIndex = headerStartLineIndex + 1; lineIndex <= blockEndLineIndex; lineIndex++) {
+      currentLineText = fileLineArray[lineIndex]
+      if (currentLineText ~ /^[[:space:]]*#/ || currentLineText ~ /^[[:space:]]*$/) continue
+      if (match(currentLineText, /^([[:space:]]*)-\s*(.*)$/, matchGroupsArray)) {
+        tokenValue = matchGroupsArray[2]
+        destinationRawTokenArray[++destinationRawTokenArray[0]] = tokenValue
+        destinationNormalizedTokenMap[unquote(tokenValue)] = 1
+      }
+      }
     }
-    function build_merged_line(key, oldRaw, oldNorm, newRaw, newNorm,    out,i,norm) {
-      out = key ": ["
-      for (i=1; i<=oldRaw[0]; i++) {
-        if (i>1) out = out ", "
-        out = out oldRaw[i]
+
+    function build_merged_line(topLevelKeyName,
+                   existingRawTokens,
+                   existingNormalizedTokenMap,
+                   newRawTokens,
+                   newNormalizedTokenMap,
+                   mergedLine,
+                   existingTokenIndex,
+                   newTokenIndex,
+                   normalizedTokenValue) {
+      mergedLine = topLevelKeyName ": ["
+      for (existingTokenIndex = 1; existingTokenIndex <= existingRawTokens[0]; existingTokenIndex++) {
+      if (existingTokenIndex > 1) mergedLine = mergedLine ", "
+      mergedLine = mergedLine existingRawTokens[existingTokenIndex]
       }
-      for (i=1; i<=newRaw[0]; i++) {
-        norm = unquote(newRaw[i])
-        if (!(norm in oldNorm)) {
-          if (oldRaw[0] || appended_count) out = out ", "
-          out = out newRaw[i]
-          appended_count++
-        }
+      for (newTokenIndex = 1; newTokenIndex <= newRawTokens[0]; newTokenIndex++) {
+      normalizedTokenValue = unquote(newRawTokens[newTokenIndex])
+      if (!(normalizedTokenValue in existingNormalizedTokenMap)) {
+        if (existingRawTokens[0] || appended_count) mergedLine = mergedLine ", "
+        mergedLine = mergedLine newRawTokens[newTokenIndex]
+        appended_count++
       }
-      out = out "]"
-      return out
+      }
+      mergedLine = mergedLine "]"
+      return mergedLine
     }
     BEGIN { collectTopLevelKeysFromFile(NEWFILE) }
     { lines[++N] = $0 }
