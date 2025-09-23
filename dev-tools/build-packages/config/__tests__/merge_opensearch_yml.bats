@@ -473,3 +473,53 @@ YML
   run diff -u "$OPENSEARCH_DASHBOARD_YML.copy" "$OPENSEARCH_DASHBOARD_YML"
   [ "$status" -eq 0 ]
 }
+
+@test "inline array merge: append missing values for plugins.security.system_indices.indices" {
+  # Active config contains the 4.13.0 indices (quoted) only
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+plugins.security.system_indices.indices: [".plugins-ml-model", ".plugins-ml-task", ".opendistro-alerting-config", ".opendistro-alerting-alert*", ".opendistro-anomaly-results*", ".opendistro-anomaly-detector*", ".opendistro-anomaly-checkpoints", ".opendistro-anomaly-detection-state", ".opendistro-reports-*", ".opensearch-notifications-*", ".opensearch-notebooks", ".opensearch-observability", ".opendistro-asynchronous-search-response*", ".replication-metadata-store"]
+YML
+
+  # New defaults (4.14.0) include permission flag and a longer indices array (flow style, multi-line)
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+plugins.security.system_indices.permission.enabled: true
+plugins.security.system_indices.indices: [.plugins-ml-agent, .plugins-ml-config, .plugins-ml-connector,
+  .plugins-ml-controller, .plugins-ml-model-group, .plugins-ml-model, .plugins-ml-task,
+  .plugins-ml-conversation-meta, .plugins-ml-conversation-interactions, .plugins-ml-memory-meta,
+  .plugins-ml-memory-message, .plugins-ml-stop-words, .opendistro-alerting-config,
+  .opendistro-alerting-alert*, .opendistro-anomaly-results*, .opendistro-anomaly-detector*,
+  .opendistro-anomaly-checkpoints, .opendistro-anomaly-detection-state, .opendistro-reports-*,
+  .opensearch-notifications-*, .opensearch-notebooks, .opensearch-observability, .ql-datasources,
+  .opendistro-asynchronous-search-response*, .replication-metadata-store, .opensearch-knn-models,
+  .geospatial-ip2geo-data*, .plugins-flow-framework-config, .plugins-flow-framework-templates,
+  .plugins-flow-framework-state, .plugins-search-relevance-experiment, .plugins-search-relevance-judgment-cache]
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+
+  # Permission flag added as new key
+  run grep -Fx "plugins.security.system_indices.permission.enabled: true" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+
+  # Indices array merged by appending only missing values (keep existing order)
+  expected='plugins.security.system_indices.indices: [".plugins-ml-model", ".plugins-ml-task", ".opendistro-alerting-config", ".opendistro-alerting-alert*", ".opendistro-anomaly-results*", ".opendistro-anomaly-detector*", ".opendistro-anomaly-checkpoints", ".opendistro-anomaly-detection-state", ".opendistro-reports-*", ".opensearch-notifications-*", ".opensearch-notebooks", ".opensearch-observability", ".opendistro-asynchronous-search-response*", ".replication-metadata-store", .plugins-ml-agent, .plugins-ml-config, .plugins-ml-connector, .plugins-ml-controller, .plugins-ml-model-group, .plugins-ml-conversation-meta, .plugins-ml-conversation-interactions, .plugins-ml-memory-meta, .plugins-ml-memory-message, .plugins-ml-stop-words, .ql-datasources, .opensearch-knn-models, .geospatial-ip2geo-data*, .plugins-flow-framework-config, .plugins-flow-framework-templates, .plugins-flow-framework-state, .plugins-search-relevance-experiment, .plugins-search-relevance-judgment-cache]'
+  run grep -Fx "$expected" "$OPENSEARCH_DASHBOARD_YML"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+}
+
+@test "inline array merge: idempotent on rerun (no duplicates)" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+plugins.security.system_indices.indices: [".plugins-ml-model", ".plugins-ml-task", ".opendistro-alerting-config", ".opendistro-alerting-alert*", ".opendistro-anomaly-results*", ".opendistro-anomaly-detector*", ".opendistro-anomaly-checkpoints", ".opendistro-anomaly-detection-state", ".opendistro-reports-*", ".opensearch-notifications-*", ".opensearch-notebooks", ".opensearch-observability", ".opendistro-asynchronous-search-response*", ".replication-metadata-store"]
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" <<'YML'
+plugins.security.system_indices.indices: [.plugins-ml-agent, .plugins-ml-model]
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
+  # Rerun should not duplicate appended entries
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
+  COUNT=$(grep -o "\.plugins-ml-agent" "$OPENSEARCH_DASHBOARD_YML" | wc -l | tr -d ' ')
+  [ "$COUNT" -eq 1 ]
+}

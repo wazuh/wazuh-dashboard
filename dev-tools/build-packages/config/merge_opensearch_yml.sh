@@ -5,6 +5,13 @@
 # merge: appends whole missing top-level blocks and injects only missing
 # nested lines under existing blocks; never overwrites user-defined values.
 #
+# Special case: for top-level keys whose values are YAML flow-style arrays
+# (e.g., `key: [a, b]`) that already exist in the destination, the script
+# appends only the elements that are present in the new defaults but absent in
+# the destination, preserving the existing order. This enables cases like
+# `plugins.security.system_indices.indices` where new indices must be added
+# without reordering or duplicating user-defined values.
+#
 # Design notes (clean code / maintainability):
 # - Single-responsibility functions for argument parsing, capability detection,
 #   merge strategies, permission handling, and logging.
@@ -357,6 +364,160 @@ textual_additive_merge() {
   fi
 }
 
+# merge_inline_flow_arrays
+#   Special-case merge for top-level keys whose values are YAML flow-style
+#   sequences (arrays written as "[a, b, c]") present in the new packaged file
+#   and already present in the destination. The behavior appends only the
+#   missing elements from the new array to the existing array, preserving the
+#   original order of the destination and the appearance order from the new
+#   file for appended elements. Other list styles (block lists with "- item")
+#   are intentionally not handled here.
+#
+#   Args:
+#     $1: destination file
+#     $2: new packaged file
+merge_inline_flow_arrays() {
+  # Build a modified copy of destination with merged arrays.
+  # Keys considered: any top-level line matching 'key: [ ... ]' in the new file.
+  awk -v NEWFILE="$2" '
+    function trim(s) { sub(/^([[:space:]]|\r)+/, "", s); sub(/([[:space:]]|\r)+$/, "", s); return s }
+    function unquote(s) { s=trim(s); if (s ~ /^".*"$/) return substr(s, 2, length(s)-2); if (s ~ /^\x27.*\x27$/) return substr(s, 2, length(s)-2); return s }
+    function starts_key_array(line, key_re,    m) {
+      return (line ~ ("^" key_re ":[[:space:]]*\\["))
+    }
+    function escape_re(s,    t) {
+      t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t
+    }
+    function collect_keys_with_arrays(file,    l,k) {
+      while ((getline l < file) > 0) {
+        if (l ~ /^[^[:space:]#][^:]*:[[:space:]]*\[/) {
+          k=l; sub(/:.*/, "", k); gsub(/[[:space:]]+$/, "", k);
+          keys[++keysN] = k
+        }
+      }
+      close(file)
+    }
+    function parse_array_for_key(file, key, rawA, normA,    l,cap,depth,buf,t,i,tok,n,key_re) {
+      delete rawA; delete normA; rawA[0]=0
+      key_re = escape_re(key)
+      cap=0; depth=0; buf=""
+      while ((getline l < file) > 0) {
+        if (!cap) {
+          if (starts_key_array(l, key_re)) {
+            cap=1
+            sub(/^[^\[]*\[/, "[", l)
+            depth += gsub(/\[/, "[", l)
+            depth -= gsub(/\]/, "]", l)
+            sub(/^\[/, "", l)
+            buf = buf l
+            if (depth == 0) break
+          }
+        } else {
+          depth += gsub(/\[/, "[", l)
+          depth -= gsub(/\]/, "]", l)
+          buf = buf l
+          if (depth == 0) break
+        }
+      }
+      close(file)
+      sub(/].*$/, "", buf)
+      n = split(buf, t, /,/)  # comma-separated tokens
+      for (i=1; i<=n; i++) {
+        tok = trim(t[i]); if (tok == "") continue
+        rawA[++rawA[0]] = tok
+        normA[unquote(tok)] = 1
+      }
+    }
+    function build_merged_line(key, oldRaw, oldNorm, newRaw, newNorm,    out,i,norm) {
+      out = key ": ["
+      for (i=1; i<=oldRaw[0]; i++) {
+        if (i>1) out = out ", "
+        out = out oldRaw[i]
+      }
+      for (i=1; i<=newRaw[0]; i++) {
+        norm = unquote(newRaw[i])
+        if (!(norm in oldNorm)) {
+          if (oldRaw[0] || appended_count) out = out ", "
+          out = out newRaw[i]
+          appended_count++
+        }
+      }
+      out = out "]"
+      return out
+    }
+    BEGIN {
+      collect_keys_with_arrays(NEWFILE)
+    }
+    { lines[++N] = $0 }
+    END {
+      # Precompute replacements for each candidate key
+      for (ki=1; ki<=keysN; ki++) {
+        key = keys[ki]
+        key_re = escape_re(key)
+        # Locate range [start,end] in destination for this key
+        start = end = 0
+        for (i=1; i<=N; i++) {
+          if (starts_key_array(lines[i], key_re)) { start = i; break }
+        }
+        if (!start) continue
+        depth=0; tmp=lines[start]
+        sub(/^[^\[]*\[/, "[", tmp)
+        depth += gsub(/\[/, "[", tmp)
+        depth -= gsub(/\]/, "]", tmp)
+        if (depth == 0) { end = start } else {
+          for (j=start+1; j<=N; j++) {
+            tmp = lines[j]
+            depth += gsub(/\[/, "[", tmp)
+            depth -= gsub(/\]/, "]", tmp)
+            if (depth == 0) { end = j; break }
+          }
+        }
+        if (!end) continue
+
+        # Parse arrays from dest and new
+        delete oldRaw; delete oldNorm; oldRaw[0]=0
+        delete newRaw; delete newNorm; newRaw[0]=0
+
+        # Build dest buffer
+        buf=""; tmp=lines[start]
+        sub(/^[^\[]*\[/, "[", tmp); sub(/^\[/, "", tmp); buf = buf tmp
+        for (j=start+1; j<=end; j++) buf = buf lines[j]
+        sub(/].*$/, "", buf)
+        n = split(buf, t, /,/) 
+        for (i2=1; i2<=n; i2++) { tok = trim(t[i2]); if (tok=="") continue; oldRaw[++oldRaw[0]] = tok; oldNorm[unquote(tok)] = 1 }
+
+        parse_array_for_key(NEWFILE, key, newRaw, newNorm)
+        if (newRaw[0] == 0) continue
+
+        repl[key] = build_merged_line(key, oldRaw, oldNorm, newRaw, newNorm)
+        rstart[key] = start; rend[key] = end
+      }
+
+      # Print destination applying replacements
+      i = 1
+      while (i <= N) {
+        replaced = 0
+        for (ki=1; ki<=keysN; ki++) {
+          key = keys[ki]
+          if (i == rstart[key] && rend[key] > 0) {
+            print repl[key]
+            i = rend[key] + 1
+            replaced = 1
+            break
+          }
+        }
+        if (!replaced) { print lines[i]; i++ }
+      }
+    }
+  ' "$1" > "$TMP_DIR/arrays.merged.tmp" 2>/dev/null || true
+
+  if [ -s "$TMP_DIR/arrays.merged.tmp" ]; then
+    mv "$TMP_DIR/arrays.merged.tmp" "$1"
+    ensure_permissions "$1"
+    log_info "[array-merge] Merged inline flow arrays from packaged defaults."
+  fi
+}
+
 # ------------------------------ Main ----------------------------------------
 CONFIG_DIR="$DEFAULT_CONFIG_DIR"
 TARGET_FILE="$DEFAULT_TARGET_FILE"
@@ -388,6 +549,9 @@ trap cleanup EXIT INT TERM HUP
 backup_config_file "$TARGET_PATH"
 
 textual_additive_merge "$TARGET_PATH" "$NEW_PATH"
+
+# Merge inline flow arrays (e.g., key: [a, b]) by appending missing elements
+merge_inline_flow_arrays "$TARGET_PATH" "$NEW_PATH"
 
 # Always remove the packaged new config file once handled (idempotent)
 if [ -f "$NEW_PATH" ]; then
