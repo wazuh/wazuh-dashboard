@@ -4,10 +4,10 @@ This folder contains a containerized test environment for the post‑install con
 
 ## What’s Included
 
-- `Dockerfile.awk`: Debian image sin Python, para ejercitar el fallback awk/textual.
-- `test.yml`: Docker Compose con un servicio por variante.
-- `merge_opensearch_yml.bats`: Suite Bats que cubre comportamiento de merge.
-- `run-bats.sh`: Runner que construye imágenes y ejecuta la suite en uno o todos los servicios.
+- `Dockerfile.awk`: Minimal Debian image with test deps (bats, jq, GNU tools).
+- `test.yml`: Docker Compose file to build and run the tests.
+- `merge_opensearch_yml.bats`: Bats test suite covering merge behavior.
+- `run-bats.sh`: Host runner that builds the image and executes the suite in a container (no local deps required).
 
 ## Prerequisites
 
@@ -19,19 +19,19 @@ This folder contains a containerized test environment for the post‑install con
 From the repo root or anywhere:
 
 ```sh
-dev-tools/build-packages/tests/run-bats.sh          # ejecuta la suite (servicio awk)
-dev-tools/build-packages/tests/run-bats.sh -s awk   # solo fallback awk/textual
+./run-bats.sh          # run the suite (awk service)
+./run-bats.sh -s awk   # only fallback awk/textual
 ```
 
 Examples:
 
 - Filter tests by name pattern:
   ```sh
-  dev-tools/build-packages/tests/run-bats.sh -f 'nested block'
+  ./run-bats.sh -f 'nested block'
   ```
 - Show test timings:
   ```sh
-  dev-tools/build-packages/tests/run-bats.sh -t
+  ./run-bats.sh -t
   ```
 
 The script will:
@@ -64,7 +64,7 @@ The script will:
 
 ## File Layout
 
-- `dev-tools/build-packages/tests/Dockerfile.awk`
-- `dev-tools/build-packages/tests/test.yml`
-- `dev-tools/build-packages/tests/merge_opensearch_yml.bats`
-- `dev-tools/build-packages/tests/run-bats.sh`
+- `./Dockerfile.awk`
+- `./test.yml`
+- `./merge_opensearch_yml.bats`
+- `./run-bats.sh`

@@ -63,11 +63,11 @@ Helper script: `/usr/share/wazuh-dashboard/bin/merge-opensearch-yml`.
 
 Behavior details
 Performs a conservative, non-destructive merge that adds only missing settings, never overwriting existing values. For example, if the package adds:
-  
+
   uiSettings:
     overrides:
       "home:useNewHomePage": true
-  
+
   and the user already has `uiSettings:` but not `overrides` or the nested flag, the script will add only the missing nested fields.
 
 Notes
@@ -77,7 +77,6 @@ Notes
 
 Testing
 - Containerized tests: no local deps required.
-  - Build and run with Docker Compose: `dev-tools/build-packages/tests/run-bats.sh`
+  - Build and run with Docker Compose: `./run-bats.sh`
   - This uses `tests/Dockerfile.awk` and `tests/test.yml` para ejecutar la suite en contenedor.
-- Bats tests live under `dev-tools/build-packages/tests/`.
 No se requieren herramientas YAML externas.
