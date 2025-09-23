@@ -343,7 +343,7 @@ YML
   [ -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
 }
 
-@test "edge: lists are not merged (conservative)" {
+@test "block list merge: append missing items, preserve '-' style" {
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 xs:
   - a
@@ -353,15 +353,51 @@ YML
 xs:
   - a
   - b
+  - "c"
 YML
 
   run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
-  # Destination list unchanged (no injection inside lists)
-  COUNT=$(grep -Ec '^\s*-\s*a$' "$OPENSEARCH_DASHBOARD_YML")
-  [ "$COUNT" -eq 1 ]
-  run grep -F "- b" "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -ne 0 ]
+  # Existing item remains once
+  COUNT_A=$(grep -Ec '^\s*-\s*a$' "$OPENSEARCH_DASHBOARD_YML")
+  [ "$COUNT_A" -eq 1 ]
+  # Missing items appended at the end, preserving block style
+  run grep -Eq '^\s*-\s*b$' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+  run grep -Eq '^\s*-\s*"c"$' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+}
+
+@test "mixed styles: dest flow [], new block '-' -> keep flow and append missing" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+xs: [a]
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+xs:
+  - a
+  - b
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
+  run grep -Fx 'xs: [a, b]' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+}
+
+@test "mixed styles: dest block '-', new flow [] -> keep block and append missing" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+xs:
+  - a
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-new" <<'YML'
+xs: [a, b]
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
+  # Keep block style in destination and add b
+  run grep -Eq '^\s*-\s*a$' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+  run grep -Eq '^\s*-\s*b$' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+  # No single-line flow should remain
+  run grep -Fx 'xs: [a, b]' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -ne 0 ]
 }
 
 @test "edge: malformed .rpmnew does not crash and removes packaged file" {
@@ -520,6 +556,78 @@ YML
   run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
   # Rerun should not duplicate appended entries
   run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
+  COUNT=$(grep -o "\.plugins-ml-agent" "$OPENSEARCH_DASHBOARD_YML" | wc -l | tr -d ' ')
+  [ "$COUNT" -eq 1 ]
+}
+
+@test "system_indices: block list merge preserves '-' and appends missing (new flow style)" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+plugins.security.system_indices.indices:
+  - ".plugins-ml-model"
+  - ".plugins-ml-task"
+  - ".opendistro-alerting-config"
+  - ".opendistro-alerting-alert*"
+  - ".opendistro-anomaly-results*"
+  - ".opendistro-anomaly-detector*"
+  - ".opendistro-anomaly-checkpoints"
+  - ".opendistro-anomaly-detection-state"
+  - ".opendistro-reports-*"
+  - ".opensearch-notifications-*"
+  - ".opensearch-notebooks"
+  - ".opensearch-observability"
+  - ".opendistro-asynchronous-search-response*"
+  - ".replication-metadata-store"
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+plugins.security.system_indices.permission.enabled: true
+plugins.security.system_indices.indices: [.plugins-ml-agent, .plugins-ml-config, .plugins-ml-connector,
+  .plugins-ml-controller, .plugins-ml-model-group, .plugins-ml-model, .plugins-ml-task,
+  .plugins-ml-conversation-meta, .plugins-ml-conversation-interactions, .plugins-ml-memory-meta,
+  .plugins-ml-memory-message, .plugins-ml-stop-words, .opendistro-alerting-config,
+  .opendistro-alerting-alert*, .opendistro-anomaly-results*, .opendistro-anomaly-detector*,
+  .opendistro-anomaly-checkpoints, .opendistro-anomaly-detection-state, .opendistro-reports-*,
+  .opensearch-notifications-*, .opensearch-notebooks, .opensearch-observability, .ql-datasources,
+  .opendistro-asynchronous-search-response*, .replication-metadata-store, .opensearch-knn-models,
+  .geospatial-ip2geo-data*, .plugins-flow-framework-config, .plugins-flow-framework-templates,
+  .plugins-flow-framework-state, .plugins-search-relevance-experiment, .plugins-search-relevance-judgment-cache]
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+
+  # Permission flag added
+  run grep -Fx "plugins.security.system_indices.permission.enabled: true" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+
+  # Key remains block style (no single-line flow)
+  run grep -Eq '^plugins\.security\.system_indices\.indices:\s*$' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+  run grep -Eq '^plugins\.security\.system_indices\.indices:\s*\[' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -ne 0 ]
+
+  # Existing item present once
+  [ $(grep -Ec '^\s*-\s*"\.opendistro-alerting-config"$' "$OPENSEARCH_DASHBOARD_YML") -eq 1 ]
+  # New items appended (allow quoted or unquoted)
+  run grep -Eq '^\s*-\s*("|)\.plugins-ml-agent("|)$' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+  run grep -Eq '^\s*-\s*("|)\.plugins-ml-config("|)$' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+  run grep -Eq '^\s*-\s*("|)\.plugins-ml-connector("|)$' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+}
+
+@test "system_indices: mixed styles (dest flow, new block) -> keep flow and append missing" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+plugins.security.system_indices.indices: [".plugins-ml-model", ".plugins-ml-task", ".opendistro-alerting-config", ".opendistro-alerting-alert*", ".opendistro-anomaly-results*", ".opendistro-anomaly-detector*", ".opendistro-anomaly-checkpoints", ".opendistro-anomaly-detection-state", ".opendistro-reports-*", ".opensearch-notifications-*", ".opensearch-notebooks", ".opensearch-observability", ".opendistro-asynchronous-search-response*", ".replication-metadata-store"]
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" <<'YML'
+plugins.security.system_indices.indices:
+  - ".plugins-ml-model"
+  - .plugins-ml-agent
+  - .plugins-ml-config
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
+  # Remains flow-style
+  run grep -Eq '^plugins\.security\.system_indices\.indices:\s*\[' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+  # Contains appended items exactly once
   COUNT=$(grep -o "\.plugins-ml-agent" "$OPENSEARCH_DASHBOARD_YML" | wc -l | tr -d ' ')
   [ "$COUNT" -eq 1 ]
 }

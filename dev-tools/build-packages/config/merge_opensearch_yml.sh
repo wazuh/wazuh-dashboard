@@ -5,12 +5,14 @@
 # merge: appends whole missing top-level blocks and injects only missing
 # nested lines under existing blocks; never overwrites user-defined values.
 #
-# Special case: for top-level keys whose values are YAML flow-style arrays
-# (e.g., `key: [a, b]`) that already exist in the destination, the script
-# appends only the elements that are present in the new defaults but absent in
-# the destination, preserving the existing order. This enables cases like
-# `plugins.security.system_indices.indices` where new indices must be added
-# without reordering or duplicating user-defined values.
+# Special cases for lists:
+# - Flow-style arrays (e.g., `key: [a, b]`) and block-style lists
+#   (e.g., `key:` then indented `- a`) are merged by appending missing elements
+#   from the new defaults while preserving the destination's existing order and
+#   style. If styles differ between dest and new, the destination style is
+#   preserved. This enables cases like
+#   `plugins.security.system_indices.indices` where new indices must be added
+#   without reordering or duplicating user-defined values.
 #
 # Design notes (clean code / maintainability):
 # - Single-responsibility functions for argument parsing, capability detection,
@@ -378,7 +380,9 @@ textual_additive_merge() {
 #     $2: new packaged file
 merge_inline_flow_arrays() {
   # Build a modified copy of destination with merged arrays.
-  # Keys considered: any top-level line matching 'key: [ ... ]' in the new file.
+  # Keys considered: any top-level key present in the new file. If the
+  # destination uses flow-style for that key, merge items from the new file
+  # regardless of whether the new file uses flow or block style.
   awk -v NEWFILE="$2" '
     function trim(s) { sub(/^([[:space:]]|\r)+/, "", s); sub(/([[:space:]]|\r)+$/, "", s); return s }
     function unquote(s) { s=trim(s); if (s ~ /^".*"$/) return substr(s, 2, length(s)-2); if (s ~ /^\x27.*\x27$/) return substr(s, 2, length(s)-2); return s }
@@ -388,9 +392,10 @@ merge_inline_flow_arrays() {
     function escape_re(s,    t) {
       t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t
     }
-    function collect_keys_with_arrays(file,    l,k) {
+    function collect_top_keys(file,    l,k) {
       while ((getline l < file) > 0) {
-        if (l ~ /^[^[:space:]#][^:]*:[[:space:]]*\[/) {
+        if (l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue
+        if (l ~ /^[^[:space:]#][^:]*:/) {
           k=l; sub(/:.*/, "", k); gsub(/[[:space:]]+$/, "", k);
           keys[++keysN] = k
         }
@@ -428,6 +433,20 @@ merge_inline_flow_arrays() {
         normA[unquote(tok)] = 1
       }
     }
+    function parse_block_for_key(file, key, rawA, normA,    l,cap,buf,key_re,depth,lines,N,i,mt) {
+      delete rawA; delete normA; rawA[0]=0
+      key_re = escape_re(key)
+      N=0; while((getline l < file)>0){ lines[++N]=l } close(file)
+      # find header strictly 'key:'
+      s=0; for(i=1;i<=N;i++){ if(lines[i] ~ ("^" key_re ":[[:space:]]*$")){ s=i; break } }
+      if(!s) return
+      # ensure next non-empty/comment starts with '-'
+      isBlock=0; for(i=s+1;i<=N;i++){ if(lines[i] ~ /^[[:space:]]*#/ || lines[i] ~ /^[[:space:]]*$/) continue; if(lines[i] ~ /^[[:space:]]*-\s+/){ isBlock=1; break } else { break } }
+      if(!isBlock) return
+      # read until next top key
+      e=N; for(i=s+1;i<=N;i++){ if(lines[i] ~ /^[^[:space:]#][^:]*:[[:space:]]*/){ e=i-1; break } }
+      for(i=s+1;i<=e;i++){ l=lines[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue; if(match(l,/^([[:space:]]*)-\s*(.*)$/,mt)){ tok=mt[2]; rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } }
+    }
     function build_merged_line(key, oldRaw, oldNorm, newRaw, newNorm,    out,i,norm) {
       out = key ": ["
       for (i=1; i<=oldRaw[0]; i++) {
@@ -445,9 +464,7 @@ merge_inline_flow_arrays() {
       out = out "]"
       return out
     }
-    BEGIN {
-      collect_keys_with_arrays(NEWFILE)
-    }
+    BEGIN { collect_top_keys(NEWFILE) }
     { lines[++N] = $0 }
     END {
       # Precompute replacements for each candidate key
@@ -474,7 +491,7 @@ merge_inline_flow_arrays() {
         }
         if (!end) continue
 
-        # Parse arrays from dest and new
+        # Parse arrays from dest and new (new may be flow or block)
         delete oldRaw; delete oldNorm; oldRaw[0]=0
         delete newRaw; delete newNorm; newRaw[0]=0
 
@@ -485,8 +502,9 @@ merge_inline_flow_arrays() {
         sub(/].*$/, "", buf)
         n = split(buf, t, /,/) 
         for (i2=1; i2<=n; i2++) { tok = trim(t[i2]); if (tok=="") continue; oldRaw[++oldRaw[0]] = tok; oldNorm[unquote(tok)] = 1 }
-
+        # Try flow-style in new first
         parse_array_for_key(NEWFILE, key, newRaw, newNorm)
+        if (newRaw[0] == 0) { parse_block_for_key(NEWFILE, key, newRaw, newNorm) }
         if (newRaw[0] == 0) continue
 
         repl[key] = build_merged_line(key, oldRaw, oldNorm, newRaw, newNorm)
@@ -515,6 +533,118 @@ merge_inline_flow_arrays() {
     mv "$TMP_DIR/arrays.merged.tmp" "$1"
     ensure_permissions "$1"
     log_info "[array-merge] Merged inline flow arrays from packaged defaults."
+  fi
+}
+
+# merge_top_level_lists_preserve_style
+#   General list merge for top-level keys when either file uses list syntax
+#   (flow `[...]` or block `- item`). Style is preserved from destination.
+#
+#   Args:
+#     $1: destination file
+#     $2: new packaged file
+merge_top_level_lists_preserve_style() {
+  awk -v NEWFILE="$2" '
+    function trim(s){ sub(/^([[:space:]]|\r)+/,"",s); sub(/([[:space:]]|\r)+$/,"",s); return s }
+    function unquote(s){ s=trim(s); if(s ~ /^".*"$/) return substr(s,2,length(s)-2); if(s ~ /^\x27.*\x27$/) return substr(s,2,length(s)-2); return s }
+    function esc(s){ t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t }
+    function starts_top_key(line, key_re){ return (line ~ ("^" key_re ":[[:space:]]*")) }
+    function is_top_key_line(line){ return (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) }
+    function parse_flow_items_from_buffer(buf, rawA, normA,    t,i,tok){ delete rawA; delete normA; rawA[0]=0; sub(/^[^\[]*\[/,"[",buf); sub(/^\[/, "", buf); sub(/].*$/, "", buf); n=split(buf,t,/,/); for(i=1;i<=n;i++){ tok=trim(t[i]); if(tok!=""){ rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } } }
+    function collect_block_items(lines, N, start, end, rawA, normA,    i,ind,cap,l,mtch){ delete rawA; delete normA; rawA[0]=0; ind=""; cap=0; for(i=start+1;i<=end;i++){ l=lines[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) { continue } if(match(l, /^([[:space:]]*)-\s*(.*)$/, mtch)){ if(ind=="") ind=mtch[1]; tok=mtch[2]; rawA[++rawA[0]]=tok; normA[unquote(tok)]=1; cap=1 } else if(cap && is_top_key_line(l)) { break } }
+      return ind }
+    function find_block(lines, N, key, style, sidx, eidx,    i,key_re,l,depth,tmp){ key_re=esc(key); style="none"; sidx=0; eidx=0; for(i=1;i<=N;i++){ l=lines[i]; if(starts_top_key(l,key_re)){ sidx=i; break } } if(!sidx){ return 0 }
+      # Detect flow vs block
+      if(lines[sidx] ~ /\[[^\]]*$/){ style="flow"; depth=0; tmp=lines[sidx]; sub(/^[^\[]*\[/,"[",tmp); depth += gsub(/\[/,"[",tmp); depth -= gsub(/\]/,"]",tmp); if(depth==0){ eidx=sidx } else { for(i=sidx+1;i<=N;i++){ tmp=lines[i]; depth += gsub(/\[/,"[",tmp); depth -= gsub(/\]/,"]",tmp); if(depth==0){ eidx=i; break } } } }
+      else {
+        # If next non-empty/comment line starts with dash, consider block list; otherwise treat as scalar
+        for(i=sidx+1;i<=N;i++){ l=lines[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue; if(l ~ /^[[:space:]]*-\s+/){ style="block"; break } else { style="scalar"; break } }
+        if(style=="block"){ # end at next top-level key or EOF
+          eidx=N; for(i=sidx+1;i<=N;i++){ if(is_top_key_line(lines[i])){ eidx=i-1; break } }
+        }
+      }
+      if(eidx==0) eidx=sidx; return 1 }
+    function parse_items(lines,N,start,end,style,rawA,normA,indent,    buf){ if(style=="flow"){ buf=""; for(i=start;i<=end;i++) buf = buf lines[i]; parse_flow_items_from_buffer(buf,rawA,normA) ; indent="" } else if(style=="block"){ indent = collect_block_items(lines,N,start,end,rawA,normA) } else { delete rawA; delete normA; rawA[0]=0; indent="" } return indent }
+    function parse_items_from_file(file, key, rawA, normA, style, indent,    lns,Nl,ok,s,e){ Nl=0; while((getline l < file)>0){ lns[++Nl]=l } close(file); ok=find_block(lns,Nl,key,style,s,e); if(!ok){ style="none"; indent=""; rawA[0]=0; return 0 } indent=parse_items(lns,Nl,s,e,style,rawA,normA,indent); return 1 }
+    function build_flow_line(key, oldRaw, oldNorm, newRaw,    out,i,norm){ out=key ": ["; for(i=1;i<=oldRaw[0];i++){ if(i>1) out=out ", "; out=out oldRaw[i] } for(i=1;i<=newRaw[0];i++){ norm=unquote(newRaw[i]); if(!(norm in oldNorm)){ if(oldRaw[0]>0 || appended) out=out ", "; out=out newRaw[i]; appended++ } } out=out "]"; return out }
+    function build_block_lines(key, lines, N, start, end, newRaw, oldNorm, indent,    i,buf){ for(i=1;i<=N;i++){ out_lines[++outN]=lines[i] } # placeholder; handled later
+      return 1 }
+
+    { dst[++DN]=$0 }
+    END {
+      # Load new file lines
+      while((getline nl < NEWFILE)>0){ src[++SN]=nl } close(NEWFILE)
+
+      # Iterate over top-level keys in new file
+      # First, collect their order
+      for(i=1;i<=SN;i++){
+        l=src[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue
+        if(match(l,/^[^[:space:]#][^:]*:/)){
+          k=l; sub(/:.*/,"",k); gsub(/[[:space:]]+$/,"",k); if(!(k in seen)){ order[++orderN]=k; seen[k]=1 }
+        }
+      }
+
+      # Prepare a mapping from index to replacement for destination
+      for(oi=1; oi<=orderN; oi++){
+        key=order[oi]
+        # Parse items from new (if any list)
+        if(!parse_items_from_file(NEWFILE, key, newRaw, newNorm, newStyle, newIndent)) continue
+        if(newStyle!="flow" && newStyle!="block") continue
+
+        # Parse destination block and style; skip if key not present in dest
+        if(!find_block(dst, DN, key, dstStyle, s, e)) continue
+        if(dstStyle=="scalar") continue
+
+        # Parse destination items
+        indent = parse_items(dst, DN, s, e, dstStyle, oldRaw, oldNorm, indent)
+
+        # Build replacement respecting destination style
+        if(dstStyle=="flow"){
+          repl = build_flow_line(key, oldRaw, oldNorm, newRaw)
+          RSTART[s] = 1; REND[s] = e; RLINE[s] = repl
+        } else if(dstStyle=="block"){
+          # Reconstruct: print header and original body, then append missing items as new lines
+          # Determine indent (default two spaces if none found)
+          ind = indent; if(ind=="") ind="  "
+          # Prepare list of append lines
+          append_lines_count=0
+          for(i=1;i<=newRaw[0];i++){
+            norm = unquote(newRaw[i]); if(!(norm in oldNorm)){ append_lines[++append_lines_count] = ind "- " newRaw[i] }
+          }
+          if(append_lines_count>0){
+            # Store replacement as header + original block + appended items
+            # Capture header
+            header = dst[s]
+            body=""; for(i=s+1;i<=e;i++){ body = body dst[i] "\n" }
+            repl_block = header "\n" body
+            for(i=1;i<=append_lines_count;i++){ repl_block = repl_block append_lines[i] "\n" }
+            # Trim trailing newline from repl_block when printing
+            RSTART[s] = 1; REND[s] = e; RBLK[s] = repl_block
+          }
+        }
+      }
+
+      # Emit destination with replacements
+      i=1
+      while(i<=DN){
+        if(RSTART[i]){
+          if(RLINE[i] != ""){
+            print RLINE[i]
+          } else if(RBLK[i] != ""){
+            sub(/\n$/,"",RBLK[i]); print RBLK[i]
+          }
+          i = REND[i] + 1
+        } else {
+          print dst[i]; i++
+        }
+      }
+    }
+  ' "$1" > "$TMP_DIR/lists.merged.tmp" 2>/dev/null || true
+
+  if [ -s "$TMP_DIR/lists.merged.tmp" ]; then
+    mv "$TMP_DIR/lists.merged.tmp" "$1"
+    ensure_permissions "$1"
+    log_info "[list-merge] Merged top-level lists preserving destination style."
   fi
 }
 
@@ -550,8 +680,112 @@ backup_config_file "$TARGET_PATH"
 
 textual_additive_merge "$TARGET_PATH" "$NEW_PATH"
 
-# Merge inline flow arrays (e.g., key: [a, b]) by appending missing elements
+# Merge flow-style arrays first (handles flow and mixed where dest is flow)
 merge_inline_flow_arrays "$TARGET_PATH" "$NEW_PATH"
+
+# Merge block-style lists where destination already uses '-' style
+merge_block_lists_preserve_style() {
+  awk -v NEWFILE="$2" '
+    function trim(s){ sub(/^([[:space:]]|\r)+/,"",s); sub(/([[:space:]]|\r)+$/,"",s); return s }
+    function unquote(s){ s=trim(s); if(s ~ /^".*"$/) return substr(s,2,length(s)-2); if(s ~ /^\x27.*\x27$/) return substr(s,2,length(s)-2); return s }
+    function esc(s){ t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t }
+    function is_top_key_line(line){ return (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) }
+    function parse_block_items(lines,N,start,end,rawA,normA,indent,    i,l,mt){ delete rawA; delete normA; rawA[0]=0; indent=""; for(i=start+1;i<=end;i++){ l=lines[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue; if(match(l,/^([[:space:]]*)-\s*(.*)$/,mt)){ if(indent=="") indent=mt[1]; tok=mt[2]; rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } else if(is_top_key_line(l)) { break } } return indent }
+    function find_dest_block_lists(lines,N,    i,l,k,m){ for(i=1;i<=N;i++){ l=lines[i]; if(match(l,/^([^[:space:]#][^:]*):[[:space:]]*$/,m)){ k=m[1]; # look ahead for dash
+          for(j=i+1;j<=N;j++){ if(lines[j] ~ /^[[:space:]]*#/ || lines[j] ~ /^[[:space:]]*$/) continue; if(lines[j] ~ /^[[:space:]]*-\s+/){ d_start[k]=i; # end at next top key
+              e=i; for(m=i+1;m<=N;m++){ if(is_top_key_line(lines[m])){ e=m-1; break } } d_end[k]=e; break } else { break } } } } }
+    function parse_new_items_any_style(src,SN,key,rawA,normA,    i,l,keyre,cap,depth,buf,t,n,tok,s,e){ delete rawA; delete normA; rawA[0]=0; keyre=esc(key)
+      # Try block style first
+      s=0; for(i=1;i<=SN;i++){ if(src[i] ~ ("^" keyre ":[[:space:]]*$")){ s=i; break } }
+      if(s){ for(i=s+1;i<=SN;i++){ if(src[i] ~ /^[[:space:]]*#/ || src[i] ~ /^[[:space:]]*$/) continue; if(src[i] ~ /^[[:space:]]*-\s+/){ # block
+              e=SN; for(m=s+1;m<=SN;m++){ if(is_top_key_line(src[m])){ e=m-1; break } }
+              # collect block items
+              for(m=s+1;m<=e;m++){ l=src[m]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue; if(match(l,/^([[:space:]]*)-\s*(.*)$/,t)){ tok=t[2]; rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } } return 1 } else { break } } }
+      # Try flow style
+      cap=0; depth=0; buf=""; for(i=1;i<=SN;i++){ l=src[i]; if(!cap){ if(l ~ ("^" keyre ":[[:space:]]*\\[")){ cap=1; sub(/^[^\[]*\[/,"[",l); depth+=gsub(/\[/,"[",l); depth-=gsub(/\]/,"]",l); sub(/^\[/,"",l); buf=buf l; if(depth==0) break } } else { depth+=gsub(/\[/,"[",l); depth-=gsub(/\]/,"]",l); buf=buf l; if(depth==0) break } } sub(/].*$/,"",buf); if(buf!=""){ n=split(buf,t,/,/); for(i=1;i<=n;i++){ tok=trim(t[i]); if(tok!=""){ rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } } return 1 }
+      return 0 }
+    { dst[++DN]=$0 }
+    END {
+      while((getline nl < NEWFILE)>0){ src[++SN]=nl } close(NEWFILE)
+      # Index destination block lists
+      find_dest_block_lists(dst,DN)
+      # For each recorded dest block list key, parse items and merge
+      for (key in d_start){ sD=d_start[key]; eD=d_end[key]; if(sD==0||eD==0) continue; # parse dest
+        destIndent = parse_block_items(dst,DN,sD,eD,oldRaw,oldNorm,destIndent); if(destIndent=="") destIndent="  "
+        # parse new items any style
+        if(!parse_new_items_any_style(src,SN,key,newRaw,newNorm)) continue
+        append_count=0; for(i=1;i<=newRaw[0];i++){ nm=unquote(newRaw[i]); if(!(nm in oldNorm)){ append[++append_count] = destIndent "- " newRaw[i] } }
+        if(append_count>0){ header=dst[sD]; body=""; for(i=sD+1;i<=eD;i++){ body = body dst[i] "\n" } repl = header "\n" body; for(i=1;i<=append_count;i++){ repl = repl append[i] "\n" } RSTART[sD]=1; REND[sD]=eD; RBLK[sD]=repl }
+      }
+      # Emit destination with replacements
+      i=1; while(i<=DN){ if(RSTART[i]){ sub(/\n$/,"",RBLK[i]); print RBLK[i]; i=REND[i]+1 } else { print dst[i]; i++ } }
+    }
+  ' "$1" > "$TMP_DIR/blocklists.merged.tmp" 2>/dev/null || true
+  if [ -s "$TMP_DIR/blocklists.merged.tmp" ]; then
+    mv "$TMP_DIR/blocklists.merged.tmp" "$1"
+    ensure_permissions "$1"
+    log_info "[list-merge] Merged block-style lists preserving '-' style."
+  fi
+}
+
+merge_block_lists_preserve_style "$TARGET_PATH" "$NEW_PATH"
+
+# Handle mixed style: destination uses block list ('-') and new file provides
+# a flow-style array. We synthesize a minimal YAML with only the missing
+# elements under the corresponding block keys and reuse the textual additive
+# injector to append them.
+merge_flow_to_block_via_textual() {
+  inj="$TMP_DIR/block_injections.yml"
+  : > "$inj"
+  awk -v DST="$1" -v SRC="$2" -v OUT="$inj" '
+    function trim(s){ sub(/^([[:space:]]|\r)+/,"",s); sub(/([[:space:]]|\r)+$/,"",s); return s }
+    function esc(s){ t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t }
+    # Load destination block-list keys
+    BEGIN {
+      while((getline l < DST)>0){ d[++DN]=l }
+      close(DST)
+      for(i=1;i<=DN;i++){
+        l=d[i]
+        if(match(l,/^([^[:space:]#][^:]*):[[:space:]]*$/,m)){
+          k=m[1]
+          # check next significant line starts with dash
+          for(j=i+1;j<=DN;j++){
+            if(d[j] ~ /^[[:space:]]*#/ || d[j] ~ /^[[:space:]]*$/) continue
+            if(d[j] ~ /^[[:space:]]*-\s+/){ blk[k]=1 } 
+            break
+          }
+        }
+      }
+      # Parse flow arrays from SRC and emit blocks for keys that are block in DST
+      while((getline l < SRC)>0){ s[++SN]=l }
+      close(SRC)
+      for(i=1;i<=SN;i++){
+        l=s[i]
+        if(match(l,/^([^[:space:]#][^:]*):[[:space:]]*\[/,m)){
+          key=m[1]
+          if(!(key in blk)) continue
+          # capture until closing ]
+          buf=l; depth=gsub(/\[/,"[",l)-gsub(/\]/,"]",l)
+          while(depth>0 && i<SN){ i++; ln=s[i]; buf=buf ln; depth+=gsub(/\[/,"[",ln)-gsub(/\]/,"]",ln) }
+          sub(/^[^\[]*\[/,"[",buf); sub(/^\[/, "", buf); sub(/].*$/, "", buf)
+          n=split(buf, t, /,/)
+          if(n>0){
+            print key ":" >> OUT
+            for(k2=1;k2<=n;k2++){ tok=trim(t[k2]); if(tok!="") print "  - " tok >> OUT }
+          }
+        }
+      }
+    }
+  ' /dev/null
+  if [ -s "$inj" ]; then
+    # Reuse textual additive merger to append only missing lines under blocks
+    TMP_PKG_NEW="$TMP_DIR/new.blockified.yml"
+    cp "$inj" "$TMP_PKG_NEW"
+    textual_additive_merge "$TARGET_PATH" "$TMP_PKG_NEW"
+  fi
+}
+
+merge_flow_to_block_via_textual "$TARGET_PATH" "$NEW_PATH"
 
 # Always remove the packaged new config file once handled (idempotent)
 if [ -f "$NEW_PATH" ]; then

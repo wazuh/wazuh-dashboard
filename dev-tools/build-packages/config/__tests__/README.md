@@ -52,7 +52,9 @@ The script will:
   ```
   ) appending only what’s missing.
 - Idempotency: multiple runs do not duplicate keys.
- - Flow-style arrays (e.g., `key: [a, b]`) are merged by appending only missing values while preserving the existing order. Block-style lists (with `- item`) are intentionally not merged.
+- Lists merge:
+  - Flow-style arrays (`key: [a, b]`) and block lists (`key:` with `- item`) are merged by appending only missing values, preserving the destination order.
+  - If styles differ between destination and new defaults, the destination style is preserved (flow stays flow; block stays block).
 
 ## Notes on Dependencies
 
