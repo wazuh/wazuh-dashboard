@@ -23,10 +23,30 @@ DEFAULT_OWNER_USER="wazuh-dashboard"
 DEFAULT_FILE_MODE="0640"
 
 # ---------------------------- Logging utils ---------------------------------
+# log_info
+#   Emit an informational message to stderr. Useful for non‑critical traces.
+#   Example:
+#     log_info "Merged defaults into /etc/wazuh-dashboard/opensearch_dashboards.yml"
 log_info()  { echo "[INFO]  $*" 1>&2; }
+
+# log_warn
+#   Emit a warning to stderr. Useful for unknown arguments or operations that
+#   continue with default behavior.
+#   Example:
+#     log_warn "Ignoring unknown argument: --foo"
 log_warn()  { echo "[WARN]  $*" 1>&2; }
+
+# log_error
+#   Emit an error to stderr. Does NOT terminate the script; intended to record
+#   non‑critical failures that should not abort the merge.
+#   Example:
+#     log_error "Could not set ownership; continuing"
 log_error() { echo "[ERROR] $*" 1>&2; }
 
+# usage
+#   Show script usage help.
+#   Example:
+#     ./merge_opensearch_yml.sh --help
 usage() {
   cat 1>&2 <<USAGE
 Usage: $0 [--config-dir DIR] [--help]
@@ -39,6 +59,19 @@ USAGE
 }
 
 # --------------------------- Helper functions -------------------------------
+# ensure_permissions
+#   Ensure destination file ownership/group and permissions. If the service
+#   user does not exist, do not fail.
+#
+#   Args:
+#     $1: path to file whose ownership/permissions will be adjusted.
+#
+#   Examples:
+#     ensure_permissions "/etc/wazuh-dashboard/opensearch_dashboards.yml"
+#
+#   Notes:
+#   - Does not abort if `chown`/`chmod` fail; the merge is already done and we
+#     do not want to lose the work.
 ensure_permissions() {
   # Ensure ownership (if user exists) and mode, but never fail the merge.
   if command -v id >/dev/null 2>&1 && id "$DEFAULT_OWNER_USER" >/dev/null 2>&1; then
@@ -47,6 +80,17 @@ ensure_permissions() {
   chmod "$DEFAULT_FILE_MODE" "$1" || true
 }
 
+# detect_new_config_path
+#   Look for new configuration artifacts produced by the package manager
+#   (e.g., `.rpmnew`, `.dpkg-dist`, `.dpkg-new`, `.ucf-dist`) for the target
+#   file. Prints the first match to stdout or empty if none found.
+#
+#   Args:
+#     $1: base path of the target file without suffix (e.g., /etc/.../file.yml)
+#
+#   Example:
+#     detect_new_config_path "/etc/wazuh-dashboard/opensearch_dashboards.yml"
+#     # => /etc/wazuh-dashboard/opensearch_dashboards.yml.rpmnew | ""
 detect_new_config_path() {
   # Args: $1 = target path without suffix
   # Echoes path to the packaged new config if found, else empty
@@ -62,7 +106,11 @@ detect_new_config_path() {
 }
 
 detect_yq_variant() {
-  # Echoes one of: farah | legacy | none
+  # Determine which yq variant is available for choosing the merge strategy.
+  # Echo to stdout one of: farah | legacy | none
+  # - farah: Mike Farah yq v4+, supports powerful YAML expressions and *d merge.
+  # - legacy: another yq (or wrapper) present, no compatibility guarantees.
+  # - none: no yq available; use conservative fallback.
   if command -v yq >/dev/null 2>&1; then
     if yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null 2>&1; then
       echo "farah"
@@ -74,6 +122,13 @@ detect_yq_variant() {
   echo "none"
 }
 
+# create_tmp_workspace
+#   Create a temporary directory for intermediate files (patch, append, json,
+#   etc.) and export paths as global variables. Removed in `cleanup` via trap.
+#
+#   Example:
+#     create_tmp_workspace
+#     # Global variables become available: $TMP_DIR, $PATCH_FILE, ...
 create_tmp_workspace() {
   TMP_DIR=$(mktemp -d)
   APPEND_FILE="$TMP_DIR/append.yml"
@@ -86,48 +141,114 @@ create_tmp_workspace() {
 }
 
 cleanup() {
+  # Remove temporary workspace if it exists. Invoked automatically on
+  # EXIT/INT/TERM/HUP via the trap; reentrant-safe.
   if [ "${TMP_DIR:-}" != "" ] && [ -d "$TMP_DIR" ]; then
     rm -rf "$TMP_DIR" || true
   fi
 }
 
 collect_existing_top_keys() {
-  # Args: $1 = yaml file, $2 = output file with keys (one per line)
+  # Extract top‑level keys from YAML ignoring blank lines and comments, write
+  # them sorted and unique to the output file.
+  #
+  # Args:
+  #   $1: input YAML file
+  #   $2: output file with one key per line
+  #
+  # Example:
+  #   collect_existing_top_keys target.yml out.txt
+  #   # out.txt ->
+  #   # server
+  #   # logging
+  #   # uiSettings
   awk '
     /^[[:space:]]*#/ { next }
     /^[[:space:]]*$/ { next }
     {
       if (match($0, /^[[:space:]]*([^:#]+)[[:space:]]*:/, m)) {
-        key=m[1]; gsub(/[[:space:]]+$/, "", key); print key
+        key = m[1]
+        gsub(/[[:space:]]+$/, "", key)
+        print key
       }
     }
-  ' "$1" | sed 's/[[:space:]]*$//' | sort -u > "$2"
+  ' "$1" \
+  | sed 's/[[:space:]]*$//' \
+  | sort -u > "$2"
 }
 
 append_missing_top_level_blocks() {
-  # Args: $1 = target file, $2 = new file
-  # Modifies: APPEND_FILE, ADDED_KEYS_FILE
+  # Append to the destination file any top‑level blocks present in the "new"
+  # file but absent in the target. Does not overwrite existing keys nor modify
+  # already present blocks; only copies whole missing blocks.
+  #
+  # Args:
+  #   $1: destination file (e.g., /etc/wazuh-dashboard/opensearch_dashboards.yml)
+  #   $2: new file (e.g., opensearch_dashboards.yml.rpmnew)
+  # Side effects:
+  #   Writes APPEND_FILE with content to append and ADDED_KEYS_FILE with the
+  #   list of added top‑level keys.
+  #
+  # Example:
+  #   target.yml: has "server:" and "logging:"
+  #   new.yml:    has "server:", "logging:", "uiSettings:"
+  #   => The full "uiSettings:" block is appended to target.yml; existing
+  #      blocks remain intact.
   collect_existing_top_keys "$1" "$TMP_DIR/existing_keys.txt"
   : > "$APPEND_FILE"; : > "$ADDED_KEYS_FILE"
-  awk -v existing="$TMP_DIR/existing_keys.txt" -v added="$ADDED_KEYS_FILE" -v out="$APPEND_FILE" '
-    BEGIN { while ((getline k < existing) > 0) { have[k]=1 } close(existing) }
-    { lines[NR]=$0 }
+  awk \
+    -v existing="$TMP_DIR/existing_keys.txt" \
+    -v added="$ADDED_KEYS_FILE" \
+    -v out="$APPEND_FILE" \
+    '
+    BEGIN {
+      while ((getline k < existing) > 0) {
+        have[k] = 1
+      }
+      close(existing)
+    }
+
+    {
+      lines[NR] = $0
+    }
+
     END {
-      n=NR
-      for (i=1; i<=n; i++) {
-        line=lines[i]
-        if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
+      n = NR
+
+  # Detect the start of each top-level block in the new file and record
+  # their appearance order so complete blocks can be copied if missing.
+      for (i = 1; i <= n; i++) {
+        line = lines[i]
+        if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) {
+          continue
+        }
         if (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) {
-          key=line; sub(/:.*/, "", key); gsub(/[[:space:]]+$/, "", key)
-          if (!(key in start)) { order[++orderN]=key; start[key]=i }
+          key = line
+          sub(/:.*/, "", key)
+          gsub(/[[:space:]]+$/, "", key)
+          if (!(key in start)) {
+            order[++orderN] = key
+            start[key] = i
+          }
         }
       }
-      for (idx=1; idx<=orderN; idx++) {
-        k=order[idx]; s=start[k]; e=n; if (idx<orderN) { nk=order[idx+1]; e=start[nk]-1 }
+
+  # For each top-level block, if not present in target, copy the complete
+  # block (from its start to the next top-level key or EOF).
+      for (idx = 1; idx <= orderN; idx++) {
+        k = order[idx]
+        s = start[k]
+        e = n
+        if (idx < orderN) {
+          nk = order[idx + 1]
+          e = start[nk] - 1
+        }
         if (!(k in have) && !(k in printed)) {
-          for (j=s; j<=e; j++) print lines[j] >> out
+          for (j = s; j <= e; j++) {
+            print lines[j] >> out
+          }
           print k >> added
-          printed[k]=1
+          printed[k] = 1
         }
       }
     }
@@ -141,8 +262,23 @@ append_missing_top_level_blocks() {
 }
 
 merge_with_yq_v4() {
-  # Args: $1 target, $2 new
-  # Build a patch containing only missing scalar leaves and deep-merge without overwrite
+  # Perform a deep additive merge with yq v4 (Mike Farah) without overwriting
+  # existing values. First build a "patch" containing only missing scalar leaf
+  # nodes from the target, then apply `$old *d $patch`.
+  #
+  # Args:
+  #   $1: destination file
+  #   $2: new (packaged) file
+  #
+  # Conceptual example:
+  #   old:
+  #     server:
+  #       port: 5601
+  #   new:
+  #     server:
+  #       host: 0.0.0.0
+  #   patch => { server: { host: 0.0.0.0 } }
+  #   merge => inserts host, keeps port.
   yq ea -n '
     (select(fileIndex==0)) as $old |
     (select(fileIndex==1)) as $new |
@@ -171,8 +307,15 @@ merge_with_yq_v4() {
 }
 
 merge_with_yq_legacy() {
-  # Args: $1 target, $2 new
-  # Strategy: append missing top-level blocks; then best-effort nested additions for common blocks.
+  # Strategy for environments with non‑Mike-Farah yq (or wrappers):
+  # 1) Append missing top-level blocks (safe, non-destructive).
+  # 2) If nothing appended, attempt an optional improvement: detect missing
+  #    nested scalars via jq and apply a textual patch for the known `uiSettings`
+  #    block (without overwriting existing lines).
+  #
+  # Args:
+  #   $1: destination file
+  #   $2: new file
   append_missing_top_level_blocks "$1" "$2"
 
   # Only attempt nested patching if nothing was appended (i.e., keys exist already)
@@ -182,16 +325,53 @@ merge_with_yq_legacy() {
     if [ -s "$OLD_JSON" ] && [ -s "$NEW_JSON" ]; then
       MISSING_NESTED=$(jq -s '[ (.[1]|paths(scalars)) as $p | select(((.[0]|keys)|index($p[0])) and ((.[0]|getpath($p)? // null) == null)) ] | length' "$OLD_JSON" "$NEW_JSON" 2>/dev/null || echo 0)
       if [ "${MISSING_NESTED:-0}" -gt 0 ] 2>/dev/null; then
-        # Special-case merge for uiSettings only (textual, additive, non-overwrite)
+  # Special case: `uiSettings` (textual additive merge without overwriting).
         if grep -q '^uiSettings:' "$1" && grep -q '^uiSettings:' "$2"; then
-          awk '/^uiSettings:[[:space:]]*$/{flag=1; next} /^[^[:space:]#][^:]*:[[:space:]]*/{if(flag){exit}} flag{print}' "$2" > "$TMP_DIR/ui_block.new"
+            # Extract the `uiSettings` block from the new file without header.
+          awk \
+            '/^uiSettings:[[:space:]]*$/ { flag = 1; next } \
+             /^[^[:space:]#][^:]*:[[:space:]]*/ { if (flag) { exit } } \
+             flag { print }' \
+            "$2" > "$TMP_DIR/ui_block.new"
           if [ -s "$TMP_DIR/ui_block.new" ]; then
-            awk -v tmpfile="$TMP_DIR/ui_block.new" '
-              BEGIN{printed=0}
-              /^uiSettings:[[:space:]]*$/ {print; ui=1; next}
-              /^[^[:space:]#][^:]*:[[:space:]]*/ { if (ui && !printed) { while ((getline line < tmpfile) > 0) { if (line != "" && system("grep -Fqx \"" line "\" \"" FILENAME "\"") != 0) print line } close(tmpfile); printed=1; ui=0 } }
-              {print}
-              END{ if (ui && !printed) { while ((getline line < tmpfile) > 0) { if (line != "" && system("grep -Fqx \"" line "\" \"" FILENAME "\"") != 0) print line } close(tmpfile) } }
+            # Insert missing lines from the new `uiSettings` block right after
+            # the header in the destination, avoiding duplicates.
+            awk \
+              -v tmpfile="$TMP_DIR/ui_block.new" \
+              '
+              BEGIN { printed = 0 }
+
+              /^uiSettings:[[:space:]]*$/ {
+                print
+                ui = 1
+                next
+              }
+
+              /^[^[:space:]#][^:]*:[[:space:]]*/ {
+                if (ui && !printed) {
+                  while ((getline line < tmpfile) > 0) {
+                    if (line != "" && system("grep -Fqx \"" line "\" \"" FILENAME "\"") != 0) {
+                      print line
+                    }
+                  }
+                  close(tmpfile)
+                  printed = 1
+                  ui = 0
+                }
+              }
+
+              { print }
+
+              END {
+                if (ui && !printed) {
+                  while ((getline line < tmpfile) > 0) {
+                    if (line != "" && system("grep -Fqx \"" line "\" \"" FILENAME "\"") != 0) {
+                      print line
+                    }
+                  }
+                  close(tmpfile)
+                }
+              }
             ' "$1" > "$TMP_DIR/target.with.ui.yml" 2>/dev/null || true
             if [ -s "$TMP_DIR/target.with.ui.yml" ]; then
               mv "$TMP_DIR/target.with.ui.yml" "$1"
@@ -205,7 +385,12 @@ merge_with_yq_legacy() {
 }
 
 fallback_append_only() {
-  # Args: $1 target, $2 new
+  # Fallback without yq: append only missing top-level blocks.
+  # No deep merges; deliberately conservative to avoid touching user values.
+  #
+  # Args:
+  #   $1: destination file
+  #   $2: new file
   append_missing_top_level_blocks "$1" "$2"
   if [ -s "$ADDED_KEYS_FILE" ]; then
     log_info "Merged new default keys into $1:" ; sed 's/^/  - /' "$ADDED_KEYS_FILE" 1>&2 || true
@@ -257,9 +442,4 @@ if [ -f "$NEW_PATH" ]; then
   rm -f "$NEW_PATH" || true
 fi
 
-exit 0
-
-# Remove the pending new config file to avoid future prompts
-rm -f "$NEW_PATH"
-rm -rf "$TMP_DIR"
 exit 0
