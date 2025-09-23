@@ -545,97 +545,133 @@ merge_inline_flow_arrays() {
 #     $2: new packaged file
 merge_top_level_lists_preserve_style() {
   awk -v NEWFILE="$2" '
-    function trim(s){ sub(/^([[:space:]]|\r)+/,"",s); sub(/([[:space:]]|\r)+$/,"",s); return s }
-    function unquote(s){ s=trim(s); if(s ~ /^".*"$/) return substr(s,2,length(s)-2); if(s ~ /^\x27.*\x27$/) return substr(s,2,length(s)-2); return s }
-    function esc(s){ t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t }
-    function starts_top_key(line, key_re){ return (line ~ ("^" key_re ":[[:space:]]*")) }
+    function trim(text){ sub(/^([[:space:]]|\r)+/,"",text); sub(/([[:space:]]|\r)+$/,"",text); return text }
+    function unquote(text){ text=trim(text); if(text ~ /^".*"$/) return substr(text,2,length(text)-2); if(text ~ /^\x27.*\x27$/) return substr(text,2,length(text)-2); return text }
+    function escape_regex(text){ gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", text); return text }
     function is_top_key_line(line){ return (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) }
-    function parse_flow_items_from_buffer(buf, rawA, normA,    t,i,tok){ delete rawA; delete normA; rawA[0]=0; sub(/^[^\[]*\[/,"[",buf); sub(/^\[/, "", buf); sub(/].*$/, "", buf); n=split(buf,t,/,/); for(i=1;i<=n;i++){ tok=trim(t[i]); if(tok!=""){ rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } } }
-    function collect_block_items(lines, N, start, end, rawA, normA,    i,ind,cap,l,mtch){ delete rawA; delete normA; rawA[0]=0; ind=""; cap=0; for(i=start+1;i<=end;i++){ l=lines[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) { continue } if(match(l, /^([[:space:]]*)-\s*(.*)$/, mtch)){ if(ind=="") ind=mtch[1]; tok=mtch[2]; rawA[++rawA[0]]=tok; normA[unquote(tok)]=1; cap=1 } else if(cap && is_top_key_line(l)) { break } }
-      return ind }
-    function find_block(lines, N, key, style, sidx, eidx,    i,key_re,l,depth,tmp){ key_re=esc(key); style="none"; sidx=0; eidx=0; for(i=1;i<=N;i++){ l=lines[i]; if(starts_top_key(l,key_re)){ sidx=i; break } } if(!sidx){ return 0 }
-      # Detect flow vs block
-      if(lines[sidx] ~ /\[[^\]]*$/){ style="flow"; depth=0; tmp=lines[sidx]; sub(/^[^\[]*\[/,"[",tmp); depth += gsub(/\[/,"[",tmp); depth -= gsub(/\]/,"]",tmp); if(depth==0){ eidx=sidx } else { for(i=sidx+1;i<=N;i++){ tmp=lines[i]; depth += gsub(/\[/,"[",tmp); depth -= gsub(/\]/,"]",tmp); if(depth==0){ eidx=i; break } } } }
-      else {
-        # If next non-empty/comment line starts with dash, consider block list; otherwise treat as scalar
-        for(i=sidx+1;i<=N;i++){ l=lines[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue; if(l ~ /^[[:space:]]*-\s+/){ style="block"; break } else { style="scalar"; break } }
-        if(style=="block"){ # end at next top-level key or EOF
-          eidx=N; for(i=sidx+1;i<=N;i++){ if(is_top_key_line(lines[i])){ eidx=i-1; break } }
+    function starts_exact_key(line,key_regex){ return (line ~ ("^" key_regex ":[[:space:]]*")) }
+
+    function parse_flow_items_from_buffer(buffer, raw_items, normalized_items,    tokens, i, token){
+      delete raw_items; delete normalized_items; raw_items[0]=0
+      sub(/^[^\[]*\[/,"[",buffer); sub(/^\[/ , "", buffer); sub(/].*$/, "", buffer)
+      token_count=split(buffer,tokens,/,/)
+      for(i=1;i<=token_count;i++){ token=trim(tokens[i]); if(token!=""){ raw_items[++raw_items[0]]=token; normalized_items[unquote(token)]=1 } }
+    }
+
+    function parse_block_items_from_range(lines,total,start_index,end_index,raw_items,normalized_items,indentation,    i,line,match_groups){
+      delete raw_items; delete normalized_items; raw_items[0]=0; indentation=""
+      for(i=start_index+1;i<=end_index;i++){
+        line=lines[i]
+        if(line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
+        if(match(line,/^([[:space:]]*)-\s*(.*)$/,match_groups)){
+          if(indentation=="") indentation=match_groups[1]
+          token=match_groups[2]
+          raw_items[++raw_items[0]]=token
+          normalized_items[unquote(token)]=1
+        } else if(is_top_key_line(line)){
+          break
         }
       }
-      if(eidx==0) eidx=sidx; return 1 }
-    function parse_items(lines,N,start,end,style,rawA,normA,indent,    buf){ if(style=="flow"){ buf=""; for(i=start;i<=end;i++) buf = buf lines[i]; parse_flow_items_from_buffer(buf,rawA,normA) ; indent="" } else if(style=="block"){ indent = collect_block_items(lines,N,start,end,rawA,normA) } else { delete rawA; delete normA; rawA[0]=0; indent="" } return indent }
-    function parse_items_from_file(file, key, rawA, normA, style, indent,    lns,Nl,ok,s,e){ Nl=0; while((getline l < file)>0){ lns[++Nl]=l } close(file); ok=find_block(lns,Nl,key,style,s,e); if(!ok){ style="none"; indent=""; rawA[0]=0; return 0 } indent=parse_items(lns,Nl,s,e,style,rawA,normA,indent); return 1 }
-    function build_flow_line(key, oldRaw, oldNorm, newRaw,    out,i,norm){ out=key ": ["; for(i=1;i<=oldRaw[0];i++){ if(i>1) out=out ", "; out=out oldRaw[i] } for(i=1;i<=newRaw[0];i++){ norm=unquote(newRaw[i]); if(!(norm in oldNorm)){ if(oldRaw[0]>0 || appended) out=out ", "; out=out newRaw[i]; appended++ } } out=out "]"; return out }
-    function build_block_lines(key, lines, N, start, end, newRaw, oldNorm, indent,    i,buf){ for(i=1;i<=N;i++){ out_lines[++outN]=lines[i] } # placeholder; handled later
-      return 1 }
+      return indentation
+    }
 
-    { dst[++DN]=$0 }
+    function find_key_in_dest(lines,total,key_name,style,start_index,end_index,    i,line,key_regex,depth,tmp){
+      key_regex=escape_regex(key_name)
+      style="none"; start_index=0; end_index=0
+      for(i=1;i<=total;i++){ line=lines[i]; if(starts_exact_key(line,key_regex)){ start_index=i; break } }
+      if(!start_index) return 0
+      if(lines[start_index] ~ /\[[^\]]*$/){
+        style="flow"; depth=0; tmp=lines[start_index]; sub(/^[^\[]*\[/,"[",tmp); depth+=gsub(/\[/,"[",tmp); depth-=gsub(/\]/,"]",tmp)
+        if(depth==0){ end_index=start_index } else { for(i=start_index+1;i<=total;i++){ tmp=lines[i]; depth+=gsub(/\[/,"[",tmp); depth-=gsub(/\]/,"]",tmp); if(depth==0){ end_index=i; break } } }
+      } else {
+        for(i=start_index+1;i<=total;i++){
+          line=lines[i]; if(line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
+          if(line ~ /^[[:space:]]*-\s+/){ style="block"; break } else { style="scalar"; break }
+        }
+        if(style=="block"){ end_index=total; for(i=start_index+1;i<=total;i++){ if(is_top_key_line(lines[i])){ end_index=i-1; break } } }
+      }
+      if(end_index==0) end_index=start_index
+      return 1
+    }
+
+    function parse_items_from_new_file(file_path,key_name,raw_items,normalized_items,style,indentation,    lines,total,i,line,key_regex,header_index,is_block,depth,buffer,match_groups){
+      delete raw_items; delete normalized_items; raw_items[0]=0; style="none"; indentation=""
+      total=0; while((getline line < file_path)>0){ lines[++total]=line } close(file_path)
+      key_regex=escape_regex(key_name)
+      header_index=0; for(i=1;i<=total;i++){ if(lines[i] ~ ("^" key_regex ":[[:space:]]*$")){ header_index=i; break } }
+      if(header_index){
+        is_block=0; for(i=header_index+1;i<=total;i++){ if(lines[i] ~ /^[[:space:]]*#/ || lines[i] ~ /^[[:space:]]*$/) continue; if(lines[i] ~ /^[[:space:]]*-\s+/){ is_block=1; break } else { break } }
+        if(is_block){
+          style="block"; end_index=total; for(i=header_index+1;i<=total;i++){ if(is_top_key_line(lines[i])){ end_index=i-1; break } }
+          indentation=parse_block_items_from_range(lines,total,header_index,end_index,raw_items,normalized_items,indentation)
+          return 1
+        }
+      }
+      depth=0; buffer=""; for(i=1;i<=total;i++){ line=lines[i]; if(depth==0){ if(line ~ ("^" key_regex ":[[:space:]]*\\[")){ style="flow"; sub(/^[^\[]*\[/,"[",line); depth+=gsub(/\[/,"[",line); depth-=gsub(/\]/,"]",line); sub(/^\[/,"",line); buffer=buffer line; if(depth==0) break } } else { depth+=gsub(/\[/,"[",line); depth-=gsub(/\]/,"]",line); buffer=buffer line; if(depth==0) break } }
+      if(style=="flow"){ parse_flow_items_from_buffer(buffer,raw_items,normalized_items); return 1 }
+      return 0
+    }
+
+    function build_flow_replacement_line(key_name, existing_raw, existing_norm, new_raw,    output_line, i, normalized){
+      output_line = key_name ": ["
+      for(i=1;i<=existing_raw[0];i++){ if(i>1) output_line=output_line ", "; output_line=output_line existing_raw[i] }
+      for(i=1;i<=new_raw[0];i++){ normalized=unquote(new_raw[i]); if(!(normalized in existing_norm)){ if(existing_raw[0]) output_line=output_line ", "; output_line=output_line new_raw[i]; existing_raw[0]++ } }
+      output_line = output_line "]"
+      return output_line
+    }
+
+    { dest_lines[++dest_count] = $0 }
     END {
-      # Load new file lines
-      while((getline nl < NEWFILE)>0){ src[++SN]=nl } close(NEWFILE)
-
-      # Iterate over top-level keys in new file
-      # First, collect their order
-      for(i=1;i<=SN;i++){
-        l=src[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue
-        if(match(l,/^[^[:space:]#][^:]*:/)){
-          k=l; sub(/:.*/,"",k); gsub(/[[:space:]]+$/,"",k); if(!(k in seen)){ order[++orderN]=k; seen[k]=1 }
+      while((getline new_line < NEWFILE)>0){ new_lines[++new_count]=new_line } close(NEWFILE)
+      for(i=1;i<=new_count;i++){
+        line=new_lines[i]; if(line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
+        if(match(line,/^[^[:space:]#][^:]*:/)){
+          key_name=line; sub(/:.*/,"",key_name); gsub(/[[:space:]]+$/, "", key_name)
+          if(!(key_name in seen_key)){ new_keys_order[++new_keys_total]=key_name; seen_key[key_name]=1 }
         }
       }
+      for(order_index=1; order_index<=new_keys_total; order_index++){
+        key_name=new_keys_order[order_index]
+        if(!parse_items_from_new_file(NEWFILE,key_name,new_raw,new_norm,new_style,new_indent)) continue
+        if(new_style!="flow" && new_style!="block") continue
 
-      # Prepare a mapping from index to replacement for destination
-      for(oi=1; oi<=orderN; oi++){
-        key=order[oi]
-        # Parse items from new (if any list)
-        if(!parse_items_from_file(NEWFILE, key, newRaw, newNorm, newStyle, newIndent)) continue
-        if(newStyle!="flow" && newStyle!="block") continue
+        if(!find_key_in_dest(dest_lines,dest_count,key_name,dest_style,dest_start_index,dest_end_index)) continue
+        if(dest_style=="scalar") continue
 
-        # Parse destination block and style; skip if key not present in dest
-        if(!find_block(dst, DN, key, dstStyle, s, e)) continue
-        if(dstStyle=="scalar") continue
-
-        # Parse destination items
-        indent = parse_items(dst, DN, s, e, dstStyle, oldRaw, oldNorm, indent)
-
-        # Build replacement respecting destination style
-        if(dstStyle=="flow"){
-          repl = build_flow_line(key, oldRaw, oldNorm, newRaw)
-          RSTART[s] = 1; REND[s] = e; RLINE[s] = repl
-        } else if(dstStyle=="block"){
-          # Reconstruct: print header and original body, then append missing items as new lines
-          # Determine indent (default two spaces if none found)
-          ind = indent; if(ind=="") ind="  "
-          # Prepare list of append lines
-          append_lines_count=0
-          for(i=1;i<=newRaw[0];i++){
-            norm = unquote(newRaw[i]); if(!(norm in oldNorm)){ append_lines[++append_lines_count] = ind "- " newRaw[i] }
+        if(dest_style=="flow"){
+          buffer=""; temp=dest_lines[dest_start_index]; sub(/^[^\[]*\[/,"[",temp); sub(/^\[/,"",temp); buffer=buffer temp; for(i=dest_start_index+1;i<=dest_end_index;i++){ buffer=buffer dest_lines[i] }
+          parse_flow_items_from_buffer(buffer,existing_raw,existing_norm)
+          replacement_line = build_flow_replacement_line(key_name, existing_raw, existing_norm, new_raw)
+          replacement_start[dest_start_index]=1; replacement_end[dest_start_index]=dest_end_index; replacement_text_line[dest_start_index]=replacement_line
+        } else if(dest_style=="block"){
+          dest_indentation = parse_block_items_from_range(dest_lines,dest_count,dest_start_index,dest_end_index,existing_raw,existing_norm,dest_indentation)
+          if(dest_indentation=="") dest_indentation="  "
+          appended_count=0
+          for(i=1;i<=new_raw[0];i++){
+            normalized_value=unquote(new_raw[i])
+            if(!(normalized_value in existing_norm)) appended_lines[++appended_count] = dest_indentation "- " new_raw[i]
           }
-          if(append_lines_count>0){
-            # Store replacement as header + original block + appended items
-            # Capture header
-            header = dst[s]
-            body=""; for(i=s+1;i<=e;i++){ body = body dst[i] "\n" }
-            repl_block = header "\n" body
-            for(i=1;i<=append_lines_count;i++){ repl_block = repl_block append_lines[i] "\n" }
-            # Trim trailing newline from repl_block when printing
-            RSTART[s] = 1; REND[s] = e; RBLK[s] = repl_block
+          if(appended_count>0){
+            header_line = dest_lines[dest_start_index]
+            body_lines=""; for(i=dest_start_index+1;i<=dest_end_index;i++){ body_lines = body_lines dest_lines[i] "\n" }
+            replacement_block = header_line "\n" body_lines
+            for(i=1;i<=appended_count;i++){ replacement_block = replacement_block appended_lines[i] "\n" }
+            replacement_start[dest_start_index]=1; replacement_end[dest_start_index]=dest_end_index; replacement_text_block[dest_start_index]=replacement_block
           }
         }
       }
-
-      # Emit destination with replacements
       i=1
-      while(i<=DN){
-        if(RSTART[i]){
-          if(RLINE[i] != ""){
-            print RLINE[i]
-          } else if(RBLK[i] != ""){
-            sub(/\n$/,"",RBLK[i]); print RBLK[i]
+      while(i<=dest_count){
+        if(replacement_start[i]){
+          if(replacement_text_line[i] != ""){
+            print replacement_text_line[i]
+          } else if(replacement_text_block[i] != ""){
+            sub(/\n$/,"",replacement_text_block[i]); print replacement_text_block[i]
           }
-          i = REND[i] + 1
+          i = replacement_end[i] + 1
         } else {
-          print dst[i]; i++
+          print dest_lines[i]
+          i++
         }
       }
     }
