@@ -320,6 +320,12 @@ textual_additive_merge() {
         ' "$2" > "$TMP_DIR/block.new"
 
         if [ -s "$TMP_DIR/block.new" ]; then
+          # If the new block is a block-style list (lines beginning with '-')
+          # skip textual injection and let the dedicated list merge handle it
+          if grep -qE '^[[:space:]]*-[[:space:]]+' "$TMP_DIR/block.new"; then
+            log_info "[textual-merge] Skipping list-style block for '$top_level_key' (handled by list merge)."
+            continue
+          fi
           log_info "[textual-merge] block.new for '$top_level_key':"; sed -n '1,50p' "$TMP_DIR/block.new" 1>&2 || true
           log_info "[textual-merge] Found new nested lines for '$top_level_key', injecting if absent."
           # Insert missing lines from the new block just after the header in
@@ -580,7 +586,7 @@ merge_top_level_lists_preserve_style() {
       style="none"; start_index=0; end_index=0
       for(i=1;i<=total;i++){ line=lines[i]; if(starts_exact_key(line,key_regex)){ start_index=i; break } }
       if(!start_index) return 0
-      if(lines[start_index] ~ /\[[^\]]*$/){
+      if(lines[start_index] ~ /\[/){
         style="flow"; depth=0; tmp=lines[start_index]; sub(/^[^\[]*\[/,"[",tmp); depth+=gsub(/\[/,"[",tmp); depth-=gsub(/\]/,"]",tmp)
         if(depth==0){ end_index=start_index } else { for(i=start_index+1;i<=total;i++){ tmp=lines[i]; depth+=gsub(/\[/,"[",tmp); depth-=gsub(/\]/,"]",tmp); if(depth==0){ end_index=i; break } } }
       } else {
@@ -684,6 +690,87 @@ merge_top_level_lists_preserve_style() {
   fi
 }
 
+# Specialized list-merge helpers (restored for robustness)
+
+merge_block_lists_preserve_style() {
+  awk -v NEWFILE="$2" '
+    function trim(text){ sub(/^([[:space:]]|\r)+/,"",text); sub(/([[:space:]]|\r)+$/,"",text); return text }
+    function unquote(text){ text=trim(text); if(text ~ /^".*"$/) return substr(text,2,length(text)-2); if(text ~ /^\x27.*\x27$/) return substr(text,2,length(text)-2); return text }
+    function escape_regex(text){ gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", text); return text }
+    function is_top_key_line(line){ return (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) }
+    function parse_block_items(lines,total,start_index,end_index,raw_items,normalized_items,indentation,    i,line,match_groups){ delete raw_items; delete normalized_items; raw_items[0]=0; indentation=""; for(i=start_index+1;i<=end_index;i++){ line=lines[i]; if(line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue; if(match(line,/^([[:space:]]*)-\s*(.*)$/,match_groups)){ if(indentation=="") indentation=match_groups[1]; token=match_groups[2]; raw_items[++raw_items[0]]=token; normalized_items[unquote(token)]=1 } else if(is_top_key_line(line)) { break } } return indentation }
+    function find_dest_block_lists(lines,total,    i,line,key_name,match_groups){ for(i=1;i<=total;i++){ line=lines[i]; if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*$/,match_groups)){ key_name=match_groups[1]; for(j=i+1;j<=total;j++){ if(lines[j] ~ /^[[:space:]]*#/ || lines[j] ~ /^[[:space:]]*$/) continue; if(lines[j] ~ /^[[:space:]]*-\s+/){ dest_block_start[key_name]=i; end=i; for(m=i+1;m<=total;m++){ if(is_top_key_line(lines[m])){ end=m-1; break } } dest_block_end[key_name]=end; break } else { break } } } } }
+    function parse_new_items_any_style(src_lines,total_new,key_name,raw_items,normalized_items,    i,line,key_regex,capturing,depth,buffer,tokens,token_count,token,header_index,end_index,match_groups){ delete raw_items; delete normalized_items; raw_items[0]=0; key_regex=escape_regex(key_name)
+      header_index=0; for(i=1;i<=total_new;i++){ if(src_lines[i] ~ ("^" key_regex ":[[:space:]]*$")){ header_index=i; break } }
+      if(header_index){ for(i=header_index+1;i<=total_new;i++){ if(src_lines[i] ~ /^[[:space:]]*#/ || src_lines[i] ~ /^[[:space:]]*$/) continue; if(src_lines[i] ~ /^[[:space:]]*-\s+/){ end_index=total_new; for(m=header_index+1;m<=total_new;m++){ if(is_top_key_line(src_lines[m])){ end_index=m-1; break } } for(m=header_index+1;m<=end_index;m++){ line=src_lines[m]; if(line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue; if(match(line,/^([[:space:]]*)-\s*(.*)$/,match_groups)){ token=match_groups[2]; raw_items[++raw_items[0]]=token; normalized_items[unquote(token)]=1 } } return 1 } else { break } } }
+      capturing=0; depth=0; buffer=""; for(i=1;i<=total_new;i++){ line=src_lines[i]; if(!capturing){ if(line ~ ("^" key_regex ":[[:space:]]*\\[")){ capturing=1; sub(/^[^\[]*\[/,"[",line); depth+=gsub(/\[/,"[",line); depth-=gsub(/\]/,"]",line); sub(/^\[/,"",line); buffer=buffer line; if(depth==0) break } } else { depth+=gsub(/\[/,"[",line); depth-=gsub(/\]/,"]",line); buffer=buffer line; if(depth==0) break } } sub(/].*$/,"",buffer); if(buffer!=""){ token_count=split(buffer,tokens,/,/); for(i=1;i<=token_count;i++){ token=trim(tokens[i]); if(token!=""){ raw_items[++raw_items[0]]=token; normalized_items[unquote(token)]=1 } } return 1 }
+      return 0 }
+    { dest_lines[++dest_count]=$0 }
+    END {
+      while((getline src_line < NEWFILE)>0){ src_lines[++total_new]=src_line } close(NEWFILE)
+      find_dest_block_lists(dest_lines,dest_count)
+      # Build a set of literal destination lines to prevent exact duplicates
+      for(i=1;i<=dest_count;i++){ dest_line_set[dest_lines[i]] = 1 }
+      for (key_name in dest_block_start){ start_index=dest_block_start[key_name]; end_index=dest_block_end[key_name]; if(start_index==0||end_index==0) continue; dest_indentation = parse_block_items(dest_lines,dest_count,start_index,end_index,existing_raw,existing_norm,dest_indentation); if(dest_indentation=="") dest_indentation="  "
+        if(!parse_new_items_any_style(src_lines,total_new,key_name,new_raw,new_norm)) continue
+        append_count=0; for(i=1;i<=new_raw[0];i++){ normalized_value=unquote(new_raw[i]); candidate_line = dest_indentation "- " new_raw[i]; if(!(normalized_value in existing_norm) && !(candidate_line in dest_line_set)){ append[++append_count] = candidate_line } }
+        if(append_count>0){ header_line=dest_lines[start_index]; body=""; for(i=start_index+1;i<=end_index;i++){ body = body dest_lines[i] "\n" } replacement_block = header_line "\n" body; for(i=1;i<=append_count;i++){ replacement_block = replacement_block append[i] "\n" } replacement_start[start_index]=1; replacement_end[start_index]=end_index; replacement_block_text[start_index]=replacement_block }
+      }
+      i=1; while(i<=dest_count){ if(replacement_start[i]){ sub(/\n$/,"",replacement_block_text[i]); print replacement_block_text[i]; i=replacement_end[i]+1 } else { print dest_lines[i]; i++ } }
+    }
+  ' "$1" > "$TMP_DIR/blocklists.merged.tmp" 2>/dev/null || true
+  if [ -s "$TMP_DIR/blocklists.merged.tmp" ]; then
+    mv "$TMP_DIR/blocklists.merged.tmp" "$1"
+    ensure_permissions "$1"
+    log_info "[list-merge] Merged block-style lists preserving '-' style."
+  fi
+}
+
+merge_flow_to_block_via_textual() {
+  BLOCK_INJECTIONS_FILE="$TMP_DIR/block_injections.yml"
+  : > "$BLOCK_INJECTIONS_FILE"
+  awk -v DEST_PATH="$1" -v SRC_PATH="$2" -v OUTPUT_PATH="$BLOCK_INJECTIONS_FILE" '
+    function trim(text){ sub(/^([[:space:]]|\r)+/,"",text); sub(/([[:space:]]|\r)+$/,"",text); return text }
+    BEGIN {
+      while((getline dest_line < DEST_PATH)>0){ dest_lines[++dest_count]=dest_line }
+      close(DEST_PATH)
+      for(i=1;i<=dest_count;i++){
+        line=dest_lines[i]
+        if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*$/,m)){
+          key_name=m[1]
+          for(j=i+1;j<=dest_count;j++){
+            if(dest_lines[j] ~ /^[[:space:]]*#/ || dest_lines[j] ~ /^[[:space:]]*$/) continue
+            if(dest_lines[j] ~ /^[[:space:]]*-\s+/){ is_block_key[key_name]=1 }
+            break
+          }
+        }
+      }
+      while((getline src_line < SRC_PATH)>0){ src_lines[++src_count]=src_line }
+      close(SRC_PATH)
+      for(i=1;i<=src_count;i++){
+        line=src_lines[i]
+        if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*\[/,m)){
+          key_name=m[1]
+          if(!(key_name in is_block_key)) continue
+          buffer=line; depth=gsub(/\[/,"[",line)-gsub(/\]/,"]",line)
+          while(depth>0 && i<src_count){ i++; ln=src_lines[i]; buffer=buffer ln; depth+=gsub(/\[/,"[",ln)-gsub(/\]/,"]",ln) }
+          sub(/^[^\[]*\[/,"[",buffer); sub(/^\[/, "", buffer); sub(/].*$/, "", buffer)
+          tokens_count=split(buffer, tokens, /,/)
+          if(tokens_count>0){
+            print key_name ":" >> OUTPUT_PATH
+            for(k=1;k<=tokens_count;k++){ token=trim(tokens[k]); if(token!="") print "  - " token >> OUTPUT_PATH }
+          }
+        }
+      }
+    }
+  ' /dev/null
+  if [ -s "$BLOCK_INJECTIONS_FILE" ]; then
+    BLOCKIFIED_NEW_FILE="$TMP_DIR/new.blockified.yml"
+    cp "$BLOCK_INJECTIONS_FILE" "$BLOCKIFIED_NEW_FILE"
+    textual_additive_merge "$TARGET_PATH" "$BLOCKIFIED_NEW_FILE"
+  fi
+}
+
 # ------------------------------ Main ----------------------------------------
 CONFIG_DIR="$DEFAULT_CONFIG_DIR"
 TARGET_FILE="$DEFAULT_TARGET_FILE"
@@ -716,111 +803,9 @@ backup_config_file "$TARGET_PATH"
 
 textual_additive_merge "$TARGET_PATH" "$NEW_PATH"
 
-# Merge flow-style arrays first (handles flow and mixed where dest is flow)
+# Merge flow arrays, then block lists, then mixed-style adaptation
 merge_inline_flow_arrays "$TARGET_PATH" "$NEW_PATH"
-
-# Merge block-style lists where destination already uses '-' style
-merge_block_lists_preserve_style() {
-  awk -v NEWFILE="$2" '
-    function trim(s){ sub(/^([[:space:]]|\r)+/,"",s); sub(/([[:space:]]|\r)+$/,"",s); return s }
-    function unquote(s){ s=trim(s); if(s ~ /^".*"$/) return substr(s,2,length(s)-2); if(s ~ /^\x27.*\x27$/) return substr(s,2,length(s)-2); return s }
-    function esc(s){ t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t }
-    function is_top_key_line(line){ return (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) }
-    function parse_block_items(lines,N,start,end,rawA,normA,indent,    i,l,mt){ delete rawA; delete normA; rawA[0]=0; indent=""; for(i=start+1;i<=end;i++){ l=lines[i]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue; if(match(l,/^([[:space:]]*)-\s*(.*)$/,mt)){ if(indent=="") indent=mt[1]; tok=mt[2]; rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } else if(is_top_key_line(l)) { break } } return indent }
-    function find_dest_block_lists(lines,N,    i,l,k,m){ for(i=1;i<=N;i++){ l=lines[i]; if(match(l,/^([^[:space:]#][^:]*):[[:space:]]*$/,m)){ k=m[1]; # look ahead for dash
-          for(j=i+1;j<=N;j++){ if(lines[j] ~ /^[[:space:]]*#/ || lines[j] ~ /^[[:space:]]*$/) continue; if(lines[j] ~ /^[[:space:]]*-\s+/){ d_start[k]=i; # end at next top key
-              e=i; for(m=i+1;m<=N;m++){ if(is_top_key_line(lines[m])){ e=m-1; break } } d_end[k]=e; break } else { break } } } } }
-    function parse_new_items_any_style(src,SN,key,rawA,normA,    i,l,keyre,cap,depth,buf,t,n,tok,s,e){ delete rawA; delete normA; rawA[0]=0; keyre=esc(key)
-      # Try block style first
-      s=0; for(i=1;i<=SN;i++){ if(src[i] ~ ("^" keyre ":[[:space:]]*$")){ s=i; break } }
-      if(s){ for(i=s+1;i<=SN;i++){ if(src[i] ~ /^[[:space:]]*#/ || src[i] ~ /^[[:space:]]*$/) continue; if(src[i] ~ /^[[:space:]]*-\s+/){ # block
-              e=SN; for(m=s+1;m<=SN;m++){ if(is_top_key_line(src[m])){ e=m-1; break } }
-              # collect block items
-              for(m=s+1;m<=e;m++){ l=src[m]; if(l ~ /^[[:space:]]*#/ || l ~ /^[[:space:]]*$/) continue; if(match(l,/^([[:space:]]*)-\s*(.*)$/,t)){ tok=t[2]; rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } } return 1 } else { break } } }
-      # Try flow style
-      cap=0; depth=0; buf=""; for(i=1;i<=SN;i++){ l=src[i]; if(!cap){ if(l ~ ("^" keyre ":[[:space:]]*\\[")){ cap=1; sub(/^[^\[]*\[/,"[",l); depth+=gsub(/\[/,"[",l); depth-=gsub(/\]/,"]",l); sub(/^\[/,"",l); buf=buf l; if(depth==0) break } } else { depth+=gsub(/\[/,"[",l); depth-=gsub(/\]/,"]",l); buf=buf l; if(depth==0) break } } sub(/].*$/,"",buf); if(buf!=""){ n=split(buf,t,/,/); for(i=1;i<=n;i++){ tok=trim(t[i]); if(tok!=""){ rawA[++rawA[0]]=tok; normA[unquote(tok)]=1 } } return 1 }
-      return 0 }
-    { dst[++DN]=$0 }
-    END {
-      while((getline nl < NEWFILE)>0){ src[++SN]=nl } close(NEWFILE)
-      # Index destination block lists
-      find_dest_block_lists(dst,DN)
-      # For each recorded dest block list key, parse items and merge
-      for (key in d_start){ sD=d_start[key]; eD=d_end[key]; if(sD==0||eD==0) continue; # parse dest
-        destIndent = parse_block_items(dst,DN,sD,eD,oldRaw,oldNorm,destIndent); if(destIndent=="") destIndent="  "
-        # parse new items any style
-        if(!parse_new_items_any_style(src,SN,key,newRaw,newNorm)) continue
-        append_count=0; for(i=1;i<=newRaw[0];i++){ nm=unquote(newRaw[i]); if(!(nm in oldNorm)){ append[++append_count] = destIndent "- " newRaw[i] } }
-        if(append_count>0){ header=dst[sD]; body=""; for(i=sD+1;i<=eD;i++){ body = body dst[i] "\n" } repl = header "\n" body; for(i=1;i<=append_count;i++){ repl = repl append[i] "\n" } RSTART[sD]=1; REND[sD]=eD; RBLK[sD]=repl }
-      }
-      # Emit destination with replacements
-      i=1; while(i<=DN){ if(RSTART[i]){ sub(/\n$/,"",RBLK[i]); print RBLK[i]; i=REND[i]+1 } else { print dst[i]; i++ } }
-    }
-  ' "$1" > "$TMP_DIR/blocklists.merged.tmp" 2>/dev/null || true
-  if [ -s "$TMP_DIR/blocklists.merged.tmp" ]; then
-    mv "$TMP_DIR/blocklists.merged.tmp" "$1"
-    ensure_permissions "$1"
-    log_info "[list-merge] Merged block-style lists preserving '-' style."
-  fi
-}
-
 merge_block_lists_preserve_style "$TARGET_PATH" "$NEW_PATH"
-
-# Handle mixed style: destination uses block list ('-') and new file provides
-# a flow-style array. We synthesize a minimal YAML with only the missing
-# elements under the corresponding block keys and reuse the textual additive
-# injector to append them.
-merge_flow_to_block_via_textual() {
-  BLOCK_INJECTIONS_FILE="$TMP_DIR/block_injections.yml"
-  : > "$BLOCK_INJECTIONS_FILE"
-  awk -v DEST_PATH="$1" -v SRC_PATH="$2" -v OUTPUT_PATH="$BLOCK_INJECTIONS_FILE" '
-    function trim(text){ sub(/^([[:space:]]|\r)+/,"",text); sub(/([[:space:]]|\r)+$/,"",text); return text }
-    function escape_regex(text){ gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", text); return text }
-    # Load destination block-list keys
-    BEGIN {
-      while((getline dest_line < DEST_PATH)>0){ dest_lines[++dest_count]=dest_line }
-      close(DEST_PATH)
-      for(i=1;i<=dest_count;i++){
-        line=dest_lines[i]
-        if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*$/,m)){
-          key_name=m[1]
-          # check next significant line starts with dash
-          for(j=i+1;j<=dest_count;j++){
-            if(dest_lines[j] ~ /^[[:space:]]*#/ || dest_lines[j] ~ /^[[:space:]]*$/) continue
-            if(dest_lines[j] ~ /^[[:space:]]*-\s+/){ is_block_key[key_name]=1 }
-            break
-          }
-        }
-      }
-      # Parse flow arrays from SRC and emit blocks for keys that are block in DEST
-      while((getline src_line < SRC_PATH)>0){ src_lines[++src_count]=src_line }
-      close(SRC_PATH)
-      for(i=1;i<=src_count;i++){
-        line=src_lines[i]
-        if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*\[/,m)){
-          key_name=m[1]
-          if(!(key_name in is_block_key)) continue
-          # capture until closing ]
-          buffer=line; depth=gsub(/\[/,"[",line)-gsub(/\]/,"]",line)
-          while(depth>0 && i<src_count){ i++; ln=src_lines[i]; buffer=buffer ln; depth+=gsub(/\[/,"[",ln)-gsub(/\]/,"]",ln) }
-          sub(/^[^\[]*\[/,"[",buffer); sub(/^\[/, "", buffer); sub(/].*$/, "", buffer)
-          tokens_count=split(buffer, tokens, /,/)
-          if(tokens_count>0){
-            print key_name ":" >> OUTPUT_PATH
-            for(k=1;k<=tokens_count;k++){ token=trim(tokens[k]); if(token!="") print "  - " token >> OUTPUT_PATH }
-          }
-        }
-      }
-    }
-  ' /dev/null
-  if [ -s "$BLOCK_INJECTIONS_FILE" ]; then
-    # Reuse textual additive merger to append only missing lines under blocks
-    BLOCKIFIED_NEW_FILE="$TMP_DIR/new.blockified.yml"
-    cp "$BLOCK_INJECTIONS_FILE" "$BLOCKIFIED_NEW_FILE"
-    textual_additive_merge "$TARGET_PATH" "$BLOCKIFIED_NEW_FILE"
-  fi
-}
-
 merge_flow_to_block_via_textual "$TARGET_PATH" "$NEW_PATH"
 
 # Always remove the packaged new config file once handled (idempotent)
