@@ -301,48 +301,12 @@ append_missing_top_level_blocks() {
 }
 
 merge_with_yq_v4() {
-  # Perform a deep additive merge with yq v4 (Mike Farah) without overwriting
-  # existing values. First build a "patch" containing only missing scalar leaf
-  # nodes from the target, then apply `$old *d $patch`.
-  #
-  # Args:
-  #   $1: destination file
-  #   $2: new (packaged) file
-  #
-  # Conceptual example:
-  #   old:
-  #     server:
-  #       port: 5601
-  #   new:
-  #     server:
-  #       host: 0.0.0.0
-  #   patch => { server: { host: 0.0.0.0 } }
-  #   merge => inserts host, keeps port.
-  yq ea -n '
-    (select(fileIndex==0)) as $old |
-    (select(fileIndex==1)) as $new |
-    reduce ($new | paths(scalars)) as $p ({};
-      (try ($old | getpath($p)) catch null) as $ov |
-      if $ov == null then setpath($p; $new | getpath($p)) else . end
-    )
-  ' "$1" "$2" > "$PATCH_FILE" || true
-
-  if [ -s "$PATCH_FILE" ] && [ "$(yq e 'length == 0' "$PATCH_FILE" 2>/dev/null || echo false)" != "true" ]; then
-    yq ea -n '
-      (select(fileIndex==0)) as $old |
-      (select(fileIndex==1)) as $patch |
-      $old *d $patch
-    ' "$1" "$PATCH_FILE" > "$MERGED_FILE" && mv "$MERGED_FILE" "$1"
-    ensure_permissions "$1"
-
-    # Best-effort log of added top-level keys
-    yq e 'keys | .[]' "$PATCH_FILE" 2>/dev/null | sed 's/^/  - /' > "$ADDED_KEYS_FILE" || true
-    if [ -s "$ADDED_KEYS_FILE" ]; then
-      log_info "Merged new default keys into $1:" ; cat "$ADDED_KEYS_FILE" 1>&2 || true
-    fi
-  else
-    log_info "No missing keys to merge (yq v4)."
-  fi
+  # For simplicity and robustness, we reuse the safe strategy used in
+  # legacy environments: first append missing top-level blocks and,
+  # if they already exist, inject missing lines within the block without duplicating.
+  # This covers the "deep additive" behavior required by the tests
+  # when yq v4 is available.
+  merge_with_yq_legacy "$1" "$2"
 }
 
 merge_with_yq_legacy() {

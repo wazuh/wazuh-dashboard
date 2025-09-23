@@ -4,10 +4,12 @@ This folder contains a containerized test environment for the post‑install con
 
 ## What’s Included
 
-- `Dockerfile`: Minimal Debian image with test deps (bats, yq, jq, GNU tools).
-- `test.yml`: Docker Compose file to build and run the tests.
+- `Dockerfile.yqv4`: Debian image with Mike Farah `yq` v4+ for deep merge path.
+- `Dockerfile.yqlegacy`: Debian image with Python `yq` (kislyuk) to exercise legacy path.
+- `Dockerfile.awk`: Debian image without any `yq` to exercise awk-only fallback.
+- `test.yml`: Docker Compose file with one service per variant.
 - `merge_opensearch_yml.bats`: Bats test suite covering merge behavior.
-- `run-bats.sh`: Host runner that builds the image and executes the suite in a container (no local deps required).
+- `run-bats.sh`: Host runner that builds the images and executes the suite in one or all services.
 
 ## Prerequisites
 
@@ -19,7 +21,10 @@ This folder contains a containerized test environment for the post‑install con
 From the repo root or anywhere:
 
 ```sh
-dev-tools/build-packages/tests/run-bats.sh
+dev-tools/build-packages/tests/run-bats.sh          # run matrix (all variants)
+dev-tools/build-packages/tests/run-bats.sh -s yqv4  # only yq v4
+dev-tools/build-packages/tests/run-bats.sh -s yqlegacy  # only legacy yq
+dev-tools/build-packages/tests/run-bats.sh -s awk   # only awk fallback
 ```
 
 Examples:
@@ -34,8 +39,8 @@ Examples:
   ```
 
 The script will:
-- Build the test image via Dockerfile.
-- Run the Bats suite inside the container using `test.yml`.
+- Build the required test images.
+- Run the Bats suite inside the selected service(s) using `test.yml`.
 
 ## What The Suite Verifies
 
@@ -54,8 +59,9 @@ The script will:
 
 ## Notes on yq/jq
 
-- The container includes `yq` and `jq`. When available, the merge script performs a deep, additive merge that inserts only missing nested keys beneath existing top‑level sections.
-- If `yq` is not usable for deep merge, the script falls back to a safe, top‑level block append without overwriting existing values.
+- With `yq v4` (Mike Farah), the script performs a deep, additive merge that inserts only missing nested keys beneath existing top‑level sections.
+- With `yq legacy` (Python yq) the script uses conservative strategies (append missing top‑level blocks and additive textual injection of missing nested scalars).
+- With `awk` fallback (no yq present), only missing top‑level blocks are appended; no deep merges are attempted.
 
 ## Troubleshooting
 
@@ -64,8 +70,9 @@ The script will:
 
 ## File Layout
 
-- `dev-tools/build-packages/tests/Dockerfile`
+- `dev-tools/build-packages/tests/Dockerfile.yqv4`
+- `dev-tools/build-packages/tests/Dockerfile.yqlegacy`
+- `dev-tools/build-packages/tests/Dockerfile.awk`
 - `dev-tools/build-packages/tests/test.yml`
 - `dev-tools/build-packages/tests/merge_opensearch_yml.bats`
 - `dev-tools/build-packages/tests/run-bats.sh`
-

@@ -1,0 +1,36 @@
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies and a recent Mike Farah yq (v4+)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       bash \
+        ca-certificates \
+        coreutils \
+        jq \
+        curl \
+        bats \
+        git \
+        grep \
+        sed \
+        gawk \
+        findutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install yq (Mike Farah) binary explicitly to guarantee variant
+ARG YQ_VERSION=v4.44.3
+RUN arch=$(uname -m); \
+    case "$arch" in \
+      x86_64) bin_arch=amd64 ;; \
+      aarch64) bin_arch=arm64 ;; \
+      armv7l) bin_arch=arm ;; \
+      *) echo "Unsupported arch: $arch" && exit 1 ;; \
+    esac; \
+    curl -fsSL -o /usr/local/bin/yq \
+      "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${bin_arch}" \
+    && chmod +x /usr/local/bin/yq \
+    && yq --version
+
+WORKDIR /workspace
+

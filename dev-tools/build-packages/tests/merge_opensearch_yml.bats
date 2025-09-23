@@ -13,6 +13,14 @@ teardown() {
   rm -rf "$TMPDIR_TEST"
 }
 
+# Helper: detect if available yq is Mike Farah v4+
+is_farah_yq() {
+  if ! command -v yq >/dev/null 2>&1; then
+    return 1
+  fi
+  yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null 2>&1
+}
+
 @test "no new config file: script exits quietly and leaves file untouched" {
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 server.host: 0.0.0.0
@@ -252,8 +260,8 @@ YML
 }
 
 @test "deep merge with yq: add missing nested block under existing top-level" {
-  if ! command -v yq >/dev/null 2>&1; then
-    skip "requires yq for deep merge"
+  if ! is_farah_yq; then
+    skip "requires Mike Farah yq v4+ for deep merge"
   fi
 
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
@@ -277,8 +285,8 @@ YML
 }
 
 @test "deep merge with yq: add missing leaf under existing nested object" {
-  if ! command -v yq >/dev/null 2>&1; then
-    skip "requires yq for deep merge"
+  if ! is_farah_yq; then
+    skip "requires Mike Farah yq v4+ for deep merge"
   fi
 
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
@@ -303,8 +311,8 @@ YML
 }
 
 @test "deep merge with yq: no change if nested leaf already present" {
-  if ! command -v yq >/dev/null 2>&1; then
-    skip "requires yq for deep merge"
+  if ! is_farah_yq; then
+    skip "requires Mike Farah yq v4+ for deep merge"
   fi
 
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
