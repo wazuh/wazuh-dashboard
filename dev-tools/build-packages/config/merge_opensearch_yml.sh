@@ -390,31 +390,48 @@ merge_inline_flow_arrays() {
   # destination uses flow-style for that key, merge items from the new file
   # regardless of whether the new file uses flow or block style.
   awk -v NEWFILE="$2" '
-    function trim(s) { sub(/^([[:space:]]|\r)+/, "", s); sub(/([[:space:]]|\r)+$/, "", s); return s }
-    function unquote(s) { s=trim(s); if (s ~ /^".*"$/) return substr(s, 2, length(s)-2); if (s ~ /^\x27.*\x27$/) return substr(s, 2, length(s)-2); return s }
-    function starts_key_array(line, key_re,    m) {
-      return (line ~ ("^" key_re ":[[:space:]]*\\["))
+    function trim(originalText) {
+      sub(/^([[:space:]]|\r)+/, "", originalText)
+      sub(/([[:space:]]|\r)+$/, "", originalText)
+      return originalText
     }
-    function escape_re(s,    t) {
-      t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t
+    function unquote(originalText) {
+      originalText = trim(originalText)
+      if (originalText ~ /^".*"$/) return substr(originalText, 2, length(originalText)-2)
+      if (originalText ~ /^\x27.*\x27$/) return substr(originalText, 2, length(originalText)-2)
+      return originalText
     }
-    function collect_top_keys(file, line, key_name) {
-      while ((getline line < file) > 0) {
-        if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
-        if (line ~ /^[^[:space:]#][^:]*:/) {
-          key_name=line; sub(/:.*/, "", key_name); gsub(/[[:space:]]+$/, "", key_name);
-          keys[++keysN] = key_name
-        }
+    function doesLineStartFlowStyleArrayForKey(lineText, escapedKeyRegex, unusedMatchVar) {
+      return (lineText ~ ("^" escapedKeyRegex ":[[:space:]]*\\["))
+    }
+    function escapeLiteralToAwkRegexPattern(literalText, tempWorkingText) {
+      tempWorkingText = literalText
+      gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", tempWorkingText)
+      return tempWorkingText
+    }
+    function collectTopLevelKeysFromFile(filePath,
+                       currentLineText,
+                       extractedKeyName) {
+      while ((getline currentLineText < filePath) > 0) {
+      if (currentLineText ~ /^[[:space:]]*#/ || currentLineText ~ /^[[:space:]]*$/) continue
+      if (currentLineText ~ /^[^[:space:]#][^:]*:/) {
+        extractedKeyName = currentLineText
+        sub(/:.*/, "", extractedKeyName)
+        gsub(/[[:space:]]+$/, "", extractedKeyName)
+        keys[++keysN] = extractedKeyName          # existing external contract
+        topLevelKeyNames[++topLevelKeyCount] = extractedKeyName
       }
-      close(file)
+      }
+      close(filePath)
     }
+
     function parse_array_for_key(file, key, rawA, normA,    l,cap,depth,buf,t,i,tok,n,key_re) {
       delete rawA; delete normA; rawA[0]=0
-      key_re = escape_re(key)
+      key_re = escapeLiteralToAwkRegexPattern(key)
       cap=0; depth=0; buf=""
       while ((getline l < file) > 0) {
         if (!cap) {
-          if (starts_key_array(l, key_re)) {
+          if (doesLineStartFlowStyleArrayForKey(l, key_re)) {
             cap=1
             sub(/^[^\[]*\[/, "[", l)
             depth += gsub(/\[/, "[", l)
@@ -441,7 +458,7 @@ merge_inline_flow_arrays() {
     }
     function parse_block_for_key(file, key, rawA, normA,    l,cap,buf,key_re,depth,lines,N,i,mt) {
       delete rawA; delete normA; rawA[0]=0
-      key_re = escape_re(key)
+      key_re = escapeLiteralToAwkRegexPattern(key)
       N=0; while((getline l < file)>0){ lines[++N]=l } close(file)
       # find header strictly 'key:'
       s=0; for(i=1;i<=N;i++){ if(lines[i] ~ ("^" key_re ":[[:space:]]*$")){ s=i; break } }
@@ -470,17 +487,17 @@ merge_inline_flow_arrays() {
       out = out "]"
       return out
     }
-    BEGIN { collect_top_keys(NEWFILE) }
+    BEGIN { collectTopLevelKeysFromFile(NEWFILE) }
     { lines[++N] = $0 }
     END {
       # Precompute replacements for each candidate key
       for (ki=1; ki<=keysN; ki++) {
         key = keys[ki]
-        key_re = escape_re(key)
+        key_re = escapeLiteralToAwkRegexPattern(key)
         # Locate range [start,end] in destination for this key
         start = end = 0
         for (i=1; i<=N; i++) {
-          if (starts_key_array(lines[i], key_re)) { start = i; break }
+          if (doesLineStartFlowStyleArrayForKey(lines[i], key_re)) { start = i; break }
         }
         if (!start) continue
         depth=0; tmp=lines[start]
@@ -560,7 +577,7 @@ merge_block_lists_preserve_style() {
       if (original_text ~ /^\x27.*\x27$/) return substr(original_text, 2, length(original_text)-2)
       return original_text
     }
-    function escape_regex_for_awk(literal_text) {
+    function escapeLiteralToAwkRegexPatterngex_for_awk(literal_text) {
       gsub(/([][(){}.^$|*+?\\])/, "\\\\&", literal_text)
       return literal_text
     }
@@ -662,7 +679,7 @@ merge_block_lists_preserve_style() {
       delete new_raw_item_array
       delete new_normalized_item_map
       new_raw_item_array[0] = 0
-      key_regex_literal = escape_regex_for_awk(target_key_name)
+      key_regex_literal = escapeLiteralToAwkRegexPatterngex_for_awk(target_key_name)
 
       # Block style attempt
       header_line_index = 0
