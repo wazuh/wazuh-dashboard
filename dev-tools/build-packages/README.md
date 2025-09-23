@@ -78,5 +78,4 @@ Notes
 Testing
 - Containerized tests: no local deps required.
   - Build and run with Docker Compose: `./run-bats.sh`
-  - This uses `tests/Dockerfile.awk` and `tests/test.yml` para ejecutar la suite en contenedor.
-No se requieren herramientas YAML externas.
+  - This uses `tests/Dockerfile.awk` and `tests/test.yml` to run the suite in a container.

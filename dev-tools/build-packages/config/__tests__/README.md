@@ -53,9 +53,9 @@ The script will:
   ) appending only what’s missing.
 - Idempotency: multiple runs do not duplicate keys.
 
-## Notas sobre dependencias
+## Notes on Dependencies
 
-- No se requieren herramientas externas de YAML. El script aplica un merge textual conservador: añade bloques top‑level faltantes y, si corresponde, inyecta líneas anidadas faltantes bajo bloques existentes; nunca sobreescribe.
+- No external YAML tools are required. The script performs a conservative textual merge: it adds missing top-level blocks and, when applicable, injects missing nested lines under existing blocks; it never overwrites existing user values.
 
 ## Troubleshooting
 

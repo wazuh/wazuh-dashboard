@@ -2,7 +2,7 @@
 # Purpose: Merge new default settings from a packaged opensearch_dashboards.yml
 # into the active /etc/wazuh-dashboard/opensearch_dashboards.yml, only adding
 # keys that do not already exist. Performs a conservative, non-destructive
-# merge: appends whole missing top‑level blocks and injects only missing
+# merge: appends whole missing top-level blocks and injects only missing
 # nested lines under existing blocks; never overwrites user-defined values.
 #
 # Design notes (clean code / maintainability):
@@ -27,7 +27,7 @@ BACKUP_TIMESTAMP_FORMAT="%Y%m%dT%H%M%SZ"
 
 # ---------------------------- Logging utils ---------------------------------
 # log_info
-#   Emit an informational message to stderr. Useful for non‑critical traces.
+#   Emit an informational message to stderr. Useful for non-critical traces.
 #   Example:
 #     log_info "Merged defaults into /etc/wazuh-dashboard/opensearch_dashboards.yml"
 log_info()  { echo "[INFO]  $*" 1>&2; }
@@ -41,7 +41,7 @@ log_warn()  { echo "[WARN]  $*" 1>&2; }
 
 # log_error
 #   Emit an error to stderr. Does NOT terminate the script; intended to record
-#   non‑critical failures that should not abort the merge.
+#   non-critical failures that should not abort the merge.
 #   Example:
 #     log_error "Could not set ownership; continuing"
 log_error() { echo "[ERROR] $*" 1>&2; }
@@ -166,7 +166,7 @@ cleanup() {
 }
 
 collect_existing_top_keys() {
-  # Extract top‑level keys from YAML ignoring blank lines and comments, write
+  # Extract top-level keys from YAML ignoring blank lines and comments, write
   # them sorted and unique to the output file.
   #
   # Args:
@@ -199,7 +199,7 @@ collect_existing_top_keys() {
 }
 
 append_missing_top_level_blocks() {
-  # Append to the destination file any top‑level blocks present in the "new"
+  # Append to the destination file any top-level blocks present in the "new"
   # file but absent in the target. Does not overwrite existing keys nor modify
   # already present blocks; only copies whole missing blocks.
   #
