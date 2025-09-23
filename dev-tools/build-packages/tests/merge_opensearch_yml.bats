@@ -324,6 +324,110 @@ YML
   [ "$status" -eq 0 ]
 }
 
+@test "edge: empty .rpmnew is removed and no changes applied" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+server.host: 0.0.0.0
+YML
+
+  : > "$OPENSEARCH_DASHBOARD_YML.rpmnew"
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+  # File unchanged
+  run grep -Fx "server.host: 0.0.0.0" "$OPENSEARCH_DASHBOARD_YML"
+  [ "$status" -eq 0 ]
+}
+
+@test "edge: target missing but .rpmnew exists -> no action and .rpmnew remains" {
+  # Do not create destination file on purpose
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+added.key: value
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+  # Script exits early and does not remove the packaged file
+  [ -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+}
+
+@test "edge: lists are not merged (conservative)" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+xs:
+  - a
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" <<'YML'
+xs:
+  - a
+  - b
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
+  # Destination list unchanged (no injection inside lists)
+  COUNT=$(grep -Ec '^\s*-\s*a$' "$OPENSEARCH_DASHBOARD_YML")
+  [ "$COUNT" -eq 1 ]
+  run grep -F "- b" "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -ne 0 ]
+}
+
+@test "edge: malformed .rpmnew does not crash and removes packaged file" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+existing.key: 1
+YML
+
+  # Malformed YAML
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+bad: [
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+  # Packaged file removed regardless
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+  # Destination unchanged
+  run grep -Fx "existing.key: 1" "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -eq 0 ]
+}
+
+@test "edge: commented new block is ignored" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+server.host: 0.0.0.0
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+# uiSettings:
+#   overrides:
+#     "home:useNewHomePage": true
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
+  [ "$status" -eq 0 ]
+  [ ! -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+  # No uiSettings added
+  run grep -E '^uiSettings:' "$OPENSEARCH_DASHBOARD_YML"; [ "$status" -ne 0 ]
+}
+
+@test "edge: idempotent nested injection when rerun" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
+uiSettings:
+  overrides:
+    "some:otherFlag": false
+YML
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'YML'
+uiSettings:
+  overrides:
+    "home:useNewHomePage": true
+YML
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
+  # Run again, should not duplicate
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; [ "$status" -eq 0 ]
+  COUNT=$(grep -Ec "^[[:space:]]{4}[\"']?home:useNewHomePage[\"']?:[[:space:]]*true[[:space:]]*$" "$OPENSEARCH_DASHBOARD_YML")
+  [ "$COUNT" -eq 1 ]
+}
+
 @test "post-install: add new default setting if missing" {
   # Active config is missing some of the new defaults
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
