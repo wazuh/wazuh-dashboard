@@ -1,9 +1,9 @@
 #!/bin/sh
 # Purpose: Merge new default settings from a packaged opensearch_dashboards.yml
 # into the active /etc/wazuh-dashboard/opensearch_dashboards.yml, only adding
-# keys that do not already exist. Prefers deep additive merge with Mike Farah
-# yq v4+; otherwise falls back to conservative strategies without overwriting
-# user-defined values.
+# keys that do not already exist. Performs a conservative, non-destructive
+# merge: appends whole missing top‑level blocks and injects only missing
+# nested lines under existing blocks; never overwrites user-defined values.
 #
 # Design notes (clean code / maintainability):
 # - Single-responsibility functions for argument parsing, capability detection,
@@ -55,9 +55,8 @@ usage() {
 Usage: $0 [--config-dir DIR] [--help]
 
 Merges defaults from a packaged ${DEFAULT_TARGET_FILE} into the active file,
-adding only missing keys. Deep additive merge is used when Mike Farah yq v4+
-is available; otherwise a conservative append of missing top-level blocks is
-performed.
+adding only missing keys using a conservative strategy: append whole missing
+top-level blocks and inject only missing nested lines under existing blocks.
 
 Before merging, a timestamped backup of the destination YAML is created
 alongside the file with suffix `.bak.<UTC-TS>`.

@@ -13,14 +13,6 @@ teardown() {
   rm -rf "$TMPDIR_TEST"
 }
 
-# True if yq is Mike Farah v4+
-is_farah_yq() {
-  if ! command -v yq >/dev/null 2>&1; then
-    return 1
-  fi
-  yq --version 2>&1 | grep -Ei 'mikefarah|https://github.com/mikefarah/yq' >/dev/null 2>&1
-}
-
 @test "no new config file: script exits quietly and leaves file untouched" {
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 server.host: 0.0.0.0
@@ -259,7 +251,7 @@ YML
   [ $(grep -c '^uiSettings:' "$OPENSEARCH_DASHBOARD_YML") -eq 1 ]
 }
 
-@test "deep merge with yq: add missing nested block under existing top-level" {
+@test "deep merge: add missing nested block under existing top-level" {
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 uiSettings:
   # user has no overrides yet
@@ -280,7 +272,7 @@ YML
   [ "$status" -eq 0 ]
 }
 
-@test "deep merge with yq: add missing leaf under existing nested object" {
+@test "deep merge: add missing leaf under existing nested object" {
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 uiSettings:
   overrides:
@@ -302,7 +294,7 @@ YML
   [ "$status" -eq 0 ]
 }
 
-@test "deep merge with yq: no change if nested leaf already present" {
+@test "deep merge: no change if nested leaf already present" {
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 uiSettings:
   overrides:

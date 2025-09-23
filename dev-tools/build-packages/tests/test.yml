@@ -1,19 +1,4 @@
 services:
-  tests-yqv4:
-    build:
-      context: ../..
-      dockerfile: build-packages/tests/Dockerfile.yqv4
-    working_dir: /workspace/dev-tools/build-packages
-    volumes:
-      - ../../..:/workspace:rw
-
-  tests-yqlegacy:
-    build:
-      context: ../..
-      dockerfile: build-packages/tests/Dockerfile.yqlegacy
-    working_dir: /workspace/dev-tools/build-packages
-    volumes:
-      - ../../..:/workspace:rw
 
   tests-awk:
     build:

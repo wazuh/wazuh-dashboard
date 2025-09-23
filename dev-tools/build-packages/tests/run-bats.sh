@@ -6,22 +6,22 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 COMPOSE_FILE="$ROOT_DIR/tests/test.yml"
 
-# Available services (matrix): yq v4, yq legacy, awk fallback
-SERVICES=(tests-yqv4 tests-yqlegacy tests-awk)
-SERVICE_LABELS=(yqv4 yqlegacy awk)
+# Available services (single): awk/textual fallback
+SERVICES=(tests-awk)
+SERVICE_LABELS=(awk)
 
 usage() {
   cat <<EOF
 Usage: $0 [-s SERVICE] [--list] [--] [BATS_ARGS...]
 
 Run Bats tests inside Docker Compose services:
-  -s, --service  One of: yqv4 | yqlegacy | awk (default: run all)
+  -s, --service  One of: awk (default: awk)
       --list     List services and exit
   --             Stop parsing and pass the rest to bats
 
 Examples:
   $0                         # run matrix (all services)
-  $0 -s yqv4 -f 'deep merge' # run only yq v4 service with filter
+  $0 -s awk -f 'deep merge'  # run only awk service with filter
   $0 -- -t                   # pass -t to bats
 EOF
 }
@@ -44,15 +44,11 @@ while (( $# )); do
     -s|--service)
       shift
       case "${1:-}" in
-        yqv4) SELECTED_SERVICES+=(tests-yqv4) ;;
-        yqlegacy) SELECTED_SERVICES+=(tests-yqlegacy) ;;
         awk) SELECTED_SERVICES+=(tests-awk) ;;
         *) echo "Invalid service: ${1:-}" >&2; usage; exit 2 ;;
       esac
       shift ;;
     --list)
-      printf "%-14s %s\n" yqv4 tests-yqv4
-      printf "%-14s %s\n" yqlegacy tests-yqlegacy
       printf "%-14s %s\n" awk tests-awk
       exit 0 ;;
     --)

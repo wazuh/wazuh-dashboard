@@ -62,8 +62,7 @@ Starting with this change, the packages include a post-install step that checks 
 Helper script: `/usr/share/wazuh-dashboard/bin/merge-opensearch-yml`.
 
 Behavior details
-- Without `yq` installed: Adds only missing top-level keys (and entire top-level blocks) from the packaged file. Existing keys are never overwritten.
-- With `yq` installed (recommended): Performs a deep, additive merge that adds only missing nested keys under existing structures. For example, if the package adds:
+Performs a conservative, non-destructive merge that adds only missing settings, never overwriting existing values. For example, if the package adds:
   
   uiSettings:
     overrides:
@@ -79,6 +78,6 @@ Notes
 Testing
 - Containerized tests: no local deps required.
   - Build and run with Docker Compose: `dev-tools/build-packages/tests/run-bats.sh`
-  - This uses `tests/Dockerfile` and `tests/test.yml` to provide bats, yq, and jq in a container.
+  - This uses `tests/Dockerfile.awk` and `tests/test.yml` para ejecutar la suite en contenedor.
 - Bats tests live under `dev-tools/build-packages/tests/`.
-- Deep-merge runs using the container’s `yq` and `jq`.
+No se requieren herramientas YAML externas.

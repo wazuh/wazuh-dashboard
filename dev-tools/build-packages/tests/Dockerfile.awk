@@ -2,7 +2,6 @@ FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Deliberately do NOT install any yq. Provide awk/gawk for fallback path.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        bash \
@@ -18,4 +17,3 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
-

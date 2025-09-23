@@ -4,12 +4,10 @@ This folder contains a containerized test environment for the post‑install con
 
 ## What’s Included
 
-- `Dockerfile.yqv4`: Debian image with Mike Farah `yq` v4+ for deep merge path.
-- `Dockerfile.yqlegacy`: Debian image with Python `yq` (kislyuk) to exercise legacy path.
-- `Dockerfile.awk`: Debian image without any `yq` to exercise awk-only fallback.
-- `test.yml`: Docker Compose file with one service per variant.
-- `merge_opensearch_yml.bats`: Bats test suite covering merge behavior.
-- `run-bats.sh`: Host runner that builds the images and executes the suite in one or all services.
+- `Dockerfile.awk`: Debian image sin Python, para ejercitar el fallback awk/textual.
+- `test.yml`: Docker Compose con un servicio por variante.
+- `merge_opensearch_yml.bats`: Suite Bats que cubre comportamiento de merge.
+- `run-bats.sh`: Runner que construye imágenes y ejecuta la suite en uno o todos los servicios.
 
 ## Prerequisites
 
@@ -21,10 +19,8 @@ This folder contains a containerized test environment for the post‑install con
 From the repo root or anywhere:
 
 ```sh
-dev-tools/build-packages/tests/run-bats.sh          # run matrix (all variants)
-dev-tools/build-packages/tests/run-bats.sh -s yqv4  # only yq v4
-dev-tools/build-packages/tests/run-bats.sh -s yqlegacy  # only legacy yq
-dev-tools/build-packages/tests/run-bats.sh -s awk   # only awk fallback
+dev-tools/build-packages/tests/run-bats.sh          # ejecuta la suite (servicio awk)
+dev-tools/build-packages/tests/run-bats.sh -s awk   # solo fallback awk/textual
 ```
 
 Examples:
@@ -57,11 +53,9 @@ The script will:
   ) appending only what’s missing.
 - Idempotency: multiple runs do not duplicate keys.
 
-## Notes on yq/jq
+## Notas sobre dependencias
 
-- With `yq v4` (Mike Farah), the script performs a deep, additive merge that inserts only missing nested keys beneath existing top‑level sections.
-- With `yq legacy` (Python yq) the script uses conservative strategies (append missing top‑level blocks and additive textual injection of missing nested scalars).
-- With `awk` fallback (no yq present), only missing top‑level blocks are appended; no deep merges are attempted.
+- No se requieren herramientas externas de YAML. El script aplica un merge textual conservador: añade bloques top‑level faltantes y, si corresponde, inyecta líneas anidadas faltantes bajo bloques existentes; nunca sobreescribe.
 
 ## Troubleshooting
 
@@ -70,8 +64,6 @@ The script will:
 
 ## File Layout
 
-- `dev-tools/build-packages/tests/Dockerfile.yqv4`
-- `dev-tools/build-packages/tests/Dockerfile.yqlegacy`
 - `dev-tools/build-packages/tests/Dockerfile.awk`
 - `dev-tools/build-packages/tests/test.yml`
 - `dev-tools/build-packages/tests/merge_opensearch_yml.bats`
