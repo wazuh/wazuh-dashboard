@@ -7,7 +7,6 @@ RUN apt-get update \
        bash \
        ca-certificates \
        coreutils \
-       jq \
        bats \
        git \
        grep \

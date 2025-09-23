@@ -4,7 +4,7 @@ This folder contains a containerized test environment for the post‑install con
 
 ## What’s Included
 
-- `Dockerfile.awk`: Minimal Debian image with test deps (bats, jq, GNU tools).
+- `Dockerfile.awk`: Minimal Debian image with test deps (bats, GNU tools).
 - `test.yml`: Docker Compose file to build and run the tests.
 - `merge_opensearch_yml.bats`: Bats test suite covering merge behavior.
 - `run-bats.sh`: Host runner that builds the image and executes the suite in a container (no local deps required).
