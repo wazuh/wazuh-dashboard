@@ -227,60 +227,60 @@ append_missing_top_level_blocks() {
   collect_existing_top_keys "$1" "$TMP_DIR/existing_keys.txt"
   : > "$APPEND_FILE"; : > "$ADDED_KEYS_FILE"
   awk \
-    -v existing="$TMP_DIR/existing_keys.txt" \
-    -v added="$ADDED_KEYS_FILE" \
-    -v out="$APPEND_FILE" \
+    -v existing_keys_file="$TMP_DIR/existing_keys.txt" \
+    -v added_keys_file="$ADDED_KEYS_FILE" \
+    -v append_output_file="$APPEND_FILE" \
     '
-    # Load current destination keys into have[]
+    # Load current destination keys into destination_has_key[]
     BEGIN {
-      while ((getline k < existing) > 0) {
-        have[k] = 1
+      while ((getline key_name < existing_keys_file) > 0) {
+        destination_has_key[key_name] = 1
       }
-      close(existing)
+      close(existing_keys_file)
     }
 
     # Buffer all lines from the new file for second pass
     {
-      lines[NR] = $0
+      new_file_lines[NR] = $0
     }
 
     END {
-      n = NR
+      total_lines = NR
 
       # Detect top-level block starts and record their order
-      for (i = 1; i <= n; i++) {
-        line = lines[i]
+      for (i = 1; i <= total_lines; i++) {
+        line = new_file_lines[i]
         # Skip comments and blank lines
         if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) {
           continue
         }
         # A top-level block starts at column 0 (non-space, non-#) and has ':'
         if (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) {
-          key = line
-          sub(/:.*/, "", key)            # Strip text after ':'
-          gsub(/[[:space:]]+$/, "", key)  # Trim trailing spaces
-          if (!(key in start)) {
-            order[++orderN] = key   # Preserve appearance order
-            start[key] = i          # Record starting index
+          key_name = line
+          sub(/:.*/, "", key_name)            # Strip text after ':'
+          gsub(/[[:space:]]+$/, "", key_name)  # Trim trailing spaces
+          if (!(key_name in block_start_line)) {
+            appearance_order[++appearance_count] = key_name   # Preserve appearance order
+            block_start_line[key_name] = i                    # Record starting index
           }
         }
       }
 
       # Copy complete missing blocks (from start to next top-level or EOF)
-      for (idx = 1; idx <= orderN; idx++) {
-        k = order[idx]
-        s = start[k]
-        e = n
-        if (idx < orderN) {
-          nk = order[idx + 1]
-          e = start[nk] - 1
+      for (idx = 1; idx <= appearance_count; idx++) {
+        current_key = appearance_order[idx]
+        start_line = block_start_line[current_key]
+        end_line = total_lines
+        if (idx < appearance_count) {
+          next_key = appearance_order[idx + 1]
+          end_line = block_start_line[next_key] - 1
         }
-        if (!(k in have) && !(k in printed)) {
-          for (j = s; j <= e; j++) {
-            print lines[j] >> out   # Append block content
+        if (!(current_key in destination_has_key) && !(current_key in already_printed)) {
+          for (j = start_line; j <= end_line; j++) {
+            print new_file_lines[j] >> append_output_file   # Append block content
           }
-          print k >> added          # Record added key
-          printed[k] = 1
+          print current_key >> added_keys_file              # Record added key
+          already_printed[current_key] = 1
         }
       }
     }
@@ -304,60 +304,60 @@ textual_additive_merge() {
     set +e
     # Generic additive textual merge for all top-level blocks
     collect_existing_top_keys "$2" "$TMP_DIR/new_top_keys.txt"
-    while IFS= read -r key; do
+    while IFS= read -r top_level_key; do
       # Only process keys that exist in destination as well
-      if grep -q "^${key}:[[:space:]]*" "$1"; then
-        log_info "[textual-merge] Processing existing top-level key: $key"
-        key_re=$(printf '%s' "$key" | sed -E 's/([][(){}.^$|*+?\\])/\\\\\1/g')
+      if grep -q "^${top_level_key}:[[:space:]]*" "$1"; then
+        log_info "[textual-merge] Processing existing top-level key: $top_level_key"
+        target_key_regex=$(printf '%s' "$top_level_key" | sed -E 's/([][(){}.^$|*+?\\])/\\\\\1/g')
         # Extract the block from the new file (without the "key:" header)
-        awk -v key="$key_re" '
+        awk -v target_key_regex="$target_key_regex" '
           # When the exact block header is found, begin capture
-          $0 ~ "^" key ":[[:space:]]*$" { flag = 1; next }
+          $0 ~ "^" target_key_regex ":[[:space:]]*$" { capture = 1; next }
           # On the next top-level key, end capture
-          /^[^[:space:]#][^:]*:[[:space:]]*/ { if (flag) { exit } }
-          # While flag is active, print lines of the block
-          flag { print }
+          /^[^[:space:]#][^:]*:[[:space:]]*/ { if (capture) { exit } }
+          # While capture is active, print lines of the block
+          capture { print }
         ' "$2" > "$TMP_DIR/block.new"
 
         if [ -s "$TMP_DIR/block.new" ]; then
-          log_info "[textual-merge] block.new for '$key':"; sed -n '1,50p' "$TMP_DIR/block.new" 1>&2 || true
-          log_info "[textual-merge] Found new nested lines for '$key', injecting if absent."
+          log_info "[textual-merge] block.new for '$top_level_key':"; sed -n '1,50p' "$TMP_DIR/block.new" 1>&2 || true
+          log_info "[textual-merge] Found new nested lines for '$top_level_key', injecting if absent."
           # Insert missing lines from the new block just after the header in
           # the destination, avoiding duplicates and preserving order
-          awk -v key="$key_re" -v tmpfile="$TMP_DIR/block.new" -v dest="$1" '
+          awk -v target_key_regex="$target_key_regex" -v new_block_path="$TMP_DIR/block.new" -v destination_path="$1" '
             # Build a set of all lines present in destination to avoid duplicates
             BEGIN {
-              injected = 0
-              while ((getline l < dest) > 0) { file_has[l] = 1 }
-              close(dest)
+              injected_already = 0
+              while ((getline destination_line < destination_path) > 0) { destination_line_set[destination_line] = 1 }
+              close(destination_path)
             }
             # When hitting the target block header, mark that we are inside it
-            $0 ~ "^" key ":[[:space:]]*$" { print; intarget = 1; next }
+            $0 ~ "^" target_key_regex ":[[:space:]]*$" { print; inside_target_block = 1; next }
             # At the next top-level key, if still in block and not injected yet,
             # add only lines that are not already present
             /^[^[:space:]#][^:]*:[[:space:]]*/ {
-              if (intarget && !injected) {
-                while ((getline line < tmpfile) > 0) {
-                  if (line != "" && !(line in file_has)) { print line }
+              if (inside_target_block && !injected_already) {
+                while ((getline new_block_line < new_block_path) > 0) {
+                  if (new_block_line != "" && !(new_block_line in destination_line_set)) { print new_block_line }
                 }
-                close(tmpfile); injected = 1; intarget = 0
+                close(new_block_path); injected_already = 1; inside_target_block = 0
               }
             }
             # Default: print the current line unchanged
             { print }
             # If file ends while still inside block and not injected, insert pending lines
             END {
-              if (intarget && !injected) {
-                while ((getline line < tmpfile) > 0) {
-                  if (line != "" && !(line in file_has)) { print line }
+              if (inside_target_block && !injected_already) {
+                while ((getline new_block_line < new_block_path) > 0) {
+                  if (new_block_line != "" && !(new_block_line in destination_line_set)) { print new_block_line }
                 }
-                close(tmpfile)
+                close(new_block_path)
               }
             }
           ' "$1" > "$TMP_DIR/target.tmp" 2>/dev/null || true
           if [ -s "$TMP_DIR/target.tmp" ]; then
             mv "$TMP_DIR/target.tmp" "$1"; ensure_permissions "$1"
-            log_info "[textual-merge] Injected nested lines for '$key'."
+            log_info "[textual-merge] Injected nested lines for '$top_level_key'."
           fi
         fi
       fi
@@ -392,7 +392,7 @@ merge_inline_flow_arrays() {
     function escape_re(s,    t) {
       t=s; gsub(/([][(){}.^$|*+?\\])/ , "\\\\&", t); return t
     }
-    function collect_top_keys(file,    line,key_name) {
+    function collect_top_keys(file, line, key_name) {
       while ((getline line < file) > 0) {
         if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
         if (line ~ /^[^[:space:]#][^:]*:/) {
@@ -500,7 +500,7 @@ merge_inline_flow_arrays() {
         sub(/^[^\[]*\[/, "[", tmp); sub(/^\[/, "", tmp); buf = buf tmp
         for (j=start+1; j<=end; j++) buf = buf lines[j]
         sub(/].*$/, "", buf)
-        n = split(buf, t, /,/) 
+        n = split(buf, t, /,/)
         for (i2=1; i2<=n; i2++) { tok = trim(t[i2]); if (tok=="") continue; oldRaw[++oldRaw[0]] = tok; oldNorm[unquote(tok)] = 1 }
         # Try flow-style in new first
         parse_array_for_key(NEWFILE, key, newRaw, newNorm)
