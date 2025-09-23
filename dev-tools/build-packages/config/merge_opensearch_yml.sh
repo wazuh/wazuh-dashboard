@@ -587,71 +587,79 @@ merge_flow_to_block_via_textual() {
   # Args:
   #   $1: destination file
   #   $2: new packaged file
-  BLOCK_INJECTIONS_FILE="$TMP_DIR/block_injections.yml"
-  : > "$BLOCK_INJECTIONS_FILE"
+  TEMPORARY_CONVERTED_BLOCK_LISTS_FILE="$TMP_DIR/converted_block_style_lists.yml"
+  : > "$TEMPORARY_CONVERTED_BLOCK_LISTS_FILE"
 
-  awk -v DEST_PATH="$1" -v SRC_PATH="$2" -v OUTPUT_PATH="$BLOCK_INJECTIONS_FILE" '
-    function trim(t) { sub(/^([[:space:]]|\r)+/, "", t); sub(/([[:space:]]|\r)+$/, "", t); return t }
+  awk -v DESTINATION_FILE_PATH="$1" -v SOURCE_FILE_PATH="$2" -v CONVERTED_BLOCK_LISTS_FILE_PATH="$TEMPORARY_CONVERTED_BLOCK_LISTS_FILE" '
+    function trim(text_value) { sub(/^([[:space:]]|\r)+/, "", text_value); sub(/([[:space:]]|\r)+$/, "", text_value); return text_value }
 
     BEGIN {
-      # Load destination lines
-      while ((getline dl < DEST_PATH) > 0) { dest_lines[++destN] = dl }
-      close(DEST_PATH)
+      # Load destination file lines
+      while ((getline destination_config_line < DESTINATION_FILE_PATH) > 0) {
+        destination_config_lines[++destination_config_line_count] = destination_config_line
+      }
+      close(DESTINATION_FILE_PATH)
 
       # Identify destination keys that are block-style lists
-      for (i = 1; i <= destN; i++) {
-        line = dest_lines[i]
-        if (match(line, /^([^[:space:]#][^:]*):[[:space:]]*$/, m)) {
-          key = m[1]
-          for (j = i + 1; j <= destN; j++) {
-            if (dest_lines[j] ~ /^[[:space:]]*#/ || dest_lines[j] ~ /^[[:space:]]*$/) continue
-            if (dest_lines[j] ~ /^[[:space:]]*-\s+/) is_block_key[key] = 1
+      for (line_index = 1; line_index <= destination_config_line_count; line_index++) {
+        current_line_content = destination_config_lines[line_index]
+        if (match(current_line_content, /^([^[:space:]#][^:]*):[[:space:]]*$/, regex_match_parts)) {
+          current_top_level_key = regex_match_parts[1]
+          for (lookahead_line_index = line_index + 1; lookahead_line_index <= destination_config_line_count; lookahead_line_index++) {
+            if (destination_config_lines[lookahead_line_index] ~ /^[[:space:]]*#/ || destination_config_lines[lookahead_line_index] ~ /^[[:space:]]*$/) continue
+            if (destination_config_lines[lookahead_line_index] ~ /^[[:space:]]*-\s+/) {
+              destination_block_list_style_key_map[current_top_level_key] = 1
+            }
             break
           }
         }
       }
 
-      # Load new file lines
-      while ((getline sl < SRC_PATH) > 0) { src_lines[++srcN] = sl }
-      close(SRC_PATH)
+      # Load source (new) file lines
+      while ((getline source_config_line < SOURCE_FILE_PATH) > 0) {
+        source_config_lines[++source_config_line_count] = source_config_line
+      }
+      close(SOURCE_FILE_PATH)
 
-      # Convert flow arrays (key: [a, b]) to block style if destination uses block style
-      for (i = 1; i <= srcN; i++) {
-        line = src_lines[i]
-        if (match(line, /^([^[:space:]#][^:]*):[[:space:]]*\[/, m)) {
-          key = m[1]
-          if (!(key in is_block_key)) continue
+      # Convert flow arrays in source to block style only if destination uses block style for that key
+      for (line_index = 1; line_index <= source_config_line_count; line_index++) {
+        current_line_content = source_config_lines[line_index]
+        if (match(current_line_content, /^([^[:space:]#][^:]*):[[:space:]]*\[/, regex_match_parts)) {
+          current_top_level_key = regex_match_parts[1]
+          if (!(current_top_level_key in destination_block_list_style_key_map)) continue
 
-            buffer = line
-            depth = gsub(/\[/, "[", line) - gsub(/\]/, "]", line)
-            while (depth > 0 && i < srcN) {
-              i++
-              ln = src_lines[i]
-              buffer = buffer ln
-              depth += gsub(/\[/, "[", ln) - gsub(/\]/, "]", ln)
-            }
+          flow_array_accumulated_content = current_line_content
+          bracket_nesting_depth = gsub(/\[/, "[", current_line_content) - gsub(/\]/, "]", current_line_content)
+          while (bracket_nesting_depth > 0 && line_index < source_config_line_count) {
+            line_index++
+            continued_line_content = source_config_lines[line_index]
+            flow_array_accumulated_content = flow_array_accumulated_content continued_line_content
+            bracket_nesting_depth += gsub(/\[/, "[", continued_line_content) - gsub(/\]/, "]", continued_line_content)
+          }
 
-            sub(/^[^\[]*\[/, "[", buffer)
-            sub(/^\[/, "", buffer)
-            sub(/].*$/, "", buffer)
+          sub(/^[^\[]*\[/, "[", flow_array_accumulated_content)
+          sub(/^\[/, "", flow_array_accumulated_content)
+          sub(/].*$/, "", flow_array_accumulated_content)
 
-            count = split(buffer, tok, /,/)
-            if (count > 0) {
-              print key ":" >> OUTPUT_PATH
-              for (k = 1; k <= count; k++) {
-                item = trim(tok[k])
-                if (item != "") print "  - " item >> OUTPUT_PATH
+          flow_array_token_count = split(flow_array_accumulated_content, flow_array_token_list, /,/)
+          if (flow_array_token_count > 0) {
+            print current_top_level_key ":" >> CONVERTED_BLOCK_LISTS_FILE_PATH
+            for (token_index = 1; token_index <= flow_array_token_count; token_index++) {
+              trimmed_item_value = trim(flow_array_token_list[token_index])
+              if (trimmed_item_value != "") {
+                print "  - " trimmed_item_value >> CONVERTED_BLOCK_LISTS_FILE_PATH
               }
             }
+          }
         }
       }
     }
   ' /dev/null
 
-  if [ -s "$BLOCK_INJECTIONS_FILE" ]; then
-    BLOCKIFIED_NEW_FILE="$TMP_DIR/new.blockified.yml"
-    cp "$BLOCK_INJECTIONS_FILE" "$BLOCKIFIED_NEW_FILE"
-    textual_additive_merge "$TARGET_PATH" "$BLOCKIFIED_NEW_FILE"
+  if [ -s "$TEMPORARY_CONVERTED_BLOCK_LISTS_FILE" ]; then
+    TEMPORARY_BLOCKIFIED_NEW_FILE="$TMP_DIR/new_converted_block_style.yml"
+    cp "$TEMPORARY_CONVERTED_BLOCK_LISTS_FILE" "$TEMPORARY_BLOCKIFIED_NEW_FILE"
+    textual_additive_merge "$TARGET_PATH" "$TEMPORARY_BLOCKIFIED_NEW_FILE"
   fi
 }
 
