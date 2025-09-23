@@ -12,7 +12,9 @@
 # - POSIX sh compatible (no bashisms) to maximize portability.
 # - Explicit and defensive checks; exits cleanly if nothing to do.
 
-set -eu
+# Be conservative about aborting: avoid exiting on non-zero intermediate commands.
+# We keep undefined-variable checks but do not use `-e` to prevent partial merges.
+set -u
 
 # ----------------------------- Constants ------------------------------------
 DEFAULT_CONFIG_DIR="/etc/wazuh-dashboard"
@@ -301,111 +303,132 @@ append_missing_top_level_blocks() {
 }
 
 merge_with_yq_v4() {
-  # For simplicity and robustness, we reuse the safe strategy used in
-  # legacy environments: first append missing top-level blocks and,
-  # if they already exist, inject missing lines within the block without duplicating.
-  # This covers the "deep additive" behavior required by the tests
-  # when yq v4 is available.
-  merge_with_yq_legacy "$1" "$2"
+  # Use textual additive merge (append missing top-level blocks and inject
+  # missing lines inside existing blocks) to avoid dependency on specific
+  # yq query syntax and keep formatting stable.
+  textual_additive_merge "$1" "$2"
 }
 
-merge_with_yq_legacy() {
-  # Strategy for environments with non‑Mike-Farah yq (or wrappers):
-  # 1) Append missing top-level blocks (safe, non-destructive).
-  # 2) If nothing appended, attempt an optional improvement: detect missing
-  #    nested scalars via jq and apply a textual patch for the known `uiSettings`
-  #    block (without overwriting existing lines).
-  #
-  # Args:
-  #   $1: destination file
-  #   $2: new file
+textual_additive_merge() {
+  # Args: $1 dest, $2 new
   append_missing_top_level_blocks "$1" "$2"
 
   # Only attempt additive textual merge if nothing was appended yet (i.e.,
   # the top-level keys already exist). This step is generic for any
   # top-level block and does not depend on specific names.
   if [ ! -s "$APPEND_FILE" ]; then
-        # Generic additive textual merge for all top-level blocks
-        collect_existing_top_keys "$2" "$TMP_DIR/new_top_keys.txt"
-        while IFS= read -r key; do
-          # Only process keys that exist in destination as well
-          if grep -q "^${key}:[[:space:]]*" "$1"; then
-            key_re=$(printf '%s' "$key" | sed -E 's/([][(){}.^$|*+?\\])/\\\\\1/g')
+    set +e
+    # Generic additive textual merge for all top-level blocks
+    collect_existing_top_keys "$2" "$TMP_DIR/new_top_keys.txt"
+    while IFS= read -r key; do
+      # Only process keys that exist in destination as well
+      if grep -q "^${key}:[[:space:]]*" "$1"; then
+        log_info "[textual-merge] Processing existing top-level key: $key"
+        key_re=$(printf '%s' "$key" | sed -E 's/([][(){}.^$|*+?\\])/\\\\\1/g')
+        # Extract the block from the new file (without the "key:" header)
+        awk -v key="$key_re" '
+          # When the exact block header is found, begin capture
+          $0 ~ "^" key ":[[:space:]]*$" { flag = 1; next }
+          # On the next top-level key, end capture
+          /^[^[:space:]#][^:]*:[[:space:]]*/ { if (flag) { exit } }
+          # While flag is active, print lines of the block
+          flag { print }
+        ' "$2" > "$TMP_DIR/block.new"
 
-            # Extract the block from the new file (without the "key:" header)
-            awk \
-              -v key="$key_re" \
-              '
-              # When the exact block header is found, begin capture
-              $0 ~ "^" key ":[[:space:]]*$" { flag = 1; next }
-              # On the next top-level key, end capture
-              /^[^[:space:]#][^:]*:[[:space:]]*/ { if (flag) { exit } }
-              # While flag is active, print lines of the block
-              flag { print }
-              ' "$2" > "$TMP_DIR/block.new"
-
-            if [ -s "$TMP_DIR/block.new" ]; then
-              # Insert missing lines from the new block just after the header in
-              # the destination, avoiding duplicates and preserving order
-          awk \
-            -v key="$key_re" \
-            -v tmpfile="$TMP_DIR/block.new" \
-            -v dest="$1" \
-            '
+        if [ -s "$TMP_DIR/block.new" ]; then
+          log_info "[textual-merge] block.new for '$key':"; sed -n '1,50p' "$TMP_DIR/block.new" 1>&2 || true
+          log_info "[textual-merge] Found new nested lines for '$key', injecting if absent."
+          # Insert missing lines from the new block just after the header in
+          # the destination, avoiding duplicates and preserving order
+          awk -v key="$key_re" -v tmpfile="$TMP_DIR/block.new" -v dest="$1" '
             # Build a set of all lines present in destination to avoid duplicates
             BEGIN {
               injected = 0
-              while ((getline l < dest) > 0) {
-                file_has[l] = 1
-              }
+              while ((getline l < dest) > 0) { file_has[l] = 1 }
               close(dest)
             }
-
             # When hitting the target block header, mark that we are inside it
-            $0 ~ "^" key ":[[:space:]]*$" {
-              print
-              intarget = 1
-              next
-            }
-
+            $0 ~ "^" key ":[[:space:]]*$" { print; intarget = 1; next }
             # At the next top-level key, if still in block and not injected yet,
             # add only lines that are not already present
             /^[^[:space:]#][^:]*:[[:space:]]*/ {
               if (intarget && !injected) {
                 while ((getline line < tmpfile) > 0) {
-                  if (line != "" && !(line in file_has)) {
-                    print line
-                  }
+                  if (line != "" && !(line in file_has)) { print line }
                 }
-                close(tmpfile)
-                injected = 1
-                intarget = 0
+                close(tmpfile); injected = 1; intarget = 0
               }
             }
-
             # Default: print the current line unchanged
             { print }
-
             # If file ends while still inside block and not injected, insert pending lines
             END {
               if (intarget && !injected) {
                 while ((getline line < tmpfile) > 0) {
-                  if (line != "" && !(line in file_has)) {
-                    print line
-                  }
+                  if (line != "" && !(line in file_has)) { print line }
                 }
                 close(tmpfile)
               }
             }
           ' "$1" > "$TMP_DIR/target.tmp" 2>/dev/null || true
-
-              if [ -s "$TMP_DIR/target.tmp" ]; then
-                mv "$TMP_DIR/target.tmp" "$1"
-                ensure_permissions "$1"
-              fi
-            fi
+          if [ -s "$TMP_DIR/target.tmp" ]; then
+            mv "$TMP_DIR/target.tmp" "$1"; ensure_permissions "$1"
+            log_info "[textual-merge] Injected nested lines for '$key'."
           fi
-        done < "$TMP_DIR/new_top_keys.txt"
+        fi
+      fi
+    done < "$TMP_DIR/new_top_keys.txt"
+    set -e || true
+  fi
+}
+
+merge_with_yq_legacy() {
+  # Deep additive merge usando Python (PyYAML), sin sobrescribir valores
+  # existentes y agregando solo claves faltantes de forma recursiva.
+  py="${TMP_DIR}/legacy_merge.py"
+  cat > "$py" <<'PY'
+import sys, yaml
+from typing import Any
+
+dest, newf = sys.argv[1], sys.argv[2]
+
+def load_yaml(path: str) -> Any:
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+            return {} if data is None else data
+    except FileNotFoundError:
+        return {}
+
+def add_missing(o: Any, n: Any) -> Any:
+    if isinstance(o, dict) and isinstance(n, dict):
+        for k, v in n.items():
+            if k not in o:
+                o[k] = v
+            else:
+                o[k] = add_missing(o[k], v)
+        return o
+    # If destination is null and new is a mapping, adopt new mapping
+    if o is None and isinstance(n, dict):
+        return n
+    # If destination is not a dict (scalar or list), keep it as is
+    return o
+
+old = load_yaml(dest)
+new = load_yaml(newf)
+merged = add_missing(old, new)
+
+with open(dest, 'w', encoding='utf-8') as f:
+    yaml.safe_dump(merged, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+PY
+  if command -v python3 >/dev/null 2>&1; then
+    python3 "$py" "$1" "$2" || true
+    ensure_permissions "$1"
+    log_info "[legacy-merge] Resulting YAML (head):"
+    sed -n '1,80p' "$1" 1>&2 || true
+  else
+    # Fallback to textual additive if python3 not available
+    textual_additive_merge "$1" "$2"
   fi
 }
 
@@ -459,10 +482,8 @@ backup_config_file "$TARGET_PATH"
 case "$YQ_VARIANT" in
   farah)
     merge_with_yq_v4 "$TARGET_PATH" "$NEW_PATH" ;;
-  legacy)
-    merge_with_yq_legacy "$TARGET_PATH" "$NEW_PATH" ;;
-  none)
-    fallback_append_only "$TARGET_PATH" "$NEW_PATH" ;;
+  legacy|none)
+    textual_additive_merge "$TARGET_PATH" "$NEW_PATH" ;;
 esac
 
 # Always remove the packaged new config file once handled (idempotent)

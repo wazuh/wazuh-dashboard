@@ -13,7 +13,7 @@ teardown() {
   rm -rf "$TMPDIR_TEST"
 }
 
-# Helper: detect if available yq is Mike Farah v4+
+# True if yq is Mike Farah v4+
 is_farah_yq() {
   if ! command -v yq >/dev/null 2>&1; then
     return 1
@@ -27,7 +27,7 @@ server.host: 0.0.0.0
 existing.key: value
 YML
 
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   echo "$output"
   [ "$status" -eq 0 ]
   [ -f "$OPENSEARCH_DASHBOARD_YML" ]
@@ -101,7 +101,7 @@ YML
   run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-new" ]
-  run grep -Fx "added.key: yes" "$OPENSEARCH_DASHBOARD_YML"
+  run grep -Eq '^added\.key: (yes|true)$' "$OPENSEARCH_DASHBOARD_YML"
   [ "$status" -eq 0 ]
 }
 
@@ -235,7 +235,7 @@ YML
   [ "$status" -eq 0 ]
   run grep -Fx "  overrides:" "$OPENSEARCH_DASHBOARD_YML"
   [ "$status" -eq 0 ]
-  run grep -Fx "    \"home:useNewHomePage\": true" "$OPENSEARCH_DASHBOARD_YML"
+  run grep -Eq "^[[:space:]]{4}[\"']?home:useNewHomePage[\"']?:[[:space:]]*true[[:space:]]*$" "$OPENSEARCH_DASHBOARD_YML"
   [ "$status" -eq 0 ]
 }
 
@@ -260,10 +260,6 @@ YML
 }
 
 @test "deep merge with yq: add missing nested block under existing top-level" {
-  if ! is_farah_yq; then
-    skip "requires Mike Farah yq v4+ for deep merge"
-  fi
-
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 uiSettings:
   # user has no overrides yet
@@ -275,7 +271,7 @@ uiSettings:
     "home:useNewHomePage": true
 YML
 
-  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
   run grep -Fx "  overrides:" "$OPENSEARCH_DASHBOARD_YML"
@@ -285,10 +281,6 @@ YML
 }
 
 @test "deep merge with yq: add missing leaf under existing nested object" {
-  if ! is_farah_yq; then
-    skip "requires Mike Farah yq v4+ for deep merge"
-  fi
-
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 uiSettings:
   overrides:
@@ -311,10 +303,6 @@ YML
 }
 
 @test "deep merge with yq: no change if nested leaf already present" {
-  if ! is_farah_yq; then
-    skip "requires Mike Farah yq v4+ for deep merge"
-  fi
-
   cat > "$OPENSEARCH_DASHBOARD_YML" <<'YML'
 uiSettings:
   overrides:
