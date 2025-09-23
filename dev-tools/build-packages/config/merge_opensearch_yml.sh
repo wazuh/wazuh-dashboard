@@ -163,12 +163,16 @@ collect_existing_top_keys() {
   #   # logging
   #   # uiSettings
   awk '
+    # Skip top-level comments and blank lines
     /^[[:space:]]*#/ { next }
     /^[[:space:]]*$/ { next }
+
+    # If the line matches "key:" (ignoring values/comments), extract the key.
+    # Only considers first-level (non-indented) keys.
     {
       if (match($0, /^[[:space:]]*([^:#]+)[[:space:]]*:/, m)) {
         key = m[1]
-        gsub(/[[:space:]]+$/, "", key)
+        gsub(/[[:space:]]+$/, "", key)  # Trim trailing spaces
         print key
       }
     }
@@ -201,6 +205,7 @@ append_missing_top_level_blocks() {
     -v added="$ADDED_KEYS_FILE" \
     -v out="$APPEND_FILE" \
     '
+    # Load existing destination keys into have[] map.
     BEGIN {
       while ((getline k < existing) > 0) {
         have[k] = 1
@@ -208,6 +213,7 @@ append_missing_top_level_blocks() {
       close(existing)
     }
 
+    # Store all lines from new file for second pass.
     {
       lines[NR] = $0
     }
@@ -215,26 +221,26 @@ append_missing_top_level_blocks() {
     END {
       n = NR
 
-  # Detect the start of each top-level block in the new file and record
-  # their appearance order so complete blocks can be copied if missing.
+      # Detect top-level block starts and record order.
       for (i = 1; i <= n; i++) {
         line = lines[i]
+        # Skip comments / blank lines
         if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) {
           continue
         }
+        # A top-level block: begins at column 0 (non-space, non-#) and contains ':'
         if (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) {
           key = line
-          sub(/:.*/, "", key)
-          gsub(/[[:space:]]+$/, "", key)
+          sub(/:.*/, "", key)            # Take text before ':'
+          gsub(/[[:space:]]+$/, "", key)  # Trim trailing spaces
           if (!(key in start)) {
-            order[++orderN] = key
-            start[key] = i
+            order[++orderN] = key   # Preserve appearance order
+            start[key] = i          # Record start index
           }
         }
       }
 
-  # For each top-level block, if not present in target, copy the complete
-  # block (from its start to the next top-level key or EOF).
+      # Copy full blocks missing in destination (start to next top-level or EOF)
       for (idx = 1; idx <= orderN; idx++) {
         k = order[idx]
         s = start[k]
@@ -245,9 +251,9 @@ append_missing_top_level_blocks() {
         }
         if (!(k in have) && !(k in printed)) {
           for (j = s; j <= e; j++) {
-            print lines[j] >> out
+            print lines[j] >> out   # Append content
           }
-          print k >> added
+          print k >> added          # Record key added
           printed[k] = 1
         }
       }
@@ -329,7 +335,9 @@ merge_with_yq_legacy() {
         if grep -q '^uiSettings:' "$1" && grep -q '^uiSettings:' "$2"; then
             # Extract the `uiSettings` block from the new file without header.
           awk \
-            '/^uiSettings:[[:space:]]*$/ { flag = 1; next } \
+            '# Extract the `uiSettings` block without its header; stop at the
+             # next top-level key.
+             /^uiSettings:[[:space:]]*$/ { flag = 1; next } \
              /^[^[:space:]#][^:]*:[[:space:]]*/ { if (flag) { exit } } \
              flag { print }' \
             "$2" > "$TMP_DIR/ui_block.new"
@@ -339,14 +347,18 @@ merge_with_yq_legacy() {
             awk \
               -v tmpfile="$TMP_DIR/ui_block.new" \
               '
+              # Indicator whether we already injected the new block
               BEGIN { printed = 0 }
 
+              # On `uiSettings:` header, print it and enter UI mode
               /^uiSettings:[[:space:]]*$/ {
                 print
                 ui = 1
                 next
               }
 
+              # At the next top-level key, if UI mode active and not printed,
+              # insert missing lines from new block (avoid duplicates via grep)
               /^[^[:space:]#][^:]*:[[:space:]]*/ {
                 if (ui && !printed) {
                   while ((getline line < tmpfile) > 0) {
@@ -360,8 +372,10 @@ merge_with_yq_legacy() {
                 }
               }
 
+              # Default: print lines
               { print }
 
+              # If file ends and we still have pending lines, append them
               END {
                 if (ui && !printed) {
                   while ((getline line < tmpfile) > 0) {
