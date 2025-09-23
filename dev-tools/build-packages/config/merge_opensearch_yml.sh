@@ -163,16 +163,16 @@ collect_existing_top_keys() {
   #   # logging
   #   # uiSettings
   awk '
-    # Skip top-level comments and blank lines
+    # Ignore top-level comments and blank lines
     /^[[:space:]]*#/ { next }
     /^[[:space:]]*$/ { next }
 
-    # If the line matches "key:" (ignoring values/comments), extract the key.
-    # Only considers first-level (non-indented) keys.
+    # If the line matches "key:" (ignoring values/comments), extract it.
+    # Only first-level (non-indented) keys are considered.
     {
       if (match($0, /^[[:space:]]*([^:#]+)[[:space:]]*:/, m)) {
         key = m[1]
-        gsub(/[[:space:]]+$/, "", key)  # Trim trailing spaces
+        gsub(/[[:space:]]+$/, "", key)  # Trim trailing whitespace
         print key
       }
     }
@@ -205,7 +205,7 @@ append_missing_top_level_blocks() {
     -v added="$ADDED_KEYS_FILE" \
     -v out="$APPEND_FILE" \
     '
-    # Load existing destination keys into have[] map.
+    # Load current destination keys into have[]
     BEGIN {
       while ((getline k < existing) > 0) {
         have[k] = 1
@@ -213,7 +213,7 @@ append_missing_top_level_blocks() {
       close(existing)
     }
 
-    # Store all lines from new file for second pass.
+    # Buffer all lines from the new file for second pass
     {
       lines[NR] = $0
     }
@@ -221,26 +221,26 @@ append_missing_top_level_blocks() {
     END {
       n = NR
 
-      # Detect top-level block starts and record order.
+      # Detect top-level block starts and record their order
       for (i = 1; i <= n; i++) {
         line = lines[i]
-        # Skip comments / blank lines
+        # Skip comments and blank lines
         if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) {
           continue
         }
-        # A top-level block: begins at column 0 (non-space, non-#) and contains ':'
+        # A top-level block starts at column 0 (non-space, non-#) and has ':'
         if (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/) {
           key = line
-          sub(/:.*/, "", key)            # Take text before ':'
+          sub(/:.*/, "", key)            # Strip text after ':'
           gsub(/[[:space:]]+$/, "", key)  # Trim trailing spaces
           if (!(key in start)) {
             order[++orderN] = key   # Preserve appearance order
-            start[key] = i          # Record start index
+            start[key] = i          # Record starting index
           }
         }
       }
 
-      # Copy full blocks missing in destination (start to next top-level or EOF)
+      # Copy complete missing blocks (from start to next top-level or EOF)
       for (idx = 1; idx <= orderN; idx++) {
         k = order[idx]
         s = start[k]
@@ -251,9 +251,9 @@ append_missing_top_level_blocks() {
         }
         if (!(k in have) && !(k in printed)) {
           for (j = s; j <= e; j++) {
-            print lines[j] >> out   # Append content
+            print lines[j] >> out   # Append block content
           }
-          print k >> added          # Record key added
+          print k >> added          # Record added key
           printed[k] = 1
         }
       }
@@ -335,17 +335,21 @@ merge_with_yq_legacy() {
           if grep -q "^${key}:[[:space:]]*" "$1"; then
             key_re=$(printf '%s' "$key" | sed -E 's/([][(){}.^$|*+?\\])/\\\\\1/g')
 
-            # Extract block (without the header) from the new file
+            # Extract the block from the new file (without the "key:" header)
             awk \
               -v key="$key_re" \
               '
+              # When the exact block header is found, begin capture
               $0 ~ "^" key ":[[:space:]]*$" { flag = 1; next }
+              # On the next top-level key, end capture
               /^[^[:space:]#][^:]*:[[:space:]]*/ { if (flag) { exit } }
+              # While flag is active, print lines of the block
               flag { print }
               ' "$2" > "$TMP_DIR/block.new"
 
             if [ -s "$TMP_DIR/block.new" ]; then
-              # Insert any missing lines from new block just after the header in dest
+              # Insert missing lines from the new block just after the header in
+              # the destination, avoiding duplicates and preserving order
           awk \
             -v key="$key_re" \
             -v tmpfile="$TMP_DIR/block.new" \
@@ -360,15 +364,15 @@ merge_with_yq_legacy() {
               close(dest)
             }
 
-            # When we hit the block header, mark that we are inside target block
+            # When hitting the target block header, mark that we are inside it
             $0 ~ "^" key ":[[:space:]]*$" {
               print
               intarget = 1
               next
             }
 
-            # At the next top-level key, if we are in target block and not yet
-            # injected, append only the lines that are not already present
+            # At the next top-level key, if still in block and not injected yet,
+            # add only lines that are not already present
             /^[^[:space:]#][^:]*:[[:space:]]*/ {
               if (intarget && !injected) {
                 while ((getline line < tmpfile) > 0) {
@@ -382,10 +386,10 @@ merge_with_yq_legacy() {
               }
             }
 
-            # Default: forward the current line unchanged
+            # Default: print the current line unchanged
             { print }
 
-            # If file ended while still inside the block, perform pending insert
+            # If file ends while still inside block and not injected, insert pending lines
             END {
               if (intarget && !injected) {
                 while ((getline line < tmpfile) > 0) {
