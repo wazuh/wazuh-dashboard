@@ -21,6 +21,7 @@ DEFAULT_TARGET_FILE="opensearch_dashboards.yml"
 PACKAGE_SUFFIXES="rpmnew dpkg-dist dpkg-new ucf-dist"
 DEFAULT_OWNER_USER="wazuh-dashboard"
 DEFAULT_FILE_MODE="0640"
+BACKUP_TIMESTAMP_FORMAT="%Y%m%dT%H%M%SZ"
 
 # ---------------------------- Logging utils ---------------------------------
 # log_info
@@ -48,13 +49,16 @@ log_error() { echo "[ERROR] $*" 1>&2; }
 #   Example:
 #     ./merge_opensearch_yml.sh --help
 usage() {
-  cat 1>&2 <<USAGE
+  cat 1>&2 <<'USAGE'
 Usage: $0 [--config-dir DIR] [--help]
 
 Merges defaults from a packaged ${DEFAULT_TARGET_FILE} into the active file,
 adding only missing keys. Deep additive merge is used when Mike Farah yq v4+
 is available; otherwise a conservative append of missing top-level blocks is
 performed.
+
+Before merging, a timestamped backup of the destination YAML is created
+alongside the file with suffix `.bak.<UTC-TS>`.
 USAGE
 }
 
@@ -78,6 +82,35 @@ ensure_permissions() {
     chown "$DEFAULT_OWNER_USER":"$DEFAULT_OWNER_USER" "$1" || true
   fi
   chmod "$DEFAULT_FILE_MODE" "$1" || true
+}
+
+# backup_config_file
+#   Create a timestamped backup of the destination YAML before any merge.
+#   The backup is placed alongside the original with suffix `.bak.<UTC-TS>`.
+#
+#   Args:
+#     $1: path to the destination file to back up
+#
+#   Notes:
+#   - Does not abort on failure; logs an error and continues to be resilient
+#     in packaging/upgrade flows.
+backup_config_file() {
+  src="$1"
+  if [ ! -f "$src" ]; then
+    return 0
+  fi
+  ts=$(date -u +"$BACKUP_TIMESTAMP_FORMAT")
+  dest="${src}.bak.${ts}"
+  if cp -p "$src" "$dest" 2>/dev/null; then
+    log_info "Created backup: $dest"
+  else
+    # Try without -p as a fallback (busybox/limited cp implementations)
+    if cp "$src" "$dest" 2>/dev/null; then
+      log_info "Created backup: $dest"
+    else
+      log_error "Failed to create backup at $dest"
+    fi
+  fi
 }
 
 # detect_new_config_path
@@ -455,6 +488,9 @@ create_tmp_workspace
 trap cleanup EXIT INT TERM HUP
 
 YQ_VARIANT=$(detect_yq_variant)
+
+# Backup the destination file before any modification
+backup_config_file "$TARGET_PATH"
 
 case "$YQ_VARIANT" in
   farah)
