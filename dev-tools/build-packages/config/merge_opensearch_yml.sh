@@ -579,43 +579,75 @@ merge_block_lists_preserve_style() {
 }
 
 merge_flow_to_block_via_textual() {
+  # Purpose: Convert flow-style arrays in the new file into temporary block-style
+  #          lists when the destination already uses block-list style for that
+  #          key, then perform an additive textual merge so only missing items
+  #          are appended (without altering user order or style).
+  #
+  # Args:
+  #   $1: destination file
+  #   $2: new packaged file
   BLOCK_INJECTIONS_FILE="$TMP_DIR/block_injections.yml"
   : > "$BLOCK_INJECTIONS_FILE"
+
   awk -v DEST_PATH="$1" -v SRC_PATH="$2" -v OUTPUT_PATH="$BLOCK_INJECTIONS_FILE" '
-    function trim(text){ sub(/^([[:space:]]|\r)+/,"",text); sub(/([[:space:]]|\r)+$/,"",text); return text }
+    function trim(t) { sub(/^([[:space:]]|\r)+/, "", t); sub(/([[:space:]]|\r)+$/, "", t); return t }
+
     BEGIN {
-      while((getline dest_line < DEST_PATH)>0){ dest_lines[++dest_count]=dest_line }
+      # Load destination lines
+      while ((getline dl < DEST_PATH) > 0) { dest_lines[++destN] = dl }
       close(DEST_PATH)
-      for(i=1;i<=dest_count;i++){
-        line=dest_lines[i]
-        if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*$/,m)){
-          key_name=m[1]
-          for(j=i+1;j<=dest_count;j++){
-            if(dest_lines[j] ~ /^[[:space:]]*#/ || dest_lines[j] ~ /^[[:space:]]*$/) continue
-            if(dest_lines[j] ~ /^[[:space:]]*-\s+/){ is_block_key[key_name]=1 }
+
+      # Identify destination keys that are block-style lists
+      for (i = 1; i <= destN; i++) {
+        line = dest_lines[i]
+        if (match(line, /^([^[:space:]#][^:]*):[[:space:]]*$/, m)) {
+          key = m[1]
+          for (j = i + 1; j <= destN; j++) {
+            if (dest_lines[j] ~ /^[[:space:]]*#/ || dest_lines[j] ~ /^[[:space:]]*$/) continue
+            if (dest_lines[j] ~ /^[[:space:]]*-\s+/) is_block_key[key] = 1
             break
           }
         }
       }
-      while((getline src_line < SRC_PATH)>0){ src_lines[++src_count]=src_line }
+
+      # Load new file lines
+      while ((getline sl < SRC_PATH) > 0) { src_lines[++srcN] = sl }
       close(SRC_PATH)
-      for(i=1;i<=src_count;i++){
-        line=src_lines[i]
-        if(match(line,/^([^[:space:]#][^:]*):[[:space:]]*\[/,m)){
-          key_name=m[1]
-          if(!(key_name in is_block_key)) continue
-          buffer=line; depth=gsub(/\[/,"[",line)-gsub(/\]/,"]",line)
-          while(depth>0 && i<src_count){ i++; ln=src_lines[i]; buffer=buffer ln; depth+=gsub(/\[/,"[",ln)-gsub(/\]/,"]",ln) }
-          sub(/^[^\[]*\[/,"[",buffer); sub(/^\[/, "", buffer); sub(/].*$/, "", buffer)
-          tokens_count=split(buffer, tokens, /,/)
-          if(tokens_count>0){
-            print key_name ":" >> OUTPUT_PATH
-            for(k=1;k<=tokens_count;k++){ token=trim(tokens[k]); if(token!="") print "  - " token >> OUTPUT_PATH }
-          }
+
+      # Convert flow arrays (key: [a, b]) to block style if destination uses block style
+      for (i = 1; i <= srcN; i++) {
+        line = src_lines[i]
+        if (match(line, /^([^[:space:]#][^:]*):[[:space:]]*\[/, m)) {
+          key = m[1]
+          if (!(key in is_block_key)) continue
+
+            buffer = line
+            depth = gsub(/\[/, "[", line) - gsub(/\]/, "]", line)
+            while (depth > 0 && i < srcN) {
+              i++
+              ln = src_lines[i]
+              buffer = buffer ln
+              depth += gsub(/\[/, "[", ln) - gsub(/\]/, "]", ln)
+            }
+
+            sub(/^[^\[]*\[/, "[", buffer)
+            sub(/^\[/, "", buffer)
+            sub(/].*$/, "", buffer)
+
+            count = split(buffer, tok, /,/)
+            if (count > 0) {
+              print key ":" >> OUTPUT_PATH
+              for (k = 1; k <= count; k++) {
+                item = trim(tok[k])
+                if (item != "") print "  - " item >> OUTPUT_PATH
+              }
+            }
         }
       }
     }
   ' /dev/null
+
   if [ -s "$BLOCK_INJECTIONS_FILE" ]; then
     BLOCKIFIED_NEW_FILE="$TMP_DIR/new.blockified.yml"
     cp "$BLOCK_INJECTIONS_FILE" "$BLOCKIFIED_NEW_FILE"
