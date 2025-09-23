@@ -546,59 +546,89 @@ merge_inline_flow_arrays() {
 
 merge_block_lists_preserve_style() {
   awk -v NEWFILE="$2" '
-    function trim(text) {
-      sub(/^([[:space:]]|\r)+/, "", text)
-      sub(/([[:space:]]|\r)+$/, "", text)
-      return text
+    ##########################################################################
+    # Utility functions with descriptive names
+    ##########################################################################
+    function trim_whitespace(original_text) {
+      sub(/^([[:space:]]|\r)+/, "", original_text)
+      sub(/([[:space:]]|\r)+$/, "", original_text)
+      return original_text
     }
-    function unquote(text) {
-      text = trim(text)
-      if (text ~ /^".*"$/) return substr(text, 2, length(text)-2)
-      if (text ~ /^\x27.*\x27$/) return substr(text, 2, length(text)-2)
-      return text
+    function unquote_preserving_value(original_text) {
+      original_text = trim_whitespace(original_text)
+      if (original_text ~ /^".*"$/) return substr(original_text, 2, length(original_text)-2)
+      if (original_text ~ /^\x27.*\x27$/) return substr(original_text, 2, length(original_text)-2)
+      return original_text
     }
-    function escape_regex(text) {
-      gsub(/([][(){}.^$|*+?\\])/, "\\\\&", text)
-      return text
+    function escape_regex_for_awk(literal_text) {
+      gsub(/([][(){}.^$|*+?\\])/, "\\\\&", literal_text)
+      return literal_text
     }
-    function is_top_key_line(line) {
-      return (line ~ /^[^[:space:]#][^:]*:[[:space:]]*/)
+    function is_top_level_key_line(line_text) {
+      return (line_text ~ /^[^[:space:]#][^:]*:[[:space:]]*/)
     }
-    function parse_block_items(lines,total,start_index,end_index,
-                               raw_items,normalized_items,indentation,
-                               i,line,match_groups) {
-      delete raw_items; delete normalized_items
-      raw_items[0]=0; indentation=""
-      for (i=start_index+1; i<=end_index; i++) {
-        line=lines[i]
-        if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
-        if (match(line, /^([[:space:]]*)-\s*(.*)$/, match_groups)) {
-          if (indentation == "") indentation = match_groups[1]
-          token = match_groups[2]
-          raw_items[++raw_items[0]] = token
-          normalized_items[unquote(token)] = 1
-        } else if (is_top_key_line(line)) {
+
+    ##########################################################################
+    # Parse destination block list items
+    ##########################################################################
+    function parse_block_list_items(file_line_array,
+                                    file_line_count,
+                                    block_start_line_index,
+                                    block_end_line_index,
+                                    raw_item_array,
+                                    normalized_item_map,
+                                    returned_indentation,
+                                    line_index,
+                                    current_line,
+                                    match_groups,
+                                    potential_item_token) {
+      delete raw_item_array
+      delete normalized_item_map
+      raw_item_array[0] = 0
+      returned_indentation = ""
+      for (line_index = block_start_line_index + 1; line_index <= block_end_line_index; line_index++) {
+        current_line = file_line_array[line_index]
+        if (current_line ~ /^[[:space:]]*#/ || current_line ~ /^[[:space:]]*$/) continue
+        if (match(current_line, /^([[:space:]]*)-\s*(.*)$/, match_groups)) {
+          if (returned_indentation == "") returned_indentation = match_groups[1]
+          potential_item_token = match_groups[2]
+          raw_item_array[++raw_item_array[0]] = potential_item_token
+          normalized_item_map[unquote_preserving_value(potential_item_token)] = 1
+        } else if (is_top_level_key_line(current_line)) {
           break
         }
       }
-      return indentation
+      return returned_indentation
     }
-    function find_dest_block_lists(lines,total,
-                                   i,line,key_name,match_groups,
-                                   j,m,end) {
-      for (i=1; i<=total; i++) {
-        line = lines[i]
-        if (match(line, /^([^[:space:]#][^:]*):[[:space:]]*$/, match_groups)) {
-          key_name = match_groups[1]
-          for (j=i+1; j<=total; j++) {
-            if (lines[j] ~ /^[[:space:]]*#/ || lines[j] ~ /^[[:space:]]*$/) continue
-            if (lines[j] ~ /^[[:space:]]*-\s+/) {
-              dest_block_start[key_name] = i
-              end = i
-              for (m=i+1; m<=total; m++) {
-                if (is_top_key_line(lines[m])) { end = m - 1; break }
+
+    ##########################################################################
+    # Identify destination block-list style top-level keys
+    ##########################################################################
+    function identify_destination_block_list_ranges(destination_file_lines,
+                                                    destination_file_line_count,
+                                                    line_index,
+                                                    current_line,
+                                                    match_groups,
+                                                    lookahead_line_index,
+                                                    potential_key_name,
+                                                    search_line_index,
+                                                    inferred_block_end_line_index) {
+      for (line_index = 1; line_index <= destination_file_line_count; line_index++) {
+        current_line = destination_file_lines[line_index]
+        if (match(current_line, /^([^[:space:]#][^:]*):[[:space:]]*$/, match_groups)) {
+          potential_key_name = match_groups[1]
+          for (lookahead_line_index = line_index + 1; lookahead_line_index <= destination_file_line_count; lookahead_line_index++) {
+            if (destination_file_lines[lookahead_line_index] ~ /^[[:space:]]*#/ || destination_file_lines[lookahead_line_index] ~ /^[[:space:]]*$/) continue
+            if (destination_file_lines[lookahead_line_index] ~ /^[[:space:]]*-\s+/) {
+              destination_block_list_start_line_index_by_key[potential_key_name] = line_index
+              inferred_block_end_line_index = line_index
+              for (search_line_index = line_index + 1; search_line_index <= destination_file_line_count; search_line_index++) {
+                if (is_top_level_key_line(destination_file_lines[search_line_index])) {
+                  inferred_block_end_line_index = search_line_index - 1
+                  break
+                }
               }
-              dest_block_end[key_name] = end
+              destination_block_list_end_line_index_by_key[potential_key_name] = inferred_block_end_line_index
               break
             } else {
               break
@@ -607,35 +637,58 @@ merge_block_lists_preserve_style() {
         }
       }
     }
-    function parse_new_items_any_style(src_lines,total_new,key_name,
-                                       raw_items,normalized_items,
-                                       i,line,key_regex,capturing,depth,buffer,
-                                       tokens,token_count,token,header_index,
-                                       end_index,match_groups,m) {
-      delete raw_items; delete normalized_items
-      raw_items[0]=0
-      key_regex = escape_regex(key_name)
 
-      # Try block list header: key:
-      header_index = 0
-      for (i=1; i<=total_new; i++) {
-        if (src_lines[i] ~ ("^" key_regex ":[[:space:]]*$")) { header_index = i; break }
+    ##########################################################################
+    # Parse new file list items for a given key (block or flow style)
+    ##########################################################################
+    function parse_new_file_items_any_list_style(new_file_lines,
+                                                 new_file_line_count,
+                                                 target_key_name,
+                                                 new_raw_item_array,
+                                                 new_normalized_item_map,
+                                                 search_line_index,
+                                                 key_regex_literal,
+                                                 header_line_index,
+                                                 candidate_line_index,
+                                                 block_list_end_line_index,
+                                                 match_groups,
+                                                 capture_state_active,
+                                                 bracket_nesting_depth,
+                                                 flow_capture_buffer,
+                                                 token_array,
+                                                 token_count,
+                                                 candidate_token,
+                                                 bracket_line) {
+      delete new_raw_item_array
+      delete new_normalized_item_map
+      new_raw_item_array[0] = 0
+      key_regex_literal = escape_regex_for_awk(target_key_name)
+
+      # Block style attempt
+      header_line_index = 0
+      for (search_line_index = 1; search_line_index <= new_file_line_count; search_line_index++) {
+        if (new_file_lines[search_line_index] ~ ("^" key_regex_literal ":[[:space:]]*$")) {
+          header_line_index = search_line_index
+          break
+        }
       }
-      if (header_index) {
-        for (i=header_index+1; i<=total_new; i++) {
-          if (src_lines[i] ~ /^[[:space:]]*#/ || src_lines[i] ~ /^[[:space:]]*$/) continue
-          if (src_lines[i] ~ /^[[:space:]]*-\s+/) {
-            end_index = total_new
-            for (m=header_index+1; m<=total_new; m++) {
-              if (is_top_key_line(src_lines[m])) { end_index = m - 1; break }
+      if (header_line_index) {
+        for (candidate_line_index = header_line_index + 1; candidate_line_index <= new_file_line_count; candidate_line_index++) {
+          if (new_file_lines[candidate_line_index] ~ /^[[:space:]]*#/ || new_file_lines[candidate_line_index] ~ /^[[:space:]]*$/) continue
+          if (new_file_lines[candidate_line_index] ~ /^[[:space:]]*-\s+/) {
+            block_list_end_line_index = new_file_line_count
+            for (bracket_line = header_line_index + 1; bracket_line <= new_file_line_count; bracket_line++) {
+              if (is_top_level_key_line(new_file_lines[bracket_line])) {
+                block_list_end_line_index = bracket_line - 1
+                break
+              }
             }
-            for (m=header_index+1; m<=end_index; m++) {
-              line = src_lines[m]
-              if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue
-              if (match(line, /^([[:space:]]*)-\s*(.*)$/, match_groups)) {
-                token = match_groups[2]
-                raw_items[++raw_items[0]] = token
-                normalized_items[unquote(token)] = 1
+            for (bracket_line = header_line_index + 1; bracket_line <= block_list_end_line_index; bracket_line++) {
+              if (new_file_lines[bracket_line] ~ /^[[:space:]]*#/ || new_file_lines[bracket_line] ~ /^[[:space:]]*$/) continue
+              if (match(new_file_lines[bracket_line], /^([[:space:]]*)-\s*(.*)$/, match_groups)) {
+                candidate_token = match_groups[2]
+                new_raw_item_array[++new_raw_item_array[0]] = candidate_token
+                new_normalized_item_map[unquote_preserving_value(candidate_token)] = 1
               }
             }
             return 1
@@ -645,35 +698,37 @@ merge_block_lists_preserve_style() {
         }
       }
 
-      # Try flow style: key: [ ... ]
-      capturing=0; depth=0; buffer=""
-      for (i=1; i<=total_new; i++) {
-        line = src_lines[i]
-        if (!capturing) {
-          if (line ~ ("^" key_regex ":[[:space:]]*\\[")) {
-            capturing = 1
-            sub(/^[^\[]*\[/, "[", line)
-            depth += gsub(/\[/, "[", line)
-            depth -= gsub(/\]/, "]", line)
-            sub(/^\[/, "", line)
-            buffer = buffer line
-            if (depth == 0) break
+      # Flow style attempt
+      capture_state_active = 0
+      bracket_nesting_depth = 0
+      flow_capture_buffer = ""
+      for (search_line_index = 1; search_line_index <= new_file_line_count; search_line_index++) {
+        current_line = new_file_lines[search_line_index]
+        if (!capture_state_active) {
+          if (current_line ~ ("^" key_regex_literal ":[[:space:]]*\\[")) {
+            capture_state_active = 1
+            sub(/^[^\[]*\[/, "[", current_line)
+            bracket_nesting_depth += gsub(/\[/, "[", current_line)
+            bracket_nesting_depth -= gsub(/\]/, "]", current_line)
+            sub(/^\[/, "", current_line)
+            flow_capture_buffer = flow_capture_buffer current_line
+            if (bracket_nesting_depth == 0) break
           }
         } else {
-          depth += gsub(/\[/, "[", line)
-          depth -= gsub(/\]/, "]", line)
-          buffer = buffer line
-          if (depth == 0) break
+          bracket_nesting_depth += gsub(/\[/, "[", current_line)
+            bracket_nesting_depth -= gsub(/\]/, "]", current_line)
+          flow_capture_buffer = flow_capture_buffer current_line
+          if (bracket_nesting_depth == 0) break
         }
       }
-      sub(/].*$/, "", buffer)
-      if (buffer != "") {
-        token_count = split(buffer, tokens, /,/)
-        for (i=1; i<=token_count; i++) {
-          token = trim(tokens[i])
-          if (token != "") {
-            raw_items[++raw_items[0]] = token
-            normalized_items[unquote(token)] = 1
+      sub(/].*$/, "", flow_capture_buffer)
+      if (flow_capture_buffer != "") {
+        token_count = split(flow_capture_buffer, token_array, /,/)
+        for (search_line_index = 1; search_line_index <= token_count; search_line_index++) {
+          candidate_token = trim_whitespace(token_array[search_line_index])
+          if (candidate_token != "") {
+            new_raw_item_array[++new_raw_item_array[0]] = candidate_token
+            new_normalized_item_map[unquote_preserving_value(candidate_token)] = 1
           }
         }
         return 1
@@ -681,68 +736,86 @@ merge_block_lists_preserve_style() {
       return 0
     }
 
-    { dest_lines[++dest_count] = $0 }
+    ##########################################################################
+    # Main AWK processing
+    ##########################################################################
+    { destination_file_lines[++destination_file_line_count] = $0 }
 
     END {
-      # Load new file
-      while ((getline src_line < NEWFILE) > 0) {
-        src_lines[++total_new] = src_line
+      # Load new file fully
+      while ((getline new_file_line < NEWFILE) > 0) {
+        new_file_lines[++new_file_line_count] = new_file_line
       }
       close(NEWFILE)
 
-      find_dest_block_lists(dest_lines, dest_count)
+      # Identify destination block-list style key ranges
+      identify_destination_block_list_ranges(destination_file_lines,
+                                             destination_file_line_count)
 
-      # Set of existing literal destination lines (avoid exact dupes)
-      for (i=1; i<=dest_count; i++) dest_line_set[dest_lines[i]] = 1
+      # Build literal line set to prevent inserting duplicates line-for-line
+      for (indexDestinationLine = 1; indexDestinationLine <= destination_file_line_count; indexDestinationLine++) {
+        destination_line_set_map[destination_file_lines[indexDestinationLine]] = 1
+      }
 
-      for (key_name in dest_block_start) {
-        start_index = dest_block_start[key_name]
-        end_index   = dest_block_end[key_name]
-        if (start_index == 0 || end_index == 0) continue
+      # Process each destination block list key
+      for (current_top_level_key in destination_block_list_start_line_index_by_key) {
+        destination_block_start_index = destination_block_list_start_line_index_by_key[current_top_level_key]
+        destination_block_end_index   = destination_block_list_end_line_index_by_key[current_top_level_key]
+        if (destination_block_start_index == 0 || destination_block_end_index == 0) continue
 
-        dest_indentation = parse_block_items(dest_lines, dest_count,
-                                             start_index, end_index,
-                                             existing_raw, existing_norm,
-                                             dest_indentation)
-        if (dest_indentation == "") dest_indentation = "  "
+        destination_block_list_indentation = parse_block_list_items(destination_file_lines,
+                                                                    destination_file_line_count,
+                                                                    destination_block_start_index,
+                                                                    destination_block_end_index,
+                                                                    existing_list_raw_items,
+                                                                    existing_list_normalized_items,
+                                                                    destination_block_list_indentation)
 
-        if (!parse_new_items_any_style(src_lines, total_new, key_name,
-                                       new_raw, new_norm))
+        if (destination_block_list_indentation == "") destination_block_list_indentation = "  "
+
+        if (!parse_new_file_items_any_list_style(new_file_lines,
+                                                 new_file_line_count,
+                                                 current_top_level_key,
+                                                 new_list_raw_items,
+                                                 new_list_normalized_items))
           continue
 
-        append_count = 0
-        for (i=1; i<=new_raw[0]; i++) {
-          normalized_value = unquote(new_raw[i])
-          candidate_line = dest_indentation "- " new_raw[i]
-          if (!(normalized_value in existing_norm) &&
-              !(candidate_line in dest_line_set)) {
-            append[++append_count] = candidate_line
-          }
+        appended_candidate_item_line_count = 0
+        for (indexNewItem = 1; indexNewItem <= new_list_raw_items[0]; indexNewItem++) {
+            candidate_normalized_value = unquote_preserving_value(new_list_raw_items[indexNewItem])
+            candidate_item_line = destination_block_list_indentation "- " new_list_raw_items[indexNewItem]
+            if (!(candidate_normalized_value in existing_list_normalized_items) &&
+                !(candidate_item_line in destination_line_set_map)) {
+              appended_candidate_item_lines[++appended_candidate_item_line_count] = candidate_item_line
+            }
         }
 
-        if (append_count > 0) {
-          header_line = dest_lines[start_index]
-          body = ""
-          for (i=start_index+1; i<=end_index; i++)
-            body = body dest_lines[i] "\n"
-          replacement_block = header_line "\n" body
-          for (i=1; i<=append_count; i++)
-            replacement_block = replacement_block append[i] "\n"
-          replacement_start[start_index] = 1
-          replacement_end[start_index]   = end_index
-          replacement_block_text[start_index] = replacement_block
+        if (appended_candidate_item_line_count > 0) {
+          destination_block_header_line = destination_file_lines[destination_block_start_index]
+          existing_block_body_text = ""
+          for (indexBodyLine = destination_block_start_index + 1; indexBodyLine <= destination_block_end_index; indexBodyLine++) {
+            existing_block_body_text = existing_block_body_text destination_file_lines[indexBodyLine] "\n"
+          }
+          replacement_complete_block_text = destination_block_header_line "\n" existing_block_body_text
+          for (indexAppendLine = 1; indexAppendLine <= appended_candidate_item_line_count; indexAppendLine++) {
+            replacement_complete_block_text = replacement_complete_block_text appended_candidate_item_lines[indexAppendLine] "\n"
+          }
+          replacement_block_presence_start_line_index_map[destination_block_start_index] = 1
+          replacement_block_presence_end_line_index_map[destination_block_start_index]   = destination_block_end_index
+          replacement_block_text_by_start_line_index[destination_block_start_index]      = replacement_complete_block_text
         }
       }
 
-      i = 1
-      while (i <= dest_count) {
-        if (replacement_start[i]) {
-          sub(/\n$/, "", replacement_block_text[i])
-          print replacement_block_text[i]
-          i = replacement_end[i] + 1
+      # Emit final merged file
+      output_line_index = 1
+      while (output_line_index <= destination_file_line_count) {
+        if (replacement_block_presence_start_line_index_map[output_line_index]) {
+          sub(/\n$/, "", replacement_block_text_by_start_line_index[output_line_index])
+          print replacement_block_text_by_start_line_index[output_line_index]
+          output_line_index = replacement_block_presence_end_line_index_map[output_line_index] + 1
         } else {
-          print dest_lines[i]
-          i++
+          print destination_file_lines[output_line_index]
+          output_line_index++
         }
       }
     }
