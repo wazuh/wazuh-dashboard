@@ -2,13 +2,10 @@ name: (4.x) Merge config tests
 
 on:
   pull_request:
-    branches: ['**', '!feature/**']
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.lycheeignore'
-      - 'CODEOWNERS'
-      - 'changelogs/fragments/**'
+    paths:
+      - 'dev-tools/build-packages/*'
+    branches:
+      - 4.*
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
