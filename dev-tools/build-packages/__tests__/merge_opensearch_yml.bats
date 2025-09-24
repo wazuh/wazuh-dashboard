@@ -93,7 +93,7 @@ YML
   run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"; echo "$output" >&3
   [ "$status" -eq 0 ]
   [ ! -f "$OPENSEARCH_DASHBOARD_YML.dpkg-new" ]
-  run grep -Eq '^added\.key: (yes|true)$' "$OPENSEARCH_DASHBOARD_YML"
+  run grep -Eq '^added\.key: yes$' "$OPENSEARCH_DASHBOARD_YML"
   [ "$status" -eq 0 ]
 }
 
