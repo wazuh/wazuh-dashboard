@@ -75,7 +75,7 @@ override_dh_install:
 	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/config
 
 	# Install post-install merge helper (relative to this rules file)
-	cp $(TARGET_DIR)$(INSTALLATION_DIR)/merge_opensearch_yml.sh $(TARGET_DIR)$(CONFIG_DIR)/merge_opensearch_yml.sh
+	cp $(TARGET_DIR)$(INSTALLATION_DIR)/merge_config.sh $(TARGET_DIR)$(CONFIG_DIR)/merge_config.sh
 
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard.service $(TARGET_DIR)/etc/systemd/system/wazuh-dashboard.service
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard $(TARGET_DIR)/etc/systemd/system/$(NAME)
@@ -109,7 +109,7 @@ override_dh_fixperms:
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 644 -exec chmod 640 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 755 -exec chmod 750 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 744 -exec chmod 740 {} \;
-	chmod 750 $(TARGET_DIR)$(CONFIG_DIR)/merge_opensearch_yml.sh
+	chmod 750 $(TARGET_DIR)$(CONFIG_DIR)/merge_config.sh
 
 # -----------------------------------------------------------------------------
 

@@ -58,7 +58,7 @@ log_error() { echo "[ERROR] $*" 1>&2; }
 # usage
 #   Show script usage help.
 #   Example:
-#     ./merge_opensearch_yml.sh --help
+#     ./merge_config.sh --help
 usage() {
   cat 1>&2 <<'USAGE'
 Usage: $0 [--config-dir DIR] [--help]

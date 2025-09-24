@@ -6,7 +6,7 @@ This folder contains a containerized test environment for the post‑install con
 
 - `Dockerfile.awk`: Minimal Debian image with test deps (bats, GNU tools).
 - `test.yml`: Docker Compose file to build and run the tests.
-- `merge_opensearch_yml.bats`: Bats test suite covering merge behavior.
+- `merge_config.bats`: Bats test suite covering merge behavior.
 - `run-bats.sh`: Host runner that builds the image and executes the suite in a container (no local deps required).
 - `fixtures/`: Self-contained scenarios used by the Bats suite. Each scenario is a single YAML file named after the test (e.g., `rpmnew_append_missing.yml`) with four top-level keys:
   - `metadata`: Optional map with knobs for the run. Known fields are `DEFAULT_SUFFIX` (packaged suffix to create, e.g., `rpmnew`), `RUN_TWICE` (run merge twice to prove idempotency when set to `1`), `EXPECT_STATUS` (expected exit code, default `0`), `EXPECT_PACKAGED_REMOVED` (`1` if the packaged file must be deleted, `0` if it should remain), `EXPECT_DESTINATION_PRESENT` (`1` when the final config must exist, `0` when it must not), and `EXPECT_MODE` (permission expected on the final config, e.g., `640`).
@@ -74,5 +74,5 @@ The script will:
 
 - `./Dockerfile.awk`
 - `./test.yml`
-- `./merge_opensearch_yml.bats`
+- `./merge_config.bats`
 - `./run-bats.sh`
