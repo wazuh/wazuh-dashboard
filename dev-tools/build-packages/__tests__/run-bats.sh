@@ -78,8 +78,8 @@ for svc in "${SELECTED_SERVICES[@]}"; do
   echo "==> Running bats in $svc"
   set +e
   # Working dir inside container is /workspace/dev-tools/build-packages
-  # The suite lives at config/__tests__/merge_opensearch_yml.bats
-  "${COMPOSE[@]}" -f "$COMPOSE_FILE" run --rm "$svc" bats config/__tests__/merge_opensearch_yml.bats "${BATS_ARGS[@]}"
+  # The suite lives at __tests__/merge_opensearch_yml.bats
+  "${COMPOSE[@]}" -f "$COMPOSE_FILE" run --rm "$svc" bats __tests__/merge_opensearch_yml.bats "${BATS_ARGS[@]}"
   rc=$?
   set -e
   if [ $rc -ne 0 ]; then

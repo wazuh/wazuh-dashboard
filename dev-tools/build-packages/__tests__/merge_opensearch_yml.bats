@@ -2,7 +2,7 @@
 
 setup() {
   REPO_DIR="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
-  MERGE_SCRIPT="$REPO_DIR/merge_opensearch_yml.sh"
+  MERGE_SCRIPT="$REPO_DIR/config/merge_opensearch_yml.sh"
   TMPDIR_TEST=$(mktemp -d)
   CONFIG_DIR="$TMPDIR_TEST/etc/wazuh-dashboard"
   mkdir -p "$CONFIG_DIR"
