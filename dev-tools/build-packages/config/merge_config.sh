@@ -701,7 +701,7 @@ merge_inline_flow_arrays() {
 #
 # Typical Use Case:
 #   Used during build/packaging of Wazuh dashboard to combine a baseline
-#   opensearch.yml fragment with plugin- or environment-specific list
+#   opensearch_dashboards.yml fragment with plugin- or environment-specific list
 #   extensions (e.g. node.roles, discovery.seed_hosts, plugins.security.*
 #   allowlists/denylists) without reformatting the surrounding file.
 #
