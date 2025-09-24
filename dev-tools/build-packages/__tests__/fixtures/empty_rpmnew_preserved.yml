@@ -1,10 +1,10 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   server.host: 0.0.0.0
-  
+
 defaults: ""
 expected: |-
   server.host: 0.0.0.0
-  
+

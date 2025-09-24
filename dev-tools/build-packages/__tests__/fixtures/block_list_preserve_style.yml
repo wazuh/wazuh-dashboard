@@ -1,19 +1,19 @@
 metadata:
   DEFAULT_SUFFIX: dpkg-dist
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   xs:
     - a
-  
+
 defaults: |-
   xs:
     - a
     - b
     - "c"
-  
+
 expected: |-
   xs:
     - b
     - "c"
     - a
-  
+

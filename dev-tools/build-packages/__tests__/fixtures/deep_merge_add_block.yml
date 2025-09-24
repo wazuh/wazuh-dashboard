@@ -1,18 +1,18 @@
 metadata:
   DEFAULT_SUFFIX: dpkg-dist
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   uiSettings:
     # user has no overrides yet
-  
+
 defaults: |-
   uiSettings:
     overrides:
       "home:useNewHomePage": true
-  
+
 expected: |-
   uiSettings:
     # user has no overrides yet
     overrides:
       "home:useNewHomePage": true
-  
+

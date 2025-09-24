@@ -1,18 +1,18 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   existing.key: old
   another.present: yes
-  
+
 defaults: |-
   existing.key: changed
   new.default.one: 42
   new.default.two: value
-  
+
 expected: |-
   existing.key: old
   another.present: yes
   new.default.one: 42
   new.default.two: value
-  
+

@@ -1,19 +1,19 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   server.host: 0.0.0.0
   logging.verbose: false
-  
+
 defaults: |-
   server.host: 127.0.0.1
   logging.verbose: true
   logging.dest: stdout
   i18n.locale: en
-  
+
 expected: |-
   server.host: 0.0.0.0
   logging.verbose: false
   logging.dest: stdout
   i18n.locale: en
-  
+

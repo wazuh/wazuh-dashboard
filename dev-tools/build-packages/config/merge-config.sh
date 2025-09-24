@@ -110,7 +110,18 @@ backup_config_file() {
     return 0
   fi
   ts=$(date -u +"$BACKUP_TIMESTAMP_FORMAT")
-  dest="${src}.bak.${ts}"
+  base_dest="${src}.bak.${ts}"
+  dest="$base_dest"
+
+  # Avoid clobbering an existing backup created within the same second.
+  if [ -e "$dest" ]; then
+    suffix=1
+    while [ -e "${base_dest}.${suffix}" ]; do
+      suffix=$((suffix + 1))
+    done
+    dest="${base_dest}.${suffix}"
+  fi
+
   if cp -p "$src" "$dest" 2>/dev/null; then
     log_info "Created backup: $dest"
   else
@@ -1248,9 +1259,16 @@ merge_inline_flow_arrays "$TARGET_PATH" "$NEW_PATH"
 merge_block_lists_preserve_style "$TARGET_PATH" "$NEW_PATH"
 merge_flow_to_block_via_textual "$TARGET_PATH" "$NEW_PATH"
 
-# Always remove the packaged new config file once handled (idempotent)
+# Preserve .rpmnew/.dpkg-dist for operator review; clean other suffixes.
 if [ -f "$NEW_PATH" ]; then
-  rm -f "$NEW_PATH" || true
+  case "${NEW_PATH##*.}" in
+    rpmnew|dpkg-dist)
+      log_info "Preserving packaged config artifact: $NEW_PATH"
+      ;;
+    *)
+      rm -f "$NEW_PATH" || true
+      ;;
+  esac
 fi
 
 exit 0

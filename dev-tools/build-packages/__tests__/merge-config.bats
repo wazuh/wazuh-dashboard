@@ -24,7 +24,6 @@ parse_fixture_metadata() {
       RUN_TWICE) RUN_TWICE="$value" ;;
       EXPECT_STATUS) EXPECT_STATUS="$value" ;;
       EXPECT_PACKAGED_REMOVED) EXPECT_PACKAGED_REMOVED="$value" ;;
-      EXPECT_DESTINATION_PRESENT) EXPECT_DESTINATION_PRESENT="$value" ;;
       EXPECT_MODE) EXPECT_MODE="$value" ;;
     esac
   done <<EOF
@@ -116,7 +115,6 @@ prepare_fixture() {
   RUN_TWICE=0
   EXPECT_STATUS=0
   EXPECT_PACKAGED_REMOVED=""
-  EXPECT_DESTINATION_PRESENT=""
   EXPECT_MODE=""
 
   parse_fixture_metadata
@@ -142,16 +140,23 @@ prepare_fixture() {
     rm -f "$EXPECTED_PATH"
   fi
 
+  if [ -z "$EXPECT_PACKAGED_REMOVED" ] && [ -n "$PACKAGED_PATH" ]; then
+    case "$DEFAULT_SUFFIX" in
+      rpmnew|dpkg-dist|ufc-dist)
+        EXPECT_PACKAGED_REMOVED=0
+        ;;
+      *)
+        EXPECT_PACKAGED_REMOVED=1
+        ;;
+    esac
+  fi
+
   if [ -z "$EXPECT_DESTINATION_PRESENT" ]; then
     if [ "$EXPECTED_PRESENT" -eq 1 ]; then
       EXPECT_DESTINATION_PRESENT=1
     else
       EXPECT_DESTINATION_PRESENT=0
     fi
-  fi
-
-  if [ -z "$EXPECT_PACKAGED_REMOVED" ] && [ -n "$PACKAGED_PATH" ]; then
-    EXPECT_PACKAGED_REMOVED=1
   fi
 }
 
@@ -272,8 +277,8 @@ run_fixture_case() {
   run_fixture_case "deep_merge_no_change"
 }
 
-@test "edge: empty .rpmnew is removed and no changes applied" {
-  run_fixture_case "empty_rpmnew_removed"
+@test "edge: empty .rpmnew stays in place and no changes applied" {
+  run_fixture_case "empty_rpmnew_preserved"
 }
 
 @test "edge: target missing but .rpmnew exists -> no action and .rpmnew remains" {
@@ -292,8 +297,8 @@ run_fixture_case() {
   run_fixture_case "mixed_styles_dest_block"
 }
 
-@test "edge: malformed .rpmnew does not crash and removes packaged file" {
-  run_fixture_case "malformed_rpmnew_removed"
+@test "edge: malformed .rpmnew does not crash and packaged file remains" {
+  run_fixture_case "malformed_rpmnew_preserved"
 }
 
 @test "edge: commented new block is ignored" {
@@ -326,4 +331,41 @@ run_fixture_case() {
 
 @test "system_indices: mixed styles (dest flow, new block) -> keep flow and append missing" {
   run_fixture_case "system_indices_mixed_styles_flow_dest"
+}
+
+@test "backup is created alongside destination and packaged defaults are preserved" {
+  fake_bin="$TMPDIR_TEST/fake_bin"
+  mkdir -p "$fake_bin"
+  cat > "$fake_bin/date" <<'EOF'
+#!/bin/sh
+printf '%s\n' "20250924T135307Z"
+EOF
+  chmod +x "$fake_bin/date"
+
+  local PATH="$fake_bin:$PATH"
+
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'EOF'
+server.host: 0.0.0.0
+EOF
+
+  cp "$OPENSEARCH_DASHBOARD_YML" "$OPENSEARCH_DASHBOARD_YML.rpmnew"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  [ "$status" -eq 0 ]
+  [ -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+
+  mapfile -t backups < <(find "$CONFIG_DIR" -maxdepth 1 -type f -name "$(basename "$OPENSEARCH_DASHBOARD_YML").bak.*" | sort)
+  [ "${#backups[@]}" -eq 1 ]
+  backup1="${backups[0]}"
+  [[ "$backup1" == ${OPENSEARCH_DASHBOARD_YML}.bak.* ]]
+
+  cp "$OPENSEARCH_DASHBOARD_YML" "$OPENSEARCH_DASHBOARD_YML.rpmnew"
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  [ "$status" -eq 0 ]
+  [ -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+
+  mapfile -t backups_after < <(find "$CONFIG_DIR" -maxdepth 1 -type f -name "$(basename "$OPENSEARCH_DASHBOARD_YML").bak.*" | sort)
+  [ "${#backups_after[@]}" -eq 2 ]
+  [[ -f "$backup1" ]]
+  [[ "${backups_after[0]}" == ${OPENSEARCH_DASHBOARD_YML}.bak.* ]]
+  [[ "${backups_after[1]}" == ${OPENSEARCH_DASHBOARD_YML}.bak.* ]]
 }

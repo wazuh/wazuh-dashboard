@@ -1,20 +1,20 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
   RUN_TWICE: 1
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   uiSettings:
     overrides:
       "some:otherFlag": false
-  
+
 defaults: |-
   uiSettings:
     overrides:
       "home:useNewHomePage": true
-  
+
 expected: |-
   uiSettings:
     overrides:
       "some:otherFlag": false
       "home:useNewHomePage": true
-  
+

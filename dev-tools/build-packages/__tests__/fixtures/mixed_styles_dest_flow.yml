@@ -1,14 +1,14 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   xs: [a]
-  
+
 defaults: |-
   xs:
     - a
     - b
-  
+
 expected: |-
   xs: [a, b]
-  
+

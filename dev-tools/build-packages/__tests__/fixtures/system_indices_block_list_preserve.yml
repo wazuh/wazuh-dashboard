@@ -1,6 +1,6 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   plugins.security.system_indices.indices:
     - ".plugins-ml-model"
@@ -17,7 +17,7 @@ defined_by_user: |-
     - ".opensearch-observability"
     - ".opendistro-asynchronous-search-response*"
     - ".replication-metadata-store"
-  
+
 defaults: |-
   plugins.security.system_indices.permission.enabled: true
   plugins.security.system_indices.indices: [.plugins-ml-agent, .plugins-ml-config, .plugins-ml-connector,
@@ -30,7 +30,7 @@ defaults: |-
     .opendistro-asynchronous-search-response*, .replication-metadata-store, .opensearch-knn-models,
     .geospatial-ip2geo-data*, .plugins-flow-framework-config, .plugins-flow-framework-templates,
     .plugins-flow-framework-state, .plugins-search-relevance-experiment, .plugins-search-relevance-judgment-cache]
-  
+
 expected: |-
   plugins.security.system_indices.indices:
     - ".plugins-ml-model"
@@ -66,4 +66,4 @@ expected: |-
     - .plugins-search-relevance-experiment
     - .plugins-search-relevance-judgment-cache
   plugins.security.system_indices.permission.enabled: true
-  
+

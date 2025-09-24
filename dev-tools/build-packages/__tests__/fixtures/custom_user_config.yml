@@ -1,13 +1,13 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
-  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   # User customizations
   server.host: 0.0.0.0
   server.port: 5602
   opensearch.ssl.verificationMode: none
   telemetry.enabled: true
-  
+
 defaults: |-
   server.host: 127.0.0.1
   server.port: 5601
@@ -15,7 +15,7 @@ defaults: |-
   telemetry.enabled: false
   i18n.locale: en
   newsfeed.enabled: false
-  
+
 expected: |-
   # User customizations
   server.host: 0.0.0.0
@@ -24,4 +24,4 @@ expected: |-
   telemetry.enabled: true
   i18n.locale: en
   newsfeed.enabled: false
-  
+
