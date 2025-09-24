@@ -1,0 +1,3 @@
+uiSettings:
+  overrides:
+    "some:otherFlag": false

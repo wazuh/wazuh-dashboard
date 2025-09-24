@@ -1,0 +1,4 @@
+server.host: 0.0.0.0
+logging.verbose: false
+logging.dest: stdout
+i18n.locale: en

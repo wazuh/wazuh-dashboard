@@ -1,0 +1,5 @@
+# User customizations
+server.host: 0.0.0.0
+server.port: 5602
+opensearch.ssl.verificationMode: none
+telemetry.enabled: true

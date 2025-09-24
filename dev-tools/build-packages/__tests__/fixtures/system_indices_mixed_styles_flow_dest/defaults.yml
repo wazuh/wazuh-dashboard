@@ -1,0 +1,4 @@
+plugins.security.system_indices.indices:
+  - ".plugins-ml-model"
+  - .plugins-ml-agent
+  - .plugins-ml-config

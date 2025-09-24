@@ -1,0 +1,6 @@
+server.host: 127.0.0.1
+server.port: 5601
+opensearch.ssl.verificationMode: full
+telemetry.enabled: false
+i18n.locale: en
+newsfeed.enabled: false
