@@ -11,6 +11,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Added ML Commons plugin to default installation [#875](https://github.com/wazuh/wazuh-dashboard/pull/875)
 - Added Assistant Dashboards plugin to default installation [#821](https://github.com/wazuh/wazuh-dashboard/pull/821)
 - Added directive to the dashboard service to automatically restart it on crash [#919](https://github.com/wazuh/wazuh-dashboard/pull/919)
+- Added robust mechanism for merging configurations after installation/update to preserve user-defined values and integrate new configuration keys
 
 ## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 08
 
