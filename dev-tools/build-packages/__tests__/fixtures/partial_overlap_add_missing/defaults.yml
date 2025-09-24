@@ -1,4 +1,0 @@
-server.host: 127.0.0.1
-logging.verbose: true
-logging.dest: stdout
-i18n.locale: en

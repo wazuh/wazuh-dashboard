@@ -1,4 +1,0 @@
-server.host: 0.0.0.0
-uiSettings:
-  overrides:
-    "home:useNewHomePage": true

@@ -1,0 +1,19 @@
+metadata:
+  DEFAULT_SUFFIX: rpmnew
+  RUN_TWICE: 1
+  EXPECT_PACKAGED_REMOVED: 1
+  EXPECT_MODE: 640
+defined_by_user: |-
+  server.host: 0.0.0.0
+  
+defaults: |-
+  # comment line should be ignored
+  server.host: 0.0.0.0
+  new.setting: true
+  another.setting: 123
+  
+expected: |-
+  server.host: 0.0.0.0
+  new.setting: true
+  another.setting: 123
+  

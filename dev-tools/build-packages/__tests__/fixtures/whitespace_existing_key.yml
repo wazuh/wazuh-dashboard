@@ -1,0 +1,15 @@
+metadata:
+  DEFAULT_SUFFIX: dpkg-dist
+  EXPECT_PACKAGED_REMOVED: 1
+defined_by_user: |-
+  # Spaces and comments
+  telemetry.enabled:   true
+  
+defaults: |-
+  # New default sets telemetry to false, but key already exists
+  telemetry.enabled: false
+  
+expected: |-
+  # Spaces and comments
+  telemetry.enabled:   true
+  

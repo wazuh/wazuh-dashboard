@@ -1,0 +1,13 @@
+metadata:
+  DEFAULT_SUFFIX: dpkg-dist
+  EXPECT_PACKAGED_REMOVED: 1
+defined_by_user: |-
+  # new.default.one: 42
+  
+defaults: |-
+  new.default.one: 42
+  
+expected: |-
+  # new.default.one: 42
+  new.default.one: 42
+  

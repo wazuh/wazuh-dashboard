@@ -1,0 +1,13 @@
+metadata:
+  DEFAULT_SUFFIX: dpkg-new
+  EXPECT_PACKAGED_REMOVED: 1
+defined_by_user: |-
+  server.host: 127.0.0.1
+  
+defaults: |-
+  added.key: yes
+  
+expected: |-
+  server.host: 127.0.0.1
+  added.key: yes
+  

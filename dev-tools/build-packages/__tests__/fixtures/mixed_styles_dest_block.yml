@@ -1,0 +1,15 @@
+metadata:
+  DEFAULT_SUFFIX: dpkg-new
+  EXPECT_PACKAGED_REMOVED: 1
+defined_by_user: |-
+  xs:
+    - a
+  
+defaults: |-
+  xs: [a, b]
+  
+expected: |-
+  xs:
+    - b
+    - a
+  

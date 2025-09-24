@@ -14,10 +14,103 @@ teardown() {
   rm -rf "$TMPDIR_TEST"
 }
 
+parse_fixture_metadata() {
+  local line key value
+  while IFS= read -r line; do
+    key=${line%% *}
+    value=${line#* }
+    case "$key" in
+      DEFAULT_SUFFIX) DEFAULT_SUFFIX="$value" ;;
+      RUN_TWICE) RUN_TWICE="$value" ;;
+      EXPECT_STATUS) EXPECT_STATUS="$value" ;;
+      EXPECT_PACKAGED_REMOVED) EXPECT_PACKAGED_REMOVED="$value" ;;
+      EXPECT_DESTINATION_PRESENT) EXPECT_DESTINATION_PRESENT="$value" ;;
+      EXPECT_MODE) EXPECT_MODE="$value" ;;
+    esac
+  done <<EOF
+$(awk '
+  /^metadata:/ {in_meta=1; next}
+  in_meta && /^[^[:space:]].*:/{in_meta=0}
+  in_meta {
+    if (match($0, /^[[:space:]]+([^:]+):[[:space:]]*(.*)$/, a)) {
+      key=a[1]; val=a[2];
+      gsub(/^"|"$/, "", val);
+      if (val == "") { val="" }
+      printf "%s %s\n", key, val;
+    }
+  }
+' "$FIXTURE_FILE")
+EOF
+}
+
+section_to_file() {
+  local key="$1" dest="$2" presence_var="$3"
+  local section section_type body
+  section=$(awk -v key="$key" '
+    BEGIN {capture=0}
+    $0 ~ "^"key":" {
+      capture=1
+      line=$0
+      sub("^" key ":", "", line)
+      sub(/^[[:space:]]*/, "", line)
+      if (line == "~") { print "__TYPE__ NULL"; exit }
+      if (line == "\"\"") { print "__TYPE__ EMPTY"; exit }
+      if (line == "" || line == "|-" || line == "|") { print "__TYPE__ BLOCK"; next }
+      print "__TYPE__ INLINE"
+      print line
+      exit
+    }
+    capture {
+      if (/^[^[:space:]].*:/) { exit }
+      sub(/^[[:space:]]{2}/, "", $0)
+      print $0
+    }
+  ' "$FIXTURE_FILE")
+
+  if [ -z "$section" ]; then
+    eval "$presence_var=0"
+    rm -f "$dest"
+    return
+  fi
+
+  section_type=$(printf '%s
+' "$section" | head -n1 | awk '{print $2}')
+  body=$(printf '%s
+' "$section" | tail -n +2)
+
+  case "$section_type" in
+    NULL)
+      eval "$presence_var=0"
+      rm -f "$dest"
+      ;;
+    EMPTY)
+      : > "$dest"
+      eval "$presence_var=1"
+      ;;
+    INLINE)
+      printf '%s
+' "$body" > "$dest"
+      eval "$presence_var=1"
+      ;;
+    BLOCK)
+      if [ -n "$body" ]; then
+        printf '%s\n' "$body" > "$dest"
+      else
+        : > "$dest"
+      fi
+      eval "$presence_var=1"
+      ;;
+    *)
+      eval "$presence_var=0"
+      rm -f "$dest"
+      ;;
+  esac
+}
+
 prepare_fixture() {
   FIXTURE_NAME="$1"
-  FIXTURE_DIR="$FIXTURES_DIR/$FIXTURE_NAME"
-  [ -d "$FIXTURE_DIR" ]
+  FIXTURE_FILE="$FIXTURES_DIR/$FIXTURE_NAME.yml"
+  [ -f "$FIXTURE_FILE" ]
 
   DEFAULT_SUFFIX=""
   RUN_TWICE=0
@@ -26,28 +119,31 @@ prepare_fixture() {
   EXPECT_DESTINATION_PRESENT=""
   EXPECT_MODE=""
 
-  if [ -f "$FIXTURE_DIR/metadata.sh" ]; then
-    # shellcheck disable=SC1090
-    . "$FIXTURE_DIR/metadata.sh"
-  fi
+  parse_fixture_metadata
 
-  if [ -f "$FIXTURE_DIR/defined_by_user.yml" ]; then
-    cp "$FIXTURE_DIR/defined_by_user.yml" "$OPENSEARCH_DASHBOARD_YML"
-  else
-    rm -f "$OPENSEARCH_DASHBOARD_YML"
-  fi
+  RUN_TWICE=${RUN_TWICE:-0}
+  EXPECT_STATUS=${EXPECT_STATUS:-0}
 
-  if [ -f "$FIXTURE_DIR/defaults.yml" ]; then
-    DEFAULT_SUFFIX="${DEFAULT_SUFFIX:-rpmnew}"
+  section_to_file "defined_by_user" "$OPENSEARCH_DASHBOARD_YML" DEFINED_PRESENT
+
+  local defaults_tmp="$TMPDIR_TEST/defaults.yml"
+  section_to_file "defaults" "$defaults_tmp" DEFAULTS_PRESENT
+  if [ "$DEFAULTS_PRESENT" -eq 1 ]; then
+    DEFAULT_SUFFIX=${DEFAULT_SUFFIX:-rpmnew}
     PACKAGED_PATH="$OPENSEARCH_DASHBOARD_YML.$DEFAULT_SUFFIX"
-    cp "$FIXTURE_DIR/defaults.yml" "$PACKAGED_PATH"
+    cp "$defaults_tmp" "$PACKAGED_PATH"
   else
     PACKAGED_PATH=""
   fi
 
-  EXPECTED_PATH="$FIXTURE_DIR/expected.yml"
+  EXPECTED_PATH="$TMPDIR_TEST/expected.yml"
+  section_to_file "expected" "$EXPECTED_PATH" EXPECTED_PRESENT
+  if [ "$EXPECTED_PRESENT" -eq 0 ]; then
+    rm -f "$EXPECTED_PATH"
+  fi
+
   if [ -z "$EXPECT_DESTINATION_PRESENT" ]; then
-    if [ -f "$EXPECTED_PATH" ]; then
+    if [ "$EXPECTED_PRESENT" -eq 1 ]; then
       EXPECT_DESTINATION_PRESENT=1
     else
       EXPECT_DESTINATION_PRESENT=0
@@ -59,6 +155,17 @@ prepare_fixture() {
   fi
 }
 
+sanitize_config() {
+  local src="$1" dest="$2"
+  sed \
+    -e '/^# --- Added new default settings/d' \
+    -e 's/# --- Added new default settings.*$//' \
+    "$src" > "$dest"
+  local content
+  content=$(cat "$dest")
+  printf '%s' "$content" > "$dest"
+}
+
 merge_once() {
   run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
   echo "$output" >&3
@@ -68,12 +175,12 @@ merge_once() {
 assert_snapshot() {
   if [ "$EXPECT_DESTINATION_PRESENT" -eq 1 ]; then
     [ -f "$OPENSEARCH_DASHBOARD_YML" ]
-    if [ -f "$EXPECTED_PATH" ]; then
+    if [ "$EXPECTED_PRESENT" -eq 1 ]; then
       local sanitized_expected sanitized_actual
       sanitized_expected=$(mktemp "$TMPDIR_TEST/expected.XXXXXX")
       sanitized_actual=$(mktemp "$TMPDIR_TEST/actual.XXXXXX")
-      sed '/^# --- Added new default settings/d' "$EXPECTED_PATH" > "$sanitized_expected"
-      sed '/^# --- Added new default settings/d' "$OPENSEARCH_DASHBOARD_YML" > "$sanitized_actual"
+      sanitize_config "$EXPECTED_PATH" "$sanitized_expected"
+      sanitize_config "$OPENSEARCH_DASHBOARD_YML" "$sanitized_actual"
       run diff -u "$sanitized_expected" "$sanitized_actual"
       echo "$output" >&3
       [ "$status" -eq 0 ]

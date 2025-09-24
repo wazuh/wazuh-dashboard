@@ -8,13 +8,11 @@ This folder contains a containerized test environment for the post‑install con
 - `test.yml`: Docker Compose file to build and run the tests.
 - `merge_opensearch_yml.bats`: Bats test suite covering merge behavior.
 - `run-bats.sh`: Host runner that builds the image and executes the suite in a container (no local deps required).
-- `fixtures/`: Self-contained scenarios used by the Bats suite. Each folder provides `defined_by_user.yml`, `defaults.yml`, `expected.yml`, and an optional `metadata.sh` that tunes the test run (e.g., which packaged suffix to simulate, whether to run the merge twice for idempotency, expected exit status, permission checks, etc.). The metadata variables mean:
-  - `DEFAULT_SUFFIX`: Name of the packaged file suffix to create (e.g., `rpmnew`, `dpkg-dist`).
-  - `RUN_TWICE`: When set to `1`, the merge script executes twice to assert idempotency.
-  - `EXPECT_STATUS`: Expected exit code from the merge script (default `0`).
-  - `EXPECT_PACKAGED_REMOVED`: `1` asserts the packaged file is deleted after merging, `0` asserts it remains.
-  - `EXPECT_DESTINATION_PRESENT`: `1` requires the destination config to exist after merging, `0` requires it to be absent.
-  - `EXPECT_MODE`: File permission (e.g., `640`) that the destination config should have after the run.
+- `fixtures/`: Self-contained scenarios used by the Bats suite. Each scenario is a single YAML file named after the test (e.g., `rpmnew_append_missing.yml`) with four top-level keys:
+  - `metadata`: Optional map with knobs for the run. Known fields are `DEFAULT_SUFFIX` (packaged suffix to create, e.g., `rpmnew`), `RUN_TWICE` (run merge twice to prove idempotency when set to `1`), `EXPECT_STATUS` (expected exit code, default `0`), `EXPECT_PACKAGED_REMOVED` (`1` if the packaged file must be deleted, `0` if it should remain), `EXPECT_DESTINATION_PRESENT` (`1` when the final config must exist, `0` when it must not), and `EXPECT_MODE` (permission expected on the final config, e.g., `640`).
+  - `defined_by_user`: Snapshot of the existing config (`~` when the file should be absent).
+  - `defaults`: Packaged defaults dropped next to the config (`~` when no packaged file is present, empty string for an empty file).
+  - `expected`: Snapshot of the merged result (`~` when the destination should not exist).
 
 ## Prerequisites
 

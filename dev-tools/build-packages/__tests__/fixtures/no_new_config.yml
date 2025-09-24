@@ -1,0 +1,10 @@
+metadata: {}
+defined_by_user: |-
+  server.host: 0.0.0.0
+  existing.key: value
+  
+defaults: ~
+expected: |-
+  server.host: 0.0.0.0
+  existing.key: value
+  

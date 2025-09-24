@@ -1,0 +1,18 @@
+metadata:
+  DEFAULT_SUFFIX: dpkg-new
+  EXPECT_PACKAGED_REMOVED: 1
+defined_by_user: |-
+  uiSettings:
+    overrides:
+      "home:useNewHomePage": true
+  
+defaults: |-
+  uiSettings:
+    overrides:
+      "home:useNewHomePage": true
+  
+expected: |-
+  uiSettings:
+    overrides:
+      "home:useNewHomePage": true
+  

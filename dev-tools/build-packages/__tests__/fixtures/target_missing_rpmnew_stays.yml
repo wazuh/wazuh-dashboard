@@ -1,0 +1,9 @@
+metadata:
+  DEFAULT_SUFFIX: rpmnew
+  EXPECT_PACKAGED_REMOVED: 0
+  EXPECT_DESTINATION_PRESENT: 0
+defined_by_user: ~
+defaults: |-
+  added.key: value
+  
+expected: ~
