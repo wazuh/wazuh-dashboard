@@ -59,7 +59,7 @@ bash build-packages.sh \
 
 Starting with this change, the packages include a post-install step that checks for a new packaged `opensearch_dashboards.yml` left by the package manager on upgrade (for example, `/etc/wazuh-dashboard/opensearch_dashboards.yml.rpmnew` on RPM systems or `/etc/wazuh-dashboard/opensearch_dashboards.yml.dpkg-dist` on Debian systems). Any top-level settings present in the new file but missing in the active configuration are appended to `/etc/wazuh-dashboard/opensearch_dashboards.yml`, preserving existing user values. After merging, `.rpmnew` and `.dpkg-dist` files are left in place so administrators can inspect the packaged defaults; other transient suffixes may still be cleaned up.
 
-Helper script: `/usr/share/wazuh-dashboard/merge-config.sh`.
+Helper script: `/usr/share/wazuh-dashboard/bin/merge-config.sh`.
 
 Behavior details
 Performs a conservative, non-destructive merge that adds only missing settings, never overwriting existing values. For example, if the package adds:

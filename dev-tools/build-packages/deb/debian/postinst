@@ -46,8 +46,8 @@ configure)
     fi
 
     # Merge any new default settings from packaged opensearch_dashboards.yml
-    if [ -x "${CONFIG_DIR}/merge-config.sh" ]; then
-        "${CONFIG_DIR}/merge-config.sh" --config-dir "${CONFIG_DIR}" >/dev/null 2>&1 || true
+    if [ -x "${INSTALLATION_DIR}/bin/merge-config.sh" ]; then
+        "${INSTALLATION_DIR}/bin/merge-config.sh" --config-dir "${CONFIG_DIR}" >/dev/null 2>&1 || true
     fi
     ;;
 

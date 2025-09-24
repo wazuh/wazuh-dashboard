@@ -73,9 +73,11 @@ override_dh_install:
 	mv wazuh-dashboard-base/* $(TARGET_DIR)$(INSTALLATION_DIR)
 
 	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/config
+	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/bin
 
 	# Install post-install merge helper (relative to this rules file)
-	cp $(TARGET_DIR)$(INSTALLATION_DIR)/merge-config.sh $(TARGET_DIR)$(CONFIG_DIR)/merge-config.sh
+	install -m 750 $(TARGET_DIR)$(INSTALLATION_DIR)/merge-config.sh $(TARGET_DIR)$(INSTALLATION_DIR)/bin/merge-config.sh
+	rm -f $(TARGET_DIR)$(INSTALLATION_DIR)/merge-config.sh
 
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard.service $(TARGET_DIR)/etc/systemd/system/wazuh-dashboard.service
 	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard $(TARGET_DIR)/etc/systemd/system/$(NAME)
@@ -109,7 +111,7 @@ override_dh_fixperms:
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 644 -exec chmod 640 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 755 -exec chmod 750 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 744 -exec chmod 740 {} \;
-	chmod 750 $(TARGET_DIR)$(CONFIG_DIR)/merge-config.sh
+	chmod 750 $(TARGET_DIR)$(INSTALLATION_DIR)/bin/merge-config.sh
 
 # -----------------------------------------------------------------------------
 
