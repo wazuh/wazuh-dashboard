@@ -168,6 +168,17 @@ jobs:
         id: i18n-check
         run: yarn i18n:check
 
+  merge-config-tests:
+    name: Merge config.sh tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run merge_config.sh tests
+        run: dev-tools/build-packages/__tests__/run-bats.sh
+
   functional-tests:
     name: Run functional tests on ${{ matrix.name }} (ciGroup${{ matrix.group }})
     strategy:
