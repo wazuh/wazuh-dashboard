@@ -13,10 +13,13 @@ export NAME=wazuh-dashboard
 export CONFIG_DIR=/etc/"${NAME}"
 export INSTALLATION_DIR=/usr/share/"${NAME}"
 export PID_DIR=/run/"${NAME}"
+export LOG_DIR=/var/log/"${NAME}"
 
 # Setting Owner and group of own folders
 mkdir -p "${PID_DIR}"
 chown -R "${NAME}":"${NAME}" "${PID_DIR}"
+mkdir -p "${LOG_DIR}"
+chown -R "${NAME}":"${NAME}" "${LOG_DIR}"
 
 case "$1" in
 configure)
@@ -46,8 +49,12 @@ configure)
     fi
 
     # Merge any new default settings from packaged opensearch_dashboards.yml
-    if [ -x "${INSTALLATION_DIR}/bin/merge-config.sh" ]; then
-        "${INSTALLATION_DIR}/bin/merge-config.sh" --config-dir "${CONFIG_DIR}" >/dev/null 2>&1 || true
+    if [ -f "${INSTALLATION_DIR}/bin/merge-config.sh" ] && [ -x "${INSTALLATION_DIR}/bin/merge-config.sh" ]; then
+        echo "Running automatic configuration update script"
+        if ! MERGE_LOG_LEVEL="${MERGE_LOG_LEVEL:-INFO}" "${INSTALLATION_DIR}/bin/merge-config.sh" --config-dir "${CONFIG_DIR}" > "${LOG_DIR}/merge-config.log" 2>&1; then
+            echo "Warning: merge-config.sh failed. See ${LOG_DIR}/merge-config.log for details."
+        fi
+        grep -i "\[INFO\]" "${LOG_DIR}/merge-config.log" || true
     fi
     ;;
 

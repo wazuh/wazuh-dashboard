@@ -35,25 +35,67 @@ DEFAULT_FILE_MODE="0640"
 BACKUP_TIMESTAMP_FORMAT="%Y%m%dT%H%M%SZ"
 
 # ---------------------------- Logging utils ---------------------------------
+
+# Honour MERGE_LOG_LEVEL if set (DEBUG, INFO, WARN, ERROR). Defaults to INFO.
+MERGE_LOG_LEVEL="${MERGE_LOG_LEVEL:-INFO}"
+MERGE_LOG_LEVEL=$(printf '%s' "$MERGE_LOG_LEVEL" | tr '[:lower:]' '[:upper:]')
+case "$MERGE_LOG_LEVEL" in
+  DEBUG|INFO|WARN|ERROR) : ;;
+  *) MERGE_LOG_LEVEL="INFO" ;;
+esac
+
+log_level_allows() {
+  level="$1"
+  case "$MERGE_LOG_LEVEL" in
+    DEBUG) return 0 ;;
+    INFO)
+      [ "$level" = "DEBUG" ] && return 1 || return 0
+      ;;
+    WARN)
+      case "$level" in DEBUG|INFO) return 1 ;; *) return 0 ;; esac
+      ;;
+    ERROR)
+      [ "$level" = "ERROR" ] && return 0 || return 1
+      ;;
+  esac
+}
+
+log_emit() {
+  level="$1"; shift
+  if log_level_allows "$level"; then
+    case "$level" in
+      DEBUG) tag="DEBUG" ;;
+      INFO)  tag="INFO"  ;;
+      WARN)  tag="WARN"  ;;
+      ERROR) tag="ERROR" ;;
+      *)     tag="$level" ;;
+    esac
+    printf '[%s]  %s\n' "$tag" "$*" 1>&2
+  fi
+}
+
+# Convenience wrappers respecting the configured log level.
+log_debug() { log_emit DEBUG "$@"; }
+
 # log_info
-#   Emit an informational message to stderr. Useful for non-critical traces.
+#   Emit an informational message to stderr when log level permits.
 #   Example:
 #     log_info "Merged defaults into /etc/wazuh-dashboard/opensearch_dashboards.yml"
-log_info() { echo "[INFO]  $*" 1>&2; }
+log_info() { log_emit INFO "$@"; }
 
 # log_warn
 #   Emit a warning to stderr. Useful for unknown arguments or operations that
 #   continue with default behavior.
 #   Example:
 #     log_warn "Ignoring unknown argument: --foo"
-log_warn() { echo "[WARN]  $*" 1>&2; }
+log_warn() { log_emit WARN "$@"; }
 
 # log_error
 #   Emit an error to stderr. Does NOT terminate the script; intended to record
 #   non-critical failures that should not abort the merge.
 #   Example:
 #     log_error "Could not set ownership; continuing"
-log_error() { echo "[ERROR] $*" 1>&2; }
+log_error() { log_emit ERROR "$@"; }
 
 # usage
 #   Show script usage help.
@@ -123,13 +165,13 @@ backup_config_file() {
   fi
 
   if cp -p "$src" "$dest" 2>/dev/null; then
-    log_info "Created backup: $dest"
+    log_debug "Backed up file $dest"
   else
     # Try without -p as a fallback (busybox/limited cp implementations)
     if cp "$src" "$dest" 2>/dev/null; then
-      log_info "Created backup: $dest"
+      log_debug "Backed up file $dest"
     else
-      log_error "Failed to create backup at $dest"
+      log_error "Failed to create backup file $dest"
     fi
   fi
 }
@@ -299,6 +341,7 @@ append_missing_top_level_blocks() {
   ' "$2"
 
   if [ -s "$APPEND_FILE" ]; then
+    log_info "New settings added to '$1'"
     echo "# --- Added new default settings on $(date -u +"%Y-%m-%dT%H:%M:%SZ") ---" >> "$1"
     cat "$APPEND_FILE" >> "$1"
     ensure_permissions "$1"
@@ -362,7 +405,7 @@ textual_additive_merge() {
     while IFS= read -r top_level_key; do
       # Only process keys that exist in destination as well
       if grep -q "^${top_level_key}:[[:space:]]*" "$1"; then
-        log_info "[textual-merge] Processing existing top-level key: $top_level_key"
+        log_debug "[textual-merge] Processing existing top-level key: $top_level_key"
         target_key_regex=$(printf '%s' "$top_level_key" | sed -E 's/([][(){}.^$|*+?\\])/\\\\\1/g')
         # Extract the block from the new file (without the "key:" header)
         awk -v target_key_regex="$target_key_regex" '
@@ -378,11 +421,11 @@ textual_additive_merge() {
           # If the new block is a block-style list (lines beginning with '-')
           # skip textual injection and let the dedicated list merge handle it
           if grep -qE '^[[:space:]]*-[[:space:]]+' "$TMP_DIR/block.new"; then
-            log_info "[textual-merge] Skipping list-style block for '$top_level_key' (handled by list merge)."
+            log_debug "[textual-merge] Skipping list-style block for '$top_level_key' (handled by list merge)."
             continue
           fi
-          log_info "[textual-merge] block.new for '$top_level_key':"; sed -n '1,50p' "$TMP_DIR/block.new" 1>&2 || true
-          log_info "[textual-merge] Found new nested lines for '$top_level_key', injecting if absent."
+          log_debug "[textual-merge] block.new for '$top_level_key':"; sed -n '1,50p' "$TMP_DIR/block.new" 1>&2 || true
+          log_debug "[textual-merge] Found new nested lines for '$top_level_key', injecting if absent."
           # Insert missing lines from the new block just after the header in
           # the destination, avoiding duplicates and preserving order
           awk -v target_key_regex="$target_key_regex" -v new_block_path="$TMP_DIR/block.new" -v destination_path="$1" '
@@ -418,7 +461,7 @@ textual_additive_merge() {
           ' "$1" > "$TMP_DIR/target.tmp" 2>/dev/null || true
           if [ -s "$TMP_DIR/target.tmp" ]; then
             mv "$TMP_DIR/target.tmp" "$1"; ensure_permissions "$1"
-            log_info "[textual-merge] Injected nested lines for '$top_level_key'."
+            log_debug "[textual-merge] Injected nested lines for '$top_level_key'."
           fi
         fi
       fi
@@ -694,7 +737,7 @@ merge_inline_flow_arrays() {
   if [ -s "$TMP_DIR/arrays.merged.tmp" ]; then
     mv "$TMP_DIR/arrays.merged.tmp" "$1"
     ensure_permissions "$1"
-    log_info "[array-merge] Merged inline flow arrays from packaged defaults."
+    log_debug "[array-merge] Merged inline flow arrays from packaged defaults."
   fi
 }
 
@@ -1066,7 +1109,7 @@ merge_block_lists_preserve_style() {
   if [ -s "$TMP_DIR/blocklists.merged.tmp" ]; then
     mv "$TMP_DIR/blocklists.merged.tmp" "$1"
     ensure_permissions "$1"
-    log_info "[list-merge] Merged block-style lists preserving '-' style."
+    log_debug "[list-merge] Merged block-style lists preserving '-' style."
   fi
 }
 

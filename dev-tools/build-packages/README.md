@@ -74,6 +74,7 @@ Notes
 - Commented-out lines are ignored (they don’t count as “existing settings”).
 - The script doesn’t overwrite existing values; it only adds missing ones.
 - Resulting file ownership is `wazuh-dashboard:wazuh-dashboard` with mode `0640`.
+- Verbose output can be enabled by exporting `MERGE_LOG_LEVEL=DEBUG` before invoking the helper.
 
 Testing
 - Containerized tests: no local deps required.

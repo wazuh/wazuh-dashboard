@@ -28,6 +28,7 @@ ExclusiveOS: linux
 %global CONFIG_DIR /etc/%{name}
 %global PID_DIR /run/%{name}
 %global INSTALL_DIR /usr/share/%{name}
+%global LOG_DIR /var/log/%{name}
 %global DASHBOARD_FILE wazuh-dashboard.tar.gz
 %define _source_payload w9.gzdio
 %define _binary_payload w9.gzdio
@@ -76,6 +77,7 @@ mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
 # Set custom welcome styles
 
 mkdir -p %{buildroot}%{INSTALL_DIR}/config
+mkdir -p %{buildroot}%{LOG_DIR}
 
 # Install post-install merge helper
 cp %{buildroot}%{INSTALL_DIR}/etc/services/merge-config.sh %{buildroot}%{INSTALL_DIR}/bin/merge-config.sh
@@ -91,6 +93,7 @@ rm -rf %{buildroot}%{INSTALL_DIR}/etc/
 
 find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
 find %{buildroot}%{CONFIG_DIR} -exec chown %{USER}:%{GROUP} {} \;
+chown %{USER}:%{GROUP} %{buildroot}%{LOG_DIR}
 
 chown root:root %{buildroot}/etc/systemd/system/wazuh-dashboard.service
 
@@ -141,8 +144,14 @@ if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
 fi
 
 # Merge any new default settings from packaged opensearch_dashboards.yml
-if [ -x %{INSTALL_DIR}/bin/merge-config.sh ]; then
-  %{INSTALL_DIR}/bin/merge-config.sh --config-dir "%{CONFIG_DIR}" >/dev/null 2>&1 || true
+mkdir -p %{LOG_DIR}
+chown %{USER}:%{GROUP} %{LOG_DIR} >/dev/null 2>&1 || true
+if [ -f "%{INSTALL_DIR}/bin/merge-config.sh" ] && [ -x "%{INSTALL_DIR}/bin/merge-config.sh" ]; then
+  echo "Running automatic configuration update script"
+  if ! MERGE_LOG_LEVEL="${MERGE_LOG_LEVEL:-INFO}" "%{INSTALL_DIR}/bin/merge-config.sh" --config-dir "%{CONFIG_DIR}" > "%{LOG_DIR}/merge-config.log" 2>&1; then
+    echo "Warning: merge-config.sh failed. See %{LOG_DIR}/merge-config.log for details."
+  fi
+  grep -i "\[INFO\]" "%{LOG_DIR}/merge-config.log" || true
 fi
 
 # -----------------------------------------------------------------------------
@@ -218,6 +227,7 @@ rm -fr %{buildroot}
 
 %attr(440, %{USER}, %{GROUP}) %{INSTALL_DIR}/VERSION.json
 %attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}/bin/merge-config.sh
+%dir %attr(750, %{USER}, %{GROUP}) %{LOG_DIR}
 %dir %attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/core"

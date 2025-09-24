@@ -74,6 +74,7 @@ override_dh_install:
 
 	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/config
 	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/bin
+	mkdir -p $(TARGET_DIR)/var/log/$(NAME)
 
 	# Install post-install merge helper (relative to this rules file)
 	install -m 750 $(TARGET_DIR)$(INSTALLATION_DIR)/merge-config.sh $(TARGET_DIR)$(INSTALLATION_DIR)/bin/merge-config.sh
@@ -87,6 +88,7 @@ override_dh_install:
 
 	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)
 	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(CONFIG_DIR)
+	chown -R $(USER):$(GROUP) $(TARGET_DIR)/var/log/$(NAME)
 
 	find $(TARGET_DIR)$(INSTALLATION_DIR)/plugins/wazuh/ -exec chown $(USER):$(GROUP) {} \;
 
@@ -112,6 +114,7 @@ override_dh_fixperms:
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 755 -exec chmod 750 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 744 -exec chmod 740 {} \;
 	chmod 750 $(TARGET_DIR)$(INSTALLATION_DIR)/bin/merge-config.sh
+	chmod 750 $(TARGET_DIR)/var/log/$(NAME)
 
 # -----------------------------------------------------------------------------
 
