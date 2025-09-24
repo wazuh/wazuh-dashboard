@@ -296,7 +296,7 @@ append_missing_top_level_blocks() {
 }
 
 # textual_additive_merge
-# Performs an additive (non-destructive) textual merge of OpenSearch YAML
+# Performs an additive (non-destructive) textual merge of Wazuh dashboard YAML
 # configuration using a single fragment file.
 # Intended usage: textual_additive_merge <base_file> <fragment_file>
 #
