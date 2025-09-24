@@ -1,6 +1,5 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
-  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   plugins.security.system_indices.indices:
     - ".plugins-ml-model"

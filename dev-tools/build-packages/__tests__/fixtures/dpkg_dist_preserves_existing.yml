@@ -1,6 +1,5 @@
 metadata:
   DEFAULT_SUFFIX: dpkg-dist
-  EXPECT_PACKAGED_REMOVED: 0
 defined_by_user: |-
   server.host: 0.0.0.0
   existing.key: 1

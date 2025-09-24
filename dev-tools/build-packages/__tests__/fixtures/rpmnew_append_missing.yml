@@ -1,7 +1,6 @@
 metadata:
   DEFAULT_SUFFIX: rpmnew
   RUN_TWICE: 1
-  EXPECT_PACKAGED_REMOVED: 0
   EXPECT_MODE: 640
 defined_by_user: |-
   server.host: 0.0.0.0
