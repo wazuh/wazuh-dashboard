@@ -333,6 +333,48 @@ run_fixture_case() {
   run_fixture_case "system_indices_mixed_styles_flow_dest"
 }
 
+@test ".rpmnew packaged file remains unchanged" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'EOF'
+server.host: 0.0.0.0
+EOF
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.rpmnew" <<'EOF'
+# packaged defaults remain intact
+server.host: 0.0.0.0
+new.setting: should-stay
+EOF
+
+  original_checksum=$(sha256sum "$OPENSEARCH_DASHBOARD_YML.rpmnew" | awk '{print $1}')
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  [ "$status" -eq 0 ]
+  [ -f "$OPENSEARCH_DASHBOARD_YML.rpmnew" ]
+
+  final_checksum=$(sha256sum "$OPENSEARCH_DASHBOARD_YML.rpmnew" | awk '{print $1}')
+  [ "$original_checksum" = "$final_checksum" ]
+}
+
+@test ".dpkg-dist packaged file remains unchanged" {
+  cat > "$OPENSEARCH_DASHBOARD_YML" <<'EOF'
+server.host: 0.0.0.0
+EOF
+
+  cat > "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" <<'EOF'
+# dpkg-dist packaged defaults
+server.host: 0.0.0.0
+new.setting: should-stay
+EOF
+
+  original_checksum=$(sha256sum "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" | awk '{print $1}')
+
+  run bash "$MERGE_SCRIPT" --config-dir "$CONFIG_DIR"
+  [ "$status" -eq 0 ]
+  [ -f "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" ]
+
+  final_checksum=$(sha256sum "$OPENSEARCH_DASHBOARD_YML.dpkg-dist" | awk '{print $1}')
+  [ "$original_checksum" = "$final_checksum" ]
+}
+
 @test "backup is created alongside destination and packaged defaults are preserved" {
   fake_bin="$TMPDIR_TEST/fake_bin"
   mkdir -p "$fake_bin"
