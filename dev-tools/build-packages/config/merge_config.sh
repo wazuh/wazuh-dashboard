@@ -1105,7 +1105,7 @@ merge_block_lists_preserve_style() {
 #
 # Performance Considerations:
 #   - Designed for small to medium configuration files typical of opensearch.yml (a few hundred lines).
-#   - For very large YAML inputs, a parser-based approach (yq, python ruamel.yaml) may be preferable.
+#   - For very large YAML inputs, a parser-based approach (e.g., yq or ruamel-based tooling) may be preferable.
 #
 # Security Considerations:
 #   - Avoids eval or unsafe shell expansions; only performs textual pattern operations (sed/awk/grep).
