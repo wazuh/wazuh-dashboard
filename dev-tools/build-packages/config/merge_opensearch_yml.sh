@@ -10,8 +10,7 @@
 #   (e.g., `key:` then indented `- a`) are merged by appending missing elements
 #   from the new defaults while preserving the destination's existing order and
 #   style. If styles differ between dest and new, the destination style is
-#   preserved. This enables cases like
-#   `plugins.security.system_indices.indices` where new indices must be added
+#   preserved. This enables cases where new indices must be added
 #   without reordering or duplicating user-defined values.
 #
 # Design notes (clean code / maintainability):
