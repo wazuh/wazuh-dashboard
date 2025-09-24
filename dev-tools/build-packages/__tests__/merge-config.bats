@@ -142,7 +142,7 @@ prepare_fixture() {
 
   if [ -z "$EXPECT_PACKAGED_REMOVED" ] && [ -n "$PACKAGED_PATH" ]; then
     case "$DEFAULT_SUFFIX" in
-      rpmnew|dpkg-dist|ufc-dist)
+      rpmnew|dpkg-dist|ucf-dist)
         EXPECT_PACKAGED_REMOVED=0
         ;;
       *)

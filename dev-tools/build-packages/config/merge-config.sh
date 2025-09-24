@@ -1262,7 +1262,7 @@ merge_flow_to_block_via_textual "$TARGET_PATH" "$NEW_PATH"
 # Preserve .rpmnew/.dpkg-dist for operator review; clean other suffixes.
 if [ -f "$NEW_PATH" ]; then
   case "${NEW_PATH##*.}" in
-    rpmnew|dpkg-dist)
+    rpmnew|dpkg-dist|ucf-dist)
       log_info "Preserving packaged config artifact: $NEW_PATH"
       ;;
     *)
