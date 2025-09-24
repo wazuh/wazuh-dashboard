@@ -40,14 +40,14 @@ BACKUP_TIMESTAMP_FORMAT="%Y%m%dT%H%M%SZ"
 #   Emit an informational message to stderr. Useful for non-critical traces.
 #   Example:
 #     log_info "Merged defaults into /etc/wazuh-dashboard/opensearch_dashboards.yml"
-log_info()  { echo "[INFO]  $*" 1>&2; }
+log_info() { echo "[INFO]  $*" 1>&2; }
 
 # log_warn
 #   Emit a warning to stderr. Useful for unknown arguments or operations that
 #   continue with default behavior.
 #   Example:
 #     log_warn "Ignoring unknown argument: --foo"
-log_warn()  { echo "[WARN]  $*" 1>&2; }
+log_warn() { echo "[WARN]  $*" 1>&2; }
 
 # log_error
 #   Emit an error to stderr. Does NOT terminate the script; intended to record
