@@ -301,7 +301,7 @@ append_missing_top_level_blocks() {
 # Intended usage: textual_additive_merge <base_file> <fragment_file>
 #
 # Behavior (current implementation):
-# - Reads a base opensearch.yml (first argument).
+# - Reads a base opensearch_dashboards.yml (first argument).
 # - Scans the fragment file's non-empty, non-comment lines.
 # - Whole missing top-level blocks are appended to the end of the file.
 # - For existing top-level keys, missing nested lines from the fragment are
