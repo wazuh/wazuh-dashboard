@@ -1,0 +1,24 @@
+name: (4.x) Merge config tests
+
+on:
+  pull_request:
+    branches: ['**', '!feature/**']
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.lycheeignore'
+      - 'CODEOWNERS'
+      - 'changelogs/fragments/**'
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  merge-config-tests:
+    name: Run merge_config.sh bats tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run merge_config.sh tests
+        run: dev-tools/build-packages/__tests__/run-bats.sh
