@@ -13,6 +13,12 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Added directive to the dashboard service to automatically restart it on crash [#919](https://github.com/wazuh/wazuh-dashboard/pull/919)
 - Added robust mechanism for merging configurations after installation/update to preserve user-defined values and integrate new configuration keys [#925](https://github.com/wazuh/wazuh-dashboard/pull/925)
 
+## Wazuh dashboard v4.13.1 - OpenSearch Dashboards 2.19.2 - Revision 01
+
+### Added
+
+- Support for Wazuh 4.13.1
+
 ## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 08
 
 ### Added
