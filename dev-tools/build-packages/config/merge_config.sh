@@ -700,7 +700,7 @@ merge_inline_flow_arrays() {
 #     - Blank line separation to maintain human-friendly readability
 #
 # Typical Use Case:
-#   Used during build/packaging of Wazuh Dashboard to combine a baseline
+#   Used during build/packaging of Wazuh dashboard to combine a baseline
 #   opensearch.yml fragment with plugin- or environment-specific list
 #   extensions (e.g. node.roles, discovery.seed_hosts, plugins.security.*
 #   allowlists/denylists) without reformatting the surrounding file.
