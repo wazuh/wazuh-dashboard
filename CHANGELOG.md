@@ -14,8 +14,6 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.14.0
 - Added Anomaly Detection plugins to default installation [#843](https://github.com/wazuh/wazuh-dashboard/pull/843) [#905](https://github.com/wazuh/wazuh-dashboard/pull/905) [#909](https://github.com/wazuh/wazuh-dashboard/pull/909) [#913](https://github.com/wazuh/wazuh-dashboard/pull/913)
-- Added ML Commons plugin to default installation [#875](https://github.com/wazuh/wazuh-dashboard/pull/875)
-- Added Assistant Dashboards plugin to default installation [#821](https://github.com/wazuh/wazuh-dashboard/pull/821)
 - Added directive to the dashboard service to automatically restart it on crash [#919](https://github.com/wazuh/wazuh-dashboard/pull/919)
 
 ## Wazuh dashboard v4.13.1 - OpenSearch Dashboards 2.19.2 - Revision 01
