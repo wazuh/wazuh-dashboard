@@ -41,22 +41,6 @@ js-file() {
   echo "./plugins/$1/target/public/$1.$2.js"
 }
 
-assistant_dashboard_whitelabeling() {
-  local plugin_name="assistantDashboards"
-	local ASSISTANT_DASHBOARD_CHUNK_FILE=$(js-file $plugin_name "chunk.10")
-	local ASSISTANT_DASHBOARD_PLUGIN_FILE=$(js-file $plugin_name "plugin")
-
-	local OLD_IMAGE="base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMzAuODMzMyAzOS44NTlDMzEuODk2MiAzOS40Mzk4IDMxLjg2OCAzOC4xMTU5IDMxLjg2OCAzNy4wMjk0VjMyLjY2NjZIMzQuMjg1N0MzNy40NDE3IDMyLjY2NjYgNDAgMzAuMjUzOSA0MCAyNy4yNzc1VjcuMzg5MTRDND.*InVzZXJTcGFjZU9uVXNlIj4KICAgIDxzdG9wIHN0b3AtY29sb3I9IiMwMEEzRTAiLz4KICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzAwQTNFMCIgc3RvcC1vcGFjaXR5PSIwIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgo8L3N2Zz4="
-
-	local NEW_IMAGE="base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIKCSB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNTEyIDUxMjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8Zz4KCTxwYXRoIGZpbGw9IiMwMDZCQjQiIGQ9Ik00MDQuNSwyMS4yVjBoLTI5N0M0OC45LDAsMS40LDQ3LjUsMS40LDEwNi4xdjE2OS43YzAsNTguNiw0Ny41LDEwNi4xLDEwNi4xLDEwNi4xaDI0Ni45TDUxMC42LDUxMlYxMDYuMQoJCUM1MTAuNiw0Ny41LDQ2My4xLDAsNDA0LjUsMFYyMS4ydjIxLjJjMzUuMSwwLjEsNjMuNiwyOC41LDYzLjYsNjMuNnYzMTUuM2wtOTguNC04MkgxMDcuNWMtMzUuMS0wLjEtNjMuNi0yOC41LTYzLjYtNjMuNmwwLTE2OS43CgkJYzAuMS0zNS4xLDI4LjUtNjMuNiw2My42LTYzLjZoMjk3VjIxLjJ6IE00MDQuNSwxMjcuM0gxMjguN3Y0Mi40aDI3NS44VjEyNy4zeiBNNDA0LjUsMjEyLjFIMjEzLjZ2NDIuNGgxOTAuOVYyMTIuMXoiLz4KPC9nPgo8L3N2Zz4K"
-
-	sed -i -e "s|OpenSearch Assistant|Dashboard assistant|g" $ASSISTANT_DASHBOARD_CHUNK_FILE
-	sed -i -e "s|OpenSearch Assistant|Dashboard assistant|g" $ASSISTANT_DASHBOARD_PLUGIN_FILE
-	sed -i -e "s|he Dashboard assistant|he dashboard assistant|g" $ASSISTANT_DASHBOARD_PLUGIN_FILE
-
-	sed -i -e "s|$OLD_IMAGE|$NEW_IMAGE|" $ASSISTANT_DASHBOARD_PLUGIN_FILE
-}
-
 # Paths
 current_path="$(
   cd $(dirname $0)
@@ -77,8 +61,8 @@ log
 
 mkdir -p applications
 mkdir -p base
-packages_list=(app base security ml)
-packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "ML Commons plugin")
+packages_list=(app base security)
+packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin")
 
 for i in "${!packages_list[@]}"; do
   package_var="${packages_list[$i]}"
@@ -142,8 +126,6 @@ sed -i -e "s|${old_category_notifications}|category:${category_explore}|" $(js-f
 # Replace app category to Index Management app
 sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|g" $(js-file "indexManagementDashboards" "plugin")
 
-assistant_dashboard_whitelabeling
-
 log
 log "Recreating plugin files"
 log
@@ -152,8 +134,6 @@ log
 files_to_recreate=(
   $(js-file "anomalyDetectionDashboards" "plugin")
   $(js-file "alertingDashboards" "plugin")
-  $(js-file "assistantDashboards" "chunk.10")
-  $(js-file "assistantDashboards" "plugin")
   $(js-file "customImportMapDashboards" "plugin")
   $(js-file "indexManagementDashboards" "plugin")
   $(js-file "notificationsDashboards" "plugin")
