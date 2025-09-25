@@ -3,7 +3,6 @@
 #         --build-arg NODE_VERSION=18.19.0 \
 #         --build-arg WAZUH_DASHBOARD_BRANCH=4.14.0 \
 #         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=4.14.0 \
-#         --build-arg WAZUH_DASHBOARD_ML_COMMONS_BRANCH=4.14.0 \
 #         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=4.14.0 \
 #         --build-arg ARCHITECTURE=arm \
 #         -t wazuh-packages-to-base:4.14.0 \
@@ -24,7 +23,6 @@ USER node
 ADD ./clone-plugins.sh /home/node/clone-plugins.sh
 ADD ./repositories/wazuh-dashboard.sh /home/node/repositories/wazuh-dashboard.sh
 ADD ./repositories/plugins/wazuh-security-dashboards-plugin.sh /home/node/repositories/plugins/wazuh-security-dashboards-plugin.sh
-ADD ./repositories/plugins/wazuh-dashboard-ml-commons.sh /home/node/repositories/plugins/wazuh-dashboard-ml-commons.sh
 ADD ./repositories/plugins/wazuh-dashboard-plugins.sh /home/node/repositories/plugins/wazuh-dashboard-plugins.sh
 RUN bash /home/node/clone-plugins.sh
 
