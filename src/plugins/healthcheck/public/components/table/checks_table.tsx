@@ -71,24 +71,6 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
           value: TASK.RUN_RESULT.RED.value,
           name: TASK.RUN_RESULT.RED.label,
         },
-        {
-          value: TASK.RUN_RESULT.GRAY.value,
-          name: TASK.RUN_RESULT.GRAY.label,
-        },
-      ],
-    },
-    {
-      type: 'field_value_toggle_group',
-      field: '_meta.isCritical',
-      items: [
-        {
-          name: i18n.translate('healthcheck.critical', { defaultMessage: 'Critical' }),
-          value: true,
-        },
-        {
-          name: i18n.translate('healthcheck.nonCritical', { defaultMessage: 'Non-critical' }),
-          value: false,
-        },
       ],
     },
     {

@@ -70,16 +70,34 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
         <EuiFlexGroup direction="column">
           {error && (
             <>
-              <EuiFlexItem>
-                <EuiText size="m">
-                  <FormattedMessage id="healthcheck.check.details.error" defaultMessage="Error:" />
-                </EuiText>
-                <EuiSpacer size="s" />
-                <EuiCallOut size="s" color={mapTaskStatusToHealthColor(result)}>
-                  <p>{error}</p>
-                </EuiCallOut>
-              </EuiFlexItem>
-              <EuiSpacer />
+              {result === 'red' && (
+                <>
+                  <EuiFlexItem>
+                    <EuiText size="m">
+                      <FormattedMessage id="healthcheck.check.details.error" defaultMessage="Error:" />
+                    </EuiText>
+                    <EuiSpacer size="s" />
+                    <EuiCallOut size="s" color={mapTaskStatusToHealthColor(result)}>
+                      <p>{error}</p>
+                    </EuiCallOut>
+                  </EuiFlexItem>
+                  <EuiSpacer />
+                </>
+              )}
+              {result === 'yellow' && (
+                <>
+                  <EuiFlexItem>
+                    <EuiText size="m">
+                      <FormattedMessage id="healthcheck.check.details.warning" defaultMessage="Warning:" />
+                    </EuiText>
+                    <EuiSpacer size="s" />
+                    <EuiCallOut size="s" color={mapTaskStatusToHealthColor(result)}>
+                      <p>{error}</p>
+                    </EuiCallOut>
+                  </EuiFlexItem>
+                  <EuiSpacer />
+                </>
+              )}
             </>
           )}
           <EuiFlexItem>

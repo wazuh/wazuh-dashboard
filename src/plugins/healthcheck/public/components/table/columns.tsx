@@ -60,17 +60,4 @@ export const tableColumns = (
     }),
     width: '150px',
   },
-  {
-    field: 'error',
-    name: i18n.translate('healthcheck.statusPage.statusTable.columns.errorHeader', {
-      defaultMessage: 'Error',
-    }),
-    truncateText: true,
-    render: (error: string) => {
-      if (!error) {
-        return '-';
-      }
-      return <span className="eui-textTruncate">{error}</span>;
-    },
-  },
 ];
