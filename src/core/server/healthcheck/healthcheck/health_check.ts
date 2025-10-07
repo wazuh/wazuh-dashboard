@@ -171,6 +171,15 @@ export class HealthCheck extends TaskManager {
     this._coreStartServices = args[0];
     const enabledChecks = this.filterEnabledChecks();
 
+    // Define props to task items
+    [...this.items.values()].forEach((item) => {
+      if (enabledChecks.includes(item.name)) {
+        item._meta.isEnabled = true;
+      } else {
+        item._meta.isEnabled = false;
+      }
+    });
+
     if (!this._enabled) {
       this.logger.info('Disabled. Skip start');
       return;
@@ -183,15 +192,6 @@ export class HealthCheck extends TaskManager {
       this._enabled = false;
       return;
     }
-
-    // Define props to task items
-    [...this.items.values()].forEach((item) => {
-      if (enabledChecks.includes(item.name)) {
-        item._meta.isEnabled = true;
-      } else {
-        item._meta.isEnabled = false;
-      }
-    });
 
     await this.runInitialCheck();
 
