@@ -59,7 +59,7 @@ on:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-ml-commons repository to build the ML Commons plugin'
         required: true
-        default: '4.14.0'
+        default: '4.14.1'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -294,7 +294,7 @@ jobs:
     name: Build ML Commons plugin
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@4.14.0
+    uses: wazuh/wazuh-dashboard-ml-commons/.github/workflows/4_builderpackage_ml_commons_plugin.yml@4.14.1
     with:
       reference: ${{ inputs.reference_ml_commons_plugin }}
 
