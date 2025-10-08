@@ -5,7 +5,14 @@
 
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { i18n } from '@osd/i18n';
-import { EuiBasicTable, EuiSearchBar, EuiSearchBarProps } from '@elastic/eui';
+import {
+  EuiBasicTable,
+  EuiSearchBar,
+  EuiSearchBarProps,
+  EuiSwitch,
+  EuiSwitchEvent,
+  EuiToolTip,
+} from '@elastic/eui';
 import { isEqual } from 'lodash';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
 import { CheckFlyout } from './check_flyout';
@@ -18,7 +25,8 @@ interface ChecksTableProps {
   checks: Array<TaskInfo<{ isCritical: boolean; isEnabled: boolean }>>;
 }
 
-const initialQuery = EuiSearchBar.Query.MATCH_ALL;
+const enabledSwitchField = '_meta.isEnabled';
+const initialQuery = EuiSearchBar.Query.parse(`${enabledSwitchField}:true`);
 
 export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => {
   const [flyoutVisible, setFlyoutVisible] = useState(false);
@@ -71,35 +79,6 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
           value: TASK.RUN_RESULT.RED.value,
           name: TASK.RUN_RESULT.RED.label,
         },
-        {
-          value: TASK.RUN_RESULT.GRAY.value,
-          name: TASK.RUN_RESULT.GRAY.label,
-        },
-      ],
-    },
-    {
-      type: 'field_value_toggle_group',
-      field: '_meta.isCritical',
-      items: [
-        {
-          name: i18n.translate('healthcheck.critical', { defaultMessage: 'Critical' }),
-          value: true,
-        },
-        {
-          name: i18n.translate('healthcheck.nonCritical', { defaultMessage: 'Non-critical' }),
-          value: false,
-        },
-      ],
-    },
-    {
-      type: 'field_value_toggle_group',
-      field: '_meta.isEnabled',
-      items: [
-        { name: i18n.translate('healthcheck.enabled', { defaultMessage: 'Enabled' }), value: true },
-        {
-          name: i18n.translate('healthcheck.disabled', { defaultMessage: 'Disabled' }),
-          value: false,
-        },
       ],
     },
   ];
@@ -113,9 +92,49 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
     };
   };
 
+  const enabledSwitchChecked = query?.ast?.clauses.some(
+    (clause) => clause.field === enabledSwitchField && clause.value === false
+  );
+  const enabledSwitchLabel = i18n.translate('healthcheck.filter.showDisabled', {
+    defaultMessage: 'Show disabled',
+  });
+
+  const enabledSwitchOnChange = (event: EuiSwitchEvent) => {
+    // Baed on https://github.com/opensearch-project/oui/blob/1.21.0/src/components/search_bar/filters/field_value_toggle_filter.tsx#L71
+    const field = enabledSwitchField;
+    // Invert the value because the switch shows "Show disabled", so checked means isEnabled:false
+    const value = !Boolean(event.target.checked);
+    const operator = undefined;
+    const newQuery = query
+      .addSimpleFieldValue(field, value, true, operator) // Add new value
+      .removeSimpleFieldValue(field, !value); // Remove the opposite and expectec previous value
+
+    setQuery(newQuery);
+  };
+
   return (
     <>
-      <EuiSearchBar defaultQuery={initialQuery} onChange={onChangeQuery} filters={filters} />
+      <EuiSearchBar
+        defaultQuery={initialQuery}
+        query={query}
+        onChange={onChangeQuery}
+        filters={filters}
+        toolsRight={
+          <EuiToolTip
+            content={i18n.translate('healthcheck.filter.showDisabled.tooltip', {
+              defaultMessage: 'Filter by disabled checks',
+            })}
+            position="top"
+          >
+            <EuiSwitch
+              label={enabledSwitchLabel}
+              checked={enabledSwitchChecked}
+              onChange={enabledSwitchOnChange}
+              compressed={true}
+            />
+          </EuiToolTip>
+        }
+      />
       <EuiBasicTable
         columns={tableColumns(openFlyout)}
         items={filteredChecks}
