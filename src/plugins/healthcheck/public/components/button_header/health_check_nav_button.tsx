@@ -58,12 +58,7 @@ export const HealthCheckNavButton = ({
 
   const isPlacedInLeftNav = coreStart.uiSettings.get('home:useNewHomePage');
 
-  const overallStatusIndicator = (
-    <EuiHealth
-      color={mapTaskStatusToHealthColor(status)}
-      onClick={() => setPopoverOpen((prevState) => !prevState)}
-    />
-  );
+  const overallStatusIndicator = <EuiHealth color={mapTaskStatusToHealthColor(status)} />;
 
   // ToDo: Add aria-label and tooltip when isPlacedInLeftNav is true
   const button = (
@@ -142,13 +137,25 @@ export const HealthCheckNavButton = ({
     </EuiPopover>
   );
 
+  const switchPopover = () => setPopoverOpen((prevState) => !prevState);
+
   return (
     <I18nProvider>
-      {isPlacedInLeftNav ? (
-        popover
-      ) : (
-        <EuiHeaderSectionItemButton size="l">{popover}</EuiHeaderSectionItemButton>
-      )}
+      <div
+        // https://github.com/wazuh/wazuh-dashboard/pull/946#issuecomment-3381930040
+        role="button"
+        tabIndex={0}
+        onClick={switchPopover}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') switchPopover();
+        }}
+      >
+        {isPlacedInLeftNav ? (
+          popover
+        ) : (
+          <EuiHeaderSectionItemButton size="l">{popover}</EuiHeaderSectionItemButton>
+        )}
+      </div>
     </I18nProvider>
   );
 };
