@@ -35,10 +35,17 @@ log() {
 run_with_retry() {
     local attempt=1
     local exit_code=0
+    local cmd_str="$*"
 
     while [ "${attempt}" -le "${retry_max_attempts}" ]; do
-        "$@" # Run the command
-        exit_code=$?
+        if [ -z "${RETRY_SIMULATE_USED:-}" ]; then
+            export RETRY_SIMULATE_USED=1
+            log "Simulating transient failure for testing run_with_retry (attempt ${attempt}/${retry_max_attempts}) on: ${cmd_str}" >&2
+            exit_code=1
+        else
+            "$@" # Run the command
+            exit_code=$?
+        fi
         if [ ${exit_code} -eq 0 ]; then
             return 0
         fi
