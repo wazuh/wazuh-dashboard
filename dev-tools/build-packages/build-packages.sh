@@ -15,6 +15,8 @@ rpm="no"
 tar="no"
 architecture="x64"
 production="no"
+retry_max_attempts=3
+retry_delay_seconds=15
 commit_sha=$(git rev-parse --short HEAD)
 output_dir="${current_path}/output"
 tmp_dir="${current_path}/tmp"
@@ -29,6 +31,35 @@ log() {
     if [ "$verbose" = "info" ] || [ "$verbose" = "debug" ]; then
         echo "$@"
     fi
+}
+
+run_with_retry() {
+    local attempt=1
+    local exit_code=0
+
+    while [ "${attempt}" -le "${retry_max_attempts}" ]; do
+        "$@" # Run the command
+        exit_code=$?
+        if [ ${exit_code} -eq 0 ]; then
+            return 0
+        fi
+
+        if [ "${attempt}" -ge "${retry_max_attempts}" ]; then
+            echo "Command failed after ${retry_max_attempts} attempts (exit code ${exit_code}): $*" >&2
+            return ${exit_code}
+        fi
+
+        local next_attempt=$((attempt + 1))
+        if [ "$verbose" != "silent" ]; then
+            echo "Command failed (attempt ${attempt}/${retry_max_attempts}, exit ${exit_code}). Retrying in ${retry_delay_seconds}s (attempt ${next_attempt}/${retry_max_attempts})." >&2
+        fi
+
+        if [ "${retry_delay_seconds}" -gt 0 ]; then
+            sleep "${retry_delay_seconds}"
+        fi
+
+        attempt=$((attempt + 1))
+    done
 }
 
 clean() {
@@ -68,8 +99,8 @@ get_packages(){
     log "Downloading ${package_name}"
 
     if [[ $package_url =~ $valid_url ]]; then
-      if ! curl --output "packages/${package_var}.zip" --silent --fail "${package_url}"; then
-        echo "The given URL or Path to the ${package_name} is not working: ${package_url}"
+      if ! run_with_retry curl --output "packages/${package_var}.zip" --silent --show-error --fail "${package_url}"; then
+        echo "Failed to download ${package_name} after ${retry_max_attempts} attempts: ${package_url}"
         clean 1
       fi
     else
@@ -94,9 +125,9 @@ build_tar() {
   cp ./base-builder.sh ${dockerfile_path}
   cp ./plugins ${dockerfile_path}
   cp ${root_dir}/VERSION.json ${dockerfile_path}
-  docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z\
-  ${container_name} ${version} ${revision} ${architecture} ${verbose}|| return 1
+  run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
+  run_with_retry docker run -t --rm -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
+    "${container_name}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
   cd ..
 }
 
@@ -108,10 +139,10 @@ build_rpm() {
   cp -r ${package_config_dir} ${tmp_dir}
   cp ./rpm-builder.sh ${dockerfile_path}
   cp ./wazuh-dashboard.spec ${dockerfile_path}
-  docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z\
-  ${container_name} ${version} ${revision} ${architecture}\
-  ${commit_sha} ${production} ${verbose}|| return 1
+  run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
+  run_with_retry docker run -t --rm -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
+    "${container_name}" "${version}" "${revision}" "${architecture}" \
+    "${commit_sha}" "${production}" "${verbose}" || return 1
   cd ../
 }
 
@@ -124,10 +155,10 @@ build_deb() {
   cp -r ${package_config_dir} ${tmp_dir}
   cp ./deb-builder.sh ${dockerfile_path}
   cp -r ./debian ${dockerfile_path}
-  docker build -t ${container_name} ${dockerfile_path} || return 1
-  docker run -t --rm -v ${tmp_dir}/:/tmp:Z -v ${output_dir}/:/output:Z \
-  ${container_name} ${version} ${revision} ${architecture}\
-  ${commit_sha} ${production} ${verbose}|| return 1
+  run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
+  run_with_retry docker run -t --rm -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
+    "${container_name}" "${version}" "${revision}" "${architecture}" \
+    "${commit_sha}" "${production}" "${verbose}" || return 1
   cd ..
 }
 
@@ -175,6 +206,8 @@ help() {
     echo "        --production              [Optional] The naming of the package will be ready for production."
     echo "        --arm                     [Optional] Build for arm64 instead of x64."
     echo "        --debug                   [Optional] Debug mode."
+    echo "        --retry-attempts <n>      [Optional] Retry transient steps up to n times. Defaults to 3."
+    echo "        --retry-delay <seconds>   [Optional] Seconds to wait between retries. Defaults to 15."
     echo "        --silent                  [Optional] Silent mode. Will not work if --debug is set."
     echo "    -r, --revision <revision>     [Optional] Set the revision of this build. By default, it is set to 1."
     echo "    -h, --help                    Show this help."
@@ -261,6 +294,24 @@ main() {
         "--arm")
             architecture="arm64"
             shift 1
+            ;;
+        "--retry-attempts")
+            if [ -n "${2}" ] && [[ "${2}" =~ ^[0-9]+$ ]] && [ "${2}" -gt 0 ]; then
+                retry_max_attempts="${2}"
+                shift 2
+            else
+                echo "Invalid value for --retry-attempts. It must be a positive integer."
+                help 1
+            fi
+            ;;
+        "--retry-delay")
+            if [ -n "${2}" ] && [[ "${2}" =~ ^[0-9]+$ ]]; then
+                retry_delay_seconds="${2}"
+                shift 2
+            else
+                echo "Invalid value for --retry-delay. It must be a non-negative integer."
+                help 1
+            fi
             ;;
         "--silent")
             verbose="silent"
