@@ -14,7 +14,7 @@ import { BadgeResults } from './utils/badge_results';
 
 interface TitleViewProps {
   status: RESULT;
-  checks: Array<TaskInfo<{ isCritical: boolean; isEnabled: boolean }>>;
+  checks: TaskInfo[];
 }
 
 export const TitleView = ({ status, checks }: TitleViewProps) => {
@@ -26,10 +26,7 @@ export const TitleView = ({ status, checks }: TitleViewProps) => {
         <EuiText>
           <h3>
             <FormattedMessage id="healthcheck.statusTitle" defaultMessage="Status is " />
-            <BadgeResults
-              result={status}
-              isEnabled={checks.some((check) => check._meta.isEnabled)}
-            />
+            <BadgeResults result={status} isEnabled={checks.some((check) => check.enabled)} />
           </h3>
         </EuiText>
       </EuiFlexItem>

@@ -5,7 +5,7 @@
 
 import { Duration } from 'moment';
 
-export interface TaskInfo<M = { isCritical?: boolean; isEnabled?: boolean }> {
+export interface TaskInfo {
   name: string;
   status: 'not_started' | 'running' | 'finished';
   result: 'green' | 'yellow' | 'red' | 'gray';
@@ -15,7 +15,8 @@ export interface TaskInfo<M = { isCritical?: boolean; isEnabled?: boolean }> {
   duration: number | null; // seconds
   data: any;
   error: string | null;
-  _meta: M;
+  enabled: boolean;
+  critical: boolean;
 }
 
 export interface ITask extends TaskInfo {

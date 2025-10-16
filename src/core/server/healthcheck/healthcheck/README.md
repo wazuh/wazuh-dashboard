@@ -102,7 +102,7 @@ export interface TaskDefinition {
   // Other metafields
   [key: string]: any;
   // Define if the task is critical. If it fails, the initial check can block the initialization or this could mark the overall status as failed in the scheduled checks.
-  isCritical: boolean
+  critical: boolean
 }
 ```
 
@@ -119,7 +119,7 @@ setup(core){
       console.log('Run from wazuhCore starts' )
     },
     order: 1
-    isCritical: false
+    critical: false
   });
 }
 ```
@@ -170,7 +170,8 @@ interface InitializationTaskRunData {
   duration: number | null; // seconds
   data: any;
   error: string | null;
-  _meta: any
+  enabled: boolean;
+  critical: boolean;
 }
 ```
 
@@ -196,7 +197,7 @@ The backend service registers routes to manage the related data:
     * `yellow`: failed — non‑critical
     * `gray`: unknown / not executed (typically because `status != "finished"`)
   * **Failed** ⟶ when `status == "finished"` and `result` is `red` or `yellow`.
-  * `isCritical` remains a task metadata that classifies the check. In the "server is not ready yet" UI, the distinction critical/non‑critical is derived from the `result` color: `red` = critical failure, `yellow` = non‑critical failure.
+  * `critical` remains a task metadata that classifies the check. In the "server is not ready yet" UI, the distinction critical/non‑critical is derived from the `result` color: `red` = critical failure, `yellow` = non‑critical failure.
     * `true` = **critical**; `false` or absent = **non-critical**.
   * When a task is considered “failed”
 
@@ -210,15 +211,15 @@ The backend service registers routes to manage the related data:
   * **Yellow** in the summary when there are **no critical failures** and there is **at least one non‑critical failed task** (`result == "yellow"`).
   * **Green** in the summary when all tasks are **finished** and the critical ones are `green`.
   * **Gray** in any other case (e.g., all `gray` or no tasks enabled).
-  * The summary does **not** have `isCritical` (because it is already inferred from the tasks).
+  * The summary does **not** have `critical` (because it is already inferred from the tasks).
 
 ### Answers to the doubts
 
 1. **“For a task to be considered *failed*, must it be different from `green` and `gray`; that is `red` or `yellow`?”**
    **Yes.** In an **individual task**, a task is considered *failed* when `status == "finished"` and `result` is `red` (**critical failure**) or `yellow` (**non‑critical failure**).
 
-2. **“If `result` is `red`, doesn’t that already imply it’s critical and `isCritical` is redundant?”**
-   In the "server is not ready yet" UI, the `result` color encodes the *criticality of a failure*: `red` = critical, `yellow` = non‑critical. The `isCritical` field, however, still exists in the task metadata and can be used by services or other UIs; when a task succeeds (`green`), it may still be classified as critical or not by metadata even though the color is not conveying that distinction.
+2. **“If `result` is `red`, doesn’t that already imply it’s critical and `critical` is redundant?”**
+   In the "server is not ready yet" UI, the `result` color encodes the *criticality of a failure*: `red` = critical, `yellow` = non‑critical. The `critical` field, however, still exists in the task metadata and can be used by services or other UIs; when a task succeeds (`green`), it may still be classified as critical or not by metadata even though the color is not conveying that distinction.
 
 ### Quick table
 
@@ -229,7 +230,7 @@ The backend service registers routes to manage the related data:
 
 ### Conclusion:
 - The `yellow` result is supported at the task level to represent **non‑critical failures**, and it also appears in the summary when there are no critical failures.
-- The `isCritical` property remains part of the task metadata. In the not‑ready UI, criticality of failures is conveyed via `result` color (`red` vs `yellow`).
+- The `critical` property remains part of the task metadata. In the not‑ready UI, criticality of failures is conveyed via `result` color (`red` vs `yellow`).
 
 
 # Notes
@@ -271,10 +272,8 @@ The UI allows exporting the checks to a JSON file to be shared easily.
       "finishedAt": "2025-08-08T10:19:59.948Z",
       "duration": 0.09,
       "error": null,
-      "_meta": {
-        "isCritical": true,
-        "isEnabled": true
-      }
+      "enabled": true,
+      "critical": true,
     }
   ],
   _meta: {
@@ -297,10 +296,8 @@ The UI allows exporting the checks to a JSON file to be shared easily.
       "finishedAt": "2025-08-08T10:19:59.948Z",
       "duration": 0.09,
       "error": null,
-      "_meta": {
-        "isCritical": true,
-        "isEnabled": true
-      }
+      "enabled": true,
+      "critical": true,
     }
   ],
   _meta: {

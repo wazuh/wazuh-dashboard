@@ -11,10 +11,10 @@ import { RESULT } from '../../constants';
 import { BadgeResults } from '../utils/badge_results';
 
 export const tableColumns = (
-  openFlyout: (item?: TaskInfo<{ isCritical: boolean; isEnabled: boolean }> | null) => void
+  openFlyout: (item?: TaskInfo | null) => void
 ): EuiBasicTableProps<TaskInfo>['columns'] => [
   {
-    render: (item: TaskInfo<{ isCritical: boolean; isEnabled: boolean }>) => (
+    render: (item: TaskInfo) => (
       <EuiButtonIcon
         iconType="inspect"
         aria-label={i18n.translate(
@@ -49,8 +49,8 @@ export const tableColumns = (
       defaultMessage: 'Result',
     }),
     width: '100px',
-    render: (result: RESULT, item: TaskInfo<{ isCritical: boolean; isEnabled: boolean }>) => (
-      <BadgeResults result={result} isEnabled={item._meta.isEnabled} />
+    render: (result: RESULT, item: TaskInfo) => (
+      <BadgeResults result={result} isEnabled={item.enabled} />
     ),
   },
   {
