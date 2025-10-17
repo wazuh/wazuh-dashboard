@@ -35,12 +35,12 @@ chmod +x build-multiarch.sh
 # Single architecture build
 docker build \
   --build-arg NODE_VERSION=20.18.3 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.2.0.0 \
-  --build-arg WAZUH_DASHBOARD_BRANCH=migrate-main-to-3.2.0 \
-  --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=migrate-main-to-3.2.0.0 \
-  --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=migrate-main-to-3.2.0.0 \
-  --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=migrate-main-to-3.2.0 \
-  -t quay.io/wazuh/osd-dev:3.2.0-5.0.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
+  --build-arg WAZUH_DASHBOARD_BRANCH=migrate-main-to-3.3.0 \
+  --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=migrate-main-to-3.3.0.0 \
+  --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=migrate-main-to-3.3.0.0 \
+  --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=migrate-main-to-3.3.0 \
+  -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \
   -f wzd.dockerfile .
 ```
 
@@ -53,12 +53,12 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
 | `--node-version` | `-n` | Node.js version | `20.18.3` |
-| `--opensearch-version` | `-o` | OpenSearch Dashboard version | `3.2.0.0` |
-| `--wazuh-branch` | `-w` | Wazuh Dashboard branch | `migrate-main-to-3.2.0` |
-| `--security-branch` | `-s` | Wazuh Dashboard Security branch | `migrate-main-to-3.2.0.0` |
-| `--reporting-branch` | `-r` | Wazuh Dashboard Reporting branch | `migrate-main-to-3.2.0.0` |
-| `--plugins-branch` | `-p` | Wazuh Dashboard Plugins branch | `migrate-main-to-3.2.0` |
-| `--tag` | `-t` | Docker image tag | `3.2.0-5.0.0` |
+| `--opensearch-version` | `-o` | OpenSearch Dashboard version | `3.3.0.0` |
+| `--wazuh-branch` | `-w` | Wazuh Dashboard branch | `migrate-main-to-3.3.0` |
+| `--security-branch` | `-s` | Wazuh Dashboard Security branch | `migrate-main-to-3.3.0.0` |
+| `--reporting-branch` | `-r` | Wazuh Dashboard Reporting branch | `migrate-main-to-3.3.0.0` |
+| `--plugins-branch` | `-p` | Wazuh Dashboard Plugins branch | `migrate-main-to-3.3.0` |
+| `--tag` | `-t` | Docker image tag | `3.3.0-5.0.0` |
 | `--push` | | Push image to registry | `false` (local build) |
 | `--help` | `-h` | Show help message | |
 
@@ -88,17 +88,17 @@ For specific architecture builds:
 # For ARM64 (if you're on AMD64)
 docker build --platform linux/arm64 \
   --build-arg NODE_VERSION=20.18.3 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.2.0.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
-  -t quay.io/wazuh/osd-dev:3.2.0-arm64 \
+  -t quay.io/wazuh/osd-dev:3.3.0-arm64 \
   -f wzd.dockerfile .
 
 # For AMD64 (if you're on ARM64)
 docker build --platform linux/amd64 \
   --build-arg NODE_VERSION=20.18.3 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.2.0.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
-  -t quay.io/wazuh/osd-dev:3.2.0-amd64 \
+  -t quay.io/wazuh/osd-dev:3.3.0-amd64 \
   -f wzd.dockerfile .
 ```
 
@@ -112,9 +112,9 @@ docker buildx create --use --name multiarch
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   --build-arg NODE_VERSION=20.18.3 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.2.0.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
-  -t quay.io/wazuh/osd-dev:3.2.0-5.0.0 \
+  -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \
   -f wzd.dockerfile \
   --push .
 ```

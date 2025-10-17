@@ -1,14 +1,14 @@
 # Usage:
 # docker build \
 #         --build-arg NODE_VERSION=20.18.3 \
-#         --build-arg OPENSEARCH_DASHBOARD_VERSION=3.2.0.0 \
+#         --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
 #         --build-arg WAZUH_DASHBOARD_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_ML_COMMONS_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH=main \
-#         -t quay.io/wazuh/osd-dev:3.2.0-5.0.0 \
+#         -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \
 #         -f wzd.dockerfile .
 
 ARG NODE_VERSION=20.18.3
