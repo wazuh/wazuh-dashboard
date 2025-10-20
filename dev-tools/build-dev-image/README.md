@@ -15,6 +15,11 @@ This directory contains tools and scripts for building Docker images for Wazuh D
 
 ### Using the Multi-Architecture Script (Recommended)
 
+Requirements:
+
+- `buildx` plugin: https://github.com/docker/buildx
+- QEMU (for arch emulation builds)
+
 ```bash
 # Make the script executable
 chmod +x build-multiarch.sh
@@ -26,7 +31,7 @@ chmod +x build-multiarch.sh
 ./build-multiarch.sh --push
 
 # Build with custom branches
-./build-multiarch.sh -w main -s main -r main -p main --tag latest --push
+./build-multiarch.sh -w main -s main -r main -p main -ml main -sa main --tag latest --push
 ```
 
 ### Manual Docker Build
@@ -40,6 +45,8 @@ docker build \
   --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=migrate-main-to-3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=migrate-main-to-3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=migrate-main-to-3.3.0 \
+  --build-arg WAZUH_DASHBOARD_ML_COMMONS_BRANCH=migrate-main-to-3.3.0 \
+  --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH=migrate-main-to-3.3.0 \
   -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \
   -f wzd.dockerfile .
 ```
@@ -58,6 +65,8 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 | `--security-branch` | `-s` | Wazuh Dashboard Security branch | `migrate-main-to-3.3.0.0` |
 | `--reporting-branch` | `-r` | Wazuh Dashboard Reporting branch | `migrate-main-to-3.3.0.0` |
 | `--plugins-branch` | `-p` | Wazuh Dashboard Plugins branch | `migrate-main-to-3.3.0` |
+| `--ml-commons-branch` | `-ml` | Wazuh Dashboard ML commons branch | `migrate-main-to-3.3.0` |
+| `--security-analytics-branch` | `-sa` | Wazuh Dashboard Security analystics branch | `migrate-main-to-3.3.0` |
 | `--tag` | `-t` | Docker image tag | `3.3.0-5.0.0` |
 | `--push` | | Push image to registry | `false` (local build) |
 | `--help` | `-h` | Show help message | |
@@ -69,7 +78,7 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 ./build-multiarch.sh --wazuh-branch main --tag latest
 
 # All branches from develop
-./build-multiarch.sh -w develop -s develop -r develop -p develop --tag develop --push
+./build-multiarch.sh -w develop -s develop -r develop -p develop -ml develop -sa develop --tag develop --push
 
 # Specific version build and push
 ./build-multiarch.sh --node-version 18.19.0 --tag 4.8.0-1.0.0 --push
@@ -221,7 +230,7 @@ Example workflow:
 ./build-multiarch.sh --wazuh-branch feature/my-feature --tag feature-test
 
 # Integration testing
-./build-multiarch.sh -w develop -s develop -r develop -p develop --tag develop-test
+./build-multiarch.sh -w develop -s develop -r develop -p develop -ml develop -sa develop --tag develop-test
 
 # Release candidate
 ./build-multiarch.sh -w release/4.8.0 -s release/4.8.0 --tag 4.8.0-rc1 --push
