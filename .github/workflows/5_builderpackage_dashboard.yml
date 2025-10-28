@@ -173,11 +173,6 @@ jobs:
             repository: https://github.com/wazuh/wazuh-dashboard-reporting.git
             outputNamePackage: NAME_PLUGIN_REPORTING
             outputSHA: WAZUH_REPORTING_SHA
-          - name: ml-commons
-            packageName: wazuh-dashboard-ml-commons
-            repository: https://github.com/wazuh/wazuh-dashboard-ml-commons.git
-            outputNamePackage: NAME_PLUGIN_ML_COMMONS
-            outputSHA: WAZUH_ML_COMMONS_SHA
           - name: security-analytics
             packageName: wazuh-dashboard-security-analytics
             repository: https://github.com/wazuh/wazuh-dashboard-security-analytics.git
@@ -349,9 +344,6 @@ jobs:
           - name: wazuh-security-dashboards-plugin
             packageName: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_SECURITY }}
             repo: wazuh/wazuh-security-dashboards-plugin
-          - name: ml-commons-dashboards
-            packageName: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_ML_COMMONS }}
-            repo: wazuh/wazuh-dashboard-ml-commons
           - name: security-analytics-dashboards
             packageName: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_SECURITY_ANALYTICS }}
             repo: wazuh/wazuh-dashboard-security-analytics
@@ -411,11 +403,6 @@ jobs:
         with:
           name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_REPORTING }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
-      - name: Download ml commons plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_ML_COMMONS }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-plugin
       - name: Download security analytics plugin artifact
         uses: actions/download-artifact@v4
         with:
@@ -426,7 +413,6 @@ jobs:
         run: |
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-plugin
@@ -438,7 +424,6 @@ jobs:
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
             -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
-            -ml file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/ml-commons-package.zip \
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             -rp file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/report-package.zip \
             -sa file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-analytics-package.zip \
