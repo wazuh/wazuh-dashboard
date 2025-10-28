@@ -137,14 +137,12 @@ jobs:
       WAZUH_PLUGINS_SHA: ${{ steps.get-plugins.outputs.WAZUH_PLUGINS_SHA }}
       WAZUH_SECURITY_SHA: ${{ steps.get-plugins.outputs.WAZUH_SECURITY_SHA }}
       WAZUH_REPORTING_SHA: ${{ steps.get-plugins.outputs.WAZUH_REPORTING_SHA }}
-      WAZUH_ML_COMMONS_SHA: ${{ steps.get-plugins.outputs.WAZUH_ML_COMMONS_SHA }}
       WAZUH_SECURITY_ANALYTICS_SHA: ${{ steps.get-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA }}
       NAME_PLUGIN_WAZUH: ${{ steps.get-plugins.outputs.NAME_PLUGIN_WAZUH }}
       NAME_PLUGIN_CORE: ${{ steps.get-plugins.outputs.NAME_PLUGIN_CORE }}
       NAME_PLUGIN_CHECK_UPDATES: ${{ steps.get-plugins.outputs.NAME_PLUGIN_CHECK_UPDATES }}
       NAME_PLUGIN_SECURITY: ${{ steps.get-plugins.outputs.NAME_PLUGIN_SECURITY }}
       NAME_PLUGIN_REPORTING: ${{ steps.get-plugins.outputs.NAME_PLUGIN_REPORTING }}
-      NAME_PLUGIN_ML_COMMONS: ${{ steps.get-plugins.outputs.NAME_PLUGIN_ML_COMMONS }}
       NAME_PLUGIN_SECURITY_ANALYTICS: ${{ steps.get-plugins.outputs.NAME_PLUGIN_SECURITY_ANALYTICS }}
     strategy:
       fail-fast: true
@@ -253,7 +251,7 @@ jobs:
           VERSION=${{ needs.get-outputs-plugins.outputs.VERSION }}
           VERSION_OPENSEARCH=${{ needs.get-outputs-plugins.outputs.VERSION_OPENSEARCH }}
           REVISION=${{ needs.get-outputs-plugins.outputs.REVISION }}
-          ALL_COMMIT_SHAS=$(git rev-parse --short HEAD)-${{needs.get-outputs-plugins.outputs.WAZUH_PLUGINS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_REPORTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_ML_COMMONS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA}}
+          ALL_COMMIT_SHAS=$(git rev-parse --short HEAD)-${{needs.get-outputs-plugins.outputs.WAZUH_PLUGINS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_REPORTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA}}
           # Check the corresponding previous version to be used in the upgrade test
           sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
