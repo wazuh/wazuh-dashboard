@@ -109,7 +109,6 @@ jobs:
       WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
       WAZUH_PLUGINS_CHECK_UPDATES: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
       WAZUH_REPORT_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_REPORT_PLUGIN }}
-      WAZUH_ML_COMMONS_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_ML_COMMONS_PLUGIN }}
       PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
       ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
     steps:
@@ -294,12 +293,6 @@ jobs:
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-      - name: Download ml commons plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_ML_COMMONS_PLUGIN }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/ml-commons-plugin
-
       - name: Download report plugin artifact
         uses: actions/download-artifact@v4
         with:

@@ -6,7 +6,6 @@
 #         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=main \
-#         --build-arg WAZUH_DASHBOARD_ML_COMMONS_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH=main \
 #         -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \
 #         -f wzd.dockerfile .
@@ -18,7 +17,6 @@ ARG WAZUH_DASHBOARD_BRANCH
 ARG WAZUH_DASHBOARD_SECURITY_BRANCH
 ARG WAZUH_DASHBOARD_REPORTING_BRANCH
 ARG WAZUH_DASHBOARD_PLUGINS_BRANCH
-ARG WAZUH_DASHBOARD_ML_COMMONS_BRANCH
 ARG WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH
 USER node
 RUN git clone --depth 1 --branch ${WAZUH_DASHBOARD_BRANCH} https://github.com/wazuh/wazuh-dashboard.git /home/node/kbn
