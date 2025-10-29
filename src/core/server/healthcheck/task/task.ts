@@ -19,6 +19,7 @@ export class Task implements ITask {
   public finishedAt: ITask['finishedAt'] = null;
   public duration: ITask['duration'] = null;
   public error = null;
+  public enabled: ITask['enabled'] = false;
   public critical: ITask['critical'] = false;
 
   constructor(task: TaskDefinition) {
