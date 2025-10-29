@@ -19,7 +19,6 @@ The script needs 4 different zip files, containing the following respectively:
 - The build of each plugin in `wazuh-dashboard-plugins` repo
 - The build of the `wazuh-security-dashboards-plugin` repo
 - The build of the `wazuh-dashboards-reporting ` repo
-- The build of the `wazuh-dashboard-ml-commons ` repo
 - The build of the `wazuh-dashboard-security-analytics ` repo
 
 ### Building packages
@@ -33,7 +32,6 @@ The inputs are the following:
 - `-b`, `--base`: URL or path to the zip that contains the `wazuh-dashboard build`.
 - `-s`, `--security`: URL or path to the zip that contains the `wazuh-security-dashboards-plugin` build.
 - `-rp`, `--reportPlugin`: URL or path to the zip that contains the `wazuh-dashboard-reporting` build.
-- `-ml`, `--ml`: URL or path to the zip that contains the `wazuh-dashboard-ml-commons` build.
 - `-sa`, `--securityAnalytics`: URL or path to the zip that contains the `wazuh-dashboard-security-analytics` build.
 - `-r`, `--revision`: [Optional] Set the revision of this build. By default, it is set to 1.
 - `--all-platforms`: Build all platforms.
@@ -60,7 +58,6 @@ bash build-packages.sh \
     --base file:///home/user/packages/dashboard-package.zip \
     --security file:///home/user/packages/security-package.zip \
     --reportPlugin file:///home/user/packages/report-package.zip \
-    --ml file:///home/user/packages/ml-package.zip \
     --securityAnalytics file:///home/user/packages/securityAnalytics-package.zip \
     --revision 2 --deb --silent
 ```
