@@ -22,17 +22,15 @@ import { tableColumns } from './columns';
 import { TASK } from '../../constants';
 
 interface ChecksTableProps {
-  checks: Array<TaskInfo<{ isCritical: boolean; isEnabled: boolean }>>;
+  checks: TaskInfo[];
 }
 
-const enabledSwitchField = '_meta.isEnabled';
+const enabledSwitchField = 'enabled';
 const initialQuery = EuiSearchBar.Query.parse(`${enabledSwitchField}:true`);
 
 export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => {
   const [flyoutVisible, setFlyoutVisible] = useState(false);
-  const [check, setCheck] = useState<TaskInfo<{ isCritical: boolean; isEnabled: boolean }> | null>(
-    null
-  );
+  const [check, setCheck] = useState<TaskInfo | null>(null);
   const [query, setQuery] = useState(initialQuery);
   const [filteredChecks, setFilteredChecks] = useState(checks);
 
@@ -43,7 +41,7 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
     setFilteredChecks(queriedItems);
   }, [query, checks]);
 
-  const openFlyout = (item?: TaskInfo<{ isCritical: boolean; isEnabled: boolean }> | null) => {
+  const openFlyout = (item?: TaskInfo | null) => {
     if (!item) {
       setFlyoutVisible(false);
       setCheck(null);

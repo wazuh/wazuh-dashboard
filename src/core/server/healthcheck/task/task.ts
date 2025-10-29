@@ -19,14 +19,14 @@ export class Task implements ITask {
   public finishedAt: ITask['finishedAt'] = null;
   public duration: ITask['duration'] = null;
   public error = null;
-  public _meta: any;
+  public enabled: ITask['enabled'] = false;
+  public critical: ITask['critical'] = false;
 
   constructor(task: TaskDefinition) {
     this.name = task.name;
     this.runInternal = task.run;
     this.order = task.order;
-    const { name, run, order, ..._meta } = task;
-    this._meta = _meta;
+    this.critical = Boolean(task.critical);
   }
 
   private init() {
@@ -52,7 +52,7 @@ export class Task implements ITask {
       this.result = TASK.RUN_RESULT.GREEN;
     } catch (error_) {
       error = error_;
-      if (this._meta.isCritical) {
+      if (this.critical) {
         this.result = TASK.RUN_RESULT.RED;
       } else {
         this.result = TASK.RUN_RESULT.YELLOW;
@@ -86,7 +86,8 @@ export class Task implements ITask {
       finishedAt: this.finishedAt,
       duration: this.duration,
       error: this.error,
-      _meta: this._meta,
+      enabled: this.enabled,
+      critical: this.critical,
     };
   }
 }

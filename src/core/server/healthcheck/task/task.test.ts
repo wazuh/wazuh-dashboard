@@ -10,11 +10,12 @@ describe('Task', () => {
     const task = new Task({
       name: 'test',
       run: () => {},
+      critical: false,
     });
 
     const info = task.getInfo();
 
-    expect(info._meta).toBeDefined();
+    expect(info.critical).toBe(false);
     expect(info.createdAt).toBeDefined();
     expect(info.data).toBe(null);
     expect(info.duration).toBe(null);
@@ -22,7 +23,7 @@ describe('Task', () => {
     expect(info.finishedAt).toBe(null);
     expect(info.name).toBe('test');
     expect(info.status).toBe('not_started');
-    expect(info.result).toBe(null);
+    expect(info.result).toBe('gray');
     expect(info.startedAt).toBe(null);
   });
 
@@ -30,12 +31,13 @@ describe('Task', () => {
     const taskDefinition = {
       name: 'test',
       run: jest.fn(() => 'result:ok'),
+      critical: false,
     };
     const task = new Task(taskDefinition);
 
     const infoRun = await task.run();
 
-    expect(infoRun._meta).toBeDefined();
+    expect(infoRun.critical).toBe(false);
     expect(infoRun.createdAt).toBeDefined();
     expect(infoRun.data).toBe('result:ok');
     expect(infoRun.duration).toBeDefined();
@@ -43,14 +45,14 @@ describe('Task', () => {
     expect(infoRun.finishedAt).toBeDefined();
     expect(infoRun.name).toBe('test');
     expect(infoRun.status).toBe('finished');
-    expect(infoRun.result).toBe('success');
+    expect(infoRun.result).toBe('green');
     expect(infoRun.startedAt).toBeDefined();
 
     expect(taskDefinition.run).toHaveBeenCalledTimes(1);
 
     const info = task.getInfo();
 
-    expect(info._meta).toBeDefined();
+    expect(infoRun.critical).toBe(false);
     expect(info.createdAt).toBeDefined();
     expect(info.data).toBe('result:ok');
     expect(info.duration).toBeDefined();
@@ -58,7 +60,35 @@ describe('Task', () => {
     expect(info.finishedAt).toBeDefined();
     expect(info.name).toBe('test');
     expect(info.status).toBe('finished');
-    expect(info.result).toBe('success');
+    expect(info.result).toBe('green');
+    expect(info.startedAt).toBeDefined();
+  });
+
+  it('run task with warning', async () => {
+    const taskDefinition = {
+      name: 'test',
+      run: jest.fn(() => {
+        throw new Error('test:warning');
+      }),
+      critical: false,
+    };
+    const task = new Task(taskDefinition);
+
+    await expect(async () => await task.run()).rejects.toThrowError('test:warning');
+
+    expect(taskDefinition.run).toHaveBeenCalledTimes(1);
+
+    const info = task.getInfo();
+
+    expect(info.critical).toBe(false);
+    expect(info.createdAt).toBeDefined();
+    expect(info.data).toBe(null);
+    expect(info.duration).toBeDefined();
+    expect(info.error).toBe('test:warning');
+    expect(info.finishedAt).toBeDefined();
+    expect(info.name).toBe('test');
+    expect(info.status).toBe('finished');
+    expect(info.result).toBe('yellow');
     expect(info.startedAt).toBeDefined();
   });
 
@@ -68,6 +98,7 @@ describe('Task', () => {
       run: jest.fn(() => {
         throw new Error('test:error');
       }),
+      critical: true,
     };
     const task = new Task(taskDefinition);
 
@@ -77,7 +108,7 @@ describe('Task', () => {
 
     const info = task.getInfo();
 
-    expect(info._meta).toBeDefined();
+    expect(info.critical).toBe(true);
     expect(info.createdAt).toBeDefined();
     expect(info.data).toBe(null);
     expect(info.duration).toBeDefined();
@@ -85,7 +116,7 @@ describe('Task', () => {
     expect(info.finishedAt).toBeDefined();
     expect(info.name).toBe('test');
     expect(info.status).toBe('finished');
-    expect(info.result).toBe('fail');
+    expect(info.result).toBe('red');
     expect(info.startedAt).toBeDefined();
   });
 });

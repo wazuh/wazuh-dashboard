@@ -122,13 +122,13 @@ export class HealthcheckService {
       checks.some(
         ({
           result,
-          _meta,
+          critical,
           status,
         }: {
           result: TaskInfo['result'];
-          _meta: TaskInfo['_meta'];
+          critical: TaskInfo['critical'];
           status: TaskInfo['status'];
-        }) => !_meta.isCritical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
+        }) => !critical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
       )
     ) {
       overallStatus = 'yellow';
@@ -138,13 +138,13 @@ export class HealthcheckService {
       checks.some(
         ({
           result,
-          _meta,
+          critical,
           status,
         }: {
           result: TaskInfo['result'];
-          _meta: TaskInfo['_meta'];
+          critical: TaskInfo['critical'];
           status: TaskInfo['status'];
-        }) => _meta.isCritical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
+        }) => critical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
       )
     ) {
       overallStatus = 'red';
