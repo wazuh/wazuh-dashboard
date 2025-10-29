@@ -15,9 +15,8 @@
  * @property {string} finishedAt
  * @property {number} duration
  * @property {string} error
- * @property {Object} _meta
- * @property {boolean} [_meta.isCritical]
- * @property {boolean} _meta.isEnabled
+ * @property {boolean} critical
+ * @property {boolean} enabled
  */
 
 /**
@@ -388,8 +387,8 @@ function filterEnabledFinishedFailedTasks() {
    * @returns
    */
   return (task) => {
-    const { _meta, status, result } = task;
-    return _meta.isEnabled && Status.isFinished(status) && !Result.isSuccess(result);
+    const { enabled, status, result } = task;
+    return enabled && Status.isFinished(status) && !Result.isSuccess(result);
   };
 }
 
@@ -399,7 +398,7 @@ function filterEnabledFinishedFailedTasks() {
  * @returns
  */
 function getCriticalTasks(tasks) {
-  return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ _meta }) => _meta.isCritical);
+  return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ critical }) => critical);
 }
 
 /**
@@ -408,7 +407,7 @@ function getCriticalTasks(tasks) {
  * @returns
  */
 function getNonCriticalTasks(tasks) {
-  return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ _meta }) => !_meta.isCritical);
+  return tasks.filter(filterEnabledFinishedFailedTasks()).filter(({ critical }) => !critical);
 }
 
 /**

@@ -174,10 +174,11 @@ export class HealthCheck extends TaskManager {
     // Define props to task items
     [...this.items.values()].forEach((item) => {
       if (enabledChecks.includes(item.name)) {
-        item._meta.isEnabled = true;
+        item.enabled = true;
       } else {
-        item._meta.isEnabled = false;
+        item.enabled = false;
       }
+      item.critical = Boolean(item.critical) || false;
     });
 
     if (!this._enabled) {
@@ -233,9 +234,9 @@ export class HealthCheck extends TaskManager {
         ok =
           Array.isArray(checks) &&
           checks.every(
-            ({ status, result, ..._meta }) =>
+            ({ status, result, critical }) =>
               status === TASK.RUN_STATUS.FINISHED &&
-              (_meta?.isCritical ? result === TASK.RUN_RESULT.GREEN : true)
+              (critical ? result === TASK.RUN_RESULT.GREEN : true)
           );
       }
 
@@ -267,10 +268,8 @@ export class HealthCheck extends TaskManager {
           throw new Error(data.error);
         }
         const failedCriticalChecks = data.checks?.filter(
-          ({ status, result, _meta = {} }) =>
-            _meta?.isCritical &&
-            status === TASK.RUN_STATUS.FINISHED &&
-            result === TASK.RUN_RESULT.RED
+          ({ status, result, critical }) =>
+            critical && status === TASK.RUN_STATUS.FINISHED && result === TASK.RUN_RESULT.RED
         );
         if (failedCriticalChecks?.length) {
           throw new Error(

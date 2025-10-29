@@ -48,7 +48,8 @@ describe('client script: server not ready page', () => {
         startedAt: '2024-01-01T00:00:00Z',
         finishedAt: '2024-01-01T00:00:05Z',
         duration: 5000,
-        _meta: { isCritical: true, isEnabled: true },
+        enabled: true,
+        critical: true,
       },
       {
         name: 'minor:1',
@@ -58,13 +59,15 @@ describe('client script: server not ready page', () => {
         createdAt: '2024-01-01T00:00:01Z',
         finishedAt: '2024-01-01T00:00:02Z',
         duration: 1000,
-        _meta: { isCritical: false, isEnabled: true },
+        enabled: true,
+        critical: false,
       },
       {
         name: 'ok:1',
         status: 'finished',
         result: 'green',
-        _meta: { isCritical: false, isEnabled: true },
+        enabled: true,
+        critical: false,
       },
     ];
 
@@ -159,14 +162,16 @@ describe('client script: server not ready page', () => {
         createdAt: '2024-01-01T00:00:00Z',
         finishedAt: '2024-01-01T00:00:02Z',
         duration: 2000,
-        _meta: { isCritical: true, isEnabled: true },
+        enabled: true,
+        critical: true,
       },
       {
         name: 'minor:1',
         status: 'finished',
         result: 'red',
         error: 'Minor error',
-        _meta: { isCritical: false, isEnabled: true },
+        enabled: true,
+        critical: false,
       },
     ];
 
@@ -176,7 +181,8 @@ describe('client script: server not ready page', () => {
         name: 'critical:1',
         status: 'finished',
         result: 'green',
-        _meta: { isCritical: true, isEnabled: true },
+        enabled: true,
+        critical: true,
       },
     ];
 
@@ -236,7 +242,7 @@ describe('client script: server not ready page', () => {
     // Expect success notice about no critical errors remaining
     const root = document.getElementById('root')!;
     expect(root.innerHTML).toContain('No critical errors remain');
-    expect(root.innerHTML).toContain('In about ~30 seconds, you can reload this page');
+    expect(root.innerHTML).toContain('In about 30 seconds, you can reload this page');
 
     // When no critical errors remain, the run button section is hidden
     const runBtn = document.getElementById(

@@ -23,15 +23,15 @@ import { mapTaskStatusToHealthColor } from '../services/health';
 import { BadgeResults } from '../utils/badge_results';
 
 interface CheckFlyoutProps {
-  check: TaskInfo<{ isEnabled: boolean; isCritical: boolean }>;
+  check: TaskInfo;
   formatDate: (date: string) => string;
   setIsFlyoutVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyoutProps) => {
-  const { name, duration, startedAt, finishedAt, error, _meta, result, status } = check;
+  const { name, duration, startedAt, finishedAt, error, result, status, enabled, critical } = check;
 
-  const callOut = !_meta.isEnabled && (
+  const callOut = !enabled && (
     <EuiCallOut iconType="help">
       <EuiText>
         <FormattedMessage
@@ -104,24 +104,24 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
             <EuiDescriptionList type="responsiveColumn">
               <EuiDescriptionListTitle>
                 <FormattedMessage
-                  id="healthcheck.check.details._meta.isEnabled"
+                  id="healthcheck.check.details.isEnabled"
                   defaultMessage="Enabled:"
                 />
               </EuiDescriptionListTitle>
 
               <EuiDescriptionListDescription>
-                {responseYesOrNo(_meta.isEnabled)}
+                {responseYesOrNo(enabled)}
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>
                 <FormattedMessage
-                  id="healthcheck.check.details._meta.isCritical"
+                  id="healthcheck.check.details.critical"
                   defaultMessage="Critical:"
                 />
               </EuiDescriptionListTitle>
 
               <EuiDescriptionListDescription>
-                {responseYesOrNo(_meta.isCritical)}
+                {responseYesOrNo(critical)}
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>
@@ -135,7 +135,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                 <FormattedMessage id="healthcheck.check.details.result" defaultMessage="Result:" />
               </EuiDescriptionListTitle>
               <EuiDescriptionListDescription>
-                <BadgeResults result={result} isEnabled={_meta.isEnabled} />
+                <BadgeResults result={result} isEnabled={enabled} />
               </EuiDescriptionListDescription>
 
               <EuiDescriptionListTitle>

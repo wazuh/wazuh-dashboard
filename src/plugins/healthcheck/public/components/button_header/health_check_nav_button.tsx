@@ -99,7 +99,7 @@ export const HealthCheckNavButton = ({
             id="healthcheck.status.contextMenu"
             defaultMessage="Health check status: "
           />
-          <BadgeResults result={status} isEnabled={checks.some((check) => check._meta.isEnabled)} />
+          <BadgeResults result={status} isEnabled={checks.some((check) => check.enabled)} />
         </h3>
 
         <span>
