@@ -95,7 +95,9 @@ jobs:
 
       - name: Build Plugin
         working-directory: plugins/${{ inputs.name }}
-        run: node ../../scripts/plugin_helpers build --opensearch-dashboards-version=${{ inputs.version_opensearch }} 2>&1 | tee build.log
+        run: |
+          set -o pipefail
+          GIT_REF=${{ env.PLUGIN_REF }} OPENSEARCH_DASHBOARDS_VERSION=${{ inputs.version_opensearch }} yarn build 2>&1 | tee build.log
 
       - name: Upload Plugin Artifact
         if: success()
