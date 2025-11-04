@@ -108,8 +108,6 @@ main() {
     help 1
   fi
 
-  WAZUH_DASHBOARD_BUILDER_CONTAINER_NAME=$(echo "base-${WAZUH_DASHBOARD_BRANCH}-${WAZUH_SECURITY_PLUGIN_BRANCH}-${WAZUH_DASHBOARD_PLUGINS_BRANCH}-${WAZUH_DASHBOARD_REPORTING_BRANCH}-${WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH}-${ARCHITECTURE}" | tr -c '[:alnum:]-_' '-' | sed 's/-\{2,\}/-/g' | cut -c1-128)
-
   run_docker_compose || exit 1
 
   exit 0
