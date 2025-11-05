@@ -2,6 +2,7 @@
 .signing-config.json
 .ackrc
 /dev-tools/build-packages/output
+/dev-tools/build-packages/zipped_packages
 /dev-tools/build-packages/tmp
 /.opensearch
 /.chromium
