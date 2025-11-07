@@ -91,7 +91,9 @@ jobs:
           rm -rf ${{inputs.pathPlugin}}
 
       - name: Bootstrap with Plugins
-        run: GIT_REF=${{ env.PLUGIN_REF }} yarn osd bootstrap --single-version=loose
+        env:
+          GIT_REF: ${{ env.PLUGIN_REF }}
+        run: yarn osd bootstrap --single-version=loose
 
       - name: Build Plugin
         working-directory: plugins/${{ inputs.name }}
