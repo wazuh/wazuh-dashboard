@@ -96,7 +96,7 @@ export function getUiSettings(
       description: i18n.translate('data.advancedSettings.metaFieldsText', {
         // Wazuh
         defaultMessage:
-          'Fields that exist outside of _source to merge into our document when displaying it. Other fields: _id, _type, _score',
+          'Fields that exist outside of _source to merge into our document when displaying it. Other fields: _id, _score, _type',
       }),
       schema: schema.arrayOf(schema.string()),
     },
