@@ -76,6 +76,10 @@ cp wazuh-dashboard-base/VERSION.json %{buildroot}%{INSTALL_DIR}
 
 mv wazuh-dashboard-base/* %{buildroot}%{INSTALL_DIR}
 
+# Set custom welcome styles
+
+mkdir -p %{buildroot}%{INSTALL_DIR}/config
+
 cp %{buildroot}%{INSTALL_DIR}/etc/services/wazuh-dashboard.service %{buildroot}/usr/lib/systemd/system/wazuh-dashboard.service
 cp %{buildroot}%{INSTALL_DIR}/etc/services/default %{buildroot}/etc/default/wazuh-dashboard
 
@@ -406,6 +410,7 @@ rm -fr %{buildroot}
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards"
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards-plugin"
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards-keystore"
+%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config"
 %attr(640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/node.options"
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
 
