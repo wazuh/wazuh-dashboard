@@ -25,6 +25,8 @@ config_dir="${root_dir}/config"
 package_config_dir="${current_path}/config"
 verbose="info"
 
+source "${current_path}/common/run-with-retry.sh"
+
 trap clean INT
 trap clean EXIT
 
@@ -32,35 +34,6 @@ log() {
     if [ "$verbose" = "info" ] || [ "$verbose" = "debug" ]; then
         echo "$@"
     fi
-}
-
-run_with_retry() {
-    local attempt=1
-    local exit_code=0
-
-    while [ "${attempt}" -le "${retry_max_attempts}" ]; do
-        "$@" # Run the command
-        exit_code=$?
-        if [ ${exit_code} -eq 0 ]; then
-            return 0
-        fi
-
-        if [ "${attempt}" -ge "${retry_max_attempts}" ]; then
-            echo "Command failed after ${retry_max_attempts} attempts (exit code ${exit_code}): $*" >&2
-            return ${exit_code}
-        fi
-
-        local next_attempt=$((attempt + 1))
-        if [ "$verbose" != "silent" ]; then
-            echo "Command failed (attempt ${attempt}/${retry_max_attempts}, exit ${exit_code}). Retrying in ${retry_delay_seconds}s (attempt ${next_attempt}/${retry_max_attempts})." >&2
-        fi
-
-        if [ "${retry_delay_seconds}" -gt 0 ]; then
-            sleep "${retry_delay_seconds}"
-        fi
-
-        attempt=$((attempt + 1))
-    done
 }
 
 clean() {
@@ -72,6 +45,7 @@ clean() {
     rm -rf ${tmp_dir}
     rm -f ${current_path}/base/Docker/base-builder.sh
     rm -f ${current_path}/base/Docker/plugins
+    rm -f ${current_path}/base/Docker/run-with-retry.sh
     rm -f ${current_path}/rpm/Docker/rpm-builder.sh
     rm -f ${current_path}/rpm/Docker/wazuh-dashboard.spec
     rm -f ${current_path}/deb/Docker/deb-builder.sh
@@ -128,8 +102,12 @@ build_tar() {
   cp ./base-builder.sh ${dockerfile_path}
   cp ./plugins ${dockerfile_path}
   cp ${root_dir}/VERSION.json ${dockerfile_path}
+  cp ${current_path}/common/run-with-retry.sh ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
-  run_with_retry docker run -t --rm -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
+  run_with_retry docker run -t --rm \
+    -e "RETRY_MAX_ATTEMPTS=${retry_max_attempts}" \
+    -e "RETRY_DELAY_SECONDS=${retry_delay_seconds}" \
+    -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
   cd ..
 }
@@ -143,7 +121,10 @@ build_rpm() {
   cp ./rpm-builder.sh ${dockerfile_path}
   cp ./wazuh-dashboard.spec ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
-  run_with_retry docker run -t --rm -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
+  run_with_retry docker run -t --rm \
+    -e "RETRY_MAX_ATTEMPTS=${retry_max_attempts}" \
+    -e "RETRY_DELAY_SECONDS=${retry_delay_seconds}" \
+    -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
   cd ../
@@ -159,7 +140,10 @@ build_deb() {
   cp ./deb-builder.sh ${dockerfile_path}
   cp -r ./debian ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
-  run_with_retry docker run -t --rm -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
+  run_with_retry docker run -t --rm \
+    -e "RETRY_MAX_ATTEMPTS=${retry_max_attempts}" \
+    -e "RETRY_DELAY_SECONDS=${retry_delay_seconds}" \
+    -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
   cd ..
@@ -354,6 +338,9 @@ main() {
     if [ "$verbose" = "debug" ]; then
       set -x
     fi
+
+    export RETRY_MAX_ATTEMPTS="${retry_max_attempts}"
+    export RETRY_DELAY_SECONDS="${retry_delay_seconds}"
 
     build || exit 1
 

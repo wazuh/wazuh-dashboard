@@ -16,6 +16,11 @@ revision="$2"
 architecture="$3"
 verbose="$4"
 
+RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS:-3}
+RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS:-15}
+
+source /usr/local/lib/wazuh/run-with-retry.sh
+
 if [ "$verbose" = "debug" ]; then
   set -x
 fi
@@ -92,7 +97,7 @@ for plugin in $plugins; do
     install=$plugin
   fi
   log "Installing ${plugin} plugin"
-  if ! bin/opensearch-dashboards-plugin install $install --allow-root 2>&1 >/dev/null; then
+  if ! run_with_retry bin/opensearch-dashboards-plugin install "${install}" --allow-root >/dev/null; then
     echo "Plugin ${plugin} installation failed"
     exit 1
   fi
