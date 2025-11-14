@@ -301,7 +301,7 @@ Additional options can be passed after `yarn opensearch snapshot` to further con
 Options:
 
       --license         Run with a 'oss', 'basic', or 'trial' license [default: oss]
-      --version         Version of OpenSearch to download [default: 3.0.0}]
+      --version         Version of OpenSearch to download [default: 3.3.0]
       --base-path       Path containing cache/installations [default: /home/ubuntu/OpenSearch-Dashboards/.opensearch]
       --install-path    Installation path, defaults to 'source' within base-path
       --data-archive    Path to zip or tarball containing an OpenSearch data directory to seed the cluster with.
