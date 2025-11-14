@@ -19,7 +19,7 @@ opensearch_security.session.keepalive: true
 
 # Define the Wazuh server hosts
 wazuh_core.hosts:
-  manager:
+  default:
     url: https://localhost
     port: 55000
     username: wazuh-wui
