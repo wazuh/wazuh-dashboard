@@ -1,9 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS:-3}
-RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS:-15}
-
 source /usr/local/lib/wazuh/run-with-retry.sh
 
 base_path_plugins="/home/node/app/plugins"

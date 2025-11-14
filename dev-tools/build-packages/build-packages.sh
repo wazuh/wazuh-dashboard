@@ -16,14 +16,16 @@ rpm="no"
 tar="no"
 architecture="x64"
 production="no"
-retry_max_attempts=3
-retry_delay_seconds=15
 commit_sha=$(git rev-parse --short HEAD)
 output_dir="${current_path}/output"
 tmp_dir="${current_path}/tmp"
 config_dir="${root_dir}/config"
 package_config_dir="${current_path}/config"
 verbose="info"
+
+RETRY_MAX_ATTEMPTS="${RETRY_MAX_ATTEMPTS:-3}"
+RETRY_DELAY_SECONDS="${RETRY_DELAY_SECONDS:-15}"
+export RETRY_MAX_ATTEMPTS RETRY_DELAY_SECONDS
 
 source "${current_path}/common/run-with-retry.sh"
 
@@ -75,7 +77,7 @@ get_packages(){
 
     if [[ $package_url =~ $valid_url ]]; then
       if ! run_with_retry curl --output "packages/${package_var}.zip" --silent --show-error --fail "${package_url}"; then
-        echo "Failed to download ${package_name} after ${retry_max_attempts} attempts: ${package_url}"
+        echo "Failed to download ${package_name} after ${RETRY_MAX_ATTEMPTS} attempts: ${package_url}"
         clean 1
       fi
     else
@@ -105,8 +107,8 @@ build_tar() {
   cp ${current_path}/common/run-with-retry.sh ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
   run_with_retry docker run -t --rm \
-    -e "RETRY_MAX_ATTEMPTS=${retry_max_attempts}" \
-    -e "RETRY_DELAY_SECONDS=${retry_delay_seconds}" \
+    -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
+    -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
   cd ..
@@ -122,8 +124,8 @@ build_rpm() {
   cp ./wazuh-dashboard.spec ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
   run_with_retry docker run -t --rm \
-    -e "RETRY_MAX_ATTEMPTS=${retry_max_attempts}" \
-    -e "RETRY_DELAY_SECONDS=${retry_delay_seconds}" \
+    -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
+    -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
@@ -141,8 +143,8 @@ build_deb() {
   cp -r ./debian ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
   run_with_retry docker run -t --rm \
-    -e "RETRY_MAX_ATTEMPTS=${retry_max_attempts}" \
-    -e "RETRY_DELAY_SECONDS=${retry_delay_seconds}" \
+    -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
+    -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
@@ -293,7 +295,7 @@ main() {
             ;;
         "--retry-attempts")
             if [ -n "${2}" ] && [[ "${2}" =~ ^[0-9]+$ ]] && [ "${2}" -gt 0 ]; then
-                retry_max_attempts="${2}"
+                RETRY_MAX_ATTEMPTS="${2}"
                 shift 2
             else
                 echo "Invalid value for --retry-attempts. It must be a positive integer."
@@ -302,7 +304,7 @@ main() {
             ;;
         "--retry-delay")
             if [ -n "${2}" ] && [[ "${2}" =~ ^[0-9]+$ ]]; then
-                retry_delay_seconds="${2}"
+                RETRY_DELAY_SECONDS="${2}"
                 shift 2
             else
                 echo "Invalid value for --retry-delay. It must be a non-negative integer."
@@ -338,9 +340,6 @@ main() {
     if [ "$verbose" = "debug" ]; then
       set -x
     fi
-
-    export RETRY_MAX_ATTEMPTS="${retry_max_attempts}"
-    export RETRY_DELAY_SECONDS="${retry_delay_seconds}"
 
     build || exit 1
 
