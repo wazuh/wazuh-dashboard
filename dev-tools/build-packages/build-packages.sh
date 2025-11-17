@@ -22,7 +22,7 @@ tmp_dir="${current_path}/tmp"
 config_dir="${root_dir}/config"
 package_config_dir="${current_path}/config"
 verbose="info"
-simulate_network_disconnection="no"
+simulate_network_disconnection="yes"
 network_disconnection_delay=60
 network_disconnection_duration=30
 network_simulation_env=()
@@ -211,7 +211,8 @@ help() {
     echo "         --debug                    [Optional] Debug mode."
     echo "         --retry-attempts <n>      [Optional] Retry transient steps up to n times. Defaults to 3."
     echo "         --retry-delay <seconds>   [Optional] Seconds to wait between retries. Defaults to 15."
-    echo "         --simulate-network-disconnection            [Optional] Temporarily disable networking inside the builder containers."
+    echo "         --simulate-network-disconnection            [Optional] Temporarily disable networking inside the builder containers (enabled by default)."
+    echo "         --no-simulate-network-disconnection         [Optional] Disable the network disconnection simulation."
     echo "         --network-disconnection-delay <seconds>     [Optional] Seconds to wait before cutting the network (default: 60)."
     echo "         --network-disconnection-duration <seconds>  [Optional] Seconds to keep the network offline (default: 30)."
     echo "         --silent                   [Optional] Silent mode. Will not work if --debug is set."
@@ -329,6 +330,10 @@ main() {
             ;;
         "--simulate-network-disconnection")
             simulate_network_disconnection="yes"
+            shift 1
+            ;;
+        "--no-simulate-network-disconnection")
+            simulate_network_disconnection="no"
             shift 1
             ;;
         "--network-disconnection-delay")

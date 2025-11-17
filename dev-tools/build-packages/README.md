@@ -42,7 +42,8 @@ The inputs are the following:
 - `--arm`: [Optional] Build for arm64 instead of x64.
 - `--debug`: [Optional] Enables debug mode, which will show detailed information during the script run.
 - `--silent`: [Optional] Enables silent mode, which will show the minimum possible information during the script run. `--debug` has priority over this.
-- `--simulate-network-disconnection`: [Optional] Disables the network interface inside the builder containers for a short period of time in order to test the retry logic.
+- `--simulate-network-disconnection`: [Optional] Disables the network interface inside the builder containers for a short period of time in order to test the retry logic. Enabled by default.
+- `--no-simulate-network-disconnection`: [Optional] Turns off the network disconnection simulation.
 - `--network-disconnection-delay`: [Optional] Number of seconds to wait before disabling the network once the container starts. Defaults to `60`.
 - `--network-disconnection-duration`: [Optional] Number of seconds that the network will remain disabled. Defaults to `30`.
 - `--help`: Show the help message.
