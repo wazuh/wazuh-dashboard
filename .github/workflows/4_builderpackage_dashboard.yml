@@ -49,12 +49,12 @@ on:
         type: string
         description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
         required: true
-        default: '4.14.1'
+        default: '4.14.2'
       reference_wazuh_plugins:
         type: string
         description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
         required: true
-        default: '4.14.1'
+        default: '4.14.2'
       is_stage:
         type: boolean
         description: 'Set production nomenclature'
@@ -87,11 +87,11 @@ on:
       reference_security_plugins:
         type: string
         required: true
-        default: '4.14.1'
+        default: '4.14.2'
       reference_wazuh_plugins:
         type: string
         required: true
-        default: '4.14.1'
+        default: '4.14.2'
       is_stage:
         type: boolean
         required: true

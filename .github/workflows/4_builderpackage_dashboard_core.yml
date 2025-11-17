@@ -13,10 +13,10 @@ name: (4.x) Build Wazuh dashboard core package (on demand)
 on:
   workflow_call:
     inputs:
-      CHECKOUT_TO: # This is the branch to checkout to. Defaults to '4.14.1'
+      CHECKOUT_TO: # This is the branch to checkout to. Defaults to '4.14.2'
         description: 'The branch/tag/commit to checkout to'
         required: true
-        default: '4.14.1'
+        default: '4.14.2'
         type: string
       ARCHITECTURE:
         description: 'The architecture to build the package for'
@@ -26,10 +26,10 @@ on:
 
   workflow_dispatch:
     inputs:
-      CHECKOUT_TO: # This is the branch to checkout to. Defaults to '4.14.1'
+      CHECKOUT_TO: # This is the branch to checkout to. Defaults to '4.14.2'
         description: 'The branch/tag/commit to checkout to'
         required: true
-        default: '4.14.1'
+        default: '4.14.2'
       ARCHITECTURE:
         description: 'The architecture to build the package for'
         required: true
