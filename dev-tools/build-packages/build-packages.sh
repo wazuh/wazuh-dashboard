@@ -22,6 +22,10 @@ tmp_dir="${current_path}/tmp"
 config_dir="${root_dir}/config"
 package_config_dir="${current_path}/config"
 verbose="info"
+simulate_network_disconnection="no"
+network_disconnection_delay=60
+network_disconnection_duration=30
+network_simulation_env=()
 
 RETRY_MAX_ATTEMPTS="${RETRY_MAX_ATTEMPTS:-3}"
 RETRY_DELAY_SECONDS="${RETRY_DELAY_SECONDS:-15}"
@@ -48,10 +52,13 @@ clean() {
     rm -f ${current_path}/base/Docker/base-builder.sh
     rm -f ${current_path}/base/Docker/plugins
     rm -f ${current_path}/base/Docker/run-with-retry.sh
+    rm -f ${current_path}/base/Docker/network-disruption.sh
     rm -f ${current_path}/rpm/Docker/rpm-builder.sh
     rm -f ${current_path}/rpm/Docker/wazuh-dashboard.spec
+    rm -f ${current_path}/rpm/Docker/network-disruption.sh
     rm -f ${current_path}/deb/Docker/deb-builder.sh
     rm -rf ${current_path}/deb/Docker/debian
+    rm -f ${current_path}/deb/Docker/network-disruption.sh
     trap '' EXIT
     exit ${exit_code}
 }
@@ -105,10 +112,12 @@ build_tar() {
   cp ./plugins ${dockerfile_path}
   cp ${root_dir}/VERSION.json ${dockerfile_path}
   cp ${current_path}/common/run-with-retry.sh ${dockerfile_path}
+  cp ${current_path}/common/network-disruption.sh ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
   run_with_retry docker run -t --rm \
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
+    "${network_simulation_env[@]}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
   cd ..
@@ -122,10 +131,12 @@ build_rpm() {
   cp -r ${package_config_dir} ${tmp_dir}
   cp ./rpm-builder.sh ${dockerfile_path}
   cp ./wazuh-dashboard.spec ${dockerfile_path}
+  cp ${current_path}/common/network-disruption.sh ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
   run_with_retry docker run -t --rm \
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
+    "${network_simulation_env[@]}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
@@ -141,10 +152,12 @@ build_deb() {
   cp -r ${package_config_dir} ${tmp_dir}
   cp ./deb-builder.sh ${dockerfile_path}
   cp -r ./debian ${dockerfile_path}
+  cp ${current_path}/common/network-disruption.sh ${dockerfile_path}
   run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
   run_with_retry docker run -t --rm \
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
+    "${network_simulation_env[@]}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
@@ -198,6 +211,9 @@ help() {
     echo "         --debug                    [Optional] Debug mode."
     echo "         --retry-attempts <n>      [Optional] Retry transient steps up to n times. Defaults to 3."
     echo "         --retry-delay <seconds>   [Optional] Seconds to wait between retries. Defaults to 15."
+    echo "         --simulate-network-disconnection            [Optional] Temporarily disable networking inside the builder containers."
+    echo "         --network-disconnection-delay <seconds>     [Optional] Seconds to wait before cutting the network (default: 60)."
+    echo "         --network-disconnection-duration <seconds>  [Optional] Seconds to keep the network offline (default: 30)."
     echo "         --silent                   [Optional] Silent mode. Will not work if --debug is set."
     echo "    -r,  --revision <revision>      [Optional] Set the revision of this build. By default, it is set to 1."
     echo "    -h,  --help                     Show this help."
@@ -311,6 +327,28 @@ main() {
                 help 1
             fi
             ;;
+        "--simulate-network-disconnection")
+            simulate_network_disconnection="yes"
+            shift 1
+            ;;
+        "--network-disconnection-delay")
+            if [ -n "${2}" ] && [[ "${2}" =~ ^[0-9]+$ ]]; then
+                network_disconnection_delay="${2}"
+                shift 2
+            else
+                echo "Invalid value for --network-disconnection-delay. It must be a non-negative integer."
+                help 1
+            fi
+            ;;
+        "--network-disconnection-duration")
+            if [ -n "${2}" ] && [[ "${2}" =~ ^[0-9]+$ ]]; then
+                network_disconnection_duration="${2}"
+                shift 2
+            else
+                echo "Invalid value for --network-disconnection-duration. It must be a non-negative integer."
+                help 1
+            fi
+            ;;
         "--silent")
             verbose="silent"
             shift 1
@@ -335,6 +373,15 @@ main() {
     if [ "$all_platforms" == "no" ] && [ "$deb" == "no" ] && [ "$rpm" == "no" ] && [ "$tar" == "no" ]; then
         echo "You must specify at least one package to build."
         help 1
+    fi
+
+    network_simulation_env=()
+    if [ "$simulate_network_disconnection" = "yes" ]; then
+        network_simulation_env=(
+            "-e" "SIMULATE_NETWORK_DISCONNECTION=true"
+            "-e" "SIMULATE_NETWORK_DISCONNECTION_AFTER=${network_disconnection_delay}"
+            "-e" "SIMULATE_NETWORK_DISCONNECTION_DURATION=${network_disconnection_duration}"
+        )
     fi
 
     if [ "$verbose" = "debug" ]; then

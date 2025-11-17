@@ -33,6 +33,7 @@ ADD base-builder.sh /usr/local/bin/builder
 ADD VERSION.json /usr/local/bin/VERSION.json
 ADD plugins /usr/local/bin/plugins
 ADD run-with-retry.sh /usr/local/lib/wazuh/run-with-retry.sh
+ADD network-disruption.sh /usr/local/lib/wazuh/network-disruption.sh
 RUN chmod +x /usr/local/bin/builder
 
 # Set the entrypoint

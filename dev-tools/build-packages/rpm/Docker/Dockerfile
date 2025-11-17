@@ -13,9 +13,12 @@ RUN yum update -y && yum install -y python3
 
 RUN ln -fs /usr/bin/python3.6 /usr/bin/python
 
+RUN mkdir -p /usr/local/lib/wazuh
+
 # Add the scripts to build the RPM package
 ADD rpm-builder.sh /usr/local/bin/builder
 ADD wazuh-dashboard.spec /usr/local/src/wazuh-dashboard.spec
+ADD network-disruption.sh /usr/local/lib/wazuh/network-disruption.sh
 RUN chmod +x /usr/local/bin/builder
 
 # Set the entrypoint

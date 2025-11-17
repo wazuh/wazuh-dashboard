@@ -8,9 +8,12 @@ RUN apt-get update && apt-get install -y --allow-change-held-packages apt-utils 
     curl sudo wget expect gnupg build-essential \
     devscripts equivs selinux-basics procps gawk jq
 
+RUN mkdir -p /usr/local/lib/wazuh
+
 # Add the script to build the Debian package
 ADD deb-builder.sh /usr/local/bin/builder
 ADD debian /usr/local/src/debian
+ADD network-disruption.sh /usr/local/lib/wazuh/network-disruption.sh
 RUN chmod +x /usr/local/bin/builder
 
 # Set the entrypoint

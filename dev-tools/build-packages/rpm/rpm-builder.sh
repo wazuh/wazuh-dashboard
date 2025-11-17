@@ -19,6 +19,15 @@ commit_sha=$4
 is_production=$5
 verbose=$6
 
+if [ -f /usr/local/lib/wazuh/network-disruption.sh ]; then
+      # shellcheck disable=SC1091
+      source /usr/local/lib/wazuh/network-disruption.sh
+fi
+
+if [ "${SIMULATE_NETWORK_DISCONNECTION:-false}" = "true" ]; then
+      start_network_disconnection_timer
+fi
+
 # Paths
 current_path="$( cd $(dirname $0) ; pwd -P )"
 
@@ -42,6 +51,9 @@ log() {
 
 clean() {
     exit_code=$?
+    if declare -f restore_network_from_simulation >/dev/null 2>&1; then
+        restore_network_from_simulation
+    fi
     # Clean the files
     rm -rf ${tmp_dir}/*
     trap '' EXIT
@@ -109,5 +121,4 @@ if [ "${is_production}" = "no" ]; then
   mv /${out_dir}/${rpm_file} /${out_dir}/${final_name}
   mv /${out_dir}/${rpm_file}.sha512 /${out_dir}/${final_name}.sha512
 fi
-
 

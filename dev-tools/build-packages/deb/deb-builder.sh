@@ -21,6 +21,15 @@ verbose=$6
 
 directory_base="/usr/share/wazuh-dashboard"
 
+if [ -f /usr/local/lib/wazuh/network-disruption.sh ]; then
+      # shellcheck disable=SC1091
+      source /usr/local/lib/wazuh/network-disruption.sh
+fi
+
+if [ "${SIMULATE_NETWORK_DISCONNECTION:-false}" = "true" ]; then
+      start_network_disconnection_timer
+fi
+
 # Paths
 current_path="$( cd $(dirname $0) ; pwd -P )"
 
@@ -43,6 +52,9 @@ log() {
 
 clean() {
     exit_code=$?
+    if declare -f restore_network_from_simulation >/dev/null 2>&1; then
+        restore_network_from_simulation
+    fi
     # Clean the files
     rm -rf ${tmp_dir}/*
     trap '' EXIT
