@@ -1,4 +1,4 @@
-s# This workflow automates the build of the Wazuh Dashboard package along with
+# This workflow automates the build of the Wazuh Dashboard package along with
 # its plugins.
 #
 # This workflow:
