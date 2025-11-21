@@ -21,14 +21,16 @@ ARG WAZUH_DASHBOARD_REPORTING_BRANCH
 ENV OPENSEARCH_DASHBOARDS_VERSION=3.2.0
 ENV ENV_ARCHITECTURE=${ARCHITECTURE}
 USER root
-RUN apt-get update && apt-get install -y jq
+RUN apt-get update && apt-get install -y jq && mkdir -p /usr/local/lib/wazuh
+ADD ./common/run-with-retry.sh /usr/local/lib/wazuh/run-with-retry.sh
+RUN chown -R node:node /usr/local/lib/wazuh
 USER node
-ADD ./clone-plugins.sh /home/node/clone-plugins.sh
-ADD ./repositories/wazuh-dashboard.sh /home/node/repositories/wazuh-dashboard.sh
-ADD ./repositories/plugins/wazuh-dashboard-security-analytics.sh /home/node/repositories/plugins/wazuh-dashboard-security-analytics.sh
-ADD ./repositories/plugins/wazuh-security-dashboards-plugin.sh /home/node/repositories/plugins/wazuh-security-dashboards-plugin.sh
-ADD ./repositories/plugins/wazuh-dashboard-reporting.sh /home/node/repositories/plugins/wazuh-dashboard-reporting.sh
-ADD ./repositories/plugins/wazuh-dashboard-plugins.sh /home/node/repositories/plugins/wazuh-dashboard-plugins.sh
+ADD ./base-packages-to-base/clone-plugins.sh /home/node/clone-plugins.sh
+ADD ./base-packages-to-base/repositories/wazuh-dashboard.sh /home/node/repositories/wazuh-dashboard.sh
+ADD ./base-packages-to-base/repositories/plugins/wazuh-dashboard-security-analytics.sh /home/node/repositories/plugins/wazuh-dashboard-security-analytics.sh
+ADD ./base-packages-to-base/repositories/plugins/wazuh-security-dashboards-plugin.sh /home/node/repositories/plugins/wazuh-security-dashboards-plugin.sh
+ADD ./base-packages-to-base/repositories/plugins/wazuh-dashboard-reporting.sh /home/node/repositories/plugins/wazuh-dashboard-reporting.sh
+ADD ./base-packages-to-base/repositories/plugins/wazuh-dashboard-plugins.sh /home/node/repositories/plugins/wazuh-dashboard-plugins.sh
 RUN bash /home/node/clone-plugins.sh
 
 FROM node:${NODE_VERSION}
