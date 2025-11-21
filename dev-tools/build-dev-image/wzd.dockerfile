@@ -30,7 +30,6 @@ WORKDIR /home/node/kbn/plugins
 ADD ./install-plugins.sh /home/node/install-plugins.sh
 ADD ./plugins /home/node/plugins
 RUN bash /home/node/install-plugins.sh
-RUN mkdir -p /home/node/kbn/data/wazuh/config
 
 FROM node:${NODE_VERSION}
 USER node
