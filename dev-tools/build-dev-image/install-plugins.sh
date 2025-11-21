@@ -15,7 +15,7 @@ for plugin in $plugins; do
       git clone --depth 1 --branch ${WAZUH_DASHBOARD_SECURITY_BRANCH} https://github.com/wazuh/$plugin.git
     fi
     # Clone the Wazuh dashboards reporting plugin
-    if [[ $plugin == "wazuh-dashboards-reporting" ]]; then
+    if [[ $plugin == "wazuh-dashboard-reporting" ]]; then
       git clone --depth 1 --branch ${WAZUH_DASHBOARD_REPORTING_BRANCH} https://github.com/wazuh/$plugin.git
     fi
     # Clone the Wazuh dashboard security analytics plugin
@@ -29,7 +29,7 @@ for plugin in $plugins; do
       mv $plugin/plugins/* ./
       for wazuh_dashboard_plugin in $wazuh_dashboard_plugins; do
         cd $base_path_plugins/$wazuh_dashboard_plugin
-        yarn install
+        GIT_REF="${WAZUH_DASHBOARD_PLUGINS_BRANCH}" yarn install
       done
       cd $base_path_plugins
       rm -rf $plugin

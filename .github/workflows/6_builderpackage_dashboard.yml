@@ -163,10 +163,10 @@ jobs:
           git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/wazuh/wazuh-security-dashboards-plugin.git wzsp
           cd wzsp
           echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      - name: Get SHA of wazuh-dashboards-reporting
+      - name: Get SHA of wazuh-dashboard-reporting
         id: get-reporting-sha
         run: |
-          git clone -b ${{ inputs.reference_report_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboards-reporting.git wzrp
+          git clone -b ${{ inputs.reference_report_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboard-reporting.git wzrp
           cd wzrp
           echo "WAZUH_REPORTING_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
