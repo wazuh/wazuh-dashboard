@@ -27,7 +27,7 @@ help() {
   echo "    -b, --base <url/path>         Set the wazuh-dashboard branch."
   echo "    -s, --security <url/path>     Set the wazuh-security-dashboards-plugin branch."
   echo "    -sa, --securityAnalytics <url/path>   Set the wazuh-dashboard-security-analytics branch."
-  echo "    -r, --reporting <url/path>    Set the wazuh-dashboards-reporting branch."
+  echo "    -r, --reporting <url/path>    Set the wazuh-dashboard-reporting branch."
   echo "    --arm                         [Optional] Build for arm64 instead of x64."
   echo "    --node-version <version>      [Optional] Set the node version."
   echo "    -h, --help                    Show this help."
