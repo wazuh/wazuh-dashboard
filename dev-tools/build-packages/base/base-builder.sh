@@ -22,8 +22,12 @@ if [ "$verbose" = "debug" ]; then
   set -x
 fi
 
-trap clean INT
-trap clean EXIT
+# Folders
+tmp_dir="/tmp"
+out_dir="/output"
+config_path="${tmp_dir}/config"
+applications_dir="${tmp_dir}/applications"
+base_dir="${tmp_dir}/base"
 
 log() {
   if [ "$verbose" = "info" ] || [ "$verbose" = "debug" ]; then
@@ -34,10 +38,13 @@ log() {
 clean() {
   exit_code=$?
   # Clean the files
-  rm -rf ${tmp_dir}/*
+  rm -rf "${applications_dir}" "${base_dir}"
   trap '' EXIT
   exit ${exit_code}
 }
+
+trap clean INT
+trap clean EXIT
 
 js-file() {
   echo "./plugins/$1/target/public/$1.$2.js"
@@ -49,20 +56,16 @@ current_path="$(
   pwd -P
 )"
 
-# Folders
-tmp_dir="/tmp"
-out_dir="/output"
-config_path=$tmp_dir/config
-
 # -----------------------------------------------------------------------------
 cd $tmp_dir
+
+rm -rf "${applications_dir}" "${base_dir}"
+mkdir -p "${applications_dir}" "${base_dir}"
 
 log
 log "Extracting packages"
 log
 
-mkdir -p applications
-mkdir -p base
 packages_list=(app base security reportPlugin securityAnalytics)
 packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "Report plugin" "Security analytics plugin")
 
@@ -71,13 +74,13 @@ for i in "${!packages_list[@]}"; do
   package_name="${packages_names[$i]}"
   if [[ "$package_var" == "base" ]]; then
     wzd_package_name=$(unzip -l "packages/${package_var}.zip" | awk 'NR==4 {print $4}')
-    unzip -o -q "packages/${package_var}.zip" -d base
+    unzip -o -q "packages/${package_var}.zip" -d "${base_dir}"
   else
-    unzip -o -q "packages/${package_var}.zip" -d applications
+    unzip -o -q "packages/${package_var}.zip" -d "${applications_dir}"
   fi
 done
 
-cd base
+cd "${base_dir}"
 
 log
 log "Installing plugins"
