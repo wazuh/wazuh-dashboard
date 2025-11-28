@@ -420,7 +420,7 @@ jobs:
         run: |
           git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git
           cd wazuh-automation
-          pip3 install -r deployability/deps/requirements.txt
+          sudo pip3 install -r deployability/deps/requirements.txt
 
       - name: RPM - Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
