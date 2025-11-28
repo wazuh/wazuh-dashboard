@@ -9,6 +9,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Support for Wazuh 5.0.0
 - Health check service [#811](https://github.com/wazuh/wazuh-dashboard/pull/811) [#866](https://github.com/wazuh/wazuh-dashboard/pull/866) [#961](https://github.com/wazuh/wazuh-dashboard/pull/961)
 - Added Health Check plugin [#870](https://github.com/wazuh/wazuh-dashboard/pull/870) [#946](https://github.com/wazuh/wazuh-dashboard/pull/946)
+- Added manager host configuration for the default configuration file [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 
 ### Removed
 
@@ -17,6 +18,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Changed
 
 - Changed the location of the wazuh-dashboard service to match with the other Wazuh components [#805](https://github.com/wazuh/wazuh-dashboard/issues/805)
+- Changed the default value of `metaFields` and `timepicker:timeDefaults` settings [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 
 ## Wazuh dashboard v4.14.2 - OpenSearch Dashboards 2.19.3 - Revision 00
 
