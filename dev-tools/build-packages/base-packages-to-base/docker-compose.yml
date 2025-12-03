@@ -2,8 +2,8 @@ services:
   base:
     image: base-${WAZUH_DASHBOARD_BRANCH}-${WAZUH_SECURITY_PLUGIN_BRANCH}-${WAZUH_DASHBOARD_PLUGINS_BRANCH}-${WAZUH_DASHBOARD_REPORTING_BRANCH}-${WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH}-${ARCHITECTURE}
     build:
-      context: .
-      dockerfile: base-packages.Dockerfile
+      context: ..
+      dockerfile: base-packages-to-base/base-packages.Dockerfile
       args:
         NODE_VERSION: ${NODE_VERSION}
         WAZUH_DASHBOARD_BRANCH: ${WAZUH_DASHBOARD_BRANCH}
