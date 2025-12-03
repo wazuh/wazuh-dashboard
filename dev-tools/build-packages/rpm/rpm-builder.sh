@@ -25,14 +25,13 @@ current_path="$( cd $(dirname $0) ; pwd -P )"
 # Folders
 tmp_dir="/tmp"
 out_dir="/output"
-config_path=$tmp_dir/config
+config_path="${tmp_dir}/config"
+workspace_dir="${tmp_dir}/wazuh-dashboard-base"
+workspace_tar="${tmp_dir}/wazuh-dashboard.tar.gz"
 
 if [ "$verbose" = "debug" ]; then
       set -x
 fi
-
-trap clean INT
-trap clean EXIT
 
 log() {
     if [ "$verbose" = "info" ] || [ "$verbose" = "debug" ]; then
@@ -43,23 +42,28 @@ log() {
 clean() {
     exit_code=$?
     # Clean the files
-    rm -rf ${tmp_dir}/*
+    rm -rf "${workspace_dir}" "${workspace_tar}"
     trap '' EXIT
     exit ${exit_code}
 }
 
-mkdir -p ${tmp_dir}/wazuh-dashboard-base
-cd ${tmp_dir}/wazuh-dashboard-base
+trap clean INT
+trap clean EXIT
+
+rm -rf "${workspace_dir}" "${workspace_tar}"
+
+mkdir -p "${workspace_dir}"
+cd "${workspace_dir}"
 log "Extracting base tar.gz..."
-tar -zxf ${out_dir}/wazuh-dashboard-$version-$revision-linux-$architecture.tar.gz
+tar -zxf "${out_dir}/wazuh-dashboard-$version-$revision-linux-$architecture.tar.gz"
 log "Preparing the package..."
 jq '.wazuh.revision="'${revision}'"' package.json > pkgtmp.json && mv pkgtmp.json package.json
 mkdir -p etc/services
-cp $config_path/* etc/services
+cp "${config_path}"/* etc/services
 jq '.version="'${version}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
 jq '.commit="'${commit_sha}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
-cd ..
-tar -czf wazuh-dashboard.tar.gz wazuh-dashboard-base
+cd "${tmp_dir}"
+tar -czf "${workspace_tar}" wazuh-dashboard-base
 
 log "Setting up parameters"
 
@@ -109,5 +113,4 @@ if [ "${is_production}" = "no" ]; then
   mv /${out_dir}/${rpm_file} /${out_dir}/${final_name}
   mv /${out_dir}/${rpm_file}.sha512 /${out_dir}/${final_name}.sha512
 fi
-
 
