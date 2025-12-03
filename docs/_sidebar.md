@@ -24,6 +24,8 @@
     - [Saved_object_repository_factory_design](saved_objects/saved_object_repository_factory_design.md)
   - Telemetry
     - [Telemetry](telemetry/telemetry.md)
+  - Reference
+    - [Installation](ref/getting-started/installation.md)
   - src
     - [Core](../src/core/README.md)
     - dev
