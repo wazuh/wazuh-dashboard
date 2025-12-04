@@ -18,6 +18,10 @@ export const TASK = {
   },
   CONTEXT: {
     INTERNAL: 'internal',
+    INTERNAL_INITIAL: 'internal-initial',
+    INTERNAL_SCHEDULED: 'internal-scheduled',
     USER: 'user',
   },
 } as const;
+
+export type TaskContext = typeof TASK.CONTEXT[keyof typeof TASK.CONTEXT];

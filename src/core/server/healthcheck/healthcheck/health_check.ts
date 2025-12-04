@@ -6,7 +6,7 @@ import { Logger } from 'opensearch-dashboards/server';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { TaskInfo } from 'src/core/common/healthcheck';
-import { retry, TASK, TaskManager } from '../task';
+import { retry, TASK, TaskManager, TaskContext } from '../task';
 import { addRoutesReadyServer } from './routes';
 import { ScheduledIntervalTask } from './scheduled_task';
 import { HealthCheckConfig } from '../../../common/healthcheck';
@@ -91,7 +91,7 @@ export class HealthCheck extends TaskManager {
   private _server_not_ready_troubleshooting_link: string = '';
   private scheduled?: ScheduledIntervalTask;
   private _coreStartServices: any;
-  public runInternal: (names?: string[]) => Promise<any>;
+  public runInternal: (names?: string[], scope?: TaskContext) => Promise<any>;
   constructor(logger: Logger, services: any = {}) {
     super(logger, services);
     this.runInternal = singlePromiseInstance(this._runInternal).bind(this);
@@ -141,13 +141,13 @@ export class HealthCheck extends TaskManager {
     return filterListByRegex(allTaskNames, this._checks_enabled);
   }
 
-  private async _runInternal(names?: string[]) {
+  private async _runInternal(names?: string[], scope: TaskContext = TASK.CONTEXT.INTERNAL) {
     const taskNames = names || this.filterEnabledChecks();
 
     return this.runWithDecorators(
       {
         services: { core: this._coreStartServices },
-        scope: 'internal',
+        scope,
       },
       taskNames
     );
@@ -155,7 +155,7 @@ export class HealthCheck extends TaskManager {
 
   async runInitialCheck() {
     this.logger.debug('Waiting until all checks are ok...');
-    this.runInternal().catch(() => {});
+    this.runInternal(undefined, TASK.CONTEXT.INTERNAL_INITIAL).catch(() => {});
     await this.status$
       .pipe(
         filter(({ ok }: HealthCheckStatus, _index: number) => Boolean(ok)),
@@ -200,7 +200,7 @@ export class HealthCheck extends TaskManager {
     this.scheduled = new ScheduledIntervalTask(async () => {
       try {
         this.logger.debug('Running scheduled check');
-        await this.runInternal();
+        await this.runInternal(undefined, TASK.CONTEXT.INTERNAL_SCHEDULED);
       } catch (error) {
         this.logger.error(`Error in scheduled check: ${error.message}`);
       } finally {
