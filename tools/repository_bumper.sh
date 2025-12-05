@@ -586,6 +586,73 @@ update_healthcheck_server_not_ready_troubleshooting_link() {
   fi
 }
 
+get_opensearch_dashboards_version(){
+  log "Attempting to extract .version from $PACKAGE_JSON using sed (Note: This is fragile)"
+  # Extract OpenSearch Dashboards version from package.json (first occurrence of "version")
+  OPENSEARCH_VERSION=$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
+  if [ -z "$OPENSEARCH_VERSION" ] || [ "$OPENSEARCH_VERSION" == "null" ]; then
+    log "ERROR: Could not extract pluginPlatform.version from $PACKAGE_JSON for changelog"
+    exit 1
+  fi
+}
+
+get_node_version(){
+  log "Attempting to get the NODE_VERSION from $PACKAGE_JSON using sed (Note: This is fragile)"
+
+  local file="${REPO_PATH}/.nvmrc"
+  NODE_VERSION=$(cat "${file}")
+  if [ -z "$NODE_VERSION" ]; then
+    log "ERROR: Could not extract NODE_VERSION from $file"
+    exit 1
+  fi
+}
+
+update_build_docker_dev_multiarch() {
+  local file="${REPO_PATH}/dev-tools/build-dev-image/build-multiarch.sh"
+
+  if [ -f "$file" ]; then
+    log "Updating $file..."
+
+    get_opensearch_dashboards_version
+    get_node_version
+
+    sed_inplace -E "s|OPENSEARCH_DASHBOARD_VERSION=\"[0-9.]+\"|OPENSEARCH_DASHBOARD_VERSION=\"$OPENSEARCH_VERSION.0\"|" "$file"
+    sed_inplace -E "s|TAG=\"[0-9.-]+\"|TAG=\"$OPENSEARCH_VERSION-$VERSION\"|" "$file"
+    sed_inplace -E "s|NODE_VERSION=\"[0-9.]+\"|NODE_VERSION=\"$NODE_VERSION\"|" "$file"
+    log "Successfully updated $file"
+
+  else
+    log "ERROR: $file does not exist" >&2
+  fi
+}
+
+
+update_build_docker_dev_multiarch_readme() {
+  local file="${REPO_PATH}/dev-tools/build-dev-image/README.md"
+
+  if [ -f "$file" ]; then
+    log "Updating $file..."
+
+    get_opensearch_dashboards_version
+    get_node_version
+
+    OPENSEARCH_DASHBOARD_VERSION_EXTENDED="$OPENSEARCH_VERSION.0"
+    OSD_WZ_VERSION="$OPENSEARCH_VERSION-$VERSION"
+
+    sed_inplace -E "s|--build-arg OPENSEARCH_DASHBOARD_VERSION=[0-9.]+|--build-arg OPENSEARCH_DASHBOARD_VERSION=$OPENSEARCH_DASHBOARD_VERSION_EXTENDED|" "$file"
+    sed_inplace -E "s|--build-arg NODE_VERSION=[0-9.]+|--build-arg NODE_VERSION=$NODE_VERSION|g" "$file"
+    sed_inplace -E "s|-t quay.io/wazuh/osd-dev:[0-9.]+-a|-t quay.io/wazuh/osd-dev:$OPENSEARCH_VERSION-a|" "$file"
+    sed_inplace -E "s|-t quay.io/wazuh/osd-dev:[0-9.-]+ \\\\|-t quay.io/wazuh/osd-dev:$OSD_WZ_VERSION \\\\|" "$file"
+    sed_inplace -E "s#(Node.js version \| \`)[0-9.-]+(\`)#\1$NODE_VERSION\2#" "$file"
+    sed_inplace -E "s#(OpenSearch Dashboard version \| \`)[0-9.-]+(\`)#\1$OPENSEARCH_DASHBOARD_VERSION_EXTENDED\2#" "$file"
+    sed_inplace -E "s#(Docker image tag \| \`)[0-9.-]+(\`)#\1$OSD_WZ_VERSION\2#" "$file"
+    log "Successfully updated $file"
+
+  else
+    log "ERROR: $file does not exist" >&2
+  fi
+}
+
 # Function to convert date from yyyy-mm-dd to RPM format (e.g., "Thu Sep 04 2025")
 convert_date_to_rpm_format() {
   local input_date="$1"
@@ -731,6 +798,8 @@ main() {
   update_deb_changelog
   update_changelog
   update_healthcheck_server_not_ready_troubleshooting_link
+  update_build_docker_dev_multiarch
+  update_build_docker_dev_multiarch_readme
 
   log "File modifications completed."
   log "Repository bump completed successfully. Log file: $LOG_FILE"

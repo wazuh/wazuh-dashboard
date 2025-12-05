@@ -8,6 +8,7 @@ WAZUH_DASHBOARD_SECURITY_BRANCH="main"
 WAZUH_DASHBOARD_REPORTING_BRANCH="main"
 WAZUH_DASHBOARD_PLUGINS_BRANCH="main"
 WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH="main"
+PLATFORM="linux/amd64,linux/arm64"
 TAG="3.3.0-5.0.0"
 PUSH=false
 
@@ -25,6 +26,7 @@ OPTIONS:
     -p, --plugins-branch            Wazuh Dashboard Plugins branch (default: $WAZUH_DASHBOARD_PLUGINS_BRANCH)
     -sa, --security-analytics-branch  Wazuh Dashboard Security Analytics branch (default: $WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH)
     -t, --tag                       Image tag (default: $TAG)
+    -pl, --platform                 Target platform (default: $PLATFORM)
     --push                          Push image to registry
     -h, --help                      Show this help
 
@@ -70,6 +72,10 @@ while [[ $# -gt 0 ]]; do
             TAG="$2"
             shift 2
             ;;
+        -pl|--platform)
+            PLATFORM="$2"
+            shift 2
+            ;;
         --push)
             PUSH=true
             shift
@@ -96,6 +102,7 @@ echo "Reporting Branch: $WAZUH_DASHBOARD_REPORTING_BRANCH"
 echo "Plugins Branch: $WAZUH_DASHBOARD_PLUGINS_BRANCH"
 echo "Security Analytics Branch: $WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH"
 echo "Tag: quay.io/wazuh/osd-dev:$TAG"
+echo "Platform: $PLATFORM"
 echo "Push: $PUSH"
 echo "==========================="
 
@@ -105,7 +112,7 @@ docker buildx inspect multiarch >/dev/null 2>&1 || docker buildx create --use --
 
 # Prepare buildx arguments
 BUILDX_ARGS=(
-    --platform linux/amd64,linux/arm64
+    --platform "$PLATFORM"
     --build-arg NODE_VERSION="$NODE_VERSION"
     --build-arg OPENSEARCH_DASHBOARD_VERSION="$OPENSEARCH_DASHBOARD_VERSION"
     --build-arg WAZUH_DASHBOARD_BRANCH="$WAZUH_DASHBOARD_BRANCH"
