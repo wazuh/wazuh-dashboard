@@ -431,6 +431,7 @@ jobs:
         run: |
           git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git
           cd wazuh-automation
+          git checkout change/2807-change-allocator-composite-names-2
           pip3 install -r deployability/deps/requirements.txt
 
       - name: RPM - Configure AWS credentials
@@ -445,9 +446,9 @@ jobs:
         if: ${{ inputs.system == 'rpm' }}
         run: |
           if [ "${{ inputs.architecture }}" = "x86_64" ]; then
-            python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name linux-centos-9-amd64 --instance-name "centos_9_amd_large_aws" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard
+            python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name centos_stream-9-amd64 --instance-name "centos_9_amd_large_aws" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard
           else
-            python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name  linux-centos-8-arm64 --instance-name "centos_8_arm_large_aws" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard
+            python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name centos_stream-8-arm64 --instance-name "centos_8_arm_large_aws" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard
           fi
           ansible_host=$(grep 'ansible_host:' /tmp/inventory.yaml | sed 's/.*: *//')
           ansible_port=$(grep 'ansible_port:' /tmp/inventory.yaml | sed 's/.*: *//')
