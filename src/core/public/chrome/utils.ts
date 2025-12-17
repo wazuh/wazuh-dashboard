@@ -231,7 +231,7 @@ function getCategoryLocalStorageKey(id: string) {
 }
 
 export function getIsCategoryOpen(id: string, storage: Storage) {
-  const value = storage.getItem(getCategoryLocalStorageKey(id)) ?? 'false';
+  const value = storage.getItem(getCategoryLocalStorageKey(id)) ?? 'true';
 
   return value === 'true';
 }
