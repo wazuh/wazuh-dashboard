@@ -8,6 +8,7 @@ import {
   CoreSetup,
   CoreStart,
   DEFAULT_APP_CATEGORIES,
+  DEFAULT_NAV_GROUPS,
   Plugin,
 } from '../../../core/public';
 import { HealtcheckPluginSetup, HealtcheckPluginStart, AppPluginStartDependencies } from './types';
@@ -31,6 +32,15 @@ export class HealtcheckPlugin implements Plugin<HealtcheckPluginSetup, Healtchec
         return renderApp(coreStart, depsStart as AppPluginStartDependencies, params);
       },
     });
+
+    // Register in the 'all' nav group under Dashboard management category
+    core.chrome.navGroup.addNavLinksToGroup(DEFAULT_NAV_GROUPS.all, [
+      {
+        id: PLUGIN_ID,
+        category: DEFAULT_APP_CATEGORIES.dashboardManagement,
+        order: 100,
+      },
+    ]);
 
     return {};
   }
