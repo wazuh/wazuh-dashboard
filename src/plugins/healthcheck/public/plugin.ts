@@ -38,7 +38,7 @@ export class HealtcheckPlugin implements Plugin<HealtcheckPluginSetup, Healtchec
       {
         id: PLUGIN_ID,
         category: DEFAULT_APP_CATEGORIES.dashboardManagement,
-        order: 100,
+        order: 10009,
       },
     ]);
 
