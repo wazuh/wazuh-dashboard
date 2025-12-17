@@ -241,9 +241,7 @@ export class HomePublicPlugin
       description: i18n.translate('home.tutorialDirectory.featureCatalogueDescription', {
         defaultMessage: 'Get started with sample data, visualizations, and dashboards.',
       }),
-      navLinkStatus: core.chrome.navGroup.getNavGroupEnabled()
-        ? AppNavLinkStatus.default
-        : AppNavLinkStatus.hidden,
+      navLinkStatus: AppNavLinkStatus.hidden,
       mount: async (params: AppMountParameters) => {
         const [coreStart, { navigation }] = await core.getStartServices();
         setCommonService();
