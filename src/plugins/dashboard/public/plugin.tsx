@@ -493,7 +493,7 @@ export class DashboardPlugin
       {
         id: app.id,
         order: 300,
-        category: undefined,
+        category: DEFAULT_APP_CATEGORIES.visualizeAndReport,
       },
     ]);
 
