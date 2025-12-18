@@ -245,6 +245,7 @@ export function searchNavigationLinks(
   navGroupMap: Record<string, NavGroupItemInMap>,
   query: string
 ) {
+  const queryLower = query.toLowerCase();
   return allAvailableCaseId.flatMap((useCaseId) => {
     const navGroup = navGroupMap[useCaseId];
     if (!navGroup) return [];
@@ -263,13 +264,14 @@ export function searchNavigationLinks(
             (navLink) => navLink.id === link.parentNavLinkId
           )?.title;
         }
-        const titleMatch = title && title.toLowerCase().includes(query.toLowerCase());
+        const titleMatch = title && title.toLowerCase().includes(queryLower);
         const parentTitleMatch =
-          parentNavLinkTitle && parentNavLinkTitle.toLowerCase().includes(query.toLowerCase());
+          parentNavLinkTitle && parentNavLinkTitle.toLowerCase().includes(queryLower);
+        const categoryMatch = link.category?.label?.toLowerCase().includes(queryLower);
         return (
           !link.hidden &&
           !link.disabled &&
-          (titleMatch || parentTitleMatch) &&
+          (titleMatch || parentTitleMatch || categoryMatch) &&
           !parentNavLinkIds.includes(link.id)
         );
       })
