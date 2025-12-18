@@ -29,8 +29,11 @@ export const GlobalSearchPageItem = ({ link, search, callback, renderBreadcrumbs
       </EuiHighlight>
     );
 
-    const isOverviewPage = appId.endsWith('overview');
-    if (isOverviewPage && link.category) {
+    if (
+      link.category &&
+      !link.parentNavLinkId &&
+      link.category.label.trim().toLowerCase() !== (link.title || '').trim().toLowerCase()
+    ) {
       breadcrumbList.push({ text: link.category.label });
     }
 
