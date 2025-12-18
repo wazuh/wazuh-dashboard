@@ -240,13 +240,59 @@ export function setIsCategoryOpen(id: string, isOpen: boolean, storage: Storage)
   storage.setItem(getCategoryLocalStorageKey(id), `${isOpen}`);
 }
 
+function getFuzzyScore(query: string, target: string): number | undefined {
+  if (!query) return 0;
+  if (!target) return undefined;
+
+  let score = 0;
+  let lastMatchedIndex = -1;
+  let firstMatchedIndex = -1;
+  let consecutiveMatches = 0;
+
+  for (let queryIndex = 0; queryIndex < query.length; queryIndex++) {
+    const queryChar = query[queryIndex];
+    const matchIndex = target.indexOf(queryChar, lastMatchedIndex + 1);
+
+    if (matchIndex === -1) return undefined;
+
+    if (firstMatchedIndex === -1) firstMatchedIndex = matchIndex;
+
+    const isConsecutive = matchIndex === lastMatchedIndex + 1;
+    const prevChar = matchIndex > 0 ? target[matchIndex - 1] : '';
+    const isWordStart = matchIndex === 0 || /[^\p{L}\p{N}]/u.test(prevChar);
+
+    if (isConsecutive) {
+      consecutiveMatches += 1;
+      score += 15 + consecutiveMatches;
+    } else {
+      consecutiveMatches = 0;
+      score += 10;
+      score -= Math.max(0, matchIndex - lastMatchedIndex - 1);
+    }
+
+    if (isWordStart) {
+      score += 5;
+    }
+
+    lastMatchedIndex = matchIndex;
+  }
+
+  if (firstMatchedIndex > 0) {
+    score -= firstMatchedIndex;
+  }
+
+  return score;
+}
+
 export function searchNavigationLinks(
   allAvailableCaseId: string[],
   navGroupMap: Record<string, NavGroupItemInMap>,
   query: string
 ) {
-  const queryLower = query.toLowerCase();
-  return allAvailableCaseId.flatMap((useCaseId) => {
+  const queryTokens = query.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  let originalIndex = 0;
+
+  const results = allAvailableCaseId.flatMap((useCaseId) => {
     const navGroup = navGroupMap[useCaseId];
     if (!navGroup) return [];
 
@@ -254,30 +300,59 @@ export function searchNavigationLinks(
     // parent nav links are not clickable
     const parentNavLinkIds = links.map((link) => link.parentNavLinkId).filter((link) => !!link);
 
-    return links
-      .filter((link) => {
-        const title = link.title;
-        let parentNavLinkTitle;
-        // parent title also taken into consideration for search its sub items
-        if (link.parentNavLinkId) {
-          parentNavLinkTitle = navGroup.navLinks.find(
-            (navLink) => navLink.id === link.parentNavLinkId
-          )?.title;
+    return links.flatMap((link) => {
+      if (link.hidden || link.disabled || parentNavLinkIds.includes(link.id)) {
+        originalIndex += 1;
+        return [];
+      }
+
+      let parentNavLinkTitle;
+      // parent title also taken into consideration for search its sub items
+      if (link.parentNavLinkId) {
+        parentNavLinkTitle = navGroup.navLinks.find((navLink) => navLink.id === link.parentNavLinkId)
+          ?.title;
+      }
+
+      if (queryTokens.length === 0) {
+        const result = {
+          ...link,
+          navGroup,
+          score: 0,
+          originalIndex,
+        };
+        originalIndex += 1;
+        return [result];
+      }
+
+      const searchableText = [link.category?.label, parentNavLinkTitle, link.title]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      let score = 0;
+      for (const token of queryTokens) {
+        const tokenScore = getFuzzyScore(token, searchableText);
+        if (tokenScore === undefined) {
+          originalIndex += 1;
+          return [];
         }
-        const titleMatch = title && title.toLowerCase().includes(queryLower);
-        const parentTitleMatch =
-          parentNavLinkTitle && parentNavLinkTitle.toLowerCase().includes(queryLower);
-        const categoryMatch = link.category?.label?.toLowerCase().includes(queryLower);
-        return (
-          !link.hidden &&
-          !link.disabled &&
-          (titleMatch || parentTitleMatch || categoryMatch) &&
-          !parentNavLinkIds.includes(link.id)
-        );
-      })
-      .map((link) => ({
+        score += tokenScore;
+      }
+
+      const result = {
         ...link,
         navGroup,
-      }));
+        score,
+        originalIndex,
+      };
+      originalIndex += 1;
+      return [result];
+    });
   });
+
+  if (queryTokens.length > 0) {
+    results.sort((a, b) => b.score - a.score || a.originalIndex - b.originalIndex);
+  }
+
+  return results.map(({ score, originalIndex, ...link }) => link);
 }
