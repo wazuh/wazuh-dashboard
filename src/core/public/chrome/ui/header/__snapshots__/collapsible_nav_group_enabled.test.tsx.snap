@@ -54,7 +54,7 @@ exports[`<CollapsibleNavGroupEnabled /> should render correctly 1`] = `
                       title="link-in-all"
                     >
                       <div
-                        class="euiText euiText--medium"
+                        class="euiText euiText--small"
                       >
                         link-in-all
                       </div>
@@ -152,7 +152,7 @@ exports[`<CollapsibleNavGroupEnabled /> should show use case nav when current na
                       title="link-in-all"
                     >
                       <div
-                        class="euiText euiText--medium"
+                        class="euiText euiText--small"
                       >
                         link-in-all
                       </div>

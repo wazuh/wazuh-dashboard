@@ -64,7 +64,7 @@ export function NavGroups({
 
     return {
       id: `${link.id}-${link.title}`,
-      name: <EuiText>{link.title}</EuiText>,
+      name: <EuiText size="s">{link.title}</EuiText>,
       onClick: euiListItem.onClick,
       href: euiListItem.href,
       emphasize: euiListItem.isActive,
@@ -87,7 +87,11 @@ export function NavGroups({
 
         return {
           ...navItem,
-          name: <EuiText color="success">{navItem.name}</EuiText>,
+          name: (
+            <EuiText size="s" color="success">
+              {navLink.link.title}
+            </EuiText>
+          ),
           emphasize: false,
         };
       }
