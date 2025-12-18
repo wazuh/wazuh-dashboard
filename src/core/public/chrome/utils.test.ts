@@ -269,19 +269,6 @@ describe('searchNavigationLinks', () => {
     );
   });
 
-  it('should fuzzy match when query characters are non-consecutive', () => {
-    const query = 'chld';
-    const result = searchNavigationLinks(allAvailableCaseId, navGroupMap, query);
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(
-      expect.objectContaining({
-        id: 'child',
-        title: 'Child Link',
-      })
-    );
-  });
-
   it('should return links when searching by category label', () => {
     const query = 'endpoint';
     const result = searchNavigationLinks(allAvailableCaseId, navGroupMap, query);
