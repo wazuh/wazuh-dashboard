@@ -34,7 +34,13 @@ export const GlobalSearchPageItem = ({ link, search, callback, renderBreadcrumbs
       !link.parentNavLinkId &&
       link.category.label.trim().toLowerCase() !== (link.title || '').trim().toLowerCase()
     ) {
-      breadcrumbList.push({ text: link.category.label });
+      breadcrumbList.push({
+        text: (
+          <EuiHighlight search={search} highlightAll={true}>
+            {link.category.label}
+          </EuiHighlight>
+        ),
+      });
     }
 
     if (link.parentNavLinkId) {
