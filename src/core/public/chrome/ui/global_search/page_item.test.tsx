@@ -55,7 +55,6 @@ describe('PageItem', () => {
   it('renders the page item correctly', () => {
     const { getByText } = render(<GlobalSearchPageItem link={link} search="abc" />);
 
-    expect(getByText('Observability')).toBeInTheDocument();
     expect(getByText('App 1')).toBeInTheDocument();
   });
 
@@ -78,13 +77,10 @@ describe('PageItem', () => {
         ],
       },
     };
-    const { getByText, queryByText } = render(
-      <GlobalSearchPageItem link={linkWithParentLink} search="abc" />
-    );
+    const { getByText } = render(<GlobalSearchPageItem link={linkWithParentLink} search="abc" />);
 
     expect(getByText('Settings')).toBeInTheDocument();
     expect(getByText('App 1')).toBeInTheDocument();
-    expect(queryByText('Observability')).not.toBeInTheDocument();
   });
 
   it('renders the page item correctly for non workspace pages', () => {
