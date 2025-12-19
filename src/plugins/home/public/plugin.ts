@@ -161,33 +161,33 @@ export class HomePublicPlugin
       });
     };
 
-    core.application.register({
-      id: PLUGIN_ID,
-      title: 'Home',
-      navLinkStatus: AppNavLinkStatus.hidden,
-      mount: async (params: AppMountParameters) => {
-        const [coreStart, { navigation }] = await core.getStartServices();
-        if (!!coreStart.application.capabilities.workspaces?.enabled) {
-          coreStart.application.navigateToApp('workspace_initial');
-          return () => {};
-        }
-        setCommonService();
-        coreStart.chrome.docTitle.change(
-          i18n.translate('home.pageTitle', { defaultMessage: 'Home' })
-        );
-        const { renderApp } = await import('./application');
-        return await renderApp(
-          params.element,
-          {
-            ...coreStart,
-            navigation,
-            setHeaderActionMenu: params.setHeaderActionMenu,
-          },
-          params.history
-        );
-      },
-      workspaceAvailability: WorkspaceAvailability.outsideWorkspace,
-    });
+    // core.application.register({
+    //   id: PLUGIN_ID,
+    //   title: 'Home',
+    //   navLinkStatus: AppNavLinkStatus.hidden,
+    //   mount: async (params: AppMountParameters) => {
+    //     const [coreStart, { navigation }] = await core.getStartServices();
+    //     if (!!coreStart.application.capabilities.workspaces?.enabled) {
+    //       coreStart.application.navigateToApp('workspace_initial');
+    //       return () => {};
+    //     }
+    //     setCommonService();
+    //     coreStart.chrome.docTitle.change(
+    //       i18n.translate('home.pageTitle', { defaultMessage: 'Home' })
+    //     );
+    //     const { renderApp } = await import('./application');
+    //     return await renderApp(
+    //       params.element,
+    //       {
+    //         ...coreStart,
+    //         navigation,
+    //         setHeaderActionMenu: params.setHeaderActionMenu,
+    //       },
+    //       params.history
+    //     );
+    //   },
+    //   workspaceAvailability: WorkspaceAvailability.outsideWorkspace,
+    // });
 
     if (core.chrome.navGroup.getNavGroupEnabled()) {
       // register search use case overview page
@@ -350,7 +350,7 @@ export class HomePublicPlugin
         mount: toMountPoint(
           React.createElement(HomeIcon, {
             core,
-            appId: PLUGIN_ID,
+            appId: 'wz-home',
           })
         ),
       });
