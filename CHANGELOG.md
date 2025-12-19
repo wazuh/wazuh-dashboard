@@ -14,6 +14,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Removed
 
 - Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
+- Hide Forecasting app [#1048](https://github.com/wazuh/wazuh-dashboard/pull/1048)
 
 ### Changed
 
