@@ -119,6 +119,9 @@ sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}
 # Replace app category to Anomaly Detection app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/anomalyDetectionDashboards/target/public/anomalyDetectionDashboards.plugin.js
 
+# Disable forecasting in Anomaly Detection app
+sed -i -e "s|forecastingEnabled=true|forecastingEnabled=false|g" ./plugins/anomalyDetectionDashboards/target/public/anomalyDetectionDashboards.plugin.js
+
 # Replace app category to Maps app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" $(js-file "customImportMapDashboards" "plugin")
 
