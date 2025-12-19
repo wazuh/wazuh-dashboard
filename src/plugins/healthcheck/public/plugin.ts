@@ -33,6 +33,7 @@ export class HealtcheckPlugin implements Plugin<HealtcheckPluginSetup, Healtchec
       },
     });
 
+    /* Wazuh BEGIN */
     // Register in the 'all' nav group under Dashboard management category
     core.chrome.navGroup.addNavLinksToGroup(DEFAULT_NAV_GROUPS.all, [
       {
@@ -41,6 +42,7 @@ export class HealtcheckPlugin implements Plugin<HealtcheckPluginSetup, Healtchec
         order: 10009,
       },
     ]);
+    /* Wazuh END */
 
     return {};
   }

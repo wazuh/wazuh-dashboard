@@ -493,7 +493,9 @@ export class DashboardPlugin
       {
         id: app.id,
         order: 300,
+        /* Wazuh BEGIN */
         category: DEFAULT_APP_CATEGORIES.visualizeAndReport,
+        /* Wazuh END */
       },
     ]);
 

@@ -241,7 +241,9 @@ export class HomePublicPlugin
       description: i18n.translate('home.tutorialDirectory.featureCatalogueDescription', {
         defaultMessage: 'Get started with sample data, visualizations, and dashboards.',
       }),
+      /* Wazuh BEGIN */
       navLinkStatus: AppNavLinkStatus.hidden,
+      /* Wazuh END */
       mount: async (params: AppMountParameters) => {
         const [coreStart, { navigation }] = await core.getStartServices();
         setCommonService();
