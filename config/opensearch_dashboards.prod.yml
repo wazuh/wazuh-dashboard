@@ -14,7 +14,6 @@ opensearch.ssl.certificateAuthorities: ["/etc/wazuh-dashboard/certs/root-ca.pem"
 uiSettings:
   overrides:
     defaultRoute: /app/wz-home
-    "home:useNewHomePage": true
 # Session expiration settings
 opensearch_security.cookie.ttl: 900000
 opensearch_security.session.ttl: 900000
