@@ -429,7 +429,7 @@ jobs:
         env:
           username: 'wazuh-devel-xdrsiem-dashboard'
         run: |
-          git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git
+          git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git -b $(bash dev-tools/product_version.sh)
           cd wazuh-automation
           pip3 install -r deployability/deps/requirements.txt
 
