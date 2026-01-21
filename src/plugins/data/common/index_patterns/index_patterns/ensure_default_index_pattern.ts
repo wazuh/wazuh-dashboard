@@ -33,6 +33,7 @@ import { IndexPatternsContract } from './index_patterns';
 import { SavedObjectsClientCommon, UiSettingsCommon } from '../types';
 
 export type EnsureDefaultIndexPattern = () => Promise<unknown | void> | undefined;
+const WAZUH_EVENTS_INDEX = 'wazuh-events*';
 
 export const createEnsureDefaultIndexPattern = (
   uiSettings: UiSettingsCommon,
@@ -120,7 +121,7 @@ export const createEnsureDefaultIndexPattern = (
     // If there is any index pattern created, set the first as default
     if (patterns.length >= 1) {
       defaultId = patterns[0];
-      await uiSettings.set('defaultIndex', defaultId);
+      await uiSettings.set('defaultIndex', WAZUH_EVENTS_INDEX);
     } else {
       const isEnhancementsEnabled = await uiSettings.get('query:enhancements:enabled');
       const shouldRedirect = !isEnhancementsEnabled;

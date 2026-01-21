@@ -123,4 +123,5 @@ export const UI_SETTINGS = {
   DATA_WITH_LONG_NUMERALS: 'data:withLongNumerals',
   DATE_FORMAT: 'dateFormat',
   DATE_FORMAT_TIMEZONE: 'dateFormat:tz',
+  WAZUH_EVENTS_INDEX: 'wazuh-events*',
 } as const;

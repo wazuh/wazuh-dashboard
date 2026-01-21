@@ -8,6 +8,7 @@ import { DataViewsContract } from './data_views';
 import { DataViewSavedObjectsClientCommon, DataViewUiSettingsCommon } from '../types';
 
 export type EnsureDefaultDataView = () => Promise<unknown | void> | undefined;
+const WAZUH_EVENTS_INDEX = 'wazuh-events*';
 
 export const createEnsureDefaultDataView = (
   uiSettings: DataViewUiSettingsCommon,
@@ -95,7 +96,7 @@ export const createEnsureDefaultDataView = (
     // If there is any index pattern created, set the first as default
     if (patterns.length >= 1) {
       defaultId = patterns[0];
-      await uiSettings.set('defaultIndex', defaultId);
+      await uiSettings.set('defaultIndex', WAZUH_EVENTS_INDEX);
     } else {
       const isEnhancementsEnabled = await uiSettings.get('query:enhancements:enabled');
       const shouldRedirect = !isEnhancementsEnabled;

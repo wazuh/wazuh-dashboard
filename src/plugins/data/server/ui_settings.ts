@@ -202,7 +202,7 @@ export function getUiSettings(
       name: i18n.translate('data.advancedSettings.defaultIndexTitle', {
         defaultMessage: 'Default index',
       }),
-      value: null,
+      value: UI_SETTINGS.WAZUH_EVENTS_INDEX,
       type: 'string',
       description: i18n.translate('data.advancedSettings.defaultIndexText', {
         defaultMessage: 'The index to access if no index is set',
