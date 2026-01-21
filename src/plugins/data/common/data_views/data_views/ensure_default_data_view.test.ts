@@ -87,7 +87,7 @@ describe('ensureDefaultDataView', () => {
 
     await ensureDefaultDataView.call(indexPatterns);
     expect(indexPatterns.getIds).toHaveBeenCalled();
-    expect(uiSettings.set).toHaveBeenCalledWith('wazuh-events*', 'pattern1');
+    expect(uiSettings.set).toHaveBeenCalledWith('defaultIndex', 'pattern1');
   });
 
   test('should redirect when no patterns available and enhancements disabled', async () => {
@@ -199,7 +199,7 @@ describe('ensureDefaultDataView', () => {
     });
 
     await ensureDefaultDataView.call(indexPatterns);
-    expect(uiSettings.set).toHaveBeenCalledWith('wazuh-events*', 'pattern1');
+    expect(uiSettings.set).toHaveBeenCalledWith('defaultIndex', 'pattern1');
   });
 
   test('should handle error in savedObjectsClient.find', async () => {
@@ -260,7 +260,7 @@ describe('ensureDefaultDataView', () => {
     });
 
     await ensureDefaultDataView.call(indexPatterns);
-    expect(uiSettings.set).toHaveBeenCalledWith('wazuh-events*', 'pattern1');
+    expect(uiSettings.set).toHaveBeenCalledWith('defaultIndex', 'pattern1');
   });
 
   test("should handle index patterns without throwing error when data sources reference's id is empty", async () => {
@@ -314,7 +314,7 @@ describe('ensureDefaultDataView', () => {
     });
 
     await ensureDefaultDataView.call(indexPatterns);
-    expect(uiSettings.set).toHaveBeenCalledWith('wazuh-events*', 'pattern1');
+    expect(uiSettings.set).toHaveBeenCalledWith('defaultIndex', 'pattern1');
     uiSettings.set.mockClear();
 
     savedObjectsClient.find.mockImplementation(async (params) => {
@@ -338,7 +338,7 @@ describe('ensureDefaultDataView', () => {
     });
 
     await ensureDefaultDataView.call(indexPatterns);
-    expect(uiSettings.set).toHaveBeenCalledWith('wazuh-events*', 'pattern2');
+    expect(uiSettings.set).toHaveBeenCalledWith('defaultIndex', 'pattern2');
     uiSettings.set.mockClear();
 
     savedObjectsClient.find.mockImplementation(async (params) => {
@@ -358,7 +358,7 @@ describe('ensureDefaultDataView', () => {
     });
 
     await ensureDefaultDataView.call(indexPatterns);
-    expect(uiSettings.set).toHaveBeenCalledWith('wazuh-events*', 'pattern1');
+    expect(uiSettings.set).toHaveBeenCalledWith('defaultIndex', 'pattern1');
   });
 
   test('should not throw error when getDataSource throws error', async () => {
