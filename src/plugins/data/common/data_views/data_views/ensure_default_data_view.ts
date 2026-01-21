@@ -95,7 +95,7 @@ export const createEnsureDefaultDataView = (
     // If there is any index pattern created, set the first as default
     if (patterns.length >= 1) {
       defaultId = patterns[0];
-      await uiSettings.set('defaultIndex', defaultId);
+      await uiSettings.set('wazuh-events*', defaultId);
     } else {
       const isEnhancementsEnabled = await uiSettings.get('query:enhancements:enabled');
       const shouldRedirect = !isEnhancementsEnabled;
