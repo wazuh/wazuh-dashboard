@@ -17,6 +17,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 ### Changed
 
+- Changed default index pattern settings key from `defaultIndex` to `wazuh-events*` [#1090](https://github.com/wazuh/wazuh-dashboard/issues/1090)
 - Changed the location of the wazuh-dashboard service to match with the other Wazuh components [#805](https://github.com/wazuh/wazuh-dashboard/issues/805)
 - Changed the default value of `metaFields` and `timepicker:timeDefaults` settings [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 
