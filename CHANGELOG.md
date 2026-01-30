@@ -10,6 +10,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Health check service [#811](https://github.com/wazuh/wazuh-dashboard/pull/811) [#866](https://github.com/wazuh/wazuh-dashboard/pull/866) [#961](https://github.com/wazuh/wazuh-dashboard/pull/961) [#1031](https://github.com/wazuh/wazuh-dashboard/pull/1031)
 - Added Health Check plugin [#870](https://github.com/wazuh/wazuh-dashboard/pull/870) [#946](https://github.com/wazuh/wazuh-dashboard/pull/946)
 - Added manager host configuration for the default configuration file [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
+- Set v9 theme as default [#1092](https://github.com/wazuh/wazuh-dashboard/pull/1092)
 
 ### Removed
 
