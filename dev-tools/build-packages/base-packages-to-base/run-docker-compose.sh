@@ -5,6 +5,8 @@ export WAZUH_DASHBOARD_BRANCH=""
 export WAZUH_SECURITY_PLUGIN_BRANCH=""
 export WAZUH_DASHBOARD_REPORTING_BRANCH=""
 export WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH=""
+export WAZUH_DASHBOARD_ALERTING_BRANCH=""
+export WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH=""
 export ARCHITECTURE="amd"
 export NODE_VERSION="22.22.0"
 
@@ -15,6 +17,8 @@ run_docker_compose() {
   echo "WAZUH_DASHBOARD_BRANCH: $WAZUH_DASHBOARD_BRANCH"
   echo "WAZUH_DASHBOARD_REPORTING_BRANCH: $WAZUH_DASHBOARD_REPORTING_BRANCH"
   echo "WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH: $WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH"
+  echo "WAZUH_DASHBOARD_ALERTING_BRANCH: $WAZUH_DASHBOARD_ALERTING_BRANCH"
+  echo "WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH: $WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH"
   echo "ARCHITECTURE: $ARCHITECTURE"
   echo "NODE_VERSION: $NODE_VERSION"
   docker-compose up -d
@@ -83,6 +87,22 @@ main() {
         help 0
       fi
       ;;
+    "-al" | "--alerting")
+      if [ -n "${2}" ]; then
+        WAZUH_DASHBOARD_ALERTING_BRANCH="${2}"
+        shift 2
+      else
+        help 0
+      fi
+      ;;
+    "-no" | "--notifications")
+      if [ -n "${2}" ]; then
+        WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH="${2}"
+        shift 2
+      else
+        help 0
+      fi
+      ;;
     "--arm")
       ARCHITECTURE="arm"
       shift 1
@@ -103,8 +123,8 @@ main() {
     esac
   done
 
-  if [ -z "$WAZUH_DASHBOARD_PLUGINS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_BRANCH" ] | [ -z "$WAZUH_SECURITY_PLUGIN_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_REPORTING_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH" ]; then
-    echo "You must specify the app, base, security, reporting and securityAnalytics."
+  if [ -z "$WAZUH_DASHBOARD_PLUGINS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_BRANCH" ] | [ -z "$WAZUH_SECURITY_PLUGIN_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_REPORTING_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_ALERTING_BRANCH" ] | [ -z "$WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH" ]; then
+    echo "You must specify the app, base, security, reporting, securityAnalytics, alerting and notifications."
     help 1
   fi
 

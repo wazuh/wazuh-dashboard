@@ -22,6 +22,14 @@ for plugin in $plugins; do
     if [[ $plugin == "wazuh-dashboard-security-analytics" ]]; then
       git clone --depth 1 --branch ${WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH} https://github.com/wazuh/$plugin.git
     fi
+    # Clone the Wazuh dashboard notifications plugin
+    if [[ $plugin == "wazuh-dashboard-notifications" ]]; then
+      git clone --depth 1 --branch ${WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH} https://github.com/wazuh/$plugin.git
+    fi
+    # Clone the Wazuh dashboard alerting plugin
+    if [[ $plugin == "wazuh-dashboard-alerting" ]]; then
+      git clone --depth 1 --branch ${WAZUH_DASHBOARD_ALERTING_BRANCH} https://github.com/wazuh/$plugin.git
+    fi
     # Clone the Wazuh dashboards plugins and move the plugins to the plugins folder
     if [[ $plugin == "wazuh-dashboard-plugins" ]]; then
       git clone --depth 1 --branch ${WAZUH_DASHBOARD_PLUGINS_BRANCH} https://github.com/wazuh/$plugin.git

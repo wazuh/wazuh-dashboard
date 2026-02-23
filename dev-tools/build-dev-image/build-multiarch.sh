@@ -2,14 +2,16 @@
 
 # Default values
 NODE_VERSION="22.22.0"
-OPENSEARCH_DASHBOARD_VERSION="3.3.0.0"
+OPENSEARCH_DASHBOARD_VERSION="3.5.0.0"
 WAZUH_DASHBOARD_BRANCH="main"
 WAZUH_DASHBOARD_SECURITY_BRANCH="main"
 WAZUH_DASHBOARD_REPORTING_BRANCH="main"
 WAZUH_DASHBOARD_PLUGINS_BRANCH="main"
 WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH="main"
+WAZUH_DASHBOARD_ALERTING_BRANCH="main"
+WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH="main"
 PLATFORM="linux/amd64,linux/arm64"
-TAG="3.3.0-5.0.0"
+TAG="3.5.0-5.0.0"
 PUSH=false
 
 # Function to show help
@@ -25,6 +27,8 @@ OPTIONS:
     -r, --reporting-branch          Wazuh Dashboard Reporting branch (default: $WAZUH_DASHBOARD_REPORTING_BRANCH)
     -p, --plugins-branch            Wazuh Dashboard Plugins branch (default: $WAZUH_DASHBOARD_PLUGINS_BRANCH)
     -sa, --security-analytics-branch  Wazuh Dashboard Security Analytics branch (default: $WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH)
+    -al, --alerting-branch          Wazuh Dashboard Alerting branch (default: $WAZUH_DASHBOARD_ALERTING_BRANCH)
+    -no, --notifications-branch      Wazuh Dashboard Notifications branch (default: $WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH)
     -t, --tag                       Image tag (default: $TAG)
     -pl, --platform                 Target platform (default: $PLATFORM)
     --push                          Push image to registry
@@ -33,7 +37,7 @@ OPTIONS:
 EXAMPLES:
     $0 --wazuh-branch main --tag latest
     $0 -w develop -s develop -r develop -p develop --push
-    $0 --node-version 18.19.0 --tag 3.3.0-1.0.0 --push
+    $0 --node-version 22.22.0 --tag 3.5.0-1.0.0 --push
 EOF
 }
 
@@ -66,6 +70,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         -sa|--security-analytics-branch)
             WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH="$2"
+            shift 2
+            ;;
+        -al|--alerting-branch)
+            WAZUH_DASHBOARD_ALERTING_BRANCH="$2"
+            shift 2
+            ;;
+        -no|--notifications-branch)
+            WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH="$2"
             shift 2
             ;;
         -t|--tag)
@@ -101,6 +113,8 @@ echo "Security Branch: $WAZUH_DASHBOARD_SECURITY_BRANCH"
 echo "Reporting Branch: $WAZUH_DASHBOARD_REPORTING_BRANCH"
 echo "Plugins Branch: $WAZUH_DASHBOARD_PLUGINS_BRANCH"
 echo "Security Analytics Branch: $WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH"
+echo "Alerting Branch: $WAZUH_DASHBOARD_ALERTING_BRANCH"
+echo "Notifications Branch: $WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH"
 echo "Tag: quay.io/wazuh/osd-dev:$TAG"
 echo "Platform: $PLATFORM"
 echo "Push: $PUSH"
@@ -120,6 +134,8 @@ BUILDX_ARGS=(
     --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH="$WAZUH_DASHBOARD_REPORTING_BRANCH"
     --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH="$WAZUH_DASHBOARD_PLUGINS_BRANCH"
     --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH="$WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH"
+    --build-arg WAZUH_DASHBOARD_ALERTING_BRANCH="$WAZUH_DASHBOARD_ALERTING_BRANCH"
+    --build-arg WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH="$WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH"
     -t quay.io/wazuh/osd-dev:"$TAG"
     -f wzd.dockerfile
 )

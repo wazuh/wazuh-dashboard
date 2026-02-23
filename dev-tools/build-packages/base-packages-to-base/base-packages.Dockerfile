@@ -6,6 +6,8 @@
 #         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH=main \
+#         --build-arg WAZUH_DASHBOARD_ALERTING_BRANCH=main \
+#         --build-arg WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH=main \
 #         --build-arg ARCHITECTURE=arm \
 #         -t wazuh-packages-to-base:5.0.0 \
 #         -f base-packages.Dockerfile .
@@ -18,7 +20,9 @@ ARG WAZUH_DASHBOARD_SECURITY_BRANCH
 ARG WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH
 ARG WAZUH_DASHBOARD_PLUGINS_BRANCH
 ARG WAZUH_DASHBOARD_REPORTING_BRANCH
-ENV OPENSEARCH_DASHBOARDS_VERSION=3.3.0
+ARG WAZUH_DASHBOARD_ALERTING_BRANCH
+ARG WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH
+ENV OPENSEARCH_DASHBOARDS_VERSION=3.5.0
 ENV ENV_ARCHITECTURE=${ARCHITECTURE}
 USER root
 RUN apt-get update && apt-get install -y jq && mkdir -p /usr/local/lib/wazuh
@@ -31,6 +35,8 @@ ADD ./base-packages-to-base/repositories/plugins/wazuh-dashboard-security-analyt
 ADD ./base-packages-to-base/repositories/plugins/wazuh-security-dashboards-plugin.sh /home/node/repositories/plugins/wazuh-security-dashboards-plugin.sh
 ADD ./base-packages-to-base/repositories/plugins/wazuh-dashboard-reporting.sh /home/node/repositories/plugins/wazuh-dashboard-reporting.sh
 ADD ./base-packages-to-base/repositories/plugins/wazuh-dashboard-plugins.sh /home/node/repositories/plugins/wazuh-dashboard-plugins.sh
+ADD ./base-packages-to-base/repositories/plugins/wazuh-dashboard-alerting.sh /home/node/repositories/plugins/wazuh-dashboard-alerting.sh
+ADD ./base-packages-to-base/repositories/plugins/wazuh-dashboard-notifications.sh /home/node/repositories/plugins/wazuh-dashboard-notifications.sh
 RUN bash /home/node/clone-plugins.sh
 
 FROM node:${NODE_VERSION}

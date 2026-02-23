@@ -40,13 +40,15 @@ chmod +x build-multiarch.sh
 # Single architecture build
 docker build \
   --build-arg NODE_VERSION=22.22.0 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
-  --build-arg WAZUH_DASHBOARD_BRANCH=migrate-main-to-3.3.0 \
-  --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=migrate-main-to-3.3.0.0 \
-  --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=migrate-main-to-3.3.0.0 \
-  --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=migrate-main-to-3.3.0 \
-  --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH=migrate-main-to-3.3.0 \
-  -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.5.0.0 \
+  --build-arg WAZUH_DASHBOARD_BRANCH=migrate-main-to-3.5.0 \
+  --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=migrate-main-to-3.5.0.0 \
+  --build-arg WAZUH_DASHBOARD_REPORTING_BRANCH=migrate-main-to-3.5.0.0 \
+  --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=migrate-main-to-3.5.0 \
+  --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH=migrate-main-to-3.5.0.0 \
+  --build-arg WAZUH_DASHBOARD_ALERTING_BRANCH=main \
+  --build-arg WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH=maim \
+  -t quay.io/wazuh/osd-dev:3.5.0-5.0.0 \
   -f wzd.dockerfile .
 ```
 
@@ -59,13 +61,15 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 | Option                        | Short | Description                                | Default                   |
 | ----------------------------- | ----- | ------------------------------------------ | ------------------------- |
 | `--node-version`              | `-n`  | Node.js version                            | `22.22.0`                 |
-| `--opensearch-version`        | `-o`  | OpenSearch Dashboard version               | `3.3.0.0`                 |
+| `--opensearch-version`        | `-o`  | OpenSearch Dashboard version               | `3.5.0.0`                 |
 | `--wazuh-branch`              | `-w`  | Wazuh Dashboard branch                     | `main`                    |
 | `--security-branch`           | `-s`  | Wazuh Dashboard Security branch            | `main`                    |
 | `--reporting-branch`          | `-r`  | Wazuh Dashboard Reporting branch           | `main`                    |
 | `--plugins-branch`            | `-p`  | Wazuh Dashboard Plugins branch             | `main`                    |
 | `--security-analytics-branch` | `-sa` | Wazuh Dashboard Security analystics branch | `main`                    |
-| `--tag`                       | `-t`  | Docker image tag                           | `3.3.0-5.0.0`             |
+| `--alerting-branch`           | `-al` | Wazuh Dashboard Alerting branch            | `main`                    |
+| `--notifications-branch`      | `-no` | Wazuh Dashboard Notifications branch       | `main`                    |
+| `--tag`                       | `-t`  | Docker image tag                           | `3.5.0-5.0.0`             |
 | `--platform`                  | `-pl` | Target platform (architecture)             | `linux/amd64,linux/arm64` |
 | `--push`                      |       | Push image to registry                     | `false` (local build)     |
 | `--help`                      | `-h`  | Show help message                          |                           |
@@ -77,7 +81,7 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 ./build-multiarch.sh --wazuh-branch main --tag latest
 
 # All branches from develop
-./build-multiarch.sh -w develop -s develop -r develop -p develop -sa develop --tag develop --push
+./build-multiarch.sh -w develop -s develop -r develop -p develop -sa develop -al develop -no develop --tag develop --push
 
 # Specific version build and push
 ./build-multiarch.sh --node-version 18.19.0 --tag 4.8.0-1.0.0 --push
@@ -96,17 +100,17 @@ For specific architecture builds:
 # For ARM64 (if you're on AMD64)
 docker build --platform linux/arm64 \
   --build-arg NODE_VERSION=22.22.0 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.5.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
-  -t quay.io/wazuh/osd-dev:3.3.0-arm64 \
+  -t quay.io/wazuh/osd-dev:3.5.0-arm64 \
   -f wzd.dockerfile .
 
 # For AMD64 (if you're on ARM64)
 docker build --platform linux/amd64 \
   --build-arg NODE_VERSION=22.22.0 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.5.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
-  -t quay.io/wazuh/osd-dev:3.3.0-amd64 \
+  -t quay.io/wazuh/osd-dev:3.5.0-amd64 \
   -f wzd.dockerfile .
 ```
 
@@ -120,9 +124,9 @@ docker buildx create --use --name multiarch
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   --build-arg NODE_VERSION=22.22.0 \
-  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
+  --build-arg OPENSEARCH_DASHBOARD_VERSION=3.5.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
-  -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \
+  -t quay.io/wazuh/osd-dev:3.5.0-5.0.0 \
   -f wzd.dockerfile \
   --push .
 ```
@@ -233,7 +237,7 @@ Example workflow:
 ./build-multiarch.sh --wazuh-branch feature/my-feature --tag feature-test
 
 # Integration testing
-./build-multiarch.sh -w develop -s develop -r develop -p develop -sa develop --tag develop-test
+./build-multiarch.sh -w develop -s develop -r develop -p develop -sa develop -al develop -no develop --tag develop-test
 
 # Release candidate
 ./build-multiarch.sh -w release/4.8.0 -s release/4.8.0 --tag 4.8.0-rc1 --push

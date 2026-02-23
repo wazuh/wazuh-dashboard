@@ -23,7 +23,7 @@ on:
       tag:
         description: 'Tag for the Docker image'
         required: false
-        default: '3.3.0'
+        default: '3.5.0'
         type: string
       node_version:
         description: 'Node.js version'
@@ -33,7 +33,7 @@ on:
       opensearch_version:
         description: 'Version of OpenSearch Dashboards plugins to install'
         required: false
-        default: '3.3.0.0'
+        default: '3.5.0.0'
         type: string
 
 jobs:

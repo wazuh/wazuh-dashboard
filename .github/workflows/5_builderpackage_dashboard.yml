@@ -138,12 +138,16 @@ jobs:
       WAZUH_SECURITY_SHA: ${{ steps.get-plugins.outputs.WAZUH_SECURITY_SHA }}
       WAZUH_REPORTING_SHA: ${{ steps.get-plugins.outputs.WAZUH_REPORTING_SHA }}
       WAZUH_SECURITY_ANALYTICS_SHA: ${{ steps.get-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA }}
+      WAZUH_ALERTING_SHA: ${{ steps.get-plugins.outputs.WAZUH_ALERTING_SHA }}
+      WAZUH_NOTIFICATIONS_SHA: ${{ steps.get-plugins.outputs.WAZUH_NOTIFICATIONS_SHA }}
       NAME_PLUGIN_WAZUH: ${{ steps.get-plugins.outputs.NAME_PLUGIN_WAZUH }}
       NAME_PLUGIN_CORE: ${{ steps.get-plugins.outputs.NAME_PLUGIN_CORE }}
       NAME_PLUGIN_CHECK_UPDATES: ${{ steps.get-plugins.outputs.NAME_PLUGIN_CHECK_UPDATES }}
       NAME_PLUGIN_SECURITY: ${{ steps.get-plugins.outputs.NAME_PLUGIN_SECURITY }}
       NAME_PLUGIN_REPORTING: ${{ steps.get-plugins.outputs.NAME_PLUGIN_REPORTING }}
       NAME_PLUGIN_SECURITY_ANALYTICS: ${{ steps.get-plugins.outputs.NAME_PLUGIN_SECURITY_ANALYTICS }}
+      NAME_PLUGIN_ALERTING: ${{ steps.get-plugins.outputs.NAME_PLUGIN_ALERTING }}
+      NAME_PLUGIN_NOTIFICATIONS: ${{ steps.get-plugins.outputs.NAME_PLUGIN_NOTIFICATIONS }}
     strategy:
       fail-fast: true
       matrix:
@@ -176,6 +180,16 @@ jobs:
             repository: https://github.com/wazuh/wazuh-dashboard-security-analytics.git
             outputNamePackage: NAME_PLUGIN_SECURITY_ANALYTICS
             outputSHA: WAZUH_SECURITY_ANALYTICS_SHA
+          - name: alerting
+            packageName: wazuh-dashboard-alerting
+            repository: https://github.com/wazuh/wazuh-dashboard-alerting.git
+            outputNamePackage: NAME_PLUGIN_ALERTING
+            outputSHA: WAZUH_ALERTING_SHA
+          - name: notifications
+            packageName: wazuh-dashboard-notifications
+            repository: https://github.com/wazuh/wazuh-dashboard-notifications.git
+            outputNamePackage: NAME_PLUGIN_NOTIFICATIONS
+            outputSHA: WAZUH_NOTIFICATIONS_SHA
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -251,7 +265,7 @@ jobs:
           VERSION=${{ needs.get-outputs-plugins.outputs.VERSION }}
           VERSION_OPENSEARCH=${{ needs.get-outputs-plugins.outputs.VERSION_OPENSEARCH }}
           REVISION=${{ needs.get-outputs-plugins.outputs.REVISION }}
-          ALL_COMMIT_SHAS=$(git rev-parse --short HEAD)-${{needs.get-outputs-plugins.outputs.WAZUH_PLUGINS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_REPORTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA}}
+          ALL_COMMIT_SHAS=$(git rev-parse --short HEAD)-${{needs.get-outputs-plugins.outputs.WAZUH_PLUGINS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_REPORTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_ALERTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_NOTIFICATIONS_SHA}}
           # Check the corresponding previous version to be used in the upgrade test
           sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
@@ -345,6 +359,12 @@ jobs:
           - name: security-analytics-dashboards
             packageName: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_SECURITY_ANALYTICS }}
             repo: wazuh/wazuh-dashboard-security-analytics
+          - name: wazuh-dashboard-alerting
+            packageName: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_ALERTING }}
+            repo: wazuh/wazuh-dashboard-alerting
+          - name: wazuh-dashboard-notifications
+            packageName: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_NOTIFICATIONS }}
+            repo: wazuh/wazuh-dashboard-notifications
     uses: ./.github/workflows/5_builderpackage_dashboard_plugins.yml
     with:
       reference_plugins: ${{ inputs.reference_plugins }}
@@ -406,6 +426,16 @@ jobs:
         with:
           name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_SECURITY_ANALYTICS }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-plugin
+      - name: Download alerting plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_ALERTING }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/alerting-plugin
+      - name: Download notifications plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_NOTIFICATIONS }}
+          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/notifications-plugin
 
       - name: Zip plugins
         run: |
@@ -414,6 +444,8 @@ jobs:
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-plugin
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/alerting-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/alerting-plugin
+          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/notifications-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/notifications-plugin
 
       - name: Build package
         run: |
@@ -425,6 +457,8 @@ jobs:
             -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
             -rp file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/report-package.zip \
             -sa file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-analytics-package.zip \
+            -al file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/alerting-package.zip \
+            -no file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/notifications-package.zip \
             --commit-sha ${{needs.setup-variables.outputs.ALL_COMMIT_SHAS}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 

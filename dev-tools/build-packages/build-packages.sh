@@ -9,6 +9,8 @@ revision="1"
 security=""
 reportPlugin=""
 securityAnalytics=""
+alerting=""
+notifications=""
 version="$(jq -r '.version' ${root_dir}/VERSION.json)"
 all_platforms="no"
 deb="no"
@@ -61,8 +63,8 @@ ctrl_c() {
 }
 
 get_packages(){
-  packages_list=(app base security reportPlugin securityAnalytics)
-  packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin"  "Report plugin" "Security analytics plugin")
+  packages_list=(app base security reportPlugin securityAnalytics alerting notifications)
+  packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin"  "Report plugin" "Security analytics plugin" "Alerting plugin" "Notifications plugin")
   valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
   mkdir -p ${tmp_dir}
   cd ${tmp_dir}
@@ -189,6 +191,8 @@ help() {
     echo "    -s,  --security <url/path>      Set the location of the .zip file containing the wazuh-security-dashboards-plugin."
     echo "    -sa, --securityAnalytics <url/path>          Set the location of the .zip file containing the wazuh-dashboard-security-analytics plugin."
     echo "    -rp, --reportPlugin <url/path>  Set the location of the .zip file containing the wazuh-reporting-plugin."
+    echo "    -al, --alertingPlugin <url/path>  Set the location of the .zip file containing the wazuh-alerting-plugin."
+    echo "    -no, --notificationsPlugin <url/path>  Set the location of the .zip file containing the wazuh-notifications-plugin."
     echo "         --all-platforms            Build for all platforms."
     echo "         --deb                      Build for deb."
     echo "         --rpm                      Build for rpm."
@@ -263,6 +267,22 @@ main() {
                 help 0
             fi
             ;;
+        "-al" | "--alertingPlugin")
+            if [ -n "${2}" ]; then
+                alerting="${2}"
+                shift 2
+            else
+                help 0
+            fi
+            ;;
+        "-no" | "--notificationsPlugin")
+            if [ -n "${2}" ]; then
+                notifications="${2}"
+                shift 2
+            else
+                help 0
+            fi
+            ;;
         "-r" | "--revision")
             if [ -n "${2}" ]; then
                 revision="${2}"
@@ -327,8 +347,8 @@ main() {
         esac
     done
 
-    if [ -z "$app" ] || [ -z "$base" ] || [ -z "$security" ] || [ -z "$reportPlugin" ] || [ -z "$securityAnalytics" ]; then
-        echo "You must specify the app, base, security, reportPlugin, and securityAnalytics."
+    if [ -z "$app" ] || [ -z "$base" ] || [ -z "$security" ] || [ -z "$reportPlugin" ] || [ -z "$securityAnalytics" ] || [ -z "$alerting" ] || [ -z "$notifications" ]; then
+        echo "You must specify the app, base, security, reportPlugin, securityAnalytics, alerting, and notifications."
         help 1
     fi
 
