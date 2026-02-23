@@ -35,7 +35,7 @@ bash run-docker-compose.sh \
     --securityAnalytics main \
     --reporting main \
     --arm \
-    --node-version 20.18.3
+    --node-version 22.22.0
 ```
 
 This example will create a packages folder that inside will have the packages divided by repository of the main branch of each one.

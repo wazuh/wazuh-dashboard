@@ -1,6 +1,6 @@
 # Usage:
 # docker build \
-#         --build-arg NODE_VERSION=20.18.3 \
+#         --build-arg NODE_VERSION=22.22.0 \
 #         --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
 #         --build-arg WAZUH_DASHBOARD_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=main \
@@ -10,7 +10,7 @@
 #         -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \
 #         -f wzd.dockerfile .
 
-ARG NODE_VERSION=20.18.3
+ARG NODE_VERSION=22.22.0
 FROM node:${NODE_VERSION} AS base
 ARG OPENSEARCH_DASHBOARD_VERSION
 ARG WAZUH_DASHBOARD_BRANCH

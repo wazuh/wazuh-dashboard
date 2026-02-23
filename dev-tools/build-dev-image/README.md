@@ -39,7 +39,7 @@ chmod +x build-multiarch.sh
 ```bash
 # Single architecture build
 docker build \
-  --build-arg NODE_VERSION=20.18.3 \
+  --build-arg NODE_VERSION=22.22.0 \
   --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=migrate-main-to-3.3.0 \
   --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=migrate-main-to-3.3.0.0 \
@@ -58,7 +58,7 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 
 | Option                        | Short | Description                                | Default                   |
 | ----------------------------- | ----- | ------------------------------------------ | ------------------------- |
-| `--node-version`              | `-n`  | Node.js version                            | `20.18.3`                 |
+| `--node-version`              | `-n`  | Node.js version                            | `22.22.0`                 |
 | `--opensearch-version`        | `-o`  | OpenSearch Dashboard version               | `3.3.0.0`                 |
 | `--wazuh-branch`              | `-w`  | Wazuh Dashboard branch                     | `main`                    |
 | `--security-branch`           | `-s`  | Wazuh Dashboard Security branch            | `main`                    |
@@ -95,7 +95,7 @@ For specific architecture builds:
 ```bash
 # For ARM64 (if you're on AMD64)
 docker build --platform linux/arm64 \
-  --build-arg NODE_VERSION=20.18.3 \
+  --build-arg NODE_VERSION=22.22.0 \
   --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
   -t quay.io/wazuh/osd-dev:3.3.0-arm64 \
@@ -103,7 +103,7 @@ docker build --platform linux/arm64 \
 
 # For AMD64 (if you're on ARM64)
 docker build --platform linux/amd64 \
-  --build-arg NODE_VERSION=20.18.3 \
+  --build-arg NODE_VERSION=22.22.0 \
   --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
   -t quay.io/wazuh/osd-dev:3.3.0-amd64 \
@@ -119,7 +119,7 @@ docker buildx create --use --name multiarch
 # Build for multiple platforms
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  --build-arg NODE_VERSION=20.18.3 \
+  --build-arg NODE_VERSION=22.22.0 \
   --build-arg OPENSEARCH_DASHBOARD_VERSION=3.3.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
   -t quay.io/wazuh/osd-dev:3.3.0-5.0.0 \

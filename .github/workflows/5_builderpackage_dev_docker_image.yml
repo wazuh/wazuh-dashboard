@@ -28,7 +28,7 @@ on:
       node_version:
         description: 'Node.js version'
         required: false
-        default: '20.18.3'
+        default: '22.22.0'
         type: string
       opensearch_version:
         description: 'Version of OpenSearch Dashboards plugins to install'
