@@ -32,6 +32,14 @@ Object {
       "wazuhVersion": Any<String>,
     },
   },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
+  },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
   },
@@ -88,6 +96,14 @@ Object {
       "version": Any<String>,
       "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
@@ -146,6 +162,14 @@ Object {
       "wazuhVersion": Any<String>,
     },
   },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
+  },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
   },
@@ -202,6 +226,14 @@ Object {
       "version": Any<String>,
       "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
@@ -264,6 +296,14 @@ Object {
       "wazuhVersion": Any<String>,
     },
   },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
+  },
   "i18n": Object {
     "translationsUrl": "/translations/en.json",
   },
@@ -321,6 +361,14 @@ Object {
       "wazuhVersion": Any<String>,
     },
   },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
+  },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
   },
@@ -377,6 +425,14 @@ Object {
       "version": Any<String>,
       "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",

@@ -204,7 +204,7 @@ export class HttpService
     this.notReadyServer = server;
 
     // Wazuh: decorate server
-    deps.enhanceNotReadyServer(server, basePath);
+    deps.enhanceNotReadyServer?.(server, basePath);
     // use hapi server while OpenSearchDashboardsResponseFactory doesn't allow specifying custom headers
     // https://github.com/elastic/kibana/issues/33779
     // Wazuh: comment

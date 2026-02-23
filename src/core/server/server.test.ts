@@ -58,8 +58,27 @@ const env = Env.createDefault(REPO_ROOT, getEnvOptions());
 const logger = loggingSystemMock.create();
 const rawConfigService = rawConfigServiceMock.create({});
 
+// Wazuh: added to mock healthcheck config
+const asDuration = (ms: number) => ({ asMilliseconds: () => ms });
+
+const healthCheckConfig = {
+  enabled: true,
+  retries_delay: asDuration(3000),
+  max_retries: 3,
+  interval: asDuration(5000),
+  server_not_ready_troubleshooting_link: 'https://example.com/troubleshooting',
+  checks_enabled: [],
+};
+
+const defaultConfig = { autoListen: true };
+
 beforeEach(() => {
-  mockConfigService.atPath.mockReturnValue(new BehaviorSubject({ autoListen: true }));
+  mockConfigService.atPath.mockImplementation((path: string) => {
+    if (path === 'healthcheck') {
+      return new BehaviorSubject(healthCheckConfig);
+    }
+    return new BehaviorSubject(defaultConfig);
+  });
   mockPluginsService.discover.mockResolvedValue({
     pluginTree: { asOpaqueIds: new Map(), asNames: new Map() },
     uiPlugins: { internal: new Map(), public: new Map(), browserConfigs: new Map() },

@@ -22,7 +22,8 @@ describe('configureDashboardServerIsNotReadyRoutes', () => {
     });
 
     // One catch-all HTML route + three static asset routes
-    expect(server.route).toHaveBeenCalledTimes(4);
+    // Wazuh: update expected route count to 5 to account for new reset styles route
+    expect(server.route).toHaveBeenCalledTimes(5);
 
     const calls = server.route.mock.calls.map((c: any[]) => c[0]);
 
