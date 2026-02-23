@@ -49,7 +49,7 @@ import {
 import { BehaviorSubject } from 'rxjs';
 import { REPO_ROOT } from '@osd/dev-utils';
 import { rawConfigServiceMock, getEnvOptions } from './config/mocks';
-import { Env } from './config';
+import { ConfigPath, Env } from './config';
 import { Server } from './server';
 
 import { loggingSystemMock } from './logging/logging_system.mock';
@@ -73,7 +73,7 @@ const healthCheckConfig = {
 const defaultConfig = { autoListen: true };
 
 beforeEach(() => {
-  mockConfigService.atPath.mockImplementation((path: string) => {
+  mockConfigService.atPath.mockImplementation((path: ConfigPath) => {
     if (path === 'healthcheck') {
       return new BehaviorSubject(healthCheckConfig);
     }
