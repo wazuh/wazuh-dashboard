@@ -66,8 +66,8 @@ log
 log "Extracting packages"
 log
 
-packages_list=(app base security reportPlugin securityAnalytics)
-packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "Report plugin" "Security analytics plugin")
+packages_list=(app base security reportPlugin securityAnalytics alertingDashboards notificationsDashboards)
+packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "Report plugin" "Security analytics plugin" "Alerting plugin" "Notifications plugin")
 
 for i in "${!packages_list[@]}"; do
   package_var="${packages_list[$i]}"
@@ -112,10 +112,6 @@ log
 category_explore='{id:"explore",label:"Explore",order:100,euiIconType:"search"}'
 category_label_indexer_management='defaultMessage:"Indexer management"'
 
-old_category_notifications='category:(_core$chrome=core.chrome)!==null&&_core$chrome!==void 0&&(_core$chrome=_core$chrome.navGroup)!==null&&_core$chrome!==void 0&&_core$chrome.getNavGroupEnabled()?undefined:_public.DEFAULT_APP_CATEGORIES.management'
-# Replace app category to Alerting app
-sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" $(js-file "alertingDashboards" "plugin")
-
 # Replace app category to Anomaly Detection app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/anomalyDetectionDashboards/target/public/anomalyDetectionDashboards.plugin.js
 
@@ -124,9 +120,6 @@ sed -i -e "s|forecastingEnabled=true|forecastingEnabled=false|g" ./plugins/anoma
 
 # Replace app category to Maps app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" $(js-file "customImportMapDashboards" "plugin")
-
-# Replace app category to Notifications app
-sed -i -e "s|${old_category_notifications}|category:${category_explore}|" $(js-file "notificationsDashboards" "plugin")
 
 # Replace app category to Index Management app
 sed -i -e "s|defaultMessage:\"Management\"|${category_label_indexer_management}|g" $(js-file "indexManagementDashboards" "plugin")
@@ -138,10 +131,8 @@ log
 # Generate compressed files
 files_to_recreate=(
   $(js-file "anomalyDetectionDashboards" "plugin")
-  $(js-file "alertingDashboards" "plugin")
   $(js-file "customImportMapDashboards" "plugin")
   $(js-file "indexManagementDashboards" "plugin")
-  $(js-file "notificationsDashboards" "plugin")
 )
 
 for value in "${files_to_recreate[@]}"; do
