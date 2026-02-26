@@ -315,7 +315,6 @@ rm -fr %{buildroot}
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/index.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/harden/index.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/harden/child_process.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/harden/lodash_template.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/no_transpilation.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/exit_on_warning.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/dist.js"
@@ -417,7 +416,7 @@ rm -fr %{buildroot}
 %changelog
 * Sat Apr 11 2026 support <info@wazuh.com> - 4.14.5
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-5.html
-* Wed Mar 12 2026 support <info@wazuh.com> - 5.0.0
+* Thu Mar 12 2026 support <info@wazuh.com> - 5.0.0
 - More info: https://documentation.wazuh.com/current/release-notes/release-5-0-0.html
 * Wed Mar 11 2026 support <info@wazuh.com> - 4.14.4
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-4.html
@@ -441,7 +440,7 @@ rm -fr %{buildroot}
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-11-2.html
 * Wed Mar 12 2025 support <info@wazuh.com> - 4.11.1
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-11-1.html
-* Wed Feb 21 2025 support <info@wazuh.com> - 4.11.0
+* Fri Feb 21 2025 support <info@wazuh.com> - 4.11.0
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-11-0.html
 * Thu Jan 16 2025 support <info@wazuh.com> - 4.10.1
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-10-1.html
