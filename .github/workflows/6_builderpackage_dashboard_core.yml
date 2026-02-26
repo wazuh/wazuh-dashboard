@@ -38,7 +38,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'ubuntu-24.04' || 'wz-linux-arm64' }}
+    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'wz-linux-amd64' || 'wz-linux-arm64' }}
     name: Build
     defaults:
       run:

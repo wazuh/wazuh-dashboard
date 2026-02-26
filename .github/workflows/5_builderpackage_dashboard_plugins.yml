@@ -32,11 +32,10 @@ on:
         description: 'Path to the plugins folder ( only for wazuh-dashboard-plugins repo )'
         required: false
 
-
 jobs:
   build-plugins:
     name: Build Plugin ${{ inputs.name }}
-    runs-on: ubuntu-latest
+    runs-on: wz-linux-amd64
     env:
       PLUGIN_REF: ${{ inputs.reference_plugins }}
     steps:

@@ -100,7 +100,7 @@ permissions:
 
 jobs:
   validate-job:
-    runs-on: ubuntu-24.04
+    runs-on: wz-linux-amd64
     name: Validate inputs
     steps:
       - name: Validate inputs
@@ -127,7 +127,7 @@ jobs:
   #   - If need to add more plugins from the wazuh-dashboard-plugins repo, outputSHA can be omitted because it will be retrieved from the main plugin
   # - Add them to the outputs section (NAME_PLUGIN_... and WAZUH_..._SHA)
   get-outputs-plugins:
-    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     name: get-outputs-plugins
     needs: [validate-job]
     outputs:
@@ -226,7 +226,7 @@ jobs:
           fi
 
   setup-variables:
-    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     needs: [validate-job, get-outputs-plugins]
     name: Setup variables
     outputs:
@@ -357,7 +357,7 @@ jobs:
 
   build-package:
     needs: [setup-variables, get-outputs-plugins, build-dashboard, build-plugins]
-    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     name: Generate packages
     steps:
       - name: Checkout code
@@ -448,7 +448,7 @@ jobs:
 
   test-package:
     needs: [setup-variables, build-package]
-    runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     strategy:
       fail-fast: false
     name: Test package
@@ -637,7 +637,7 @@ jobs:
 
   upload-package:
     needs: [setup-variables, test-package]
-    runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ inputs.architecture == 'arm64' && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     name: Upload package
     steps:
       - name: Set up AWS CLI
