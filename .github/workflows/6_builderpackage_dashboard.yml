@@ -127,7 +127,7 @@ jobs:
     #   - Final package name based on system, architecture and stage.
     #   - Architecture flags.
     #   - Version, revision and commit SHA information.
-    runs-on: ubuntu-24.04
+    runs-on: wz-linux-amd64
     name: Setup variables
     outputs:
       CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
@@ -235,7 +235,7 @@ jobs:
   validate-job:
     # 1. Validates valid combinations of system and architecture.
     # 2. Sets up AWS CLI for future uploads if needed.
-    runs-on: ubuntu-24.04
+    runs-on: wz-linux-amd64
     needs: setup-variables
     name: Validate job
     steps:
@@ -296,7 +296,7 @@ jobs:
     # 7. Finally, upload the resulting package as an artifact.
     needs:
       [setup-variables, build-main-plugins, build-base, build-security-plugin, build-report-plugin]
-    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     name: Generate packages
     steps:
       - name: Checkout code
