@@ -377,6 +377,7 @@ rm -fr %{buildroot}
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/keystore/errors.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_mixin.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/ui_render_mixin.js"
+%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/utils.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/index.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/osd_bundles_loader_source.js"
 %attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/index.js"
