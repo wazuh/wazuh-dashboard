@@ -66,7 +66,7 @@ log
 log "Extracting packages"
 log
 
-packages_list=(app base security reportPlugin securityAnalytics alertingDashboards notificationsDashboards)
+packages_list=(app base security reportPlugin securityAnalytics alerting notifications)
 packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin" "Report plugin" "Security analytics plugin" "Alerting plugin" "Notifications plugin")
 
 for i in "${!packages_list[@]}"; do

@@ -63,7 +63,7 @@ ctrl_c() {
 }
 
 get_packages(){
-  packages_list=(app base security reportPlugin securityAnalytics alertingDashboards notificationsDashboards)
+  packages_list=(app base security reportPlugin securityAnalytics alerting notifications)
   packages_names=("Wazuh plugins" "Wazuh Dashboard" "Security plugin"  "Report plugin" "Security analytics plugin" "Alerting plugin" "Notifications plugin")
   valid_url='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
   mkdir -p ${tmp_dir}
