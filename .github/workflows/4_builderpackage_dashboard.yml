@@ -110,7 +110,7 @@ permissions:
 
 jobs:
   setup-variables:
-    runs-on: ubuntu-24.04
+    runs-on: wz-linux-amd64
     name: Setup variables
     outputs:
       CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
@@ -220,7 +220,7 @@ jobs:
           echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
 
   validate-job:
-    runs-on: ubuntu-24.04
+    runs-on: wz-linux-amd64
     needs: setup-variables
     name: Validate inputs
     steps:
@@ -270,7 +270,7 @@ jobs:
 
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'ubuntu-22.04' }}
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     name: Generate packages
     steps:
       - name: Checkout code
@@ -347,7 +347,7 @@ jobs:
 
   test-package:
     needs: [setup-variables, build-package]
-    runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     strategy:
       fail-fast: false
     name: Test package
@@ -536,7 +536,7 @@ jobs:
 
   upload-package:
     needs: [setup-variables, test-package]
-    runs-on: ${{ inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ inputs.architecture == 'arm64' && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     name: Upload package
     steps:
       - name: Set up AWS CLI
