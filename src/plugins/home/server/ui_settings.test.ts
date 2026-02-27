@@ -16,19 +16,17 @@ describe('home settings', () => {
   const getValidationFn = (setting: UiSettingsParams) => (value: any) =>
     setting.schema.validate(value);
 
-  // Wazuh: Skip test because it is not used in Wazuh for now
-  describe.skip('home:useNewHomePage', () => {
+  describe('home:useNewHomePage', () => {
     const validate = getValidationFn(uiSettings['home:useNewHomePage']);
 
-    it('should only accept boolean values', () => {
-      expect(() => validate(true)).not.toThrow();
+    it('should only accept false', () => {
+      // Wazuh safeguard: this must stay hard-disabled until new home issues are fixed.
+      // If the feature is re-enabled, this test should be updated alongside ui_settings.ts
+      // and ui_settings_config.ts.
       expect(() => validate(false)).not.toThrow();
-      expect(() => validate('foo')).toThrowErrorMatchingInlineSnapshot(
-        `"expected value of type [boolean] but got [string]"`
-      );
-      expect(() => validate(12)).toThrowErrorMatchingInlineSnapshot(
-        `"expected value of type [boolean] but got [number]"`
-      );
+      expect(() => validate(true)).toThrow();
+      expect(() => validate('foo')).toThrow();
+      expect(() => validate(12)).toThrow();
     });
   });
 

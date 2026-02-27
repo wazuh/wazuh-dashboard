@@ -16,9 +16,8 @@ import { UiSettingsParams } from 'opensearch-dashboards/server';
 import { UiSettingScope } from '../../../core/server';
 import { SEARCH_WORKSPACE_DISMISS_GET_STARTED, USE_NEW_HOME_PAGE } from '../common/constants';
 
-// Wazuh: Remove the new home page configuration for now because it is not ready yet.
-// To add it again it must be exported
-// export const uiSettings: Record<string, UiSettingsParams> = {
+// Wazuh: keep the setting registered to avoid runtime errors in consumers that call
+// `uiSettings.get('home:useNewHomePage')`, but force it to remain disabled.
 export const uiSettings: Record<string, UiSettingsParams> = {
   [USE_NEW_HOME_PAGE]: {
     name: i18n.translate('home.ui_settings.useNewHomePage.label', {
@@ -28,7 +27,12 @@ export const uiSettings: Record<string, UiSettingsParams> = {
     description: i18n.translate('home.ui_settings.useNewHomePage.description', {
       defaultMessage: 'Try the new home page',
     }),
-    schema: schema.boolean(),
+    // Keep this setting hard-disabled while the new home/menu flow is unstable.
+    // To re-enable it in the future, switch back to schema.boolean(), remove readonly,
+    // and remove the ignoreUseNewHomePageOverride deprecation in ui_settings_config.ts.
+    // literal(false) also ignores stale persisted values set to true.
+    schema: schema.literal(false),
+    readonly: true,
     requiresPageReload: true,
   },
 };
