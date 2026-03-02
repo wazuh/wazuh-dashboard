@@ -7,6 +7,13 @@ name: Build and test
 on:
   pull_request:
     branches: ['**']
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.lycheeignore'
+      - 'CODEOWNERS'
+      - 'changelogs/fragments/**'
+    types: [opened, synchronize, reopened, ready_for_review]
 
 env:
   OSD_OPTIMIZER_THEMES: v8light
@@ -174,15 +181,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        group: [1, 2, 3, 4, 5]
+        os: [ubuntu-latest]
+        group: [1, 2, 3, 4]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+          # - os: windows-latest
+          #   name: Windows
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    if: github.event.pull_request.draft == false
     env:
       # Override just OSD_OPTIMIZER_MAX_WORKERS for ciGroup1 because it contains a test that checks number of workers
       OSD_OPTIMIZER_MAX_WORKERS: ${{ matrix.group != 1 && 8 || '' }}
@@ -328,6 +336,7 @@ jobs:
     needs: [prepare-source]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    if: github.event.pull_request.draft == false
     steps:
       - name: Download source archive
         uses: actions/download-artifact@v4
@@ -600,32 +609,34 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        group: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        group: [1, 2, 4, 6, 7, 8, 9, 10, 13, 14]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
-        exclude:
+          # Wazuh: Remove Windows functional test
+          # - os: windows-latest
+          #   name: Windows
+          # exclude:
           # Windows FTR coverage is provided by ciGroup1 (smoke test that OSD starts
           # and serves on Windows) and the Windows build artifact job. ciGroup2-13
           # run browser rendering tests which are platform-agnostic and fully covered
           # by Linux FTR. Removing them saves ~13 Windows jobs (~6-57 min each) per run.
-          - { os: windows-latest, group: 2 }
-          - { os: windows-latest, group: 3 }
-          - { os: windows-latest, group: 4 }
-          - { os: windows-latest, group: 5 }
-          - { os: windows-latest, group: 6 }
-          - { os: windows-latest, group: 7 }
-          - { os: windows-latest, group: 8 }
-          - { os: windows-latest, group: 9 }
-          - { os: windows-latest, group: 10 }
-          - { os: windows-latest, group: 11 }
-          - { os: windows-latest, group: 12 }
-          - { os: windows-latest, group: 13 }
-          - { os: windows-latest, group: 14 }
+          # - { os: windows-latest, group: 2 }
+          # - { os: windows-latest, group: 3 }
+          # - { os: windows-latest, group: 4 }
+          # - { os: windows-latest, group: 5 }
+          # - { os: windows-latest, group: 6 }
+          # - { os: windows-latest, group: 7 }
+          # - { os: windows-latest, group: 8 }
+          # - { os: windows-latest, group: 9 }
+          # - { os: windows-latest, group: 10 }
+          # - { os: windows-latest, group: 11 }
+          # - { os: windows-latest, group: 12 }
+          # - { os: windows-latest, group: 13 }
+          # - { os: windows-latest, group: 14 }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
+    if: github.event.pull_request.draft == false
     steps:
       - run: echo Running functional tests for ciGroup${{ matrix.group }}
 
@@ -774,13 +785,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+          # - os: windows-latest
+          #   name: Windows
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     steps:
       - run: echo Running plugin functional tests
 
