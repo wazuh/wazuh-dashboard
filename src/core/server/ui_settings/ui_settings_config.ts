@@ -49,7 +49,7 @@ const ignoreUseNewHomePageOverride: ConfigDeprecation = (settings, fromPath, log
 
   unset(settings, settingPath);
   log(
-    `"${settingPath}" is ignored in Wazuh because the new home page is not supported and remains disabled`
+    `"${settingPath}" is ignored because the new home page is not supported and remains disabled`
   );
   return settings;
 };
