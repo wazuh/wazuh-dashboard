@@ -66,7 +66,7 @@ describe('uiSettings deprecations', () => {
 
     expect(messages).toMatchInlineSnapshot(`
       Array [
-        "\\"uiSettings.overrides.home:useNewHomePage\\" is ignored in Wazuh because the new home page is not supported and remains disabled",
+        "\\"uiSettings.overrides.home:useNewHomePage\\" is ignored because the new home page is not supported and remains disabled",
       ]
     `);
     expect(migrated.uiSettings.overrides).toEqual({
