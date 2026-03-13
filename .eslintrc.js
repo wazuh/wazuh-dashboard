@@ -29,6 +29,16 @@
  */
 
 /**
+ * For new files created by Wazuh Contributors
+ */
+const OSD_WAZUH = `
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+`;
+
+/**
  * For new files created by OpenSearch Contributors
  */
 const OSD_NEW_HEADER = `
