@@ -12,7 +12,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Disabled home:useNewHomePage setting [#1132](https://github.com/wazuh/wazuh-dashboard/pull/1132)
 
-## Wazuh dashboard v4.14.4 - OpenSearch Dashboards 2.19.4 - Revision 01
+## Wazuh dashboard v4.14.4 - OpenSearch Dashboards 2.19.4 - Revision 02
 
 ### Added
 
