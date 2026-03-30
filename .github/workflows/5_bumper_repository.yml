@@ -32,6 +32,11 @@ on:
         description: 'Optional identifier for the run'
         required: false
         type: string
+      set_as_main:
+        description: 'Enable main branch mode: bump version values only, keep branch references pointing to main (use only on branch main)'
+        default: false
+        required: false
+        type: boolean
 
 jobs:
   bump:
@@ -88,12 +93,14 @@ jobs:
           STAGE: ${{ inputs.stage }}
           TAG: ${{ inputs.tag }}
           DATE: ${{ inputs.date }}
+          SET_AS_MAIN: ${{ inputs.set_as_main }}
         run: |
           script_params=""
           version=${{ env.VERSION }}
           stage=${{ env.STAGE }}
           tag=${{ env.TAG }}
           date=${{ env.DATE }}
+          set_as_main=${{ env.SET_AS_MAIN }}
 
           # Both version and stage provided
           if [[ -n "$version" && -n "$stage" && "$tag" != "true" ]]; then
@@ -106,6 +113,11 @@ jobs:
 
           if [[ -n "$date" ]]; then
             script_params+=" --date ${date}"
+          fi
+
+          # Append --set_as_main flag when enabled (keeps branch references pointing to main)
+          if [[ "$set_as_main" == "true" ]]; then
+            script_params="${script_params} --set_as_main"
           fi
 
           issue_number=$(echo "${{ inputs.issue-link }}" | awk -F'/' '{print $NF}')
@@ -122,7 +134,18 @@ jobs:
           echo "Running bump script"
           bash ${{ env.BUMP_SCRIPT_PATH }} ${{ steps.vars.outputs.script_params }}
 
+      - name: Detect if bump produced changes
+        id: bump_changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No file changes detected after bump. Skipping commit, PR creation and merge."
+          fi
+
       - name: Commit and push changes
+        if: steps.bump_changes.outputs.has_changes == 'true'
         run: |
           git add .
           git commit -m "feat: bump ${{ github.ref_name }}"
@@ -130,6 +153,7 @@ jobs:
 
       - name: Create pull request
         id: create_pr
+        if: steps.bump_changes.outputs.has_changes == 'true'
         run: |
           gh auth setup-git
           PR_URL=$(gh pr create \
@@ -142,6 +166,7 @@ jobs:
           echo "pull_request_url=${PR_URL}" >> $GITHUB_OUTPUT
 
       - name: Merge pull request
+        if: steps.bump_changes.outputs.has_changes == 'true'
         run: |
           # Any checks for the PR are bypassed since the branch is expected to be functional (i.e. the bump process does not introduce any bugs)
           gh pr merge "${{ steps.create_pr.outputs.pull_request_url }}" --merge --admin
@@ -150,6 +175,10 @@ jobs:
         run: |
           echo "Bump complete."
           echo "Branch: ${{ steps.vars.outputs.branch_name }}"
-          echo "PR: ${{ steps.create_pr.outputs.pull_request_url }}"
-          echo "Bumper scripts logs:"
+          if [[ "${{ steps.bump_changes.outputs.has_changes }}" == "true" ]]; then
+            echo "PR: ${{ steps.create_pr.outputs.pull_request_url }}"
+          else
+            echo "PR: Not created (no changes to commit)."
+          fi
+          echo "Bumper script logs:"
           cat ${BUMP_LOG_PATH}/repository_bumper*log
