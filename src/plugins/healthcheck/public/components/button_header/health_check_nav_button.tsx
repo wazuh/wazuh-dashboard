@@ -9,7 +9,7 @@ import {
   EuiButtonEmpty,
   EuiContextMenuPanel,
   EuiHeaderSectionItemButton,
-  EuiHealth,
+  EuiIcon,
   EuiPopover,
   EuiToolTip,
   EuiText,
@@ -58,7 +58,18 @@ export const HealthCheckNavButton = ({
 
   const isPlacedInLeftNav = coreStart.uiSettings.get('home:useNewHomePage');
 
-  const overallStatusIndicator = <EuiHealth color={mapTaskStatusToHealthColor(status)} />;
+  const overallStatusIndicator = (
+    <EuiIcon
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      type="dot"
+      color={mapTaskStatusToHealthColor(status)}
+      aria-hidden
+    />
+  );
 
   // ToDo: Add aria-label and tooltip when isPlacedInLeftNav is true
   const button = (
@@ -132,6 +143,7 @@ export const HealthCheckNavButton = ({
         setPopoverOpen(false);
       }}
       panelPaddingSize="m"
+      panelStyle={{ marginLeft: '-1px' }}
     >
       {contextMenuPanel}
     </EuiPopover>
