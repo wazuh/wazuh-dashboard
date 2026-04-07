@@ -17,6 +17,8 @@ REVISION="00"
 DATE=""
 CURRENT_VERSION=""
 TAG=false
+SET_AS_MAIN=false
+SKIP_URLS="no"
 WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/4_builderpackage_dashboard.yml"
 DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
 README_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/README.md"
@@ -70,7 +72,7 @@ sed_inplace() {
 
 # Function to show usage
 usage() {
-  echo "Usage: $0 [--version VERSION --stage STAGE | --tag] [--date DATE] [--help]"
+  echo "Usage: $0 [--version VERSION --stage STAGE | --tag] [--date DATE] [--set_as_main] [--help]"
   echo ""
   echo "Parameters:"
   echo "  --version VERSION   Specify the version (e.g., 4.6.0)"
@@ -84,6 +86,9 @@ usage() {
   echo "                      If --stage is not set, it will be stageless(e.g., v4.6.0)"
   echo "                      Otherwise it will be with the provided stage (e.g., v4.6.0-alpha1)"
   echo "                      If this is set, --version and --stage are not required."
+  echo "  --set_as_main       Enable main branch mode: bump version values only, keep branch"
+  echo "                      references pointing to main (alias: --set-as-main)"
+  echo "                      Use only when running on branch main to prepare a new version."
   echo "  --help              Display this help message"
   echo ""
   echo "Examples:"
@@ -92,6 +97,7 @@ usage() {
   echo "  $0 --tag --stage alpha1 --date 2025-04-15"
   echo "  $0 --tag --date 2025-04-15"
   echo "  $0 --tag"
+  echo "  $0 --version 5.0.0 --stage alpha0 --set_as_main"
 }
 
 # --- Core Logic Functions ---
@@ -119,9 +125,13 @@ parse_arguments() {
     --tag)
       TAG=true
       shift
-  ;;
+      ;;
+    --set_as_main|--set-as-main)
+      SET_AS_MAIN=true
+      shift
+      ;;
     *)
-      log "ERROR: Unknown option: $1" # Log error instead of just echo
+      log "ERROR: Unknown option: $1"
       usage
       exit 1
       ;;
@@ -425,15 +435,29 @@ update_build_workflow() {
 
     if grep -qE '\.yml@[^"[:space:]]+' "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
       log "Pattern found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
-      # If the pattern exists, perform the substitution
-      sed_inplace -E "s/(\.yml@)[^\"[:space:]]+/\1${replacement}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
+      if [[ "$SKIP_URLS" == "yes" ]]; then
+        # set-as-main mode: only update versioned .yml@x.y.z refs, preserve .yml@main
+        sed_inplace -E "s|(\.yml@)${VERSION_PATTERN}|\1${replacement}|g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
+      else
+        # Normal mode: update all .yml@<ref> (versioned and main)
+        sed_inplace -E "s/(\.yml@)[^\"[:space:]]+/\1${replacement}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
+      fi
       modified=true
     else
       log "Pattern not found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Skipping update."
     fi
 
+    # Update default: 'main' branch input defaults only when not in set-as-main mode
+    if [[ "$SKIP_URLS" != "yes" ]]; then
+      if grep -qE "^[[:space:]]*default: 'main'" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
+        log "Branch input defaults found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
+        sed_inplace -E "s/^([[:space:]]*default: )'main'([[:space:]]*)$/\1'${VERSION}'\2/" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
+        modified=true
+      fi
+    fi
+
     if [[ $modified == true ]]; then
-      log "Successfully updated references to @${replacement} in $(basename "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE")"
+      log "Successfully updated references in $(basename "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE")"
     fi
   fi
 }
@@ -755,6 +779,23 @@ update_deb_changelog() {
   fi
 }
 
+update_branch_reference_defaults() {
+  local branch_files=(
+    "${REPO_PATH}/.github/workflows/5_builderpackage_dashboard_core.yml"
+    "${REPO_PATH}/.github/workflows/5_builderpackage_dev_docker_image.yml"
+  )
+
+  for f in "${branch_files[@]}"; do
+    if [ -f "$f" ]; then
+      log "Updating branch input defaults in $(basename $f)..."
+      sed_inplace -E "s/^([[:space:]]*default: )'main'([[:space:]]*)$/\1'${VERSION}'\2/" "$f"
+      log "Successfully updated branch input defaults in $(basename $f)."
+    else
+      log "WARNING: $(basename $f) not found. Skipping branch defaults update."
+    fi
+  done
+}
+
 # --- Main Execution ---
 main() {
   # Initialize log file
@@ -772,6 +813,14 @@ main() {
   # Parse and validate arguments
   parse_arguments "$@"
   validate_input
+
+  # Determine if main branch references should be preserved
+  if [ "$SET_AS_MAIN" = true ]; then
+    SKIP_URLS="yes"
+    log "Main branch mode enabled: version values will be updated but branch references will remain pointing to main"
+  else
+    SKIP_URLS="no"
+  fi
 
   log "Version: $VERSION"
   log "Stage: $STAGE"
@@ -791,6 +840,9 @@ main() {
   update_root_version_json
   update_package_json
   update_build_workflow
+  if [[ "$SKIP_URLS" != "yes" ]]; then
+    update_branch_reference_defaults
+  fi
   update_base_package_dockerfile
   update_readme_for_base_packages
   update_rendering_service_test_snap
