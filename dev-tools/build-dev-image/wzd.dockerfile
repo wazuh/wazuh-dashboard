@@ -24,23 +24,24 @@ ARG WAZUH_DASHBOARD_ALERTING_BRANCH
 ARG WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH
 USER node
 RUN git clone --depth 1 --branch ${WAZUH_DASHBOARD_BRANCH} https://github.com/wazuh/wazuh-dashboard.git /home/node/kbn
-RUN chown node.node /home/node/kbn
 
 WORKDIR /home/node/kbn
 RUN yarn osd bootstrap --production
 
 WORKDIR /home/node/kbn/plugins
 
-ADD ./install-plugins.sh /home/node/install-plugins.sh
-ADD ./plugins /home/node/plugins
+COPY ./install-plugins.sh /home/node/install-plugins.sh
+COPY ./plugins /home/node/plugins
 RUN bash /home/node/install-plugins.sh
+
+WORKDIR /home/node/kbn
+COPY ./warmup-optimizer.sh /home/node/warmup-optimizer.sh
+COPY ./warmup-opensearch_dashboards.yml /home/node/warmup-opensearch_dashboards.yml
+RUN bash /home/node/warmup-optimizer.sh && rm -rf /home/node/kbn/.git
 
 FROM node:${NODE_VERSION}
 USER node
 COPY --chown=node:node --from=base /home/node/kbn /home/node/kbn
 WORKDIR /home/node/kbn
-ADD ./entrypoint.sh /usr/local/bin/entrypoint.sh
-USER root
-RUN chmod +x /usr/local/bin/entrypoint.sh
-USER node
+COPY --chmod=755 ./entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
