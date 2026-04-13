@@ -37,7 +37,7 @@ RUN bash /home/node/install-plugins.sh
 WORKDIR /home/node/kbn
 COPY ./warmup-optimizer.sh /home/node/warmup-optimizer.sh
 COPY ./warmup-opensearch_dashboards.yml /home/node/warmup-opensearch_dashboards.yml
-RUN bash /home/node/warmup-optimizer.sh && rm -rf /home/node/kbn/.git
+RUN bash /home/node/warmup-optimizer.sh
 
 FROM node:${NODE_VERSION}
 USER node
