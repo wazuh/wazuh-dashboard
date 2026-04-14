@@ -51,7 +51,20 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install Yarn
-        run: npm install -g yarn@^1.22.10
+        run: |
+          npm install -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      - name: Initialize Yarn Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-
 
       - name: Check if plugin reference exists or use github.ref_name
         run: |
@@ -92,7 +105,7 @@ jobs:
       - name: Bootstrap with Plugins
         env:
           GIT_REF: ${{ env.PLUGIN_REF }}
-        run: yarn osd bootstrap --single-version=loose
+        run: yarn osd bootstrap --single-version=loose || yarn osd bootstrap --single-version=loose
 
       - name: Build Plugin
         working-directory: plugins/${{ inputs.name }}
