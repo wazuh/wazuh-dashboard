@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         description: 'Version to build'
-        default: '3.5.0'
+        default: '3.6.0'
         required: true
         type: string
       plugin_ref:
@@ -151,7 +151,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: plugins
-          pattern: "*-${{ env.VERSION }}"
+          pattern: '*-${{ env.VERSION }}'
           merge-multiple: true
 
       - name: Install Plugins

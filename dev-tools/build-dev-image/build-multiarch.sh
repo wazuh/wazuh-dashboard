@@ -2,7 +2,7 @@
 
 # Default values
 NODE_VERSION="22.22.0"
-OPENSEARCH_DASHBOARD_VERSION="3.5.0.0"
+OPENSEARCH_DASHBOARD_VERSION="3.6.0.0"
 WAZUH_DASHBOARD_BRANCH="main"
 WAZUH_DASHBOARD_SECURITY_BRANCH="main"
 WAZUH_DASHBOARD_REPORTING_BRANCH="main"
@@ -11,7 +11,7 @@ WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH="main"
 WAZUH_DASHBOARD_ALERTING_BRANCH="main"
 WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH="main"
 PLATFORM="linux/amd64,linux/arm64"
-TAG="3.5.0-5.0.0"
+TAG="3.6.0-5.0.0"
 PUSH=false
 
 # Function to show help
@@ -37,7 +37,7 @@ OPTIONS:
 EXAMPLES:
     $0 --wazuh-branch main --tag latest
     $0 -w develop -s develop -r develop -p develop --push
-    $0 --node-version 22.22.0 --tag 3.5.0-1.0.0 --push
+    $0 --node-version 22.22.0 --tag 3.6.0-1.0.0 --push
 EOF
 }
 
