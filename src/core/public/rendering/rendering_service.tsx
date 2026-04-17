@@ -58,10 +58,13 @@ export class RenderingService {
     const appUi = application.getComponent();
     const bannerUi = overlays.banners.getComponent();
 
+    const pathName = chromeUi.props.application?.history?.location?.pathname || '';
+    const classContent = pathName === '/app/login' ? 'content wz-login' : 'content';
+
     const root = createRoot(targetDomElement);
     root.render(
       <I18nProvider>
-        <div className="content" data-test-subj="opensearchDashboardsChrome">
+        <div className={classContent} data-test-subj="opensearchDashboardsChrome">
           {chromeUi}
 
           <AppWrapper
