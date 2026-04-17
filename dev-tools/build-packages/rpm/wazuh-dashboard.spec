@@ -130,7 +130,6 @@ fi
 
 %post
 setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
-setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/fallback/bin/node
 rm -f /usr/share/wazuh-dashboard/VERSION
 
 if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
