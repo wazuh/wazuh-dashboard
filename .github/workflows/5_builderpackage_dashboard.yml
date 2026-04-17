@@ -269,7 +269,7 @@ jobs:
           # Check the corresponding previous version to be used in the upgrade test
           sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
-          sudo apt-get update
+          sudo apt-get update || sudo apt-get update
           PREVIOUS=$(apt-cache madison wazuh-dashboard | grep -A 1 "$VERSION" | tail -1 | awk '{print $3}')
           if [ -z "$PREVIOUS" ]; then
             MAJOR_MINOR=$(echo "$VERSION" | cut -d '.' -f 1,2)$(echo ".")
@@ -533,11 +533,10 @@ jobs:
       - name: DEB - Test package upgrade
         if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
         run: |
-          sudo apt-get install debhelper tar curl libcap2-bin #debhelper version 9 or later
-          sudo apt-get install gnupg apt-transport-https
+          sudo apt-get install debhelper tar curl libcap2-bin gnupg apt-transport-https #debhelper version 9 or later
           sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
-          sudo apt-get update
+          sudo apt-get update || sudo apt-get update
           sudo apt-get -y install wazuh-dashboard=${{needs.setup-variables.outputs.PREVIOUS}}
           sudo  systemctl daemon-reload
           sudo  systemctl enable wazuh-dashboard
@@ -566,7 +565,7 @@ jobs:
         run: |
           git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git
           cd wazuh-automation
-          pip3 install -r deployability/deps/requirements.txt
+          pip3 install --retries 3 -r deployability/deps/requirements.txt
 
       - name: RPM - Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
