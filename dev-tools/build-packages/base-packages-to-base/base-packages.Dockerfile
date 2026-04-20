@@ -9,7 +9,7 @@
 #         --build-arg WAZUH_DASHBOARD_ALERTING_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH=main \
 #         --build-arg ARCHITECTURE=arm \
-#         -t wazuh-packages-to-base:5.0.1 \
+#         -t wazuh-packages-to-base:5.9.9 \
 #         -f base-packages.Dockerfile .
 
 ARG NODE_VERSION=22.22.0
