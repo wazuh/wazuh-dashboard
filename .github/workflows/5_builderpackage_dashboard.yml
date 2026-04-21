@@ -213,21 +213,20 @@ jobs:
       - name: Get outputs of wazuh-dashboard-plugins
         id: get-plugins
         run: |
-          # TODO: Refactor getting the commit SHA using git ls-remote, use git rev-parse in the plugin build instead. The git ls-remote is causing errors due to matching multiple branches with similar name when using /, e.g. bumper/main
           REPOSITORY=${{ matrix.plugin.repository }}
           REFERENCE="${{ inputs.reference_plugins }}"
           if [ -z "$REFERENCE" ]; then
             echo "No plugin reference provided, using github.ref_name: ${{ github.ref_name }}"
             REFERENCE="${{ github.ref_name }}"
-            SHA=$(git ls-remote $REPOSITORY "refs/heads/$REFERENCE" | cut -f1 | cut -c1-7)
+            SHA=$(git ls-remote $REPOSITORY "$REFERENCE" | cut -f1 | cut -c1-7)
             PACKAGE_NAME=${{matrix.plugin.packageName}}_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
           else
             echo "Using reference: $REFERENCE"
-            SHA=$(git ls-remote $REPOSITORY "refs/heads/$REFERENCE" | cut -f1 | cut -c1-7)
+            SHA=$(git ls-remote $REPOSITORY "$REFERENCE" | cut -f1 | cut -c1-7)
             if [ -z "$SHA" ]; then
               echo "Reference $REFERENCE not found, trying with '${{ github.ref_name }}' branch"
               REFERENCE="${{ github.ref_name }}"
-              SHA=$(git ls-remote $REPOSITORY "refs/heads/$REFERENCE" | cut -f1 | cut -c1-7)
+              SHA=$(git ls-remote $REPOSITORY $REFERENCE | cut -f1 | cut -c1-7)
             fi
             PACKAGE_NAME=${{matrix.plugin.packageName}}_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
           fi
