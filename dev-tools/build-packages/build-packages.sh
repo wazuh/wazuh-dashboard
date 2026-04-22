@@ -78,7 +78,9 @@ get_packages(){
     log "Downloading ${package_name}"
 
     if [[ $package_url =~ $valid_url ]]; then
-      if ! run_with_retry curl --output "packages/${package_var}.zip" --silent --show-error --fail "${package_url}"; then
+      if ! run_with_retry curl --output "packages/${package_var}.zip" --silent --show-error --fail \
+          --retry "${RETRY_MAX_ATTEMPTS}" --retry-delay "${RETRY_DELAY_SECONDS}" --retry-connrefused \
+          "${package_url}"; then
         echo "Failed to download ${package_name} after ${RETRY_MAX_ATTEMPTS} attempts: ${package_url}"
         clean 1
       fi
@@ -91,8 +93,6 @@ get_packages(){
   done
   cd ..
 }
-
-source ../utils/retry-operation.sh
 
 build_tar() {
   log

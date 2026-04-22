@@ -89,7 +89,7 @@ jobs:
           echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }}" >> $GITHUB_ENV
 
       - name: Run bootstrap
-        run: yarn osd bootstrap
+        run: yarn osd bootstrap || yarn osd bootstrap
 
       - name: Build
         run: yarn build-platform --${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'linux' || 'linux-arm'}} --skip-os-packages --release
