@@ -146,6 +146,8 @@ jobs:
             --reporting-branch "${{ needs.extract-versions.outputs.branch }}" \
             --plugins-branch "${{ needs.extract-versions.outputs.branch }}" \
             --security-analytics-branch "${{ needs.extract-versions.outputs.branch }}" \
+            --alerting-branch "${{ needs.extract-versions.outputs.branch }}" \
+            --notifications-branch "${{ needs.extract-versions.outputs.branch }}" \
             --tag "${{ needs.extract-versions.outputs.tag }}-${{ matrix.arch }}" \
             --platform "${{ matrix.platform }}" \
             --push
