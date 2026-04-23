@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         description: 'Version to build'
-        default: '3.0.0'
+        default: '3.6.0'
         required: true
         type: string
       plugin_ref:
@@ -144,14 +144,14 @@ jobs:
           # Create directories
           mkdir -p target
           mkdir -p opensearch-dashboards-${{ env.VERSION }}
-          
+
           tar -xzf opensearch-dashboards-*.tar.gz -C opensearch-dashboards-${{ env.VERSION }} --strip-components=1
 
       - name: Download All Plugin Artifacts
         uses: actions/download-artifact@v4
         with:
           path: plugins
-          pattern: "*-${{ env.VERSION }}"
+          pattern: '*-${{ env.VERSION }}'
           merge-multiple: true
 
       - name: Install Plugins

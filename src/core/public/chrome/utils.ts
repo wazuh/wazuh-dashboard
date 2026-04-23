@@ -234,7 +234,7 @@ function getCategoryLocalStorageKey(id: string) {
 }
 
 export function getIsCategoryOpen(id: string, storage: Storage) {
-  const value = storage.getItem(getCategoryLocalStorageKey(id)) ?? 'true';
+  const value = storage.getItem(getCategoryLocalStorageKey(id)) ?? 'false';
 
   return value === 'true';
 }
@@ -269,10 +269,13 @@ export function searchNavigationLinks(
         const titleMatch = title && title.toLowerCase().includes(query.toLowerCase());
         const parentTitleMatch =
           parentNavLinkTitle && parentNavLinkTitle.toLowerCase().includes(query.toLowerCase());
+        /* Wazuh BEGIN */
+        const categoryMatch = link.category?.label?.toLowerCase().includes(query.toLowerCase());
+        /* Wazuh END */
         return (
           !link.hidden &&
           !link.disabled &&
-          (titleMatch || parentTitleMatch) &&
+          (titleMatch || parentTitleMatch || categoryMatch) &&
           !parentNavLinkIds.includes(link.id)
         );
       })

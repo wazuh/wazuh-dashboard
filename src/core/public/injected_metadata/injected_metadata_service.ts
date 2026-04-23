@@ -30,6 +30,7 @@
 
 import { get } from 'lodash';
 import { deepFreeze } from '@osd/std';
+import { HealthCheckConfig } from 'src/core/common/healthcheck';
 import { DiscoveredPlugin, PluginName } from '../../server';
 import {
   EnvironmentMode,
@@ -53,6 +54,7 @@ export interface InjectedMetadataParams {
     version: string;
     buildNumber: number;
     branch: string;
+    wazuhVersion: string;
     basePath: string;
     serverBasePath: string;
     category?: AppCategory;
@@ -80,6 +82,8 @@ export interface InjectedMetadataParams {
     keyboardShortcuts: {
       enabled: boolean;
     };
+    // Wazuh
+    healthCheck: HealthCheckConfig;
   };
 }
 
@@ -165,6 +169,21 @@ export class InjectedMetadataService {
       getKeyboardShortcuts: () => {
         return this.state.keyboardShortcuts;
       },
+
+      // Wazuh
+      getWazuhVersion: () => {
+        return this.state.wazuhVersion;
+      },
+
+      // Wazuh
+      getWazuhDocVersion: () => {
+        return this.state.wazuhVersion?.split('.').slice(0, 2).join('.') || 'current';
+      },
+
+      // Wazuh
+      getHealthCheck: () => {
+        return this.state.healthCheck;
+      },
     };
   }
 }
@@ -204,6 +223,10 @@ export interface InjectedMetadataSetup {
   getKeyboardShortcuts: () => {
     enabled: boolean;
   };
+  // Wazuh
+  getWazuhVersion: () => string;
+  getWazuhDocVersion: () => string;
+  getHealthCheck: () => HealthCheckConfig;
 }
 
 /** @internal */

@@ -63,6 +63,7 @@
       - [Embeddable](../src/plugins/embeddable/README.md)
       - [Explore](../src/plugins/explore/README.md)
       - [Expressions](../src/plugins/expressions/README.md)
+      - [Healthcheck](../src/plugins/healthcheck/README.md)
       - [Home](../src/plugins/home/README.md)
       - index_pattern_management
         - public
@@ -197,6 +198,7 @@
     - [Opensearch dashboards.release notes 2.17.1](../release-notes/opensearch-dashboards.release-notes-2.17.1.md)
     - [Opensearch dashboards.release notes 2.18.0](../release-notes/opensearch-dashboards.release-notes-2.18.0.md)
     - [Opensearch dashboards.release notes 2.19.0](../release-notes/opensearch-dashboards.release-notes-2.19.0.md)
+    - [Opensearch dashboards.release notes 2.19.3](../release-notes/opensearch-dashboards.release-notes-2.19.3.md)
     - [Opensearch dashboards.release notes 2.2.0](../release-notes/opensearch-dashboards.release-notes-2.2.0.md)
     - [Opensearch dashboards.release notes 2.2.1](../release-notes/opensearch-dashboards.release-notes-2.2.1.md)
     - [Opensearch dashboards.release notes 2.3.0](../release-notes/opensearch-dashboards.release-notes-2.3.0.md)

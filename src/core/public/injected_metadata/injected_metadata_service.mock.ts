@@ -48,6 +48,10 @@ const createSetupContractMock = () => {
     getSurvey: jest.fn(),
     getEnableIconSideNav: jest.fn(),
     getKeyboardShortcuts: jest.fn(),
+    getWazuhVersion: jest.fn(),
+    getWazuhDocVersion: jest.fn(),
+    // Wazuh
+    getHealthCheck: jest.fn(),
   };
   setupContract.getCspConfig.mockReturnValue({ warnLegacyBrowsers: true });
   setupContract.getOpenSearchDashboardsVersion.mockReturnValue('opensearchDashboardsVersion');
@@ -66,6 +70,8 @@ const createSetupContractMock = () => {
   setupContract.getPlugins.mockReturnValue([]);
   setupContract.getEnableIconSideNav.mockReturnValue(true);
   setupContract.getKeyboardShortcuts.mockReturnValue({ enabled: true });
+  setupContract.getWazuhVersion.mockReturnValue('4.x.x');
+  setupContract.getWazuhDocVersion.mockReturnValue('4.x');
   return setupContract;
 };
 
