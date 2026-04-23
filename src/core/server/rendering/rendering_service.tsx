@@ -66,6 +66,8 @@ export class RenderingService {
     status,
     uiPlugins,
     dynamicConfig,
+    // Wazuh
+    healthCheck,
   }: RenderingSetupDeps): Promise<InternalRenderingServiceSetup> {
     const [opensearchDashboardsConfig, serverConfig] = await Promise.all([
       this.coreContext.configService
@@ -122,6 +124,7 @@ export class RenderingService {
             version: env.packageInfo.version,
             buildNumber: env.packageInfo.buildNum,
             branch: env.packageInfo.branch,
+            wazuhVersion: env.packageInfo.wazuhVersion,
             basePath,
             serverBasePath,
             env,
@@ -172,6 +175,8 @@ export class RenderingService {
             keyboardShortcuts: {
               enabled: opensearchDashboardsConfig.keyboardShortcuts.enabled,
             },
+            // Wazuh
+            healthCheck: healthCheck.getConfig(),
           },
         };
 

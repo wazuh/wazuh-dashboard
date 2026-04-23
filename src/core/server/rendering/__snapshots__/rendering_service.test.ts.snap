@@ -6,12 +6,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -30,7 +30,16 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
@@ -53,6 +62,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -62,12 +72,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -86,7 +96,16 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
@@ -109,6 +128,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -118,12 +138,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -142,7 +162,16 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
@@ -165,6 +194,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -174,12 +204,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -198,7 +228,16 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
@@ -225,6 +264,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -234,12 +274,12 @@ Object {
   "basePath": "",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -258,7 +298,16 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/translations/en.json",
@@ -281,6 +330,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -290,12 +340,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -314,7 +364,16 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
@@ -337,6 +396,7 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "5.0.0",
 }
 `;
 
@@ -346,12 +406,12 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "OpenSearch Dashboards",
+    "applicationTitle": "Wazuh",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
     "mark": Object {},
-    "useExpandedHeader": true,
+    "useExpandedHeader": false,
   },
   "buildNumber": Any<Number>,
   "csp": Object {
@@ -370,7 +430,16 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhVersion": Any<String>,
     },
+  },
+  "healthCheck": Object {
+    "checks_enabled": ".*",
+    "enabled": true,
+    "interval": 900000,
+    "max_retries": 5,
+    "retries_delay": 2500,
+    "server_not_ready_troubleshooting_link": "https://example.healthcheck-docs.com",
   },
   "i18n": Object {
     "translationsUrl": "/mock-server-basepath/translations/en.json",
@@ -393,5 +462,6 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
+  "wazuhVersion": "5.0.0",
 }
 `;
