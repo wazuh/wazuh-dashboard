@@ -28,17 +28,45 @@
  * under the License.
  */
 
+import { get } from 'lodash';
+import { unset } from '@osd/std';
 import { schema, TypeOf, Type } from '@osd/config-schema';
 import { themeOptions } from '@osd/ui-shared-deps';
-import { ConfigDeprecationProvider } from 'src/core/server';
+import { ConfigDeprecation, ConfigDeprecationProvider } from 'src/core/server';
 import { ServiceConfigDescriptor } from '../internal_types';
 
+const USE_NEW_HOME_PAGE_SETTING = 'home:useNewHomePage';
+
+// Wazuh safeguard:
+// If this key is forced from opensearch_dashboards.yml (uiSettings.overrides),
+// we drop it to prevent startup failures and keep the feature disabled.
+// To re-enable the setting in the future, remove this deprecation and also
+// update the setting definition in src/plugins/home/server/ui_settings.ts.
+const ignoreUseNewHomePageOverride: ConfigDeprecation = (settings, fromPath, log) => {
+  const settingPath = `${fromPath}.overrides.${USE_NEW_HOME_PAGE_SETTING}`;
+  if (get(settings, settingPath) === undefined) {
+    return settings;
+  }
+
+  unset(settings, settingPath);
+  log(
+    `"${settingPath}" is ignored because the new home page is not supported and remains disabled`
+  );
+  return settings;
+};
+
+// Keep the custom deprecation in this list so startup config processing always
+// strips `uiSettings.overrides.home:useNewHomePage` before validation/boot.
 const deprecations: ConfigDeprecationProvider = ({ unused, renameFromRoot }) => [
   unused('enabled'),
   renameFromRoot('server.defaultRoute', 'uiSettings.overrides.defaultRoute'),
+  // Keep this entry while new home page is intentionally disabled.
+  ignoreUseNewHomePageOverride,
 ];
 
-export const DEFAULT_THEME_VERSION = 'v8';
+/* Wazuh BEGIN */
+export const DEFAULT_THEME_VERSION = 'v9';
+/* Wazuh END */
 
 /* There are 4 levels of uiSettings:
  *   1) defaults hardcoded in code

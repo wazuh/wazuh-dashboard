@@ -59,6 +59,8 @@ import { WorkspacesService } from './workspace';
 import { KeyboardShortcutService } from './keyboard_shortcut';
 import { ChatService } from './chat';
 import { TelemetryCoreService } from './telemetry';
+// Wazuh
+import { HealthcheckService } from './healthcheck';
 
 interface Params {
   rootDomElement: HTMLElement;
@@ -112,6 +114,8 @@ export class CoreSystem {
   private readonly integrations: IntegrationsService;
   private readonly coreApp: CoreApp;
   private readonly keyboardShortcut: KeyboardShortcutService;
+  // Wazuh
+  private readonly healthCheck: HealthcheckService;
 
   private readonly rootDomElement: HTMLElement;
   private readonly coreContext: CoreContext;
@@ -149,6 +153,8 @@ export class CoreSystem {
     this.workspaces = new WorkspacesService();
     this.chat = new ChatService();
     this.telemetry = new TelemetryCoreService();
+    // Wazuh
+    this.healthCheck = new HealthcheckService();
 
     this.coreContext = { coreId: Symbol('core'), env: injectedMetadata.env };
 
@@ -180,6 +186,8 @@ export class CoreSystem {
       const chat = this.chat.setup();
       chat.setScreenshotPageContainerElement(this.rootDomElement);
       const telemetry = this.telemetry.setup();
+      // Wazuh
+      const healthCheck = this.healthCheck.setup();
 
       const pluginDependencies = this.plugins.getOpaqueIds();
       const context = this.context.setup({
@@ -203,6 +211,8 @@ export class CoreSystem {
         keyboardShortcut,
         chat,
         telemetry,
+        // Wazuh
+        healthCheck,
       };
 
       // Services that do not expose contracts at setup
@@ -275,6 +285,15 @@ export class CoreSystem {
         keyboardShortcut,
       });
 
+      // Wazuh
+      const healthCheck = await this.healthCheck.start({
+        chrome,
+        uiSettings,
+        http,
+        notifications,
+        healthCheckConfig: injectedMetadata.getHealthCheck(),
+      });
+
       this.coreApp.start({ application, http, notifications, uiSettings });
 
       application.registerMountContext(this.coreContext.coreId, 'core', () => ({
@@ -308,6 +327,8 @@ export class CoreSystem {
         keyboardShortcut: keyboardShortcut || undefined,
         chat,
         telemetry,
+        // Wazuh
+        healthCheck,
       };
 
       await this.plugins.start(core);
@@ -351,6 +372,8 @@ export class CoreSystem {
 
   public stop() {
     this.plugins.stop();
+    // Wazuh
+    this.healthCheck.stop();
     this.coreApp.stop();
     this.notifications.stop();
     this.http.stop();

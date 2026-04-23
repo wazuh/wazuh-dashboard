@@ -230,6 +230,8 @@ export function createPluginSetupContext<TPlugin, TPluginDependencies>(
       getStartService: deps.dynamicConfig.getStartService,
     },
     workspace: deps.workspace,
+    // Wazuh
+    healthCheck: deps.healthCheck,
   };
 }
 
@@ -287,5 +289,7 @@ export function createPluginStartContext<TPlugin, TPluginDependencies>(
       createStoreFromRequest: deps.dynamicConfig.createStoreFromRequest,
     },
     workspace: deps.workspace,
+    // Wazuh
+    healthCheck: deps.healthCheck,
   };
 }
