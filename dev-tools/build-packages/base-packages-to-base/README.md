@@ -34,6 +34,8 @@ bash run-docker-compose.sh \
     --security main \
     --securityAnalytics main \
     --reporting main \
+    --alerting main \
+    --notifications main \
     --arm \
     --node-version 22.22.0
 ```
