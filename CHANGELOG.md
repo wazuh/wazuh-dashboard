@@ -5,6 +5,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v5.0.0 - OpenSearch Dashboards 3.6.0 - Revision 01
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 5.0.0
 - Health check service [#811](https://github.com/wazuh/wazuh-dashboard/pull/811) [#866](https://github.com/wazuh/wazuh-dashboard/pull/866) [#961](https://github.com/wazuh/wazuh-dashboard/pull/961) [#1031](https://github.com/wazuh/wazuh-dashboard/pull/1031) [#1179](https://github.com/wazuh/wazuh-dashboard/pull/1179)
@@ -24,12 +25,14 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.14.6 - OpenSearch Dashboards 2.19.5 - Revision 00
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.14.6
 
 ## Wazuh dashboard v4.14.5 - OpenSearch Dashboards 2.19.5 - Revision 01
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.14.5
 
@@ -40,30 +43,35 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.14.4 - OpenSearch Dashboards 2.19.4 - Revision 02
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.14.4
 
 ## Wazuh dashboard v4.14.3 - OpenSearch Dashboards 2.19.4 - Revision 03
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.14.3
 
 ## Wazuh dashboard v4.14.2 - OpenSearch Dashboards 2.19.4 - Revision 04
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.14.2
 
 ## Wazuh dashboard v4.14.1 - OpenSearch Dashboards 2.19.3 - Revision 02
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.14.1
 
 ## Wazuh dashboard v4.14.0 - OpenSearch Dashboards 2.19.3 - Revision 03
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.14.0
 - Added Anomaly Detection plugins to default installation [#843](https://github.com/wazuh/wazuh-dashboard/pull/843) [#905](https://github.com/wazuh/wazuh-dashboard/pull/905) [#909](https://github.com/wazuh/wazuh-dashboard/pull/909) [#913](https://github.com/wazuh/wazuh-dashboard/pull/913)
@@ -72,12 +80,14 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.13.1 - OpenSearch Dashboards 2.19.2 - Revision 01
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.13.1
 
 ## Wazuh dashboard v4.13.0 - OpenSearch Dashboards 2.19.2 - Revision 08
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.13.0
 
@@ -93,6 +103,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.12.0 - OpenSearch Dashboards 2.19.1 - Revision 03
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.12.0
 
@@ -106,6 +117,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.11.2 - OpenSearch Dashboards 2.16.0 - Revision 02
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.11.2
 
@@ -116,12 +128,14 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.11.1 - OpenSearch Dashboards 2.16.0 - Revision 02
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.11.1
 
 ## Wazuh dashboard v4.11.0 - OpenSearch Dashboards 2.16.0 - Revision 03
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.11.0
 
@@ -132,6 +146,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.10.1 - OpenSearch Dashboards 2.16.0 - Revision 01
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.10.1
 
@@ -156,12 +171,14 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.9.2 - OpenSearch Dashboards 2.13.0 - Revision 01
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.9.2
 
 ## Wazuh dashboard v4.9.1 - OpenSearch Dashboards 2.13.0 - Revision 04
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.9.1
 
@@ -177,6 +194,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ## Wazuh dashboard v4.9.0 - OpenSearch Dashboards 2.13.0 - Revision 07
 
 ### Added
+- Test entry for automated merge test [5538]
 
 - Support for Wazuh 4.9.0
 
