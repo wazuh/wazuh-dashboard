@@ -188,6 +188,11 @@ jobs:
           git checkout HEAD -- VERSION.json 2>/dev/null || true
           git checkout HEAD -- CHANGELOG.md 2>/dev/null || true
           git checkout HEAD -- package.json 2>/dev/null || true
+          git checkout HEAD -- dev-tools/build-dev-image/README.md 2>/dev/null || true
+          git checkout HEAD -- dev-tools/build-dev-image/build-multiarch.sh 2>/dev/null || true
+          git checkout HEAD -- dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile 2>/dev/null || true
+          git checkout HEAD -- src/core/server/healthcheck/healthcheck/config.ts 2>/dev/null || true
+          git checkout HEAD -- src/core/server/rendering/__snapshots__/rendering_service.test.ts.snap 2>/dev/null || true
 
           if git diff --staged --quiet; then
             echo "No references to revert. Skipping commit."
