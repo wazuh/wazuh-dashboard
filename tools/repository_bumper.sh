@@ -19,7 +19,6 @@ CURRENT_VERSION=""
 TAG=false
 SET_AS_MAIN=false
 SKIP_URLS="no"
-WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/4_builderpackage_dashboard.yml"
 DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
 README_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/README.md"
 VERSION_PATTERN="[0-9]+\.[0-9]+\.[0-9]+"
@@ -418,50 +417,6 @@ update_changelog() {
   fi
 }
 
-update_build_workflow() {
-  log "Updating $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE)..."
-
-  if [ -f "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" ]; then
-    local modified=false
-
-    if [ "$TAG" = true ]; then
-      replacement="v${VERSION}"
-      if [ -n "$STAGE" ]; then
-        replacement+="-${STAGE}"
-      fi
-    else
-      replacement="${VERSION}"
-    fi
-
-    if grep -qE '\.yml@[^"[:space:]]+' "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
-      log "Pattern found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
-      if [[ "$SKIP_URLS" == "yes" ]]; then
-        # set-as-main mode: only update versioned .yml@x.y.z refs, preserve .yml@main
-        sed_inplace -E "s|(\.yml@)${VERSION_PATTERN}|\1${replacement}|g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
-      else
-        # Normal mode: update all .yml@<ref> (versioned and main)
-        sed_inplace -E "s/(\.yml@)[^\"[:space:]]+/\1${replacement}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
-      fi
-      modified=true
-    else
-      log "Pattern not found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Skipping update."
-    fi
-
-    # Update default: 'main' branch input defaults only when not in set-as-main mode
-    if [[ "$SKIP_URLS" != "yes" ]]; then
-      if grep -qE "^[[:space:]]*default: 'main'" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
-        log "Branch input defaults found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
-        sed_inplace -E "s/^([[:space:]]*default: )'main'([[:space:]]*)$/\1'${VERSION}'\2/" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
-        modified=true
-      fi
-    fi
-
-    if [[ $modified == true ]]; then
-      log "Successfully updated references in $(basename "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE")"
-    fi
-  fi
-}
-
 update_base_package_dockerfile() {
   log "Updating $(basename $DOCKERFILE_FOR_BASE_PACKAGES)..."
 
@@ -839,19 +794,12 @@ main() {
 
   update_root_version_json
   update_package_json
-  update_build_workflow
   if [[ "$SKIP_URLS" != "yes" ]]; then
     update_branch_reference_defaults
   fi
-  update_base_package_dockerfile
-  update_readme_for_base_packages
-  update_rendering_service_test_snap
   update_rpm_changelog
   update_deb_changelog
   update_changelog
-  update_healthcheck_server_not_ready_troubleshooting_link
-  update_build_docker_dev_multiarch
-  update_build_docker_dev_multiarch_readme
 
   log "File modifications completed."
   log "Repository bump completed successfully. Log file: $LOG_FILE"
