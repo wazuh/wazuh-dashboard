@@ -50,10 +50,15 @@ The script performs the following actions:
     - `CHANGELOG.md`:
       - Updates the revision number in the header if an entry for the version already exists.
       - Adds a new entry with the specified version, stage, revision, and detected OpenSearch Dashboards version if no entry exists.
-    - `.github/workflows/build_wazuh_dashboard_with_plugins.yml`: Updates references like `yml@vX.Y.Z` to `yml@v<VERSION>-<STAGE>`.
-    - `dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile`: Updates `_BRANCH=X.Y.Z` and `wazuh-packages-to-base:X.Y.Z` references to use the new `<VERSION>`.
+    - `.github/workflows/5_builderpackage_dashboard_core.yml`: Updates version references from `default: main` to `default: <VERSION>`.
+    - `.github/workflows/5_builderpackage_dev_docker_image.yml`: Updates version references from `default: main` to `default: <VERSION>`.
     - `dev-tools/build-packages/base-packages-to-base/README.md`: Updates version references in example commands (`--app X.Y.Z`, `--base X.Y.Z`, `--security X.Y.Z`) and descriptive text.
     - `src/core/server/rendering/__snapshots__/rendering_service.test.ts.snap`: Updates `"wazuhVersion": "X.Y.Z"` to use the new `<VERSION>`.
+    - `dev-tools/build-packages/rpm/wazuh-dashboard.spec`: Changes the data for existing version entry or add a new entry if not exist for the version.
+    - `dev-tools/build-packages/deb/debian/changelog`: Changes the data for existing version entry or add a new entry if not exist for the version.
+    - `src/core/server/healthcheck/healthcheck/config.ts`: Updates the versioned documentation link from `https://documentation.wazuh.com/<VERSION>` to the new version.
+    - `dev-tools/build-dev-image/build-multiarch.sh`: Updates the default variables `OPENSEARCH_DASHBOARD_VERSION`, `TAG` and `NODE_VERSION` with the new versions.
+    - `dev-tools/build-dev-image/README.md`: Updates the versions related to OpenSearch Dashbaords, NodeJS and Docker image tag in build parameters and descriptive text.
 6.  **Logging:** All actions, errors, and results are logged to the timestamped log file in the `tools` directory.
 
 ## Notes

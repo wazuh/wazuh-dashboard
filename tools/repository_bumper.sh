@@ -19,7 +19,6 @@ CURRENT_VERSION=""
 TAG=false
 SET_AS_MAIN=false
 SKIP_URLS="no"
-WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE="${REPO_PATH}/.github/workflows/4_builderpackage_dashboard.yml"
 DOCKERFILE_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/base-packages.Dockerfile"
 README_FOR_BASE_PACKAGES="${REPO_PATH}/dev-tools/build-packages/base-packages-to-base/README.md"
 VERSION_PATTERN="[0-9]+\.[0-9]+\.[0-9]+"
@@ -418,137 +417,24 @@ update_changelog() {
   fi
 }
 
-update_build_workflow() {
-  log "Updating $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE)..."
-
-  if [ -f "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE" ]; then
-    local modified=false
-
-    if [ "$TAG" = true ]; then
-      replacement="v${VERSION}"
-      if [ -n "$STAGE" ]; then
-        replacement+="-${STAGE}"
-      fi
-    else
-      replacement="${VERSION}"
-    fi
-
-    if grep -qE '\.yml@[^"[:space:]]+' "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
-      log "Pattern found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
-      if [[ "$SKIP_URLS" == "yes" ]]; then
-        # set-as-main mode: only update versioned .yml@x.y.z refs, preserve .yml@main
-        sed_inplace -E "s|(\.yml@)${VERSION_PATTERN}|\1${replacement}|g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
-      else
-        # Normal mode: update all .yml@<ref> (versioned and main)
-        sed_inplace -E "s/(\.yml@)[^\"[:space:]]+/\1${replacement}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
-      fi
-      modified=true
-    else
-      log "Pattern not found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Skipping update."
-    fi
-
-    # Update default: 'main' branch input defaults only when not in set-as-main mode
-    if [[ "$SKIP_URLS" != "yes" ]]; then
-      if grep -qE "^[[:space:]]*default: 'main'" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
-        log "Branch input defaults found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
-        sed_inplace -E "s/^([[:space:]]*default: )'main'([[:space:]]*)$/\1'${VERSION}'\2/" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
-        modified=true
-      fi
-    fi
-
-    if [[ $modified == true ]]; then
-      log "Successfully updated references in $(basename "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE")"
-    fi
-  fi
-}
-
-update_base_package_dockerfile() {
-  log "Updating $(basename $DOCKERFILE_FOR_BASE_PACKAGES)..."
-
-  if [ -f "$DOCKERFILE_FOR_BASE_PACKAGES" ]; then
-    local modified=false
-
-    # Update all occurrences of _BRANCH=x.y.z with _BRANCH=$VERSION
-    local branch_pattern_regex="(_BRANCH=)$VERSION_PATTERN"
-    if grep -qE "$branch_pattern_regex" "$DOCKERFILE_FOR_BASE_PACKAGES"; then
-      log "Pattern '$branch_pattern_regex' found in $(basename $DOCKERFILE_FOR_BASE_PACKAGES). Attempting update..."
-      # Perform the substitution
-      sed_inplace -E "s/${branch_pattern_regex}/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES"
-      modified=true
-    else
-      log "Pattern '$branch_pattern_regex' not found in $(basename $DOCKERFILE_FOR_BASE_PACKAGES). Skipping update for this pattern."
-    fi
-
-    # Update all occurrences of wazuh-packages-to-base:x.y.z with wazuh-packages-to-base:$VERSION
-    sed_inplace -E "s/(wazuh-packages-to-base:)$VERSION_PATTERN/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
-
-    if [[ $modified == true ]]; then
-      log "Successfully updated $(basename $DOCKERFILE_FOR_BASE_PACKAGES)"
-    fi
-  fi
-}
-
 update_readme_for_base_packages() {
   log "Updating $(basename $README_FOR_BASE_PACKAGES)..."
 
   if [ -f "$README_FOR_BASE_PACKAGES" ]; then
     local modified=false
 
-    # Update all occurrences of --app x.y.z with --app $VERSION
-    # Define the pattern regex
-    local app_pattern_regex="(--app )$VERSION_PATTERN"
+    local pattern_prefixes=("--app " "--base " "--security " "--securityAnalytics " "--reporting " "--alerting " "--notifications " "This example will create a packages folder that inside will have the packages divided by repository of the ")
 
-    # Check if the pattern exists in the file
-    if grep -qE "$app_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
-      log "Pattern '$app_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
-      # If the pattern exists, perform the substitution and set modified to true
-      sed_inplace -E "s/${app_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
-      modified=true
-    else
-      log "Pattern '$app_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
-    fi
-
-    # Update all occurrences of --base x.y.z with --base $VERSION
-    # Define the pattern regex for --base
-    local base_pattern_regex="(--base )$VERSION_PATTERN"
-
-    # Check if the pattern exists in the file
-    if grep -qE "$base_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
-      log "Pattern '$base_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
-      # If the pattern exists, perform the substitution and set modified to true
-      sed_inplace -E "s/${base_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
-      modified=true
-    else
-      log "Pattern '$base_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
-    fi
-
-    # Update all occurrences of --security x.y.z with --security $VERSION
-    # Define the pattern regex for --security
-    local security_pattern_regex="(--security )$VERSION_PATTERN"
-
-    # Check if the pattern exists in the file
-    if grep -qE "$security_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
-      log "Pattern '$security_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
-      # If the pattern exists, perform the substitution and set modified to true
-      sed_inplace -E "s/${security_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
-      modified=true
-    else
-      log "Pattern '$security_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
-    fi
-
-    # Update all occurrences of --security x.y.z with --security $VERSION
-    # Define the pattern regex for the example text
-    local readme_example_pattern_regex="(This example will create a packages folder that inside will have the packages divided by repository of the )$VERSION_PATTERN"
-
-    # Check if the pattern exists in the file
-    if grep -qE "$readme_example_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
-      log "Pattern '$readme_example_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
-      # If the pattern exists, perform the substitution and set modified to true
-      sed_inplace -E "s/${readme_example_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
-      modified=true
-    else
-      log "Pattern '$readme_example_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
-    fi
+    for prefix in "${pattern_prefixes[@]}"; do
+      local pattern_regex="(${prefix})($VERSION_PATTERN|main)"
+      if grep -qE "$pattern_regex" "$README_FOR_BASE_PACKAGES"; then
+        log "Pattern '$pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
+        sed_inplace -E "s/${pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+        modified=true
+      else
+        log "Pattern '$pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
+      fi
+    done
 
     if [[ $modified == true ]]; then
       log "Successfully updated $(basename $README_FOR_BASE_PACKAGES)"
@@ -839,11 +725,9 @@ main() {
 
   update_root_version_json
   update_package_json
-  update_build_workflow
   if [[ "$SKIP_URLS" != "yes" ]]; then
     update_branch_reference_defaults
   fi
-  update_base_package_dockerfile
   update_readme_for_base_packages
   update_rendering_service_test_snap
   update_rpm_changelog
