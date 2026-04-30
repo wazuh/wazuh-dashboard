@@ -189,6 +189,14 @@ jobs:
           git checkout HEAD -- CHANGELOG.md 2>/dev/null || true
           git checkout HEAD -- package.json 2>/dev/null || true
 
+          # These files may not have been modified in the bump, so they are avoided on the revert but ignore if they are not in the index
+          git checkout HEAD -- src/core/server/rendering/__snapshots__/rendering_service.test.ts.snap 2>/dev/null || true
+          git checkout HEAD -- dev-tools/build-packages/rpm/wazuh-dashboard.spec 2>/dev/null || true
+          git checkout HEAD -- dev-tools/build-packages/deb/debian/changelog 2>/dev/null || true
+          git checkout HEAD -- src/core/server/healthcheck/healthcheck/config.ts 2>/dev/null || true
+          git checkout HEAD -- dev-tools/build-dev-image/build-multiarch.sh 2>/dev/null || true
+          git checkout HEAD -- dev-tools/build-dev-image/README.md 2>/dev/null || true
+
           if git diff --staged --quiet; then
             echo "No references to revert. Skipping commit."
             echo "has_changes=false" >> $GITHUB_OUTPUT
