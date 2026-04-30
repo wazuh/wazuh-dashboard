@@ -426,7 +426,7 @@ update_readme_for_base_packages() {
     local pattern_prefixes=("--app " "--base " "--security " "--securityAnalytics " "--reporting " "--alerting " "--notifications " "This example will create a packages folder that inside will have the packages divided by repository of the ")
 
     for prefix in "${pattern_prefixes[@]}"; do
-      local pattern_regex="(${prefix})$VERSION_PATTERN"
+      local pattern_regex="(${prefix})($VERSION_PATTERN|main)"
       if grep -qE "$pattern_regex" "$README_FOR_BASE_PACKAGES"; then
         log "Pattern '$pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
         sed_inplace -E "s/${pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
