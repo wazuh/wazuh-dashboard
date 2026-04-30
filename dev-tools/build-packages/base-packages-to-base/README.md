@@ -29,15 +29,15 @@ Example:
 
 ```bash
 bash run-docker-compose.sh \
-    --app main \
-    --base main \
-    --security main \
-    --securityAnalytics main \
-    --reporting main \
-    --alerting main \
-    --notifications main \
+    --app 5.9.9 \
+    --base 5.9.9 \
+    --security 5.9.9 \
+    --securityAnalytics 5.9.9 \
+    --reporting 5.9.9 \
+    --alerting 5.9.9 \
+    --notifications 5.9.9 \
     --arm \
     --node-version 22.22.0
 ```
 
-This example will create a packages folder that inside will have the packages divided by repository of the main branch of each one.
+This example will create a packages folder that inside will have the packages divided by repository of the 5.9.9 branch of each one.
