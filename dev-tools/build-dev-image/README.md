@@ -48,7 +48,7 @@ docker build \
   --build-arg WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH=migrate-main-to-3.6.0.0 \
   --build-arg WAZUH_DASHBOARD_ALERTING_BRANCH=main \
   --build-arg WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH=maim \
-  -t quay.io/wazuh/osd-dev:3.6.0-5.9.9 \
+  -t quay.io/wazuh/osd-dev:3.6.0-10.9.9 \
   -f wzd.dockerfile .
 ```
 
@@ -126,7 +126,7 @@ docker buildx build \
   --build-arg NODE_VERSION=22.22.0 \
   --build-arg OPENSEARCH_DASHBOARD_VERSION=3.6.0.0 \
   --build-arg WAZUH_DASHBOARD_BRANCH=main \
-  -t quay.io/wazuh/osd-dev:3.6.0-5.9.9 \
+  -t quay.io/wazuh/osd-dev:3.6.0-10.9.9 \
   -f wzd.dockerfile \
   --push .
 ```
