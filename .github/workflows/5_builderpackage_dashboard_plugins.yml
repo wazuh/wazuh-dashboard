@@ -109,6 +109,8 @@ jobs:
 
       - name: Build Plugin
         working-directory: plugins/${{ inputs.name }}
+        env:
+          GIT_REF: ${{ env.PLUGIN_REF }}
         run: |
           set -o pipefail
           OPENSEARCH_DASHBOARDS_VERSION=${{ inputs.version_opensearch }} yarn build 2>&1 | tee build.log
