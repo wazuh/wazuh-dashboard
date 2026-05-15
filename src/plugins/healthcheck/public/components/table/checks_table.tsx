@@ -12,6 +12,7 @@ import {
   EuiSwitch,
   EuiSwitchEvent,
   EuiToolTip,
+  EuiSpacer
 } from '@elastic/eui';
 import { isEqual } from 'lodash';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
@@ -133,6 +134,7 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
           </EuiToolTip>
         }
       />
+      <EuiSpacer size="s" />
       <EuiBasicTable
         columns={tableColumns(openFlyout)}
         items={filteredChecks}
