@@ -12,6 +12,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Added manager host configuration for the default configuration file [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 - Set v9 theme as default [#1092](https://github.com/wazuh/wazuh-dashboard/pull/1092)
 
+### Fixed
+
+- Fixed health check padding styles [#1276](https://github.com/wazuh/wazuh-dashboard/pull/1276)
+
 ### Removed
 
 - Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
