@@ -12,7 +12,7 @@ import {
   EuiSwitch,
   EuiSwitchEvent,
   EuiToolTip,
-  EuiSpacer
+  EuiSpacer,
 } from '@elastic/eui';
 import { isEqual } from 'lodash';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
