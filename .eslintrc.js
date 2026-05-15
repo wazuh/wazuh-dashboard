@@ -39,16 +39,6 @@ const OSD_NEW_HEADER = `
 `;
 
 /**
- * For new files created by Wazuh Contributors
- */
-const OSD_WAZUH = `
-/*
- * Copyright Wazuh
- * SPDX-License-Identifier: Apache-2.0
- */
-`;
-
-/**
  * For modified and modified files with external open source code
  */
 const OSD_HEADER = `

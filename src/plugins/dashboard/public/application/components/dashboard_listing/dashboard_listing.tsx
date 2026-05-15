@@ -136,6 +136,7 @@ export const DashboardListing = () => {
       search: search ? `${search}*` : undefined,
       fields: ['title', 'type', 'description', 'updated_at'],
       perPage: listingLimit,
+      filter: 'not dashboard.attributes.description:"*Provided by Wazuh*"', // Wazuh - added filter to exclude dashboards with description containing "Provided by Wazuh"
       page: 1,
       searchFields: ['title^3', 'type', 'description'],
       defaultSearchOperator: 'AND',
