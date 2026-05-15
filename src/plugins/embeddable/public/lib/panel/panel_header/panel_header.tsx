@@ -119,7 +119,7 @@ function getViewDescription(embeddable: IEmbeddable | EmbeddableWithDescription)
   if ('getDescription' in embeddable) {
     const description = embeddable.getDescription();
 
-    if (description) {
+    if (description && !description.includes('Provided by Wazuh.')) {
       return description;
     }
   }
