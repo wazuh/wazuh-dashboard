@@ -43,7 +43,7 @@ export async function findListItems({
   size,
   savedObjectsClient,
   mapSavedObjectApiHits,
-  filter='', // Wazuh - added filter parameter to findListItems function
+  filter = '', // Wazuh - added filter parameter to findListItems function
 }: {
   search: string;
   size: number;
