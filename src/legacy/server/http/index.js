@@ -68,7 +68,9 @@ export default async function (osdServer, server) {
         .redirect(
           format({
             search: req.url.search,
+            // WAZUH: replaced path.slice(0, -1) with normalizedPath.slice(0, -1)
             pathname: pathPrefix + normalizedPath.slice(0, -1),
+            // END WAZUH
           })
         )
         .permanent(true);
