@@ -73,9 +73,9 @@ override_dh_install:
 
 	mkdir -p $(TARGET_DIR)$(INSTALLATION_DIR)/config
 
-	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard.service $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
-	cp $(TARGET_DIR)$(INSTALLATION_DIR)/wazuh-dashboard $(TARGET_DIR)/usr/lib/systemd/system/$(NAME)
-	cp $(TARGET_DIR)$(INSTALLATION_DIR)/default $(TARGET_DIR)/etc/default/$(NAME)
+	cp $(TARGET_DIR)$(INSTALLATION_DIR)/etc/services/wazuh-dashboard.service $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
+	cp $(TARGET_DIR)$(INSTALLATION_DIR)/etc/services/wazuh-dashboard $(TARGET_DIR)/usr/lib/systemd/system/$(NAME)
+	cp $(TARGET_DIR)$(INSTALLATION_DIR)/etc/services/default $(TARGET_DIR)/etc/default/$(NAME)
 
 	rm -rf $(TARGET_DIR)$(INSTALLATION_DIR)/etc
 

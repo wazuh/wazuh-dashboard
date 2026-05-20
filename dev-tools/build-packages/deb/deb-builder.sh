@@ -60,7 +60,8 @@ log "Extracting base tar.gz..."
 tar -zxf "${out_dir}/wazuh-dashboard-$version-$revision-linux-$architecture.tar.gz"
 log "Preparing the package..."
 jq '.wazuh.revision="'${revision}'"' package.json > pkgtmp.json && mv pkgtmp.json package.json
-cp "${config_path}"/* .
+mkdir -p etc/services
+cp "${config_path}"/* etc/services
 jq '.version="'${version}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
 jq '.commit="'${commit_sha}'"' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
 cd "${tmp_dir}"
