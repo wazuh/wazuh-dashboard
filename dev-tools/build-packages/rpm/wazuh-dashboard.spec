@@ -256,6 +256,7 @@ rm -fr %{buildroot}
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/apm"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/docs"
+%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules"
 %attr(-, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules/*"
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules/.yarn-integrity"
