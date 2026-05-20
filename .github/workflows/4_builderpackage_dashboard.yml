@@ -451,8 +451,7 @@ jobs:
             INSTANCE_NAME="centos_8_arm_large_aws"
             COMPOSITE_NAME="linux-centos-8-arm64"
           fi
-          CUSTOM_TAGS="Name:${INSTANCE_NAME},Team:dashboard,Organization:xdrsiem,CreatedBy:github-actions,FixedResource:false,Sensitive:false,Product:wazuh-dashboard,Purpose:package-build,ExecutionId:${{ github.run_id }},Stage:ci"
-          python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name "${COMPOSITE_NAME}" --instance-name "${INSTANCE_NAME}" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard --custom-tags "${CUSTOM_TAGS}"
+          python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name "${COMPOSITE_NAME}" --instance-name "${INSTANCE_NAME}" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --label-creator github-actions --working-dir /tmp/dashboard --custom-tags "Product:wazuh-dashboard,Purpose:package-build,ExecutionId:${{ github.run_id }},Stage:ci"
           ansible_host=$(grep 'ansible_host:' /tmp/inventory.yaml | sed 's/.*: *//')
           ansible_port=$(grep 'ansible_port:' /tmp/inventory.yaml | sed 's/.*: *//')
           ansible_user=$(grep 'ansible_user:' /tmp/inventory.yaml | sed 's/.*: *//')
