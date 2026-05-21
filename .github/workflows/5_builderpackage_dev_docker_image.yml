@@ -18,7 +18,7 @@ on:
       branch:
         description: 'Branch to use for all Wazuh dashboard components'
         required: false
-        default: 'main'
+        default: 'v5.0.0-beta2'
         type: string
       tag:
         description: 'Tag for the Docker image'

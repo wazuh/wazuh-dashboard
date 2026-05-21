@@ -46,16 +46,31 @@ export default async function (osdServer, server) {
     path: '/{p*}',
     handler: function (req, h) {
       const path = req.path;
-      if (path === '/' || path.charAt(path.length - 1) !== '/') {
+
+      // WAZUH: Normalize the path and reject protocol-relative URLs or absolute
+      // external URLs to prevent open redirect vulnerabilities.
+      const normalizedPath = path.replace(/[\/\\]+/g, '/');
+      const isProtocolRelative = path.startsWith('//') || path.startsWith('\\\\');
+      const isAbsolute = path.includes('://');
+
+      if (
+        normalizedPath === '/' ||
+        path.charAt(path.length - 1) !== '/' ||
+        isProtocolRelative ||
+        isAbsolute
+      ) {
         throw Boom.notFound();
       }
+      // END WAZUH
 
       const pathPrefix = req.getBasePath() ? `${req.getBasePath()}/` : '';
       return h
         .redirect(
           format({
             search: req.url.search,
-            pathname: pathPrefix + path.slice(0, -1),
+            // WAZUH: replaced path.slice(0, -1) with normalizedPath.slice(0, -1)
+            pathname: pathPrefix + normalizedPath.slice(0, -1),
+            // END WAZUH
           })
         )
         .permanent(true);

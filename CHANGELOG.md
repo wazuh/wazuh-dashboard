@@ -2,7 +2,7 @@
 
 All notable changes to the Wazuh app project will be documented in this file.
 
-## Wazuh dashboard v5.0.0 - OpenSearch Dashboards 3.6.0 - Revision 01
+## Wazuh dashboard v5.0.0 - OpenSearch Dashboards 3.6.0 - Revision 02
 
 ### Added
 
@@ -15,6 +15,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Fixed
 
 - Fixed health check padding styles [#1276](https://github.com/wazuh/wazuh-dashboard/pull/1276)
+- Sanitized redirect path to prevent open redirect [#1285](https://github.com/wazuh/wazuh-dashboard/pull/1285)
 
 ### Removed
 
