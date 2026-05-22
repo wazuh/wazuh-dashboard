@@ -415,10 +415,10 @@ rm -fr %{buildroot}
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
 
 %changelog
-* Wed Jun 24 2026 support <info@wazuh.com> - 5.0.0
-- More info: https://documentation.wazuh.com/current/release-notes/release-5-0-0.html
 * Thu Jul 09 2026 support <info@wazuh.com> - 4.14.7
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-7.html
+* Wed Jun 24 2026 support <info@wazuh.com> - 5.0.0
+- More info: https://documentation.wazuh.com/current/release-notes/release-5-0-0.html
 * Thu May 14 2026 support <info@wazuh.com> - 4.14.6
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-6.html
 * Thu Apr 23 2026 support <info@wazuh.com> - 4.14.5
