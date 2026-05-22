@@ -27,6 +27,12 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Changed the default value of `metaFields` and `timepicker:timeDefaults` settings [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 - Excluded Wazuh dashboards and visualizations listing [#1278](https://github.com/wazuh/wazuh-dashboard/pull/1278) [#1279](https://github.com/wazuh/wazuh-dashboard/pull/1279)
 
+## Wazuh dashboard v4.14.7 - OpenSearch Dashboards 2.19.5 - Revision 00
+
+### Added
+
+- Support for Wazuh 4.14.7
+
 ## Wazuh dashboard v4.14.6 - OpenSearch Dashboards 2.19.5 - Revision 00
 
 ### Added
