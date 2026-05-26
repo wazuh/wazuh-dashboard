@@ -40,4 +40,4 @@ bash run-docker-compose.sh \
     --node-version 22.22.0
 ```
 
-This example will create a packages folder that inside will have the packages divided by repository of the main branch of each one.
+This example will create a packages folder that inside will have the packages divided by repository of the main git reference of each one.
