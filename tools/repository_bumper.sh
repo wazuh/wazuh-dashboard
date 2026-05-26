@@ -429,7 +429,7 @@ update_readme_for_base_packages() {
       local pattern_regex="(${prefix})($VERSION_PATTERN|main)"
       if grep -qE "$pattern_regex" "$README_FOR_BASE_PACKAGES"; then
         log "Pattern '$pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
-        sed_inplace -E "s/${pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+        sed_inplace -E "s/${pattern_regex}/\1${GIT_REF_REPLACEMENT}/g" "$README_FOR_BASE_PACKAGES"
         modified=true
       else
         log "Pattern '$pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
@@ -674,12 +674,26 @@ update_branch_reference_defaults() {
   for f in "${branch_files[@]}"; do
     if [ -f "$f" ]; then
       log "Updating branch input defaults in $(basename $f)..."
-      sed_inplace -E "s/^([[:space:]]*default: )'main'([[:space:]]*)$/\1'${VERSION}'\2/" "$f"
+      sed_inplace -E "s/^([[:space:]]*default: )'main'([[:space:]]*)$/\1'${GIT_REF_REPLACEMENT}'\2/" "$f"
       log "Successfully updated branch input defaults in $(basename $f)."
     else
       log "WARNING: $(basename $f) not found. Skipping branch defaults update."
     fi
   done
+}
+
+get_git_ref_replacement(){
+  local replacement
+  if [ "$TAG" = true ]; then
+    replacement="v${VERSION}"
+    if [ -n "$STAGE" ]; then
+      replacement+="-${STAGE}"
+    fi
+  else
+    replacement="${VERSION}"
+  fi
+
+  GIT_REF_REPLACEMENT="$replacement"
 }
 
 # --- Main Execution ---
@@ -719,6 +733,8 @@ main() {
   fi
 
   compare_versions_and_set_revision
+
+  get_git_ref_replacement
 
   # Start file modifications
   log "Starting file modifications..."
