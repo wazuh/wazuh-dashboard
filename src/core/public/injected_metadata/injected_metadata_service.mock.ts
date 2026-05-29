@@ -48,6 +48,8 @@ const createSetupContractMock = () => {
     getSurvey: jest.fn(),
     getKeyboardShortcuts: jest.fn(),
     getWazuhVersion: jest.fn(),
+    getWazuhRevision: jest.fn(),
+    getWazuhStage: jest.fn(),
     getWazuhDocVersion: jest.fn(),
     // Wazuh
     getHealthCheck: jest.fn(),
@@ -69,6 +71,8 @@ const createSetupContractMock = () => {
   setupContract.getPlugins.mockReturnValue([]);
   setupContract.getKeyboardShortcuts.mockReturnValue({ enabled: true });
   setupContract.getWazuhVersion.mockReturnValue('4.x.x');
+  setupContract.getWazuhRevision.mockReturnValue('01');
+  setupContract.getWazuhStage.mockReturnValue('');
   setupContract.getWazuhDocVersion.mockReturnValue('4.x');
   return setupContract;
 };

@@ -288,6 +288,10 @@ export interface CoreSetup<TPluginsStart extends object = object, TStart = unkno
   injectedMetadata: {
     getInjectedVar: (name: string, defaultValue?: any) => unknown;
     getBranding: () => Branding;
+    // Wazuh
+    getWazuhVersion: () => string;
+    getWazuhRevision: () => string;
+    getWazuhStage: () => string;
   };
   /** {@link StartServicesAccessor} */
   getStartServices: StartServicesAccessor<TPluginsStart, TStart>;
@@ -355,6 +359,10 @@ export interface CoreStart {
   injectedMetadata: {
     getInjectedVar: (name: string, defaultValue?: any) => unknown;
     getBranding: () => Branding;
+    // Wazuh
+    getWazuhVersion: () => string;
+    getWazuhRevision: () => string;
+    getWazuhStage: () => string;
   };
   /** {@link WorkspacesStart} */
   workspaces: WorkspacesStart;

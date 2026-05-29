@@ -126,6 +126,8 @@ export class RenderingService {
             buildNumber: env.packageInfo.buildNum,
             branch: env.packageInfo.branch,
             wazuhVersion: env.packageInfo.wazuhVersion,
+            wazuhRevision: env.packageInfo.wazuhRevision,
+            wazuhStage: env.packageInfo.wazuhStage,
             basePath,
             serverBasePath,
             env,

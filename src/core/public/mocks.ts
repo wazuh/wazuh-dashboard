@@ -144,6 +144,8 @@ function pluginInitializerContextMock() {
         buildSha: 'buildSha',
         dist: false,
         wazuhVersion: 'wazuhVersion',
+        wazuhRevision: '01',
+        wazuhStage: '',
       },
     },
     config: {
@@ -170,6 +172,8 @@ function createCoreContext(): CoreContext {
         buildSha: 'buildSha',
         dist: false,
         wazuhVersion: 'wazuhVersion',
+        wazuhRevision: '01',
+        wazuhStage: '',
       },
     },
   };

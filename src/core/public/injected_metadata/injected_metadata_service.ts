@@ -55,6 +55,8 @@ export interface InjectedMetadataParams {
     buildNumber: number;
     branch: string;
     wazuhVersion: string;
+    wazuhRevision: string;
+    wazuhStage: string;
     basePath: string;
     serverBasePath: string;
     category?: AppCategory;
@@ -171,6 +173,16 @@ export class InjectedMetadataService {
       },
 
       // Wazuh
+      getWazuhRevision: () => {
+        return this.state.wazuhRevision;
+      },
+
+      // Wazuh
+      getWazuhStage: () => {
+        return this.state.wazuhStage;
+      },
+
+      // Wazuh
       getWazuhDocVersion: () => {
         return this.state.wazuhVersion?.split('.').slice(0, 2).join('.') || 'current';
       },
@@ -219,6 +231,8 @@ export interface InjectedMetadataSetup {
   };
   // Wazuh
   getWazuhVersion: () => string;
+  getWazuhRevision: () => string;
+  getWazuhStage: () => string;
   getWazuhDocVersion: () => string;
   getHealthCheck: () => HealthCheckConfig;
 }

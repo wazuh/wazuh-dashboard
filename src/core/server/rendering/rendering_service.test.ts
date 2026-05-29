@@ -72,6 +72,8 @@ const INJECTED_METADATA = {
       dist: expect.any(Boolean),
       version: expect.any(String),
       wazuhVersion: expect.any(String),
+      wazuhRevision: expect.any(String),
+      wazuhStage: expect.any(String),
     },
   },
 };

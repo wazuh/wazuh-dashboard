@@ -120,6 +120,9 @@ export function createPluginSetupContext<
     injectedMetadata: {
       getInjectedVar: deps.injectedMetadata.getInjectedVar,
       getBranding: deps.injectedMetadata.getBranding,
+      getWazuhVersion: deps.injectedMetadata.getWazuhVersion,
+      getWazuhRevision: deps.injectedMetadata.getWazuhRevision,
+      getWazuhStage: deps.injectedMetadata.getWazuhStage,
     },
     getStartServices: () => plugin.startDependencies,
     workspaces: deps.workspaces,
@@ -179,6 +182,9 @@ export function createPluginStartContext<
     injectedMetadata: {
       getInjectedVar: deps.injectedMetadata.getInjectedVar,
       getBranding: deps.injectedMetadata.getBranding,
+      getWazuhVersion: deps.injectedMetadata.getWazuhVersion,
+      getWazuhRevision: deps.injectedMetadata.getWazuhRevision,
+      getWazuhStage: deps.injectedMetadata.getWazuhStage,
     },
     fatalErrors: deps.fatalErrors,
     workspaces: deps.workspaces,
