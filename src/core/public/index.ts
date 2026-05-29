@@ -292,6 +292,7 @@ export interface CoreSetup<TPluginsStart extends object = object, TStart = unkno
     getWazuhVersion: () => string;
     getWazuhRevision: () => string;
     getWazuhStage: () => string;
+    getWazuhIsProduction: () => boolean;
   };
   /** {@link StartServicesAccessor} */
   getStartServices: StartServicesAccessor<TPluginsStart, TStart>;
@@ -363,6 +364,7 @@ export interface CoreStart {
     getWazuhVersion: () => string;
     getWazuhRevision: () => string;
     getWazuhStage: () => string;
+    getWazuhIsProduction: () => boolean;
   };
   /** {@link WorkspacesStart} */
   workspaces: WorkspacesStart;

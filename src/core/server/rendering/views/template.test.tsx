@@ -32,6 +32,7 @@ function mockProps() {
       wazuhVersion: injectedMetadata.getWazuhVersion(),
       wazuhRevision: injectedMetadata.getWazuhRevision(),
       wazuhStage: injectedMetadata.getWazuhStage(),
+      wazuhIsProduction: injectedMetadata.getWazuhIsProduction(),
       basePath: '',
       serverBasePath: '',
       env: {
@@ -44,6 +45,7 @@ function mockProps() {
           wazuhVersion: '',
           wazuhRevision: '01',
           wazuhStage: '',
+          wazuhIsProduction: false,
         },
         mode: {
           name: 'production' as 'development' | 'production',

@@ -48,6 +48,7 @@ const packageInfo = {
   wazuhVersion: '4.0.0',
   wazuhRevision: '01',
   wazuhStage: '',
+  wazuhIsProduction: false,
 };
 
 afterEach(() => {

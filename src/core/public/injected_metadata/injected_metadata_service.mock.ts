@@ -50,6 +50,7 @@ const createSetupContractMock = () => {
     getWazuhVersion: jest.fn(),
     getWazuhRevision: jest.fn(),
     getWazuhStage: jest.fn(),
+    getWazuhIsProduction: jest.fn(),
     getWazuhDocVersion: jest.fn(),
     // Wazuh
     getHealthCheck: jest.fn(),
@@ -73,6 +74,7 @@ const createSetupContractMock = () => {
   setupContract.getWazuhVersion.mockReturnValue('4.x.x');
   setupContract.getWazuhRevision.mockReturnValue('01');
   setupContract.getWazuhStage.mockReturnValue('');
+  setupContract.getWazuhIsProduction.mockReturnValue(false);
   setupContract.getWazuhDocVersion.mockReturnValue('4.x');
   return setupContract;
 };

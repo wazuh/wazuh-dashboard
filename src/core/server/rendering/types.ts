@@ -56,6 +56,7 @@ export interface RenderingMetadata {
     wazuhVersion: string;
     wazuhRevision: string;
     wazuhStage: string;
+    wazuhIsProduction: boolean;
     basePath: string;
     serverBasePath: string;
     env: {

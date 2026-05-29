@@ -83,6 +83,7 @@ describe('GET /api/status', () => {
           wazuhVersion: '4.2.0',
           wazuhRevision: '01',
           wazuhStage: '',
+          wazuhIsProduction: false,
         },
         serverName: 'xopensearchDashboards',
         uuid: 'xxxx-xxxxx',

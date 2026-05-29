@@ -146,6 +146,7 @@ function pluginInitializerContextMock() {
         wazuhVersion: 'wazuhVersion',
         wazuhRevision: '01',
         wazuhStage: '',
+        wazuhIsProduction: false,
       },
     },
     config: {
@@ -174,6 +175,7 @@ function createCoreContext(): CoreContext {
         wazuhVersion: 'wazuhVersion',
         wazuhRevision: '01',
         wazuhStage: '',
+        wazuhIsProduction: false,
       },
     },
   };

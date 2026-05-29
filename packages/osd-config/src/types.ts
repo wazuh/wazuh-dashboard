@@ -40,6 +40,7 @@ export interface PackageInfo {
   wazuhVersion: string;
   wazuhRevision: string;
   wazuhStage: string;
+  wazuhIsProduction: boolean;
 }
 
 /**
