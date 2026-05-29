@@ -411,10 +411,14 @@ rm -fr %{buildroot}
 %attr(644, root, root) "/etc/systemd/system/wazuh-dashboard.service"
 
 %changelog
+* Thu Sep 03 2026 support <info@wazuh.com> - 4.10.5
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-10-5.html
 * Thu Jul 09 2026 support <info@wazuh.com> - 4.14.7
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-7.html
-* Thu May 14 2026 support <info@wazuh.com> - 4.14.6
+* Tue Jun 09 2026 support <info@wazuh.com> - 4.14.6
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-6.html
+* Thu May 21 2026 support <info@wazuh.com> - 4.10.4
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-10-4.html
 * Thu Apr 23 2026 support <info@wazuh.com> - 4.14.5
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-5.html
 * Tue Mar 17 2026 support <info@wazuh.com> - 4.14.4
@@ -431,6 +435,8 @@ rm -fr %{buildroot}
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-13-1.html
 * Thu Sep 18 2025 support <info@wazuh.com> - 4.13.0
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-13-0.html
+* Fri Aug 22 2025 support <info@wazuh.com> - 4.10.3
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-10-3.html
 * Wed May 21 2025 support <info@wazuh.com> - 4.10.2
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-10-2.html
 * Wed May 07 2025 support <info@wazuh.com> - 4.12.0
