@@ -33,7 +33,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.14.7
 
-## Wazuh dashboard v4.14.6 - OpenSearch Dashboards 2.19.5 - Revision 00
+## Wazuh dashboard v4.14.6 - OpenSearch Dashboards 2.19.5 - Revision 01
 
 ### Added
 
@@ -140,6 +140,34 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Fixed
 
 - Fix redirection on IDP initiated SAML configurations [#171](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/171)
+
+## Wazuh dashboard v4.10.5 - OpenSearch Dashboards 2.19.5 - Revision 00
+
+### Added
+
+- Support for Wazuh 4.10.5
+
+## Wazuh dashboard v4.10.4 - OpenSearch Dashboards 2.19.5 - Revision 01
+
+### Added
+
+- Support for Wazuh 4.10.4
+
+## Wazuh dashboard v4.10.3 - OpenSearch Dashboards 2.16.0 - Revision 01
+
+### Added
+
+- Support for Wazuh 4.10.3
+
+### Changed
+
+- Added `noreplace` directive to `/etc/default/wazuh-dashboard` for RPM packages to prevent overwriting user-modified configurations during package upgrades. [#668](https://github.com/wazuh/wazuh-dashboard/pull/668)
+
+## Wazuh dashboard v4.10.2 - OpenSearch Dashboards 2.16.0 - Revision 01
+
+### Added
+
+- Support for Wazuh 4.10.2
 
 ## Wazuh dashboard v4.10.1 - OpenSearch Dashboards 2.16.0 - Revision 01
 
