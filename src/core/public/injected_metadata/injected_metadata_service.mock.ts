@@ -29,6 +29,7 @@
  */
 
 import type { PublicMethodsOf } from '@osd/utility-types';
+import { healthCheckConfig } from 'src/core/server/healthcheck/healthcheck/health_check.mock';
 import { WazuhBuildInfo } from '../../types/wazuh_build_info';
 import { InjectedMetadataService, InjectedMetadataSetup } from './injected_metadata_service';
 
@@ -78,13 +79,7 @@ const createSetupContractMock = () => {
   setupContract.getKeyboardShortcuts.mockReturnValue({ enabled: true });
   setupContract.getWazuhBuildInfo.mockReturnValue(mockWazuhBuildInfo);
   setupContract.getWazuhDocVersion.mockReturnValue('4.x');
-  setupContract.getHealthCheck.mockReturnValue({
-    enabled: true,
-    checks_enabled: '.*',
-    retries_delay: 2500,
-    interval: 900000,
-    server_not_ready_troubleshooting_link: 'https://example.healthcheck-docs.com',
-  });
+  setupContract.getHealthCheck.mockReturnValue(healthCheckConfig);
   return setupContract;
 };
 
