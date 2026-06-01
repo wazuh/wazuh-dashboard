@@ -302,7 +302,7 @@ export class CoreSystem {
         docLinks,
         http,
         i18n,
-        injectedMetadata: pick(injectedMetadata, ['getInjectedVar', 'getBranding', 'getWazuhVersion', 'getWazuhRevision', 'getWazuhStage', 'getWazuhIsProduction']),
+        injectedMetadata: pick(injectedMetadata, ['getInjectedVar', 'getBranding', 'getWazuhBuildInfo']),
         notifications,
         overlays,
         savedObjects,

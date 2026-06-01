@@ -77,6 +77,12 @@ const INJECTED_METADATA = {
       wazuhIsProduction: expect.any(Boolean),
     },
   },
+  wazuhBuildInfo: {
+    version: expect.any(String),
+    revision: expect.any(String),
+    stage: expect.any(String),
+    isProduction: expect.any(Boolean),
+  },
 };
 
 const { createOpenSearchDashboardsRequest, createRawRequest } = httpServerMock;

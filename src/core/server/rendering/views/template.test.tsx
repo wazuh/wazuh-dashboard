@@ -29,10 +29,7 @@ function mockProps() {
       version: injectedMetadata.getOpenSearchDashboardsVersion(),
       buildNumber: 1,
       branch: injectedMetadata.getBasePath(),
-      wazuhVersion: injectedMetadata.getWazuhVersion(),
-      wazuhRevision: injectedMetadata.getWazuhRevision(),
-      wazuhStage: injectedMetadata.getWazuhStage(),
-      wazuhIsProduction: injectedMetadata.getWazuhIsProduction(),
+      wazuhBuildInfo: injectedMetadata.getWazuhBuildInfo(),
       basePath: '',
       serverBasePath: '',
       env: {

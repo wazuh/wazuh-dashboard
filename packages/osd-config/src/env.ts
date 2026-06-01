@@ -70,6 +70,7 @@ export interface RawPackageInfo {
   wazuh: {
     version: string;
     revision?: string;
+    isProduction?: boolean;
   };
 }
 
@@ -77,7 +78,6 @@ export interface RawPackageInfo {
 interface RawWazuhVersionFile {
   version?: string;
   stage?: string;
-  isProduction?: boolean;
 }
 
 function loadWazuhVersionFile(repoRoot: string): RawWazuhVersionFile {
@@ -182,7 +182,7 @@ export class Env {
       wazuhVersion: pkg.wazuh.version,
       wazuhRevision: pkg.wazuh.revision ?? '01',
       wazuhStage: wazuhVersionFile.stage ?? '',
-      wazuhIsProduction: wazuhVersionFile.isProduction ?? false,
+      wazuhIsProduction: pkg.wazuh.isProduction ?? false,
     });
   }
 }

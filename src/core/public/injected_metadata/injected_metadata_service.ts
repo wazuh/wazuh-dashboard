@@ -39,6 +39,7 @@ import {
   UserProvidedValues,
 } from '../../server/types';
 import { AppCategory, Branding } from '../';
+import { WazuhBuildInfo } from '../../types/wazuh_build_info';
 
 export interface InjectedPluginMetadata {
   id: PluginName;
@@ -54,10 +55,7 @@ export interface InjectedMetadataParams {
     version: string;
     buildNumber: number;
     branch: string;
-    wazuhVersion: string;
-    wazuhRevision: string;
-    wazuhStage: string;
-    wazuhIsProduction: boolean;
+    wazuhBuildInfo: WazuhBuildInfo;
     basePath: string;
     serverBasePath: string;
     category?: AppCategory;
@@ -169,28 +167,15 @@ export class InjectedMetadataService {
       },
 
       // Wazuh
-      getWazuhVersion: () => {
-        return this.state.wazuhVersion;
-      },
-
-      // Wazuh
-      getWazuhRevision: () => {
-        return this.state.wazuhRevision;
-      },
-
-      // Wazuh
-      getWazuhStage: () => {
-        return this.state.wazuhStage;
-      },
-
-      // Wazuh
-      getWazuhIsProduction: () => {
-        return this.state.wazuhIsProduction;
+      getWazuhBuildInfo: () => {
+        return this.state.wazuhBuildInfo;
       },
 
       // Wazuh
       getWazuhDocVersion: () => {
-        return this.state.wazuhVersion?.split('.').slice(0, 2).join('.') || 'current';
+        return (
+          this.state.wazuhBuildInfo.version?.split('.').slice(0, 2).join('.') || 'current'
+        );
       },
 
       // Wazuh
@@ -236,10 +221,7 @@ export interface InjectedMetadataSetup {
     enabled: boolean;
   };
   // Wazuh
-  getWazuhVersion: () => string;
-  getWazuhRevision: () => string;
-  getWazuhStage: () => string;
-  getWazuhIsProduction: () => boolean;
+  getWazuhBuildInfo: () => WazuhBuildInfo;
   getWazuhDocVersion: () => string;
   getHealthCheck: () => HealthCheckConfig;
 }

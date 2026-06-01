@@ -120,10 +120,7 @@ export function createPluginSetupContext<
     injectedMetadata: {
       getInjectedVar: deps.injectedMetadata.getInjectedVar,
       getBranding: deps.injectedMetadata.getBranding,
-      getWazuhVersion: deps.injectedMetadata.getWazuhVersion,
-      getWazuhRevision: deps.injectedMetadata.getWazuhRevision,
-      getWazuhStage: deps.injectedMetadata.getWazuhStage,
-      getWazuhIsProduction: deps.injectedMetadata.getWazuhIsProduction,
+      getWazuhBuildInfo: deps.injectedMetadata.getWazuhBuildInfo,
     },
     getStartServices: () => plugin.startDependencies,
     workspaces: deps.workspaces,
@@ -183,10 +180,7 @@ export function createPluginStartContext<
     injectedMetadata: {
       getInjectedVar: deps.injectedMetadata.getInjectedVar,
       getBranding: deps.injectedMetadata.getBranding,
-      getWazuhVersion: deps.injectedMetadata.getWazuhVersion,
-      getWazuhRevision: deps.injectedMetadata.getWazuhRevision,
-      getWazuhStage: deps.injectedMetadata.getWazuhStage,
-      getWazuhIsProduction: deps.injectedMetadata.getWazuhIsProduction,
+      getWazuhBuildInfo: deps.injectedMetadata.getWazuhBuildInfo,
     },
     fatalErrors: deps.fatalErrors,
     workspaces: deps.workspaces,

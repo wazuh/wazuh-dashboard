@@ -447,15 +447,6 @@ jobs:
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/alerting-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/alerting-plugin
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/notifications-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/notifications-plugin
 
-      - name: Set production flag in VERSION.json
-        run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}
-          if [ "${{ inputs.is_stage }}" = "true" ]; then
-            jq '.isProduction = true' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
-          else
-            jq '.isProduction = false' VERSION.json > VERSION.tmp && mv VERSION.tmp VERSION.json
-          fi
-
       - name: Build package
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
