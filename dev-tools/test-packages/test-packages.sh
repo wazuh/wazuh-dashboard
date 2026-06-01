@@ -153,8 +153,8 @@ block_4x_install_test() {
     exit 1
   fi
 
-  if grep -F -q "ERROR: Detected Wazuh Dashboard version" "$BUILD_LOG"; then
-    BLOCK_MSG=$(grep -F 'ERROR: Detected Wazuh Dashboard version' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
+  if grep -F -q "ERROR: Direct upgrade from Wazuh Dashboard" "$BUILD_LOG"; then
+    BLOCK_MSG=$(grep -F 'ERROR: Direct upgrade from Wazuh Dashboard' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
     echo "  $BLOCK_MSG"
   else
     echo "ERROR: Expected error message not found in build output"

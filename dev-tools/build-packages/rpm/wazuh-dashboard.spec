@@ -110,7 +110,15 @@ if [ -f %{INSTALL_DIR}/VERSION.json ]; then
   if [ -n "$INSTALLED_VER" ]; then
     MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
     if [ "$MAJOR" -lt 5 ]; then
-      echo "ERROR: Detected Wazuh Dashboard version $INSTALLED_VER. Installation of Wazuh Dashboard 5.x is BLOCKED to prevent incompatibilities. Please follow the migration guide: https://documentation.wazuh.com/current/upgrade-guide/wazuh-dashboard.html" >&2
+      cat >&2 <<EOF
+==============================================================
+ERROR: Direct upgrade from Wazuh Dashboard versions prior to 5.x
+is not supported.
+
+Detected installed version: $INSTALLED_VER
+A clean installation of Wazuh Dashboard 5.x is required.
+==============================================================
+EOF
       exit 1
     fi
   fi
