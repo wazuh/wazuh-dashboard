@@ -9,6 +9,20 @@
 
 set -e
 
+# Version guard: block 5.x installation when a pre-5.x version (4.x or earlier) is already installed
+# NOTE: we check VERSION.json on disk rather than dpkg -s because during
+# dpkg -i the old package data remains on disk until postinst runs.
+if [ -f /usr/share/wazuh-dashboard/VERSION.json ]; then
+    INSTALLED_VER=$(grep '"version"' /usr/share/wazuh-dashboard/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+    if [ -n "$INSTALLED_VER" ]; then
+        MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+        if [ "$MAJOR" -lt 5 ]; then
+            echo "ERROR: Detected Wazuh Dashboard version $INSTALLED_VER. Installation of Wazuh Dashboard 5.x is BLOCKED to prevent incompatibilities. Please follow the migration guide: https://documentation.wazuh.com/current/upgrade-guide/wazuh-dashboard.html" >&2
+            exit 1
+        fi
+    fi
+fi
+
 #
 # This script is executed in the pre-installation phase
 #

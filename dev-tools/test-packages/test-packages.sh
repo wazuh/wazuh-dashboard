@@ -1,4 +1,5 @@
 #!/bin/sh
+set -u
 
 # Package name
 PACKAGE=""
@@ -8,6 +9,9 @@ CONTAINER_NAME="wazuh-dashboard"
 FILES="/etc/wazuh-dashboard/opensearch_dashboards.yml /usr/share/wazuh-dashboard"
 # Owner of the files
 FILE_OWNER="wazuh-dashboard"
+# Test mode flags
+NEGATIVE_TEST=false
+REINSTALL_TEST=false
 
 # Remove container and image
 clean() {
@@ -120,6 +124,64 @@ check_metadata_rpm() {
   echo "metadata package is correct: $metadataPackage"
 }
 
+# Negative test: assert 5.x install is BLOCKED when 4.x is pre-installed
+negative_test() {
+  BUILD_LOG=$(mktemp)
+
+  if [[ $PACKAGE == *".deb" ]]; then
+    set +e
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg SIMULATE_4X=true -t "$CONTAINER_NAME" ./deb/ > "$BUILD_LOG" 2>&1
+    BUILD_EXIT_CODE=$?
+    set -e
+  elif [[ $PACKAGE == *".rpm" ]]; then
+    set +e
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg SIMULATE_4X=true -t "$CONTAINER_NAME" ./rpm/ > "$BUILD_LOG" 2>&1
+    BUILD_EXIT_CODE=$?
+    set -e
+  else
+    echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm)"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  if [ "$BUILD_EXIT_CODE" -eq 0 ]; then
+    echo "ERROR: Installation should have been blocked but succeeded"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  if ! grep -F -q "ERROR: Detected Wazuh Dashboard version" "$BUILD_LOG"; then
+    echo "ERROR: Expected error message not found in build output"
+    echo "--- Build output ---"
+    cat "$BUILD_LOG"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  echo "SUCCESS: 5.x installation correctly blocked when 4.x is installed"
+  rm -f "$BUILD_LOG"
+}
+
+# Reinstall test: assert 5.x install over 5.x succeeds (same-major reinstall)
+reinstall_test() {
+  if [[ $PACKAGE == *".deb" ]]; then
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg REINSTALL_5X=true -t "$CONTAINER_NAME" ./deb/
+    docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME"
+    check_metadata_deb
+  elif [[ $PACKAGE == *".rpm" ]]; then
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg REINSTALL_5X=true -t "$CONTAINER_NAME" ./rpm/
+    docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME"
+    check_metadata_rpm
+  else
+    echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm)"
+    exit 1
+  fi
+
+  echo "SUCCESS: 5.x reinstall over 5.x succeeded"
+  files_exist
+  check_opensearch_dashboard_yml
+}
+
 # Run test
 test() {
 
@@ -147,12 +209,15 @@ help() {
   echo "Usage: $0 [OPTIONS]"
   echo
   echo "    -p, --package <path>       Set Wazuh Dashboard rpm package name,which has to be in the <repository>/dev-tools/test-packages/<DISTRIBUTION>/ folder."
+  echo "    --negative                 Run negative test: assert 5.x install is blocked when 4.x is pre-installed."
+  echo "    --reinstall                Run reinstall test: assert 5.x reinstall over 5.x succeeds."
+  echo "    -h, --help                 Show this help."
   echo
   exit $1
 }
 
 main() {
-  while [ -n "${1}" ]; do
+  while [ $# -gt 0 ]; do
     case "${1}" in
     "-h" | "--help")
       help 0
@@ -165,6 +230,14 @@ main() {
         help 1
       fi
       ;;
+    "--negative")
+      NEGATIVE_TEST=true
+      shift
+      ;;
+    "--reinstall")
+      REINSTALL_TEST=true
+      shift
+      ;;
     *)
       help 1
       ;;
@@ -175,7 +248,18 @@ main() {
     help 1
   fi
 
-  test
+  if [ "$NEGATIVE_TEST" = true ] && [ "$REINSTALL_TEST" = true ]; then
+    echo "ERROR: --negative and --reinstall are mutually exclusive"
+    exit 1
+  fi
+
+  if [ "$NEGATIVE_TEST" = true ]; then
+    negative_test
+  elif [ "$REINSTALL_TEST" = true ]; then
+    reinstall_test
+  else
+    test
+  fi
 
   clean
 }
