@@ -503,6 +503,18 @@ jobs:
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
+      - name: Test package negative (5.x install blocked when 4.x present)
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh --block-4x-install \
+            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
+      - name: Test package reinstall (5.x install over 5.x succeeds)
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh --allow-same-major-reinstall \
+            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
       - name: DEB - Test package install/uninstall
         if: ${{ inputs.system == 'deb' }}
         run: |

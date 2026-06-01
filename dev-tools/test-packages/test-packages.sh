@@ -130,12 +130,12 @@ negative_test() {
 
   if [[ $PACKAGE == *".deb" ]]; then
     set +e
-    docker build --build-arg PACKAGE="$PACKAGE" --build-arg SIMULATE_4X=true -t "$CONTAINER_NAME" ./deb/ > "$BUILD_LOG" 2>&1
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg BLOCK_4X_INSTALL=true -t "$CONTAINER_NAME" ./deb/ > "$BUILD_LOG" 2>&1
     BUILD_EXIT_CODE=$?
     set -e
   elif [[ $PACKAGE == *".rpm" ]]; then
     set +e
-    docker build --build-arg PACKAGE="$PACKAGE" --build-arg SIMULATE_4X=true -t "$CONTAINER_NAME" ./rpm/ > "$BUILD_LOG" 2>&1
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg BLOCK_4X_INSTALL=true -t "$CONTAINER_NAME" ./rpm/ > "$BUILD_LOG" 2>&1
     BUILD_EXIT_CODE=$?
     set -e
   else
@@ -165,11 +165,11 @@ negative_test() {
 # Reinstall test: assert 5.x install over 5.x succeeds (same-major reinstall)
 reinstall_test() {
   if [[ $PACKAGE == *".deb" ]]; then
-    docker build --build-arg PACKAGE="$PACKAGE" --build-arg REINSTALL_5X=true -t "$CONTAINER_NAME" ./deb/
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg ALLOW_SAME_MAJOR_REINSTALL=true -t "$CONTAINER_NAME" ./deb/
     docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME"
     check_metadata_deb
   elif [[ $PACKAGE == *".rpm" ]]; then
-    docker build --build-arg PACKAGE="$PACKAGE" --build-arg REINSTALL_5X=true -t "$CONTAINER_NAME" ./rpm/
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg ALLOW_SAME_MAJOR_REINSTALL=true -t "$CONTAINER_NAME" ./rpm/
     docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME"
     check_metadata_rpm
   else
@@ -209,8 +209,8 @@ help() {
   echo "Usage: $0 [OPTIONS]"
   echo
   echo "    -p, --package <path>       Set Wazuh Dashboard rpm package name,which has to be in the <repository>/dev-tools/test-packages/<DISTRIBUTION>/ folder."
-  echo "    --negative                 Run negative test: assert 5.x install is blocked when 4.x is pre-installed."
-  echo "    --reinstall                Run reinstall test: assert 5.x reinstall over 5.x succeeds."
+  echo "    --block-4x-install         Run block test: assert 5.x install is blocked when 4.x is pre-installed."
+  echo "    --allow-same-major-reinstall Run reinstall test: assert 5.x reinstall over 5.x succeeds."
   echo "    -h, --help                 Show this help."
   echo
   exit $1
@@ -230,11 +230,11 @@ main() {
         help 1
       fi
       ;;
-    "--negative")
+    "--block-4x-install")
       NEGATIVE_TEST=true
       shift
       ;;
-    "--reinstall")
+    "--allow-same-major-reinstall")
       REINSTALL_TEST=true
       shift
       ;;
@@ -249,7 +249,7 @@ main() {
   fi
 
   if [ "$NEGATIVE_TEST" = true ] && [ "$REINSTALL_TEST" = true ]; then
-    echo "ERROR: --negative and --reinstall are mutually exclusive"
+    echo "ERROR: --block-4x-install and --allow-same-major-reinstall are mutually exclusive"
     exit 1
   fi
 
