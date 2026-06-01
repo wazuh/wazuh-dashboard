@@ -124,8 +124,8 @@ check_metadata_rpm() {
   echo "metadata package is correct: $metadataPackage"
 }
 
-# Negative test: assert 5.x install is BLOCKED when 4.x is pre-installed
-negative_test() {
+# Block-4x-install test: assert 5.x install is BLOCKED when 4.x is pre-installed
+block_4x_install_test() {
   BUILD_LOG=$(mktemp)
 
   if [[ $PACKAGE == *".deb" ]]; then
@@ -150,7 +150,10 @@ negative_test() {
     exit 1
   fi
 
-  if ! grep -F -q "ERROR: Detected Wazuh Dashboard version" "$BUILD_LOG"; then
+  if grep -F -q "ERROR: Detected Wazuh Dashboard version" "$BUILD_LOG"; then
+    BLOCK_MSG=$(grep -F 'ERROR: Detected Wazuh Dashboard version' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
+    echo "  $BLOCK_MSG"
+  else
     echo "ERROR: Expected error message not found in build output"
     echo "--- Build output ---"
     cat "$BUILD_LOG"
@@ -163,14 +166,14 @@ negative_test() {
 }
 
 # Reinstall test: assert 5.x install over 5.x succeeds (same-major reinstall)
-reinstall_test() {
+same_major_reinstall_test() {
   if [[ $PACKAGE == *".deb" ]]; then
-    docker build --build-arg PACKAGE="$PACKAGE" --build-arg ALLOW_SAME_MAJOR_REINSTALL=true -t "$CONTAINER_NAME" ./deb/
-    docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME"
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg ALLOW_SAME_MAJOR_REINSTALL=true -t "$CONTAINER_NAME" ./deb/ && \
+    docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME" && \
     check_metadata_deb
   elif [[ $PACKAGE == *".rpm" ]]; then
-    docker build --build-arg PACKAGE="$PACKAGE" --build-arg ALLOW_SAME_MAJOR_REINSTALL=true -t "$CONTAINER_NAME" ./rpm/
-    docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME"
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg ALLOW_SAME_MAJOR_REINSTALL=true -t "$CONTAINER_NAME" ./rpm/ && \
+    docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME" && \
     check_metadata_rpm
   else
     echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm)"
@@ -254,9 +257,9 @@ main() {
   fi
 
   if [ "$NEGATIVE_TEST" = true ]; then
-    negative_test
+    block_4x_install_test
   elif [ "$REINSTALL_TEST" = true ]; then
-    reinstall_test
+    same_major_reinstall_test
   else
     test
   fi

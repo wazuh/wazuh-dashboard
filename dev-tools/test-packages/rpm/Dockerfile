@@ -21,7 +21,7 @@ COPY ${PACKAGE} /tmp/wazuh.rpm
 # to exercise the %pre guard again (must allow same-major-version reinstall)
 RUN if [ -n "$ALLOW_SAME_MAJOR_REINSTALL" ]; then \
       rpm -ivh /tmp/wazuh.rpm --nodeps && \
-      rpm -Uvh /tmp/wazuh.rpm --nodeps; \
+      rpm -Uvh /tmp/wazuh.rpm --nodeps --force; \
     else \
       yum install /tmp/wazuh.rpm -y; \
     fi
