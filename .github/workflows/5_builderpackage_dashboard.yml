@@ -281,6 +281,14 @@ jobs:
           if [ -z "$PREVIOUS" ]; then
             echo "::warning No previous version::No previous version found for this architecture. Upgrade test will be skipped."
           fi
+          # If the previous version is from a different major (e.g. 4.x when building 5.x),
+          # skip the upgrade test — the pre-install guard blocks cross-major upgrades.
+          VERSION_MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          PREVIOUS_MAJOR=$(echo "$PREVIOUS" | cut -d. -f1)
+          if [ -n "$PREVIOUS" ] && [ "$VERSION_MAJOR" != "$PREVIOUS_MAJOR" ]; then
+            echo "Previous version $PREVIOUS major ($PREVIOUS_MAJOR) differs from current major ($VERSION_MAJOR). Upgrade test will be skipped."
+            PREVIOUS=""
+          fi
           if [ "${{ inputs.is_stage }}" = "true" ]; then
             PRODUCTION=--production
           else
