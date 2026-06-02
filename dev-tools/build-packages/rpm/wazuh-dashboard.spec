@@ -103,14 +103,18 @@ find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 744 -exec chmod 740
 
 %pre
 # Block installation of 5.x if any wazuh-dashboard < 5.0.0 is installed
-# NOTE: we check VERSION.json on disk rather than rpm -qa because during
+# NOTE: we check files on disk rather than rpm -qa because during
 # rpm -Uvh the old package header is removed from the DB before %pre runs.
 if [ -f %{INSTALL_DIR}/VERSION.json ]; then
   INSTALLED_VER=$(grep '"version"' %{INSTALL_DIR}/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
-  if [ -n "$INSTALLED_VER" ]; then
-    MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
-    if [ "$MAJOR" -lt 5 ]; then
-      cat >&2 <<EOF
+elif [ -f %{INSTALL_DIR}/VERSION ]; then
+  INSTALLED_VER=$(cat %{INSTALL_DIR}/VERSION 2>/dev/null)
+fi
+
+if [ -n "$INSTALLED_VER" ]; then
+  MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+  if [ "$MAJOR" -lt 5 ]; then
+    cat >&2 <<EOF
 ==============================================================
 ERROR: Direct upgrade from Wazuh Dashboard versions prior to 5.x
 is not supported.
@@ -119,8 +123,9 @@ Detected installed version: $INSTALLED_VER
 A clean installation of Wazuh Dashboard 5.x is required.
 ==============================================================
 EOF
-      exit 1
-    fi
+    exit 1
+  fi
+fi
   fi
 fi
 
