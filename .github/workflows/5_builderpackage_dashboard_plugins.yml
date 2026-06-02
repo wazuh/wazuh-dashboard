@@ -96,6 +96,17 @@ jobs:
           ref: ${{ env.PLUGIN_REF }}
           path: ${{ inputs.pathPlugin || format('plugins/{0}', inputs.name) }}
 
+      - name: Get commit SHA of the plugin of wazuh-dashboard-plugins
+        run: |
+          echo 'Getting commit sha'
+          if [  ${{ inputs.repo }} == 'wazuh/wazuh-dashboard-plugins' ]; then
+            COMMIT_SHA=$(cd ${{inputs.pathPlugin}}/${{ inputs.path }} && git rev-parse --short HEAD)
+          else
+            COMMIT_SHA=$(cd plugins/${{ inputs.name }} && git rev-parse --short HEAD)
+          fi
+          echo "COMMIT_SHA=$COMMIT_SHA"
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+
       - name: Move plugin to correct path and remove wazuh-dashboard-plugins parent folder
         if: ${{ inputs.repo == 'wazuh/wazuh-dashboard-plugins' }}
         run: |
@@ -115,12 +126,20 @@ jobs:
           set -o pipefail
           OPENSEARCH_DASHBOARDS_VERSION=${{ inputs.version_opensearch }} yarn build 2>&1 | tee build.log
 
+      - name: Build metadata
+        if: success()
+        working-directory: plugins/${{ inputs.name }}
+        run: |
+          jq -n --arg commit_sha "${{ env.COMMIT_SHA }}" '{ commit_sha: $commit_sha }' > build/metadata.json
+
       - name: Upload Plugin Artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.packageName }}
-          path: plugins/${{ inputs.name }}/build/*.zip
+          path: |
+            plugins/${{ inputs.name }}/build/*.zip
+            plugins/${{ inputs.name }}/build/metadata.json
           retention-days: 1
 
       - name: Upload Build Log
