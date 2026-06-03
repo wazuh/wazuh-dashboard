@@ -24,7 +24,8 @@ export class CrossCompatibilityService {
   }
 
   start({ opensearch, plugins }: StartDeps): CrossCompatibilityServiceStart {
-    this.log.warn('Starting cross compatibility service');
+    // Wazuh: change log level to debug
+    this.log.debug('Starting cross compatibility service');
     return {
       verifyOpenSearchPluginsState: (pluginName: string) => {
         const pluginOpenSearchDeps = plugins.get(pluginName) || {};
