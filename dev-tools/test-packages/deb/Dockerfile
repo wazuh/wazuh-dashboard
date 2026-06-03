@@ -1,23 +1,44 @@
 FROM ubuntu:jammy
 ARG PACKAGE
 ARG BLOCK_4X_INSTALL
+ARG BLOCK_3X_INSTALL
+ARG BLOCK_UNKNOWN_INSTALL
 ARG ALLOW_SAME_MAJOR_REINSTALL
 RUN mkdir -p /tmp
 RUN apt-get update --fix-missing
 RUN apt-get install -y curl libcap2-bin
 
-# If BLOCK_4X_INSTALL is set, create a VERSION.json on disk to simulate
-# an existing pre-5.x installation (the preinst guard checks this file)
+# If BLOCK_4X_INSTALL is set, simulate a 4.x installation via the plugin's package.json
+# (the preinst guard falls through VERSION.json -> VERSION -> plugin package.json)
 RUN if [ -n "$BLOCK_4X_INSTALL" ]; then \
-      mkdir -p /usr/share/wazuh-dashboard && \
-      printf '{"version": "4.14.5"}' > /usr/share/wazuh-dashboard/VERSION.json; \
+      mkdir -p /usr/share/wazuh-dashboard/plugins/wazuh && \
+      printf '{"name":"wazuh","version":"4.14.5"}\n' > /usr/share/wazuh-dashboard/plugins/wazuh/package.json; \
+    fi
+
+# If BLOCK_3X_INSTALL is set, simulate a 3.x Kibana-era installation
+# (the preinst guard falls through to /usr/share/kibana/plugins/wazuh/package.json)
+RUN if [ -n "$BLOCK_3X_INSTALL" ]; then \
+      mkdir -p /usr/share/kibana/plugins/wazuh && \
+      printf '{"name":"wazuh","version":"3.13.6"}\n' > /usr/share/kibana/plugins/wazuh/package.json; \
     fi
 
 COPY ${PACKAGE} /tmp/wazuh.deb
 
-# If ALLOW_SAME_MAJOR_REINSTALL: install the 5.x package once, then force a reinstall
-# to exercise the preinst guard again (must allow same-major-version reinstall)
-RUN if [ -n "$ALLOW_SAME_MAJOR_REINSTALL" ]; then \
+# BLOCK_UNKNOWN_INSTALL: install once (fresh, $1=install — allowed), then corrupt
+# version files so the version cannot be determined, then attempt a reinstall
+# ($1=upgrade) which must be blocked by the preinst guard.
+#
+# ALLOW_SAME_MAJOR_REINSTALL: install twice — must succeed (5.x over 5.x).
+#
+# Default: normal install (also handles BLOCK_4X_INSTALL and BLOCK_3X_INSTALL
+# via the files pre-created above).
+RUN if [ -n "$BLOCK_UNKNOWN_INSTALL" ]; then \
+      dpkg -i /tmp/wazuh.deb && \
+      rm -f /usr/share/wazuh-dashboard/VERSION.json && \
+      rm -f /usr/share/wazuh-dashboard/VERSION && \
+      rm -f /usr/share/wazuh-dashboard/plugins/wazuh/package.json && \
+      dpkg -i /tmp/wazuh.deb; \
+    elif [ -n "$ALLOW_SAME_MAJOR_REINSTALL" ]; then \
       dpkg -i /tmp/wazuh.deb && \
       dpkg -i /tmp/wazuh.deb; \
     else \

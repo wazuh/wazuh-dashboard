@@ -509,6 +509,18 @@ jobs:
           bash ./test-packages.sh --block-4x-install \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
+      - name: Test package negative (5.x install blocked when 3.x Kibana present)
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh --block-3x-install \
+            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
+      - name: Test package negative (5.x install blocked when remnants exist but version unknown)
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh --block-unknown-install \
+            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
       - name: Test package reinstall (5.x install over 5.x succeeds)
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
