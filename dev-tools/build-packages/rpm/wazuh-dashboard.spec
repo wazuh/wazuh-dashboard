@@ -126,8 +126,6 @@ EOF
     exit 1
   fi
 fi
-  fi
-fi
 
 # Create the wazuh-dashboard group if it doesn't exists
 if [ $1 = 1 ]; then
