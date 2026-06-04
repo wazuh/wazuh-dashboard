@@ -606,7 +606,7 @@ jobs:
             exit 1
           fi
 
-          if echo "$OUTPUT" | grep -F -q "ERROR: Direct upgrade from Wazuh Dashboard"; then
+          if echo "$OUTPUT" | grep -F -q "ERROR: Direct upgrade from Wazuh dashboard"; then
             echo "Cross-major upgrade correctly blocked"
           else
             echo "ERROR: Expected block message not found"
@@ -750,7 +750,7 @@ jobs:
             exit 1
           fi
 
-          if echo "$OUTPUT" | grep -F -q "ERROR: Direct upgrade from Wazuh Dashboard"; then
+          if echo "$OUTPUT" | grep -F -q "ERROR: Direct upgrade from Wazuh dashboard"; then
             echo "Cross-major upgrade correctly blocked"
           else
             echo "ERROR: Expected block message not found"
