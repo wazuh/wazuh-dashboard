@@ -109,15 +109,12 @@ find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 744 -exec chmod 740
 #   1. VERSION.json        — wazuh-dashboard 5.x+
 #   2. VERSION             — wazuh-dashboard 4.x (legacy file)
 #   3. plugin package.json — wazuh-dashboard 4.x+ (plugin metadata)
-#   4. kibana plugin       — wazuh 3.x (Kibana era)
 if [ -f %{INSTALL_DIR}/VERSION.json ]; then
   INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
 elif [ -f %{INSTALL_DIR}/VERSION ]; then
   INSTALLED_VER=$(cat %{INSTALL_DIR}/VERSION 2>/dev/null)
 elif [ -f %{INSTALL_DIR}/plugins/wazuh/package.json ]; then
   INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
-elif [ -f /usr/share/kibana/plugins/wazuh/package.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' /usr/share/kibana/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
 fi
 
 if [ -n "$INSTALLED_VER" ]; then
@@ -125,16 +122,16 @@ if [ -n "$INSTALLED_VER" ]; then
   if [ "$MAJOR" -lt 5 ]; then
     cat >&2 <<EOF
 ==============================================================
-ERROR: Direct upgrade from Wazuh Dashboard versions prior to 5.x
+ERROR: Direct upgrade from Wazuh dashboard versions prior to 5.x
 is not supported.
 
 Detected installed version: $INSTALLED_VER
-A clean installation of Wazuh Dashboard 5.x is required.
+A clean installation of Wazuh dashboard 5.x is required.
 ==============================================================
 EOF
     exit 1
   fi
-elif [ "$1" = "2" ] && { [ -d %{INSTALL_DIR}/plugins ] || [ -d /usr/share/kibana/plugins/wazuh ]; }; then
+elif [ "$1" = "2" ] && [ -d %{INSTALL_DIR}/plugins ]; then
   # Upgrade requested but version could not be determined from any source.
   # Files may have been removed or corrupted. Block the upgrade; a fresh
   # install ($1=1) is still allowed.
@@ -143,7 +140,7 @@ elif [ "$1" = "2" ] && { [ -d %{INSTALL_DIR}/plugins ] || [ -d /usr/share/kibana
 ERROR: A previous Wazuh installation was detected but the
 installed version could not be determined.
 
-A clean installation of Wazuh Dashboard 5.x is required.
+A clean installation of Wazuh dashboard 5.x is required.
 Please remove the previous installation before proceeding.
 ==============================================================
 EOF

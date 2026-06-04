@@ -11,7 +11,6 @@ FILES="/etc/wazuh-dashboard/opensearch_dashboards.yml /usr/share/wazuh-dashboard
 FILE_OWNER="wazuh-dashboard"
 # Test mode flags
 NEGATIVE_TEST=false
-NEGATIVE_3X_TEST=false
 NEGATIVE_UNKNOWN_TEST=false
 REINSTALL_TEST=false
 
@@ -155,8 +154,8 @@ block_4x_install_test() {
     exit 1
   fi
 
-  if grep -F -q "ERROR: Direct upgrade from Wazuh Dashboard" "$BUILD_LOG"; then
-    BLOCK_MSG=$(grep -F 'ERROR: Direct upgrade from Wazuh Dashboard' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
+  if grep -F -q "ERROR: Direct upgrade from Wazuh dashboard" "$BUILD_LOG"; then
+    BLOCK_MSG=$(grep -F 'ERROR: Direct upgrade from Wazuh dashboard' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
     echo "  $BLOCK_MSG"
   else
     echo "ERROR: Expected error message not found in build output"
@@ -167,47 +166,6 @@ block_4x_install_test() {
   fi
 
   echo "SUCCESS: 5.x installation correctly blocked when 4.x is installed"
-  rm -f "$BUILD_LOG"
-}
-
-# Block-3x-install test: assert 5.x install is BLOCKED when 3.x (Kibana era) is pre-installed
-block_3x_install_test() {
-  BUILD_LOG=$(mktemp)
-
-  if [[ $PACKAGE == *".deb" ]]; then
-    set +e
-    docker build --build-arg PACKAGE="$PACKAGE" --build-arg BLOCK_3X_INSTALL=true -t "$CONTAINER_NAME" ./deb/ > "$BUILD_LOG" 2>&1
-    BUILD_EXIT_CODE=$?
-    set -e
-  elif [[ $PACKAGE == *".rpm" ]]; then
-    set +e
-    docker build --build-arg PACKAGE="$PACKAGE" --build-arg BLOCK_3X_INSTALL=true -t "$CONTAINER_NAME" ./rpm/ > "$BUILD_LOG" 2>&1
-    BUILD_EXIT_CODE=$?
-    set -e
-  else
-    echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm)"
-    rm -f "$BUILD_LOG"
-    exit 1
-  fi
-
-  if [ "$BUILD_EXIT_CODE" -eq 0 ]; then
-    echo "ERROR: Installation should have been blocked but succeeded"
-    rm -f "$BUILD_LOG"
-    exit 1
-  fi
-
-  if grep -F -q "ERROR: Direct upgrade from Wazuh Dashboard" "$BUILD_LOG"; then
-    BLOCK_MSG=$(grep -F 'ERROR: Direct upgrade from Wazuh Dashboard' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
-    echo "  $BLOCK_MSG"
-  else
-    echo "ERROR: Expected error message not found in build output"
-    echo "--- Build output ---"
-    cat "$BUILD_LOG"
-    rm -f "$BUILD_LOG"
-    exit 1
-  fi
-
-  echo "SUCCESS: 5.x installation correctly blocked when 3.x (Kibana) is installed"
   rm -f "$BUILD_LOG"
 }
 
@@ -300,7 +258,6 @@ help() {
   echo
   echo "    -p, --package <path>       Set Wazuh Dashboard rpm package name,which has to be in the <repository>/dev-tools/test-packages/<DISTRIBUTION>/ folder."
   echo "    --block-4x-install         Run block test: assert 5.x install is blocked when 4.x is pre-installed."
-  echo "    --block-3x-install         Run block test: assert 5.x install is blocked when 3.x (Kibana) is pre-installed."
   echo "    --block-unknown-install    Run block test: assert 5.x install is blocked when remnants exist but version is unknown."
   echo "    --allow-same-major-reinstall Run reinstall test: assert 5.x reinstall over 5.x succeeds."
   echo "    -h, --help                 Show this help."
@@ -326,10 +283,6 @@ main() {
       NEGATIVE_TEST=true
       shift
       ;;
-    "--block-3x-install")
-      NEGATIVE_3X_TEST=true
-      shift
-      ;;
     "--block-unknown-install")
       NEGATIVE_UNKNOWN_TEST=true
       shift
@@ -351,7 +304,6 @@ main() {
   # Count how many test modes are active — only one allowed at a time
   MODE_COUNT=0
   [ "$NEGATIVE_TEST" = true ] && MODE_COUNT=$((MODE_COUNT + 1))
-  [ "$NEGATIVE_3X_TEST" = true ] && MODE_COUNT=$((MODE_COUNT + 1))
   [ "$NEGATIVE_UNKNOWN_TEST" = true ] && MODE_COUNT=$((MODE_COUNT + 1))
   [ "$REINSTALL_TEST" = true ] && MODE_COUNT=$((MODE_COUNT + 1))
 
@@ -362,8 +314,6 @@ main() {
 
   if [ "$NEGATIVE_TEST" = true ]; then
     block_4x_install_test
-  elif [ "$NEGATIVE_3X_TEST" = true ]; then
-    block_3x_install_test
   elif [ "$NEGATIVE_UNKNOWN_TEST" = true ]; then
     block_unknown_install_test
   elif [ "$REINSTALL_TEST" = true ]; then
