@@ -173,9 +173,7 @@ export class InjectedMetadataService {
 
       // Wazuh
       getWazuhDocVersion: () => {
-        return (
-          this.state.wazuhBuildInfo.version?.split('.').slice(0, 2).join('.') || 'current'
-        );
+        return this.state.wazuhBuildInfo.version?.split('.').slice(0, 2).join('.') || 'current';
       },
 
       // Wazuh

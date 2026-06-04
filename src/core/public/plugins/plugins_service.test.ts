@@ -124,7 +124,12 @@ describe('PluginsService', () => {
       ...mockSetupDeps,
       application: expect.any(Object),
       getStartServices: expect.any(Function),
-      injectedMetadata: pick(mockSetupDeps.injectedMetadata, 'getInjectedVar', 'getBranding', 'getWazuhBuildInfo'),
+      injectedMetadata: pick(
+        mockSetupDeps.injectedMetadata,
+        'getInjectedVar',
+        'getBranding',
+        'getWazuhBuildInfo'
+      ),
     };
     mockStartDeps = {
       application: applicationServiceMock.createInternalStartContract(),
@@ -148,7 +153,12 @@ describe('PluginsService', () => {
       ...mockStartDeps,
       application: expect.any(Object),
       chrome: omit(mockStartDeps.chrome, 'getComponent'),
-      injectedMetadata: pick(mockStartDeps.injectedMetadata, 'getInjectedVar', 'getBranding', 'getWazuhBuildInfo'),
+      injectedMetadata: pick(
+        mockStartDeps.injectedMetadata,
+        'getInjectedVar',
+        'getBranding',
+        'getWazuhBuildInfo'
+      ),
       telemetry: expect.any(Object),
     };
 
