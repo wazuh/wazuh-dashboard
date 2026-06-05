@@ -29,7 +29,16 @@
  */
 
 import type { PublicMethodsOf } from '@osd/utility-types';
+import { healthCheckConfig } from 'src/core/server/healthcheck/healthcheck/health_check.mock';
+import { WazuhBuildInfo } from '../../types/wazuh_build_info';
 import { InjectedMetadataService, InjectedMetadataSetup } from './injected_metadata_service';
+
+export const mockWazuhBuildInfo: WazuhBuildInfo = {
+  version: '4.x.x',
+  revision: '01',
+  stage: '',
+  isProduction: false,
+};
 
 const createSetupContractMock = () => {
   const setupContract: jest.Mocked<InjectedMetadataSetup> = {
@@ -48,7 +57,7 @@ const createSetupContractMock = () => {
     getSurvey: jest.fn(),
     getEnableIconSideNav: jest.fn(),
     getKeyboardShortcuts: jest.fn(),
-    getWazuhVersion: jest.fn(),
+    getWazuhBuildInfo: jest.fn(),
     getWazuhDocVersion: jest.fn(),
     // Wazuh
     getHealthCheck: jest.fn(),
@@ -70,18 +79,27 @@ const createSetupContractMock = () => {
   setupContract.getPlugins.mockReturnValue([]);
   setupContract.getEnableIconSideNav.mockReturnValue(true);
   setupContract.getKeyboardShortcuts.mockReturnValue({ enabled: true });
-  setupContract.getWazuhVersion.mockReturnValue('4.x.x');
+  setupContract.getWazuhBuildInfo.mockReturnValue(mockWazuhBuildInfo);
   setupContract.getWazuhDocVersion.mockReturnValue('4.x');
+  setupContract.getHealthCheck.mockReturnValue(healthCheckConfig);
   return setupContract;
 };
 
-const createStartContractMock = createSetupContractMock;
-
 type InjectedMetadataServiceContract = PublicMethodsOf<InjectedMetadataService>;
-const createMock = (): jest.Mocked<InjectedMetadataServiceContract> => ({
-  setup: jest.fn().mockReturnValue(createSetupContractMock()),
-  start: jest.fn().mockReturnValue(createStartContractMock()),
-});
+
+const createStartContractMock = () => createSetupContractMock();
+
+const createMock = () => {
+  const mocked: jest.Mocked<InjectedMetadataServiceContract> = {
+    setup: jest.fn(),
+    start: jest.fn(),
+  };
+
+  mocked.setup.mockReturnValue(createSetupContractMock());
+  mocked.start.mockReturnValue(createStartContractMock());
+
+  return mocked;
+};
 
 export const injectedMetadataServiceMock = {
   create: createMock,
