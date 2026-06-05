@@ -59,7 +59,10 @@ export { docLinksServiceMock } from './doc_links/doc_links_service.mock';
 export { fatalErrorsServiceMock } from './fatal_errors/fatal_errors_service.mock';
 export { httpServiceMock } from './http/http_service.mock';
 export { i18nServiceMock } from './i18n/i18n_service.mock';
-export { injectedMetadataServiceMock } from './injected_metadata/injected_metadata_service.mock';
+export {
+  injectedMetadataServiceMock,
+  mockWazuhBuildInfo,
+} from './injected_metadata/injected_metadata_service.mock';
 export { notificationServiceMock } from './notifications/notifications_service.mock';
 export { overlayServiceMock } from './overlays/overlay_service.mock';
 export { savedObjectsServiceMock } from './saved_objects/saved_objects_service.mock';
@@ -93,6 +96,7 @@ function createCoreSetupMock({
     injectedMetadata: {
       getInjectedVar: injectedMetadataServiceMock.createSetupContract().getInjectedVar,
       getBranding: injectedMetadataServiceMock.createSetupContract().getBranding,
+      getWazuhBuildInfo: injectedMetadataServiceMock.createSetupContract().getWazuhBuildInfo,
     },
     workspaces: workspacesServiceMock.createSetupContract(),
     keyboardShortcut: keyboardShortcutServiceMock.createSetup(),
@@ -117,6 +121,7 @@ function createCoreStartMock({ basePath = '' } = {}) {
     injectedMetadata: {
       getInjectedVar: injectedMetadataServiceMock.createStartContract().getInjectedVar,
       getBranding: injectedMetadataServiceMock.createStartContract().getBranding,
+      getWazuhBuildInfo: injectedMetadataServiceMock.createStartContract().getWazuhBuildInfo,
     },
     fatalErrors: fatalErrorsServiceMock.createStartContract(),
     workspaces: workspacesServiceMock.createStartContract(),
@@ -144,6 +149,9 @@ function pluginInitializerContextMock() {
         buildSha: 'buildSha',
         dist: false,
         wazuhVersion: 'wazuhVersion',
+        wazuhRevision: '01',
+        wazuhStage: '',
+        wazuhIsProduction: false,
       },
     },
     config: {
@@ -170,6 +178,9 @@ function createCoreContext(): CoreContext {
         buildSha: 'buildSha',
         dist: false,
         wazuhVersion: 'wazuhVersion',
+        wazuhRevision: '01',
+        wazuhStage: '',
+        wazuhIsProduction: false,
       },
     },
   };
