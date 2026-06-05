@@ -102,6 +102,51 @@ find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 744 -exec chmod 740
 # -----------------------------------------------------------------------------
 
 %pre
+# Block installation of 5.x if any Wazuh < 5.0.0 is detected on disk.
+# NOTE: we check files on disk rather than rpm -qa because during
+# rpm -Uvh the old package header is removed from the DB before %pre runs.
+# Detection order:
+#   1. VERSION.json        — wazuh-dashboard 5.x+
+#   2. VERSION             — wazuh-dashboard 4.x (legacy file)
+#   3. plugin package.json — wazuh-dashboard 4.x+ (plugin metadata)
+if [ -f %{INSTALL_DIR}/VERSION.json ]; then
+  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+elif [ -f %{INSTALL_DIR}/VERSION ]; then
+  INSTALLED_VER=$(cat %{INSTALL_DIR}/VERSION 2>/dev/null)
+elif [ -f %{INSTALL_DIR}/plugins/wazuh/package.json ]; then
+  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+fi
+
+if [ -n "$INSTALLED_VER" ]; then
+  MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+  if [ "$MAJOR" -lt 5 ]; then
+    cat >&2 <<EOF
+==============================================================
+ERROR: Direct upgrade from Wazuh dashboard versions prior to 5.x
+is not supported.
+
+Detected installed version: $INSTALLED_VER
+A clean installation of Wazuh dashboard 5.x is required.
+==============================================================
+EOF
+    exit 1
+  fi
+elif [ "$1" = "2" ] && [ -d %{INSTALL_DIR}/plugins ]; then
+  # Upgrade requested but version could not be determined from any source.
+  # Files may have been removed or corrupted. Block the upgrade; a fresh
+  # install ($1=1) is still allowed.
+  cat >&2 <<EOF
+==============================================================
+ERROR: A previous Wazuh installation was detected but the
+installed version could not be determined.
+
+A clean installation of Wazuh dashboard 5.x is required.
+Please remove the previous installation before proceeding.
+==============================================================
+EOF
+  exit 1
+fi
+
 # Create the wazuh-dashboard group if it doesn't exists
 if [ $1 = 1 ]; then
   if command -v getent > /dev/null 2>&1 && ! getent group %{GROUP} > /dev/null 2>&1; then
