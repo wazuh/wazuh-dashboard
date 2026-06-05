@@ -503,6 +503,24 @@ jobs:
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
+      - name: Test package negative (5.x install blocked when 4.x present)
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh --block-4x-install \
+            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
+      - name: Test package negative (5.x install blocked when remnants exist but version unknown)
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh --block-unknown-install \
+            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
+      - name: Test package reinstall (5.x install over 5.x succeeds)
+        run: |
+          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
+          bash ./test-packages.sh --allow-same-major-reinstall \
+            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
       - name: DEB - Test package install/uninstall
         if: ${{ inputs.system == 'deb' }}
         run: |
@@ -533,6 +551,13 @@ jobs:
       - name: DEB - Test package upgrade
         if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
         run: |
+          # Skip when previous and current major differ (pre-install guard blocks cross-major upgrades)
+          VERSION_MAJOR=$(echo "${{needs.setup-variables.outputs.VERSION}}" | cut -d. -f1)
+          PREVIOUS_MAJOR=$(echo "${{needs.setup-variables.outputs.PREVIOUS}}" | cut -d. -f1)
+          if [ "$VERSION_MAJOR" != "$PREVIOUS_MAJOR" ]; then
+            echo "Skipping upgrade test — different major ($PREVIOUS_MAJOR -> $VERSION_MAJOR)"
+            exit 0
+          fi
           sudo apt-get install debhelper tar curl libcap2-bin gnupg apt-transport-https #debhelper version 9 or later
           sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
@@ -555,6 +580,37 @@ jobs:
             echo "Service running"
           else
             echo "Service not running"
+            exit 1
+          fi
+
+      - name: DEB - Verify cross-major upgrade is blocked
+        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
+        run: |
+          sudo apt-get install debhelper tar curl libcap2-bin gnupg apt-transport-https
+          sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
+          sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
+          sudo apt-get update || sudo apt-get update
+          sudo apt-get -y install wazuh-dashboard=${{needs.setup-variables.outputs.PREVIOUS}}
+          sudo systemctl daemon-reload
+          sudo systemctl enable wazuh-dashboard
+          sudo systemctl start wazuh-dashboard
+
+          # Attempt 5.x upgrade — MUST fail
+          set +e
+          OUTPUT=$(sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}} 2>&1)
+          EXIT_CODE=$?
+          set -e
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "ERROR: Installation should have been blocked but succeeded"
+            exit 1
+          fi
+
+          if echo "$OUTPUT" | grep -F -q "ERROR: Direct upgrade from Wazuh dashboard"; then
+            echo "Cross-major upgrade correctly blocked"
+          else
+            echo "ERROR: Expected block message not found"
+            echo "$OUTPUT"
             exit 1
           fi
 
@@ -638,6 +694,13 @@ jobs:
       - name: RPM - Test package upgrade
         if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'rpm' }}
         run: |
+          # Skip when previous and current major differ (pre-install guard blocks cross-major upgrades)
+          VERSION_MAJOR=$(echo "${{needs.setup-variables.outputs.VERSION}}" | cut -d. -f1)
+          PREVIOUS_MAJOR=$(echo "${{needs.setup-variables.outputs.PREVIOUS}}" | cut -d. -f1)
+          if [ "$VERSION_MAJOR" != "$PREVIOUS_MAJOR" ]; then
+            echo "Skipping upgrade test — different major ($PREVIOUS_MAJOR -> $VERSION_MAJOR)"
+            exit 0
+          fi
           ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install libcap; \
             sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
             sudo echo -e '[wazuh]\ngpgcheck=1\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\nenabled=1\nname=EL-$releasever - Wazuh\nbaseurl=https://packages.wazuh.com/4.x/yum/\nprotect=1' | sudo tee /etc/yum.repos.d/wazuh.repo; \
@@ -660,6 +723,41 @@ jobs:
               exit 1; \
             fi
             "
+      - name: RPM - Verify cross-major upgrade is blocked
+        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'rpm' }}
+        run: |
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install libcap; \
+            sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
+            sudo echo -e '[wazuh]\ngpgcheck=1\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\nenabled=1\nname=EL-$releasever - Wazuh\nbaseurl=https://packages.wazuh.com/4.x/yum/\nprotect=1' | sudo tee /etc/yum.repos.d/wazuh.repo; \
+            sudo yum install -y wazuh-dashboard-${{needs.setup-variables.outputs.PREVIOUS}}; \
+            sudo systemctl daemon-reload; \
+            sudo systemctl enable wazuh-dashboard; \
+            sudo systemctl start wazuh-dashboard; \
+            if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
+              echo 'Service running'; \
+            else \
+              echo 'ERROR: Service not running'; \
+              exit 1; \
+            fi"
+
+          set +e
+          OUTPUT=$(${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install -y ${{needs.setup-variables.outputs.PACKAGE_NAME}} 2>&1")
+          EXIT_CODE=$?
+          set -e
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "ERROR: Installation should have been blocked but succeeded"
+            exit 1
+          fi
+
+          if echo "$OUTPUT" | grep -F -q "ERROR: Direct upgrade from Wazuh dashboard"; then
+            echo "Cross-major upgrade correctly blocked"
+          else
+            echo "ERROR: Expected block message not found"
+            echo "$OUTPUT"
+            exit 1
+          fi
+
       - name: Destroy Allocator Machine
         #DO NOT DELETE. This ensures that the generated instance is destroyed even if the job fails.
         if: ${{ always() }}
