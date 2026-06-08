@@ -53,7 +53,12 @@ export interface RenderingMetadata {
     version: string;
     buildNumber: number;
     branch: string;
-    wazuhVersion: string;
+    wazuhBuildInfo: {
+      version: string;
+      revision: string;
+      stage: string;
+      isProduction: boolean;
+    };
     basePath: string;
     serverBasePath: string;
     env: {
