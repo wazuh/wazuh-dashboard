@@ -134,12 +134,6 @@ jobs:
       VERSION: ${{ steps.get-version.outputs.VERSION }}
       VERSION_OPENSEARCH: ${{ steps.get-version.outputs.VERSION_OPENSEARCH }}
       REVISION: ${{ steps.get-version.outputs.REVISION }}
-      WAZUH_PLUGINS_SHA: ${{ steps.get-plugins.outputs.WAZUH_PLUGINS_SHA }}
-      WAZUH_SECURITY_SHA: ${{ steps.get-plugins.outputs.WAZUH_SECURITY_SHA }}
-      WAZUH_REPORTING_SHA: ${{ steps.get-plugins.outputs.WAZUH_REPORTING_SHA }}
-      WAZUH_SECURITY_ANALYTICS_SHA: ${{ steps.get-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA }}
-      WAZUH_ALERTING_SHA: ${{ steps.get-plugins.outputs.WAZUH_ALERTING_SHA }}
-      WAZUH_NOTIFICATIONS_SHA: ${{ steps.get-plugins.outputs.WAZUH_NOTIFICATIONS_SHA }}
       NAME_PLUGIN_WAZUH: ${{ steps.get-plugins.outputs.NAME_PLUGIN_WAZUH }}
       NAME_PLUGIN_CORE: ${{ steps.get-plugins.outputs.NAME_PLUGIN_CORE }}
       NAME_PLUGIN_CHECK_UPDATES: ${{ steps.get-plugins.outputs.NAME_PLUGIN_CHECK_UPDATES }}
@@ -156,12 +150,10 @@ jobs:
             packageName: wazuh-security-dashboards-plugin # this is for the name of the plugin
             repository: https://github.com/wazuh/wazuh-security-dashboards-plugin.git
             outputNamePackage: NAME_PLUGIN_SECURITY # this is for the output name of the plugin
-            outputSHA: WAZUH_SECURITY_SHA # this is for the output sha of the plugin
           - name: plugins-main
             packageName: wazuh-dashboard-plugins_wazuh
             repository: https://github.com/wazuh/wazuh-dashboard-plugins.git
             outputNamePackage: NAME_PLUGIN_WAZUH
-            outputSHA: WAZUH_PLUGINS_SHA
           - name: plugins-core
             packageName: wazuh-dashboard-plugins_core
             repository: https://github.com/wazuh/wazuh-dashboard-plugins.git
@@ -174,22 +166,18 @@ jobs:
             packageName: wazuh-dashboard-reporting
             repository: https://github.com/wazuh/wazuh-dashboard-reporting.git
             outputNamePackage: NAME_PLUGIN_REPORTING
-            outputSHA: WAZUH_REPORTING_SHA
           - name: security-analytics
             packageName: wazuh-dashboard-security-analytics
             repository: https://github.com/wazuh/wazuh-dashboard-security-analytics.git
             outputNamePackage: NAME_PLUGIN_SECURITY_ANALYTICS
-            outputSHA: WAZUH_SECURITY_ANALYTICS_SHA
           - name: alerting
             packageName: wazuh-dashboard-alerting
             repository: https://github.com/wazuh/wazuh-dashboard-alerting.git
             outputNamePackage: NAME_PLUGIN_ALERTING
-            outputSHA: WAZUH_ALERTING_SHA
           - name: notifications
             packageName: wazuh-dashboard-notifications
             repository: https://github.com/wazuh/wazuh-dashboard-notifications.git
             outputNamePackage: NAME_PLUGIN_NOTIFICATIONS
-            outputSHA: WAZUH_NOTIFICATIONS_SHA
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -218,26 +206,12 @@ jobs:
           if [ -z "$REFERENCE" ]; then
             echo "No plugin reference provided, using github.ref_name: ${{ github.ref_name }}"
             REFERENCE="${{ github.ref_name }}"
-            SHA=$(git ls-remote $REPOSITORY "$REFERENCE" | cut -f1 | cut -c1-7)
             PACKAGE_NAME=${{matrix.plugin.packageName}}_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
           else
             echo "Using reference: $REFERENCE"
-            SHA=$(git ls-remote $REPOSITORY "$REFERENCE" | cut -f1 | cut -c1-7)
-            if [ -z "$SHA" ]; then
-              echo "Reference $REFERENCE not found, trying with '${{ github.ref_name }}' branch"
-              REFERENCE="${{ github.ref_name }}"
-              SHA=$(git ls-remote $REPOSITORY $REFERENCE | cut -f1 | cut -c1-7)
-            fi
             PACKAGE_NAME=${{matrix.plugin.packageName}}_${{ steps.get-version.outputs.VERSION }}-${{ steps.get-version.outputs.REVISION }}_$(echo $REFERENCE | sed 's/\//-/g').zip
           fi
-          if [ -z "$SHA" ]; then
-            echo "Reference ${{ github.ref_name }} not found, check if the repository exists and the reference is correct."
-            exit 1
-          fi
           echo "${{matrix.plugin.outputNamePackage}}=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-          if [ -n "${{ matrix.plugin.outputSHA}}" ]; then
-            echo "${{matrix.plugin.outputSHA}}=$SHA" >> $GITHUB_OUTPUT
-          fi
 
   setup-variables:
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'wz-linux-amd64' }}
@@ -248,10 +222,8 @@ jobs:
       VERSION: ${{ steps.setup-variables.outputs.VERSION }}
       PREVIOUS: ${{ steps.setup-variables.outputs.PREVIOUS }}
       REVISION: ${{ steps.setup-variables.outputs.REVISION }}
-      ALL_COMMIT_SHAS: ${{ steps.setup-variables.outputs.ALL_COMMIT_SHAS }}
       PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
       WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-      PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
       ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
       VERSION_OPENSEARCH: ${{ steps.setup-variables.outputs.VERSION_OPENSEARCH }}
     steps:
@@ -265,7 +237,6 @@ jobs:
           VERSION=${{ needs.get-outputs-plugins.outputs.VERSION }}
           VERSION_OPENSEARCH=${{ needs.get-outputs-plugins.outputs.VERSION_OPENSEARCH }}
           REVISION=${{ needs.get-outputs-plugins.outputs.REVISION }}
-          ALL_COMMIT_SHAS=$(git rev-parse --short HEAD)-${{needs.get-outputs-plugins.outputs.WAZUH_PLUGINS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_REPORTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_SECURITY_ANALYTICS_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_ALERTING_SHA}}-${{needs.get-outputs-plugins.outputs.WAZUH_NOTIFICATIONS_SHA}}
           # Check the corresponding previous version to be used in the upgrade test
           sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
@@ -287,19 +258,6 @@ jobs:
             PRODUCTION=""
           fi
           WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
-          if [ "${{ inputs.system }}" = "deb" ]; then
-            if [ "${{ inputs.is_stage }}" = "true" ]; then
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
-            else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${ALL_COMMIT_SHAS}.deb
-            fi
-          else
-            if [ "${{ inputs.is_stage }}" = "true" ]; then
-              PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
-            else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${ALL_COMMIT_SHAS}.rpm
-            fi
-          fi
           if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
             ARCHITECTURE_FLAG=""
           else
@@ -310,10 +268,8 @@ jobs:
           echo "VERSION_OPENSEARCH=$VERSION_OPENSEARCH" >> $GITHUB_OUTPUT
           echo "PREVIOUS=$PREVIOUS" >> $GITHUB_OUTPUT
           echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
-          echo "ALL_COMMIT_SHAS=$ALL_COMMIT_SHAS" >> $GITHUB_OUTPUT
           echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
           echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
-          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
 
   build-dashboard:
@@ -379,6 +335,8 @@ jobs:
     needs: [setup-variables, get-outputs-plugins, build-dashboard, build-plugins]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     name: Generate packages
+    outputs:
+      PACKAGE_NAME: ${{ steps.get-package-name.outputs.PACKAGE_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -437,6 +395,31 @@ jobs:
           name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_NOTIFICATIONS }}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/notifications-plugin
 
+      - name: Generate all commits SHAs
+        id: get-all-commit-shas
+        run: |
+          DASHBOARD_SHA=$(git rev-parse --short HEAD)
+          SECURITY_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin/metadata.json)
+          MAIN_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins/metadata.json)
+          REPORTING_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin/metadata.json)
+          SECURITY_ANALYTICS_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-analytics-plugin/metadata.json)
+          ALERTING_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/alerting-plugin/metadata.json)
+          NOTIFICATIONS_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/notifications-plugin/metadata.json)
+          ALL_SHAS="$DASHBOARD_SHA-$MAIN_PLUGIN_SHA-$SECURITY_PLUGIN_SHA-$REPORTING_PLUGIN_SHA-$SECURITY_ANALYTICS_PLUGIN_SHA-$ALERTING_PLUGIN_SHA-$NOTIFICATIONS_PLUGIN_SHA"
+          echo "DASHBOARD_SHA=$DASHBOARD_SHA"
+          echo "SECURITY_PLUGIN_SHA=$SECURITY_PLUGIN_SHA"
+          echo "MAIN_PLUGIN_SHA=$MAIN_PLUGIN_SHA"
+          echo "REPORTING_PLUGIN_SHA=$REPORTING_PLUGIN_SHA"
+          echo "SECURITY_ANALYTICS_PLUGIN_SHA=$SECURITY_ANALYTICS_PLUGIN_SHA"
+          echo "ALERTING_PLUGIN_SHA=$ALERTING_PLUGIN_SHA"
+          echo "NOTIFICATIONS_PLUGIN_SHA=$NOTIFICATIONS_PLUGIN_SHA"
+          echo "ALL_COMMIT_SHAS=$ALL_SHAS"
+          echo "ALL_COMMIT_SHAS=$ALL_SHAS" >> $GITHUB_OUTPUT
+
+          # Remove metadata.json from the plugin artifacts to avoid issues with the build script
+          echo "Removing metadata.json from plugin artifacts to avoid issues with the build script"
+          find ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts -name "metadata.json" -type f -print -delete
+
       - name: Zip plugins
         run: |
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
@@ -459,15 +442,35 @@ jobs:
             -sa file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-analytics-package.zip \
             -al file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/alerting-package.zip \
             -no file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/notifications-package.zip \
-            --commit-sha ${{needs.setup-variables.outputs.ALL_COMMIT_SHAS}} \
+            --commit-sha ${{steps.get-all-commit-shas.outputs.ALL_COMMIT_SHAS}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+
+      - name: Get package name
+        id: get-package-name
+        run: |
+          VERSION=${{ needs.setup-variables.outputs.VERSION }}
+          if [ "${{ inputs.system }}" = "deb" ]; then
+            if [ "${{ inputs.is_stage }}" = "true" ]; then
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
+            else
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${{ steps.get-all-commit-shas.outputs.ALL_COMMIT_SHAS }}.deb
+            fi
+          else
+            if [ "${{ inputs.is_stage }}" = "true" ]; then
+              PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
+            else
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${{ steps.get-all-commit-shas.outputs.ALL_COMMIT_SHAS }}.rpm
+            fi
+          fi
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME_PATH=${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${PACKAGE_NAME}" >> $GITHUB_OUTPUT
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          name: ${{steps.get-package-name.outputs.PACKAGE_NAME}}
+          path: ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}}
           retention-days: 30
           overwrite: true
 
@@ -475,8 +478,8 @@ jobs:
         if: success() && ${{ inputs.checksum }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
+          name: ${{steps.get-package-name.outputs.PACKAGE_NAME}}.sha512
+          path: ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}}.sha512
           retention-days: 30
           overwrite: true
 
@@ -493,38 +496,38 @@ jobs:
       - name: Download  artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          name: ${{needs.build-package.outputs.PACKAGE_NAME}}
           path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
 
       - name: Test package integrity
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
-          cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
+          cp ./${{needs.build-package.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
-            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
       - name: Test package negative (5.x install blocked when 4.x present)
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh --block-4x-install \
-            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
       - name: Test package negative (5.x install blocked when remnants exist but version unknown)
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh --block-unknown-install \
-            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
       - name: Test package reinstall (5.x install over 5.x succeeds)
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh --allow-same-major-reinstall \
-            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
       - name: DEB - Test package install/uninstall
         if: ${{ inputs.system == 'deb' }}
         run: |
-          sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.build-package.outputs.PACKAGE_NAME}}
           if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
             echo "Package installed"
           else
@@ -566,7 +569,7 @@ jobs:
           sudo  systemctl daemon-reload
           sudo  systemctl enable wazuh-dashboard
           sudo  systemctl start wazuh-dashboard
-          sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.build-package.outputs.PACKAGE_NAME}}
           sudo systemctl restart wazuh-dashboard
 
           if dpkg -s wazuh-dashboard | grep '^Version:' | grep -q "${{needs.setup-variables.outputs.VERSION}}"; then
@@ -597,7 +600,7 @@ jobs:
 
           # Attempt 5.x upgrade — MUST fail
           set +e
-          OUTPUT=$(sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}} 2>&1)
+          OUTPUT=$(sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.build-package.outputs.PACKAGE_NAME}} 2>&1)
           EXIT_CODE=$?
           set -e
 
@@ -661,9 +664,9 @@ jobs:
         run: |
           # echo 'Installing package...' is necessary to init the ssh connection prior to running scp
           ${{ steps.setup_rpm_env.outputs.ssh_command }} "echo 'Installing package...'"
-          ${{ steps.setup_rpm_env.outputs.scp_command }} ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}} ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
+          ${{ steps.setup_rpm_env.outputs.scp_command }} ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.build-package.outputs.PACKAGE_NAME}} ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
 
-          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo rpm -i ./${{needs.setup-variables.outputs.PACKAGE_NAME}}; \
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo rpm -i ./${{needs.build-package.outputs.PACKAGE_NAME}}; \
               if rpm -q wazuh-dashboard &>/dev/null; then \
                 echo 'Package installed'; \
               else \
@@ -708,7 +711,7 @@ jobs:
             sudo  systemctl daemon-reload; \
             sudo  systemctl enable wazuh-dashboard; \
             sudo  systemctl start wazuh-dashboard; \
-            sudo yum install -y ${{needs.setup-variables.outputs.PACKAGE_NAME}}; \
+            sudo yum install -y ${{needs.build-package.outputs.PACKAGE_NAME}}; \
             sudo systemctl restart wazuh-dashboard; \
             if rpm -q wazuh-dashboard | grep -q '${{needs.setup-variables.outputs.VERSION}}'; then \
               echo 'Package upgraded'; \
@@ -741,7 +744,7 @@ jobs:
             fi"
 
           set +e
-          OUTPUT=$(${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install -y ${{needs.setup-variables.outputs.PACKAGE_NAME}} 2>&1")
+          OUTPUT=$(${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install -y ${{needs.build-package.outputs.PACKAGE_NAME}} 2>&1")
           EXIT_CODE=$?
           set -e
 
@@ -770,7 +773,7 @@ jobs:
           fi
 
   upload-package:
-    needs: [setup-variables, test-package]
+    needs: [build-package, test-package]
     runs-on: ${{ inputs.architecture == 'arm64' && 'wz-linux-arm64' || 'wz-linux-amd64' }}
     name: Upload package
     steps:
@@ -784,27 +787,27 @@ jobs:
       - name: Download  artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          name: ${{needs.build-package.outputs.PACKAGE_NAME}}
           path: ./
 
       - name: Download  checksum
         if: ${{ inputs.checksum }}
         uses: actions/download-artifact@v4
         with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
+          name: ${{needs.build-package.outputs.PACKAGE_NAME}}.sha512
           path: ./
 
       - name: Upload package
         run: |
           echo "Uploading package"
-          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
-          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+          aws s3 cp ./${{needs.build-package.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
+          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{needs.build-package.outputs.PACKAGE_NAME}}"
           echo "S3 URI: ${s3uri}"
 
       - name: Upload SHA512
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
-          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
+          aws s3 cp ./${{needs.build-package.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
+          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{needs.build-package.outputs.PACKAGE_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
