@@ -510,19 +510,19 @@ jobs:
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh --block-4x-install \
-            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
       - name: Test package negative (5.x install blocked when remnants exist but version unknown)
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh --block-unknown-install \
-            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
       - name: Test package reinstall (5.x install over 5.x succeeds)
         run: |
           cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
           bash ./test-packages.sh --allow-same-major-reinstall \
-            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
       - name: DEB - Test package install/uninstall
         if: ${{ inputs.system == 'deb' }}
@@ -600,7 +600,7 @@ jobs:
 
           # Attempt 5.x upgrade — MUST fail
           set +e
-          OUTPUT=$(sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}} 2>&1)
+          OUTPUT=$(sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.build-package.outputs.PACKAGE_NAME}} 2>&1)
           EXIT_CODE=$?
           set -e
 
@@ -744,7 +744,7 @@ jobs:
             fi"
 
           set +e
-          OUTPUT=$(${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install -y ${{needs.setup-variables.outputs.PACKAGE_NAME}} 2>&1")
+          OUTPUT=$(${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install -y ${{needs.build-package.outputs.PACKAGE_NAME}} 2>&1")
           EXIT_CODE=$?
           set -e
 
