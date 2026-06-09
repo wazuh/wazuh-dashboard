@@ -58,6 +58,7 @@ log "Extracting base tar.gz..."
 tar -zxf "${out_dir}/wazuh-dashboard-$version-$revision-linux-$architecture.tar.gz"
 log "Preparing the package..."
 jq '.wazuh.revision="'${revision}'"' package.json > pkgtmp.json && mv pkgtmp.json package.json
+# TODO: Review if we want to set production mode based on is_stage or if we want to have a separate input for that.
 if [ "${is_production}" = "yes" ]; then
   jq '.wazuh.isProduction = true' package.json > pkgtmp.json && mv pkgtmp.json package.json
 else
