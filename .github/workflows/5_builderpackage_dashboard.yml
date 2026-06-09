@@ -252,7 +252,10 @@ jobs:
           if [ -z "$PREVIOUS" ]; then
             echo "::warning No previous version::No previous version found for this architecture. Upgrade test will be skipped."
           fi
-          if [ "${{ inputs.is_stage }}" = "true" ]; then
+          # Set production variable for the build script. This variable will determine the nomenclature of the package and whether the build is done in production mode or not.
+          # TODO: Review if we want to set production mode based on is_stage or if we want to have a separate input for that.
+          # if [ "${{ inputs.is_stage }}" = "true" ]; then
+          if [ "false" = "true" ]; then
             PRODUCTION=--production
           else
             PRODUCTION=""
