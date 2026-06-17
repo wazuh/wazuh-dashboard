@@ -433,6 +433,7 @@ function formatDateTime(value) {
 }
 
 /**
+ * !This function is duplicated on src/plugins/healthcheck/public/components/table/check_flyout.tsx
  * Format duration in milliseconds to a compact human string
  * @param {number | undefined} ms
  */
