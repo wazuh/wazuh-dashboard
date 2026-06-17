@@ -433,6 +433,7 @@ function formatDateTime(value) {
 }
 
 /**
+ * !This function is duplicated on src/plugins/healthcheck/public/components/table/check_flyout.tsx
  * Format duration in milliseconds to a compact human string
  * @param {number | undefined} ms
  */
@@ -673,7 +674,7 @@ class Components {
    * @returns
    */
   static checkCriticalItem(task) {
-    const created = formatDateTime(task.createdAt);
+    const created = formatDateTime(task.startedAt);
     const finished = formatDateTime(task.finishedAt);
     const duration = formatDuration(task.duration);
     return /* html */ `
@@ -715,7 +716,7 @@ class Components {
     return /* html */ `
       <div class="noncritical-list" role="list">
         ${$map(tasks, (task) => {
-          const created = formatDateTime(task.createdAt);
+          const created = formatDateTime(task.startedAt);
           const finished = formatDateTime(task.finishedAt);
           const duration = formatDuration(task.duration);
           return /* html */ `
