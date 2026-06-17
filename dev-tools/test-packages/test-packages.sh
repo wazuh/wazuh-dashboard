@@ -154,8 +154,8 @@ block_4x_install_test() {
     exit 1
   fi
 
-  if grep -F -q "ERROR: Direct upgrade from Wazuh dashboard" "$BUILD_LOG"; then
-    BLOCK_MSG=$(grep -F 'ERROR: Direct upgrade from Wazuh dashboard' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
+  if grep -F -q "ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported." "$BUILD_LOG"; then
+    BLOCK_MSG=$(grep -F 'ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported.' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
     echo "  $BLOCK_MSG"
   else
     echo "ERROR: Expected error message not found in build output"
@@ -195,8 +195,8 @@ block_unknown_install_test() {
     exit 1
   fi
 
-  if grep -F -q "version could not be determined" "$BUILD_LOG"; then
-    BLOCK_MSG=$(grep -F 'version could not be determined' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
+  if grep -F -q "Detected installed version: undetermined" "$BUILD_LOG"; then
+    BLOCK_MSG=$(grep -F 'Detected installed version: undetermined' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
     echo "  $BLOCK_MSG"
   else
     echo "ERROR: Expected error message not found in build output"
