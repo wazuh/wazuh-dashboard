@@ -12,7 +12,7 @@ export interface TaskInfo {
   createdAt: string | null;
   startedAt: string | null;
   finishedAt: string | null;
-  duration: number | null; // seconds
+  duration: number | null; // milliseconds
   data: any;
   error: string | null;
   enabled: boolean;

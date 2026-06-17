@@ -22,6 +22,27 @@ import { TaskInfo } from '../../../../../core/common/healthcheck';
 import { mapTaskStatusToHealthColor } from '../services/health';
 import { BadgeResults } from '../utils/badge_results';
 
+/**
+ * !This function is duplicated on src/core/server/healthcheck/healthcheck/dashboard_server_is_not_ready_yet/client/script.js
+ * Format duration in milliseconds to a compact human string
+ * @param {number | undefined} ms
+ */
+function formatDuration(ms: number) {
+  if (ms == null || isNaN(ms)) return '';
+  const totalMs = Math.max(0, Math.floor(ms));
+  const s = Math.floor(totalMs / 1000);
+  const msR = totalMs % 1000;
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const parts = [];
+  if (h) parts.push(`${h}h`);
+  if (m) parts.push(`${m}m`);
+  if (sec || (!h && !m)) parts.push(`${sec}s`);
+  if (!h && !m && msR) parts.push(`${msR}ms`);
+  return parts.join(' ');
+}
+
 interface CheckFlyoutProps {
   check: TaskInfo;
   formatDate: (date: string) => string;
@@ -171,7 +192,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                 />
               </EuiDescriptionListTitle>
               <EuiDescriptionListDescription>
-                <p>{duration ? `${duration}s` : '-'}</p>
+                <p>{duration ? `${formatDuration(duration)}` : '-'}</p>
               </EuiDescriptionListDescription>
             </EuiDescriptionList>
           </EuiFlexItem>
