@@ -609,8 +609,9 @@ jobs:
             exit 1
           fi
 
-          if echo "$OUTPUT" | grep -F -q "ERROR: Direct upgrade from Wazuh dashboard"; then
-            echo "Cross-major upgrade correctly blocked"
+          if echo "$OUTPUT" | grep -F -q "ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported."; then
+            echo "TEST: Cross-major upgrade correctly blocked"
+            echo "$OUTPUT"
           else
             echo "ERROR: Expected block message not found"
             echo "$OUTPUT"
@@ -753,8 +754,9 @@ jobs:
             exit 1
           fi
 
-          if echo "$OUTPUT" | grep -F -q "ERROR: Direct upgrade from Wazuh dashboard"; then
-            echo "Cross-major upgrade correctly blocked"
+          if echo "$OUTPUT" | grep -F -q "ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported."; then
+            echo "TEST: Cross-major upgrade correctly blocked"
+            echo "$OUTPUT"
           else
             echo "ERROR: Expected block message not found"
             echo "$OUTPUT"
