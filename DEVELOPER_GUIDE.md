@@ -300,22 +300,23 @@ Metadata is stored in `data/osd-metadata.db` by default. You can customize the p
 
 ```yaml
 # opensearch_dashboards.yml
-savedObjects.storage.backend: "sqlite"
-savedObjects.storage.sqlite.path: "data/osd-metadata.db"
+savedObjects.storage.backend: 'sqlite'
+savedObjects.storage.sqlite.path: 'data/osd-metadata.db'
 ```
 
 #### Resource savings
 
-|  | With OpenSearch | With SQLite |
-|--|----------------|-------------|
-| Disk space | ~1.4 GB | 4 KB |
-| Memory (RSS) | ~2-3 GB (OSD + OpenSearch JVM) | ~500 MB (OSD only) |
-| Startup time | ~30-60s | ~3s |
-| Prerequisites | Java runtime + OpenSearch binary | None |
+|               | With OpenSearch                  | With SQLite        |
+| ------------- | -------------------------------- | ------------------ |
+| Disk space    | ~1.4 GB                          | 4 KB               |
+| Memory (RSS)  | ~2-3 GB (OSD + OpenSearch JVM)   | ~500 MB (OSD only) |
+| Startup time  | ~30-60s                          | ~3s                |
+| Prerequisites | Java runtime + OpenSearch binary | None               |
 
 #### When to use SQLite vs OpenSearch
 
 **Works with SQLite (no OpenSearch needed):**
+
 - UI and frontend development — React components, pages, layouts, styling
 - Workspace features — create, edit, delete, navigate workspaces
 - Saved object CRUD — import/export, management page, copy to workspace
@@ -326,6 +327,7 @@ savedObjects.storage.sqlite.path: "data/osd-metadata.db"
 - Unit and component tests using in-memory SQLite (`:memory:`)
 
 **Still needs OpenSearch:**
+
 - Data exploration (Discover) and querying actual indices
 - Visualizations with real data — charts, maps, aggregations
 - Index pattern field discovery — fetching field mappings
@@ -360,7 +362,7 @@ Additional options can be passed after `yarn opensearch snapshot` to further con
 Options:
 
       --license         Run with a 'oss', 'basic', or 'trial' license [default: oss]
-      --version         Version of OpenSearch to download [default: 3.6.0]
+      --version         Version of OpenSearch to download [default: 3.7.0]
       --base-path       Path containing cache/installations [default: /home/ubuntu/OpenSearch-Dashboards/.opensearch]
       --install-path    Installation path, defaults to 'source' within base-path
       --data-archive    Path to zip or tarball containing an OpenSearch data directory to seed the cluster with.
@@ -493,6 +495,7 @@ Every module or subsystem directory should include a `README.md` that explains:
 **Why:** README files co-located with source code are the most universal documentation convention. They are rendered automatically on GitHub, discovered by AI coding tools (Claude, Codex, Copilot, Kiro), and stay in sync with the code they describe. When contributing a new module or making significant changes to an existing one, add or update the README.
 
 **Examples:**
+
 - `src/core/server/saved_objects/storage/README.md`
 - `src/core/README.md`
 
@@ -646,14 +649,14 @@ To opt in, import Tailwind into the **top** of an SCSS entry file with a plugin-
 
 ```scss
 // my_plugin/public/styles/my_plugin.scss
-@import "tailwindcss/theme" prefix(plg);
-@import "tailwindcss/utilities" prefix(plg);
+@import 'tailwindcss/theme' prefix(plg);
+@import 'tailwindcss/utilities' prefix(plg);
 
 // Optional: scope preflight (CSS reset) to a plugin-specific body class with
 // [CSS @scope](https://developer.mozilla.org/en-US/docs/Web/CSS/@scope) so it
 // doesn't leak into OSD/EUI surfaces. Toggle the body class on app mount/unmount.
 @scope (body.plg-app-active) {
-  @import "tailwindcss/preflight";
+  @import 'tailwindcss/preflight';
 }
 
 @source "../components";
