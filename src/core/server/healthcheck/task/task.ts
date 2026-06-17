@@ -65,7 +65,7 @@ export class Task implements ITask {
       const dateStartedAt = new Date(this.startedAt as string);
       const dateFinishedAt = new Date(this.finishedAt);
 
-      this.duration = ((dateFinishedAt.getTime() - dateStartedAt.getTime()) as number) / 1000;
+      this.duration = (dateFinishedAt.getTime() - dateStartedAt.getTime()) as number;
     }
 
     if (error) {
