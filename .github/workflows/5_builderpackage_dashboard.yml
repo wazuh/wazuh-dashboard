@@ -193,7 +193,7 @@ jobs:
         run: |
           VERSION=$(jq -r '.version' VERSION.json)
           VERSION_OPENSEARCH=$(jq -r '.version' package.json)
-          REVISION=$(yarn --silent wzd-revision)
+          REVISION=$(jq -r '.wazuh.revision' package.json)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "VERSION_OPENSEARCH=$VERSION_OPENSEARCH" >> $GITHUB_OUTPUT
           echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
