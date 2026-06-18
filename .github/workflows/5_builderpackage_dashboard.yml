@@ -420,6 +420,9 @@ jobs:
           echo "Removing metadata.json from plugin artifacts to avoid issues with the build script"
           find ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts -name "metadata.json" -type f -print -delete
 
+      - name: Install zip
+        run: sudo apt-get install -y zip
+
       - name: Zip plugins
         run: |
           zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
