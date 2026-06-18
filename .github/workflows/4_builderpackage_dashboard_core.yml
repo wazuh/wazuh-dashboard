@@ -28,7 +28,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.ARCHITECTURE == 'arm64' && 'codebuild-github-actions-codebuild-runner-dashboard-arm-${{ github.run_id }}-${{ github.run_attempt }}' || 'codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}' }}
     name: Build
     defaults:
       run:
