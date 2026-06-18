@@ -38,7 +38,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}' || 'codebuild-github-actions-codebuild-runner-dashboard-arm-${{ github.run_id }}-${{ github.run_attempt }}' }}
+    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) }}
     name: Build
     defaults:
       run:
@@ -88,11 +88,18 @@ jobs:
         run: |
           echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }}" >> $GITHUB_ENV
 
+      - name: Create non-root build user
+        run: |
+          useradd -m builduser
+          chown -R builduser:builduser .
+
       - name: Run bootstrap
-        run: yarn osd bootstrap
+        run: |
+          chown -R builduser:builduser "$YARN_CACHE_LOCATION" 2>/dev/null || true
+          sudo -u builduser -H env PATH="$PATH" yarn osd bootstrap
 
       - name: Build
-        run: yarn build-platform --${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'linux' || 'linux-arm'}} --skip-os-packages --release
+        run: sudo -u builduser -H env PATH="$PATH" yarn build-platform --${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'linux' || 'linux-arm'}} --skip-os-packages --release
 
       - name: Rename artifact
         run: mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
