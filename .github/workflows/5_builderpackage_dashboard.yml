@@ -193,6 +193,7 @@ jobs:
         run: |
           VERSION=$(jq -r '.version' VERSION.json)
           VERSION_OPENSEARCH=$(jq -r '.version' package.json)
+          # Workaround: AWS CodeBuild runners do not have yarn pre-installed, use jq instead
           REVISION=$(jq -r '.wazuh.revision' package.json)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "VERSION_OPENSEARCH=$VERSION_OPENSEARCH" >> $GITHUB_OUTPUT
@@ -417,6 +418,7 @@ jobs:
           echo "Removing metadata.json from plugin artifacts to avoid issues with the build script"
           find ${{ github.workspace }}/artifacts -name "metadata.json" -type f -print -delete
 
+      # Workaround: AWS CodeBuild ARM runners do not have zip pre-installed
       - name: Install zip
         if: ${{ inputs.architecture == 'arm64' || inputs.architecture == 'aarch64' }}
         run: sudo apt-get update && sudo apt-get install -y zip
@@ -430,6 +432,12 @@ jobs:
           zip -r -j ${{ github.workspace }}/artifacts/security-analytics-package.zip ${{ github.workspace }}/artifacts/security-analytics-plugin
           zip -r -j ${{ github.workspace }}/artifacts/alerting-package.zip ${{ github.workspace }}/artifacts/alerting-plugin
           zip -r -j ${{ github.workspace }}/artifacts/notifications-package.zip ${{ github.workspace }}/artifacts/notifications-plugin
+
+      # Workaround: AWS CodeBuild runners do not start the Docker daemon automatically
+      - name: Start Docker daemon
+        run: |
+          sudo service docker start || sudo systemctl start docker
+          sudo chmod 666 /var/run/docker.sock
 
       - name: Build package
         run: |

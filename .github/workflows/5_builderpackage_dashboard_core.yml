@@ -88,6 +88,7 @@ jobs:
         run: |
           echo "ARTIFACT_BUILD_NAME=wazuh-dashboard_${{ env.WZD_VERSION }}-${{ env.WZD_REVISION }}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }}" >> $GITHUB_ENV
 
+      # Workaround: AWS CodeBuild runners execute as root; OpenSearch Dashboards refuses to run as root
       - name: Create non-root build user
         run: |
           useradd -m builduser

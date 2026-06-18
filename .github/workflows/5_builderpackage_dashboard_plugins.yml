@@ -113,6 +113,7 @@ jobs:
           mv ${{inputs.pathPlugin}}/${{ inputs.path }} plugins/${{ inputs.name }}
           rm -rf ${{inputs.pathPlugin}}
 
+      # Workaround: AWS CodeBuild runners execute as root; OpenSearch Dashboards refuses to run as root
       - name: Create non-root build user
         run: |
           useradd -m builduser
