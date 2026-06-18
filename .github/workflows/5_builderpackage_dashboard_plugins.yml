@@ -35,7 +35,7 @@ on:
 jobs:
   build-plugins:
     name: Build Plugin ${{ inputs.name }}
-    runs-on: wz-linux-amd64
+    runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     env:
       PLUGIN_REF: ${{ inputs.reference_plugins }}
     steps:
