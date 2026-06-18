@@ -444,8 +444,8 @@ jobs:
       - name: Start Docker daemon
         if: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' }}
         run: |
-          sudo service docker start || sudo systemctl start docker
-          sudo chmod 666 /var/run/docker.sock
+          sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
+          timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
 
       - name: Build package
         run: |
