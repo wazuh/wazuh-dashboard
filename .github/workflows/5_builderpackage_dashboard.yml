@@ -418,7 +418,8 @@ jobs:
           find ${{ github.workspace }}/artifacts -name "metadata.json" -type f -print -delete
 
       - name: Install zip
-        run: sudo apt-get install -y zip
+        if: ${{ inputs.architecture == 'arm64' || inputs.architecture == 'aarch64' }}
+        run: sudo apt-get update && sudo apt-get install -y zip
 
       - name: Zip plugins
         run: |
