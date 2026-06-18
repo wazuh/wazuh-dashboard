@@ -100,7 +100,7 @@ jobs:
           sudo -u builduser -H env PATH="$PATH" yarn osd bootstrap
 
       - name: Build
-        run: yarn build-platform --${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'linux' || 'linux-arm'}} --skip-os-packages --release
+        run: sudo -u builduser -H env PATH="$PATH" yarn build-platform --${{(inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'linux' || 'linux-arm'}} --skip-os-packages --release
 
       - name: Rename artifact
         run: mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
