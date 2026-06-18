@@ -564,14 +564,19 @@ jobs:
             echo "Package not installed"
             exit 1
           fi
-          sudo  systemctl daemon-reload
-          sudo  systemctl enable wazuh-dashboard
-          sudo  systemctl start wazuh-dashboard
-          if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
-            echo "Service running"
+          # Workaround: AWS CodeBuild runners do not use systemd as PID 1
+          if [ -d /run/systemd/system ]; then
+            sudo systemctl daemon-reload
+            sudo systemctl enable wazuh-dashboard
+            sudo systemctl start wazuh-dashboard
+            if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
+              echo "Service running"
+            else
+              echo "Service not running"
+              exit 1
+            fi
           else
-            echo "Service not running"
-            exit 1
+            echo "Skipping service start — systemd not available in this environment"
           fi
           sudo apt-get remove --purge wazuh-dashboard -y
           if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
@@ -596,11 +601,18 @@ jobs:
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
           sudo apt-get update || sudo apt-get update
           sudo apt-get -y install wazuh-dashboard=${{needs.setup-variables.outputs.PREVIOUS}}
-          sudo  systemctl daemon-reload
-          sudo  systemctl enable wazuh-dashboard
-          sudo  systemctl start wazuh-dashboard
+          # Workaround: AWS CodeBuild runners do not use systemd as PID 1
+          if [ -d /run/systemd/system ]; then
+            sudo systemctl daemon-reload
+            sudo systemctl enable wazuh-dashboard
+            sudo systemctl start wazuh-dashboard
+          else
+            echo "Skipping service start — systemd not available in this environment"
+          fi
           sudo dpkg -i ${{ github.workspace }}/dev-tools/test-packages/${{needs.build-package.outputs.PACKAGE_NAME}}
-          sudo systemctl restart wazuh-dashboard
+          if [ -d /run/systemd/system ]; then
+            sudo systemctl restart wazuh-dashboard
+          fi
 
           if dpkg -s wazuh-dashboard | grep '^Version:' | grep -q "${{needs.setup-variables.outputs.VERSION}}"; then
             echo "Package upgraded"
@@ -609,11 +621,15 @@ jobs:
             exit 1
           fi
 
-          if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
-            echo "Service running"
+          if [ -d /run/systemd/system ]; then
+            if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
+              echo "Service running"
+            else
+              echo "Service not running"
+              exit 1
+            fi
           else
-            echo "Service not running"
-            exit 1
+            echo "Skipping service status check — systemd not available in this environment"
           fi
 
       - name: DEB - Verify cross-major upgrade is blocked
@@ -624,9 +640,20 @@ jobs:
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
           sudo apt-get update || sudo apt-get update
           sudo apt-get -y install wazuh-dashboard=${{needs.setup-variables.outputs.PREVIOUS}}
-          sudo systemctl daemon-reload
-          sudo systemctl enable wazuh-dashboard
-          sudo systemctl start wazuh-dashboard
+          # Workaround: AWS CodeBuild runners do not use systemd as PID 1
+          if [ -d /run/systemd/system ]; then
+            sudo systemctl daemon-reload
+            sudo systemctl enable wazuh-dashboard
+            sudo systemctl start wazuh-dashboard
+            if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
+              echo "Service running"
+            else
+              echo "ERROR: Service not running"
+              exit 1
+            fi
+          else
+            echo "Skipping service start — systemd not available in this environment"
+          fi
 
           # Attempt 5.x upgrade — MUST fail
           set +e
