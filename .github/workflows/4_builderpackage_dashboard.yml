@@ -397,74 +397,19 @@ jobs:
       - name: DEB - Test package install/uninstall
         if: ${{ inputs.system == 'deb' }}
         run: |
-          sudo dpkg -i ${{ github.workspace }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
-            echo "Package installed"
-          else
-            echo "Package not installed"
-            exit 1
-          fi
-          # Workaround: AWS CodeBuild runners do not use systemd as PID 1
-          if [ -d /run/systemd/system ]; then
-            sudo systemctl daemon-reload
-            sudo systemctl enable wazuh-dashboard
-            sudo systemctl start wazuh-dashboard
-            if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
-              echo "Service running"
-            else
-              echo "Service not running"
-              exit 1
-            fi
-          else
-            echo "Skipping service start — systemd not available in this environment"
-          fi
-          sudo apt-get remove --purge wazuh-dashboard -y
-          if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
-            echo "Package not uninstalled"
-            exit 1
-          else
-            echo "Package uninstalled"
-          fi
+          bash ${{ github.workspace }}/dev-tools/test-packages/run_in_systemd_container.sh \
+            "${{ github.workspace }}" \
+            "bash /test-packages/deb-test-install-uninstall.sh '${{needs.setup-variables.outputs.PACKAGE_NAME}}'"
 
       - name: DEB - Test package upgrade
         if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
         run: |
-          sudo apt-get install debhelper tar curl libcap2-bin #debhelper version 9 or later
-          sudo apt-get install gnupg apt-transport-https
-          sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
-          sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
-          sudo apt-get update
-          sudo apt-get -y install wazuh-dashboard=${{needs.setup-variables.outputs.PREVIOUS}}
-          # Workaround: AWS CodeBuild runners do not use systemd as PID 1
-          if [ -d /run/systemd/system ]; then
-            sudo systemctl daemon-reload
-            sudo systemctl enable wazuh-dashboard
-            sudo systemctl start wazuh-dashboard
-          else
-            echo "Skipping service start — systemd not available in this environment"
-          fi
-          sudo dpkg -i ${{ github.workspace }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          if [ -d /run/systemd/system ]; then
-            sudo systemctl restart wazuh-dashboard
-          fi
-
-          if dpkg -s wazuh-dashboard | grep '^Version:' | grep -q "${{needs.setup-variables.outputs.VERSION}}"; then
-            echo "Package upgraded"
-          else
-            echo "Package not upgraded"
-            exit 1
-          fi
-
-          if [ -d /run/systemd/system ]; then
-            if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
-              echo "Service running"
-            else
-              echo "Service not running"
-              exit 1
-            fi
-          else
-            echo "Skipping service status check — systemd not available in this environment"
-          fi
+          bash ${{ github.workspace }}/dev-tools/test-packages/run_in_systemd_container.sh \
+            "${{ github.workspace }}" \
+            "bash /test-packages/deb-test-upgrade.sh \
+              '${{needs.setup-variables.outputs.PACKAGE_NAME}}' \
+              '${{needs.setup-variables.outputs.PREVIOUS}}' \
+              '${{needs.setup-variables.outputs.VERSION}}'"
 
       - name: RPM - Clone automation repo
         if: ${{ inputs.system == 'rpm' }}
