@@ -22,6 +22,8 @@ The inputs are the following:
 - `-s`, `--security`: Set the `wazuh-security-dashboards-plugin` branch.
 - `-sa`, `--securityAnalytics`: Set the `wazuh-dashboard-security-analytics` branch.
 - `-r`, `--reporting`: Set the `wazuh-dashboard-reporting` branch.
+- `-al`, `--alerting`: Set the `wazuh-dashboard-alerting` branch.
+- `-no`, `--notifications`: Set the `wazuh-dashboard-notifications` branch.
 - `--node-version`: [Optional] Set the node version.
 - `--arm`: [Optional] Build for arm64 instead of x64.
 
