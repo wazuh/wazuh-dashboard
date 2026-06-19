@@ -11,6 +11,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Added Health Check app [#870](https://github.com/wazuh/wazuh-dashboard/pull/870) [#946](https://github.com/wazuh/wazuh-dashboard/pull/946) [#1366](https://github.com/wazuh/wazuh-dashboard/pull/1366)
 - Added manager host configuration for the default configuration file [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 - Set v9 theme as default [#1092](https://github.com/wazuh/wazuh-dashboard/pull/1092)
+- Added wazuh-dashboard-alerting and wazuh-dashboard-notifications as build arguments in the Docker package builder's `docker-compose.yml` [#1376](https://github.com/wazuh/wazuh-dashboard/pull/1376)
 
 ### Fixed
 
