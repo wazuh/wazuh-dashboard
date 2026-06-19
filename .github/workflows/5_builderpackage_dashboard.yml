@@ -593,9 +593,11 @@ jobs:
           username: 'wazuh-devel-xdrsiem-dashboard'
         run: |
           git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git
-          # Workaround: AWS CodeBuild ARM runners do not have pip3 pre-installed
-          if ! command -v pip3 &>/dev/null; then
-            sudo apt-get update && sudo apt-get install -y python3-pip
+          # Workaround: AWS CodeBuild ARM runners do not have pip3 or openssh-client pre-installed
+          if ! command -v pip3 &>/dev/null || ! command -v ssh &>/dev/null; then
+            sudo apt-get update
+            command -v pip3 &>/dev/null || sudo apt-get install -y python3-pip
+            command -v ssh &>/dev/null || sudo apt-get install -y openssh-client
           fi
           cd wazuh-automation
           pip3 install --retries 3 -r deployability/deps/requirements.txt
