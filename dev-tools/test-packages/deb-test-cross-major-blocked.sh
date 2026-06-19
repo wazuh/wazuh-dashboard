@@ -9,6 +9,7 @@ set -euo pipefail
 PACKAGE_NAME="$1"
 PREVIOUS="$2"
 
+apt-get update
 apt-get install -y debhelper tar curl libcap2-bin gnupg apt-transport-https
 curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH \
   | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import
