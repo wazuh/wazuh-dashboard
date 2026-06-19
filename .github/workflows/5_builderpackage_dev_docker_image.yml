@@ -38,7 +38,7 @@ on:
 
 jobs:
   extract-versions:
-    runs-on: ubuntu-24.04
+    runs-on: codebuild-github-actions-codebuild-runner-server-amd-${{ github.run_id }}-${{ github.run_attempt }}
     outputs:
       opensearch_version: ${{ steps.versions.outputs.opensearch_version }}
       tag: ${{ steps.versions.outputs.tag }}
@@ -95,10 +95,10 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
-            runner: ubuntu-24.04
+            runner: ${{ format('codebuild-github-actions-codebuild-runner-server-amd-{0}-{1}', github.run_id, github.run_attempt) }}
             arch: amd64
           - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            runner: ${{ format('codebuild-github-actions-codebuild-runner-server-arm-{0}-{1}', github.run_id, github.run_attempt) }}
             arch: arm64
     steps:
       - name: Checkout code
@@ -153,7 +153,7 @@ jobs:
             --push
 
   create-manifest:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ format('codebuild-github-actions-codebuild-runner-server-amd-{0}-{1}', github.run_id, github.run_attempt) }}
     needs: [extract-versions, build]
 
     steps:
