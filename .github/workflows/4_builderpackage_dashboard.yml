@@ -260,29 +260,38 @@ jobs:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
           path: ${{ github.workspace }}/artifacts/plugins
 
+      # Workaround: Docker containers run as root internally, so output files are root-owned on the host. Create a non-root user to run the build and test steps.
+      - name: Create non-root build user
+        run: |
+          useradd -m builduser
+          usermod -aG docker builduser
+          chown -R builduser:builduser ${{ github.workspace }}
+
       - name: Zip plugins
         run: |
-          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
-          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
-          zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          sudo -u builduser -H env PATH="$PATH" zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
+          sudo -u builduser -H env PATH="$PATH" zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
+          sudo -u builduser -H env PATH="$PATH" zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
 
       - name: Build package
         run: |
           cd ${{ github.workspace }}/dev-tools/build-packages
-          bash ./build-packages.sh \
+          sudo -u builduser -H env PATH="$PATH" bash ./build-packages.sh \
             -v ${{ needs.setup-variables.outputs.VERSION }} \
             -r ${{ inputs.revision }} \
             -a file://${{github.workspace}}/artifacts/wazuh-package.zip \
             -s file://${{github.workspace}}/artifacts/security-package.zip \
             -b file://${{github.workspace}}/artifacts/dashboard-package.zip \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }}
+          # Workaround: Docker containers run as root internally, so output files are root-owned on the host.
+          chown -R builduser:builduser output 2>/dev/null || true
 
       - name: Test package
         run: |
           cd ${{ github.workspace }}/dev-tools/test-packages
           ls -la ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}
-          cp ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}
-          bash ./test-packages.sh \
+          sudo -u builduser -H env PATH="$PATH" cp ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}
+          sudo -u builduser -H env PATH="$PATH" bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
       - name: Set up AWS CLI
