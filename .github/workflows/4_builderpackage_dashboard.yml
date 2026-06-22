@@ -339,6 +339,10 @@ jobs:
           useradd -m builduser
           usermod -aG docker builduser
           chown -R builduser:builduser ${{ github.workspace }}
+          # Copy Docker Hub credentials so builduser can pull authenticated images
+          mkdir -p /home/builduser/.docker
+          cp /root/.docker/config.json /home/builduser/.docker/config.json
+          chown -R builduser:builduser /home/builduser/.docker
 
       - name: Build package
         run: |
