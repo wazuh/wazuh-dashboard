@@ -30,7 +30,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'ubuntu-latest' || 'wz-linux-arm64' }}
+    runs-on: ${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && format('github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) || format('github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) }}
     name: Build
     defaults:
       run:
