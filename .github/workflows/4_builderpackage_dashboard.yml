@@ -107,7 +107,6 @@ jobs:
     runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     name: Setup variables
     outputs:
-      CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
       VERSION: ${{ steps.setup-variables.outputs.VERSION }}
       REVISION: ${{ steps.setup-variables.outputs.REVISION }}
       COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
@@ -131,7 +130,6 @@ jobs:
       - name: Setup variables
         id: setup-variables
         run: |
-          CURRENT_DIR=$(pwd -P)
           VERSION=$(tail -c +2 VERSION)
           REVISION=$(yarn --silent wzd-revision)
           COMMIT_SHA=$(git rev-parse --short HEAD)
@@ -158,7 +156,6 @@ jobs:
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}.rpm
             fi
           fi
-          echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
           echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
@@ -236,52 +233,52 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
+          path: ${{ github.workspace }}/artifacts/dashboard
 
       - name: Download security plugin artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+          path: ${{ github.workspace }}/artifacts/security-plugin
 
       - name: Download main plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: ${{ github.workspace }}/artifacts/plugins
       - name: Download core plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: ${{ github.workspace }}/artifacts/plugins
       - name: Download check update plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: ${{ github.workspace }}/artifacts/plugins
 
       - name: Zip plugins
         run: |
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
+          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
 
       - name: Build package
         run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+          cd ${{ github.workspace }}/dev-tools/build-packages
           bash ./build-packages.sh \
             -v ${{ needs.setup-variables.outputs.VERSION }} \
             -r ${{ inputs.revision }} \
-            -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
-            -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
-            -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
+            -a file://${{github.workspace}}/artifacts/wazuh-package.zip \
+            -s file://${{github.workspace}}/artifacts/security-package.zip \
+            -b file://${{github.workspace}}/artifacts/dashboard-package.zip \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }}
 
       - name: Test package
         run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
-          ls -la ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}
-          cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
+          cd ${{ github.workspace }}/dev-tools/test-packages
+          ls -la ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}
+          cp ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
@@ -295,7 +292,7 @@ jobs:
       - name: Upload package
         run: |
           echo "Uploading package"
-          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
+          aws s3 cp  ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
           s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
           echo "S3 URI: ${s3uri}"
 
@@ -303,6 +300,6 @@ jobs:
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
+          aws s3 cp ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
           s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"

@@ -93,7 +93,7 @@ jobs:
         run: sudo -u builduser -H env PATH="$PATH" yarn build-platform --linux --skip-os-packages --release
 
       - name: Rename artifact
-        run: mv /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ matrix.ARCHITECTURE }}.${{ matrix.DISTRIBUTION }} /home/runner/work/wazuh-dashboard/wazuh-dashboard/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
+        run: mv target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ matrix.ARCHITECTURE }}.${{ matrix.DISTRIBUTION }} target/${{ env.ARTIFACT_BUILD_NAME }}
 
       - uses: actions/upload-artifact@v4
         if: success()
