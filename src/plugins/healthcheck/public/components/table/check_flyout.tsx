@@ -81,7 +81,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                     </EuiText>
                     <EuiSpacer size="s" />
                     <EuiCallOut size="s" color={mapTaskStatusToHealthColor(result)}>
-                      <p>{error}</p>
+                      <p style={{ whiteSpace: 'pre-wrap' }}>{error}</p>
                     </EuiCallOut>
                   </EuiFlexItem>
                   <EuiSpacer />
@@ -98,7 +98,7 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                     </EuiText>
                     <EuiSpacer size="s" />
                     <EuiCallOut size="s" color={mapTaskStatusToHealthColor(result)}>
-                      <p>{error}</p>
+                      <p style={{ whiteSpace: 'pre-wrap' }}>{error}</p>
                     </EuiCallOut>
                   </EuiFlexItem>
                   <EuiSpacer />

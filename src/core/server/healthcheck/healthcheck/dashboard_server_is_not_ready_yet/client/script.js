@@ -727,7 +727,9 @@ class Components {
                       Check [<code class="noncritical-item__name">${task.name}</code>]
                       <span class="badge badge--minor">Minor</span>
                     </div>
-                    <div class="noncritical-item__msg">${task.error || 'No details provided'}</div>
+                    <div class="noncritical-item__msg" style="white-space: pre-wrap;">${
+                      task.error || 'No details provided'
+                    }</div>
                   </div>
                 </div>
                 <div class="noncritical-item__meta">
