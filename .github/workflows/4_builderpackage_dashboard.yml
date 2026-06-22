@@ -260,26 +260,30 @@ jobs:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
           path: ${{ github.workspace }}/artifacts/plugins
 
+      - name: Zip plugins
+        run: |
+          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
+          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+
+
+      # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       # Workaround: Docker containers run as root internally, so output files are root-owned on the host. Create a non-root user to run the build and test steps.
       - name: Create non-root build user
         run: |
           useradd -m builduser
           usermod -aG docker builduser
           chown -R builduser:builduser ${{ github.workspace }}
-
-      - name: Zip plugins
-        run: |
-          sudo -u builduser -H env PATH="$PATH" zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
-          sudo -u builduser -H env PATH="$PATH" zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
-          sudo -u builduser -H env PATH="$PATH" zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-
-
-        # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          # Copy Docker Hub credentials so builduser can pull authenticated images
+          mkdir -p /home/builduser/.docker
+          cp /root/.docker/config.json /home/builduser/.docker/config.json
+          chown -R builduser:builduser /home/builduser/.docker
 
       - name: Build package
         run: |
