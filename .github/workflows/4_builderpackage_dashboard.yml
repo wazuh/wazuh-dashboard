@@ -11,7 +11,7 @@
 #
 # - Allows customization of:
 #   - Operating system (`deb` or `rpm`)
-#   - Architecture (`amd64`, `x86_64`, `aarch64`, `arm64`)
+#   - Architecture (`amd64`, `x86_64`)
 #   - Package revision
 #   - Plugin references (branches, tags, or commits)
 #   - Staging, upload, and checksum options.
@@ -220,7 +220,7 @@ jobs:
 
   build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'codebuild-github-actions-codebuild-runner-dashboard-arm-${{ github.run_id }}-${{ github.run_attempt }}' || 'codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}' }}
+    runs-on: 'codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}'
     name: Generate packages
     steps:
       - name: Checkout code
