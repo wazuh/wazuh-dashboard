@@ -205,6 +205,9 @@ jobs:
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@change/5246-4.10.5-migrate-github-runners-to-aws-runners
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   build-security-plugin:
     needs: [validate-job]
