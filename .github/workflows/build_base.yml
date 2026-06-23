@@ -20,7 +20,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.ARCHITECTURE == 'arm64' && 'codebuild-github-actions-codebuild-runner-dashboard-arm-${{ github.run_id }}-${{ github.run_attempt }}' || 'ubuntu-latest' }}
     name: Build
     defaults:
       run:

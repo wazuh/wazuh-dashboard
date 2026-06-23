@@ -202,7 +202,7 @@ jobs:
 
   build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ubuntu-latest
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'codebuild-github-actions-codebuild-runner-dashboard-arm-${{ github.run_id }}-${{ github.run_attempt }}' || 'ubuntu-22.04' }}
     name: Generate packages
     steps:
       - name: Checkout code

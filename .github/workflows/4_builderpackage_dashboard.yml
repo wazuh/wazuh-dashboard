@@ -11,7 +11,7 @@
 #
 # - Allows customization of:
 #   - Operating system (`deb` or `rpm`)
-#   - Architecture (`amd64`, `x86_64`, `aarch64`, `arm64`)
+#   - Architecture (`amd64`, `x86_64`)
 #   - Package revision
 #   - Plugin references (branches, tags, or commits)
 #   - Staging, upload, and checksum options.
@@ -104,10 +104,9 @@ on:
 
 jobs:
   setup-variables:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     name: Setup variables
     outputs:
-      CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
       VERSION: ${{ steps.setup-variables.outputs.VERSION }}
       REVISION: ${{ steps.setup-variables.outputs.REVISION }}
       COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
@@ -131,7 +130,6 @@ jobs:
       - name: Setup variables
         id: setup-variables
         run: |
-          CURRENT_DIR=$(pwd -P)
           VERSION=$(tail -c +2 VERSION)
           REVISION=$(yarn --silent wzd-revision)
           COMMIT_SHA=$(git rev-parse --short HEAD)
@@ -158,7 +156,6 @@ jobs:
               PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}.rpm
             fi
           fi
-          echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
           echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
@@ -171,7 +168,7 @@ jobs:
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
 
   validate-job:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     needs: setup-variables
     name: Validate inputs
     steps:
@@ -208,6 +205,9 @@ jobs:
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@4.10.5
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   build-security-plugin:
     needs: [validate-job]
@@ -220,7 +220,7 @@ jobs:
 
   build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ubuntu-latest
+    runs-on: 'codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}'
     name: Generate packages
     steps:
       - name: Checkout code
@@ -236,53 +236,74 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
+          path: ${{ github.workspace }}/artifacts/dashboard
 
       - name: Download security plugin artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+          path: ${{ github.workspace }}/artifacts/security-plugin
 
       - name: Download main plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: ${{ github.workspace }}/artifacts/plugins
       - name: Download core plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: ${{ github.workspace }}/artifacts/plugins
       - name: Download check update plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: ${{ github.workspace }}/artifacts/plugins
 
       - name: Zip plugins
         run: |
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
+          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+
+
+      # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Workaround: Docker containers run as root internally, so output files are root-owned on the host. Create a non-root user to run the build and test steps.
+      - name: Create non-root build user
+        run: |
+          useradd -m builduser
+          usermod -aG docker builduser
+          chown -R builduser:builduser ${{ github.workspace }}
+          # Copy Docker Hub credentials so builduser can pull authenticated images
+          mkdir -p /home/builduser/.docker
+          cp /root/.docker/config.json /home/builduser/.docker/config.json
+          chown -R builduser:builduser /home/builduser/.docker
 
       - name: Build package
         run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
-          bash ./build-packages.sh \
+          cd ${{ github.workspace }}/dev-tools/build-packages
+          sudo -u builduser -H env PATH="$PATH" bash ./build-packages.sh \
             -v ${{ needs.setup-variables.outputs.VERSION }} \
             -r ${{ inputs.revision }} \
-            -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
-            -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
-            -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
+            -a file://${{github.workspace}}/artifacts/wazuh-package.zip \
+            -s file://${{github.workspace}}/artifacts/security-package.zip \
+            -b file://${{github.workspace}}/artifacts/dashboard-package.zip \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }}
+          # Workaround: Docker containers run as root internally, so output files are root-owned on the host.
+          chown -R builduser:builduser output 2>/dev/null || true
 
       - name: Test package
         run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
-          ls -la ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}
-          cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
-          bash ./test-packages.sh \
+          cd ${{ github.workspace }}/dev-tools/test-packages
+          ls -la ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}
+          sudo -u builduser -H env PATH="$PATH" cp ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}
+          sudo -u builduser -H env PATH="$PATH" bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
       - name: Set up AWS CLI
@@ -295,7 +316,7 @@ jobs:
       - name: Upload package
         run: |
           echo "Uploading package"
-          aws s3 cp  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
+          aws s3 cp  ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
           s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
           echo "S3 URI: ${s3uri}"
 
@@ -303,6 +324,6 @@ jobs:
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
+          aws s3 cp ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
           s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
