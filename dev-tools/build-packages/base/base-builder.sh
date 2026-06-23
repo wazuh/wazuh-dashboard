@@ -112,12 +112,6 @@ log
 category_explore='{id:"explore",label:"Explore",order:100,euiIconType:"search"}'
 category_label_indexer_management='defaultMessage:"Indexer management"'
 
-# Replace app category to Anomaly Detection app
-sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" ./plugins/anomalyDetectionDashboards/target/public/anomalyDetectionDashboards.plugin.js
-
-# Disable forecasting in Anomaly Detection app
-sed -i -e "s|forecastingEnabled=true|forecastingEnabled=false|g" ./plugins/anomalyDetectionDashboards/target/public/anomalyDetectionDashboards.plugin.js
-
 # Replace app category to Maps app
 sed -i -e "s|category:{id:\"opensearch\",label:\"OpenSearch Plugins\",order:2e3}|category:${category_explore}|" $(js-file "customImportMapDashboards" "plugin")
 
@@ -130,7 +124,6 @@ log
 
 # Generate compressed files
 files_to_recreate=(
-  $(js-file "anomalyDetectionDashboards" "plugin")
   $(js-file "customImportMapDashboards" "plugin")
   $(js-file "indexManagementDashboards" "plugin")
 )
