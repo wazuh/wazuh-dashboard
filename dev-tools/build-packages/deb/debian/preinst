@@ -9,6 +9,48 @@
 
 set -e
 
+# Version guard: block 5.x installation when a pre-5.x Wazuh version is detected on disk.
+# NOTE: we check files on disk rather than dpkg -s because during
+# dpkg -i the old package data remains on disk until postinst runs.
+# Detection order:
+#   1. VERSION.json        — wazuh-dashboard 5.x+
+#   2. VERSION             — wazuh-dashboard 4.x (legacy file)
+#   3. plugin package.json — wazuh-dashboard 4.x+ (plugin metadata)
+print_upgrade_error() {
+    cat >&2 <<EOF
+==============================================================
+ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported.
+
+Detected installed version: ${1:-undetermined}
+
+A clean installation of Wazuh dashboard 5.x is required.
+Refer to the 5.x migration guide for more information.
+==============================================================
+EOF
+}
+
+if [ -f /usr/share/wazuh-dashboard/VERSION.json ]; then
+    INSTALLED_VER=$(grep -m 1 '"version"' /usr/share/wazuh-dashboard/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+elif [ -f /usr/share/wazuh-dashboard/VERSION ]; then
+    INSTALLED_VER=$(cat /usr/share/wazuh-dashboard/VERSION 2>/dev/null)
+elif [ -f /usr/share/wazuh-dashboard/plugins/wazuh/package.json ]; then
+    INSTALLED_VER=$(grep -m 1 '"version"' /usr/share/wazuh-dashboard/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+fi
+
+if [ -n "$INSTALLED_VER" ]; then
+    MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+    if [ "$MAJOR" -lt 5 ]; then
+        print_upgrade_error "$INSTALLED_VER"
+        exit 1
+    fi
+elif [ "$1" = "upgrade" ] && [ -d /usr/share/wazuh-dashboard/plugins ]; then
+    # Upgrade requested but version could not be determined from any source.
+    # Files may have been removed or corrupted. Block the upgrade; a fresh
+    # install ($1=install) is still allowed.
+    print_upgrade_error
+    exit 1
+fi
+
 #
 # This script is executed in the pre-installation phase
 #

@@ -2,13 +2,13 @@
 
 All notable changes to the Wazuh app project will be documented in this file.
 
-## Wazuh dashboard v5.0.0 - OpenSearch Dashboards 3.6.0 - Revision 02
+## Wazuh dashboard v5.0.0 - OpenSearch Dashboards 3.6.0 - Revision 03
 
 ### Added
 
 - Support for Wazuh 5.0.0
-- Health check service [#811](https://github.com/wazuh/wazuh-dashboard/pull/811) [#866](https://github.com/wazuh/wazuh-dashboard/pull/866) [#961](https://github.com/wazuh/wazuh-dashboard/pull/961) [#1031](https://github.com/wazuh/wazuh-dashboard/pull/1031) [#1179](https://github.com/wazuh/wazuh-dashboard/pull/1179)
-- Added Health Check plugin [#870](https://github.com/wazuh/wazuh-dashboard/pull/870) [#946](https://github.com/wazuh/wazuh-dashboard/pull/946) [#1379](https://github.com/wazuh/wazuh-dashboard/pull/1379)
+- Health check service [#811](https://github.com/wazuh/wazuh-dashboard/pull/811) [#866](https://github.com/wazuh/wazuh-dashboard/pull/866) [#961](https://github.com/wazuh/wazuh-dashboard/pull/961) [#1031](https://github.com/wazuh/wazuh-dashboard/pull/1031) [#1179](https://github.com/wazuh/wazuh-dashboard/pull/1179) [#1366](https://github.com/wazuh/wazuh-dashboard/pull/1366)
+- Added Health Check app [#870](https://github.com/wazuh/wazuh-dashboard/pull/870) [#946](https://github.com/wazuh/wazuh-dashboard/pull/946) [#1366](https://github.com/wazuh/wazuh-dashboard/pull/1366) [#1379](https://github.com/wazuh/wazuh-dashboard/pull/1379)
 - Added manager host configuration for the default configuration file [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 - Set v9 theme as default [#1092](https://github.com/wazuh/wazuh-dashboard/pull/1092)
 
@@ -26,6 +26,8 @@ All notable changes to the Wazuh app project will be documented in this file.
 - Changed the location of the wazuh-dashboard service to match with the other Wazuh components [#805](https://github.com/wazuh/wazuh-dashboard/issues/805)
 - Changed the default value of `metaFields` and `timepicker:timeDefaults` settings [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 - Excluded Wazuh dashboards and visualizations listing [#1278](https://github.com/wazuh/wazuh-dashboard/pull/1278) [#1279](https://github.com/wazuh/wazuh-dashboard/pull/1279)
+- Changed log level of the cross compatibility service on start [#1330](https://github.com/wazuh/wazuh-dashboard/pull/1330)
+- Changed pre install scripts to block Wazuh dashboard installation if there's an existing installation prior to 5.x [#1328](https://github.com/wazuh/wazuh-dashboard/pull/1328) [#1365](https://github.com/wazuh/wazuh-dashboard/pull/1365)
 
 ## Wazuh dashboard v4.14.7 - OpenSearch Dashboards 2.19.5 - Revision 00
 
@@ -33,7 +35,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.14.7
 
-## Wazuh dashboard v4.14.6 - OpenSearch Dashboards 2.19.5 - Revision 00
+## Wazuh dashboard v4.14.6 - OpenSearch Dashboards 2.19.5 - Revision 01
 
 ### Added
 
@@ -140,6 +142,34 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Fixed
 
 - Fix redirection on IDP initiated SAML configurations [#171](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/171)
+
+## Wazuh dashboard v4.10.5 - OpenSearch Dashboards 2.19.5 - Revision 00
+
+### Added
+
+- Support for Wazuh 4.10.5
+
+## Wazuh dashboard v4.10.4 - OpenSearch Dashboards 2.19.5 - Revision 01
+
+### Added
+
+- Support for Wazuh 4.10.4
+
+## Wazuh dashboard v4.10.3 - OpenSearch Dashboards 2.16.0 - Revision 01
+
+### Added
+
+- Support for Wazuh 4.10.3
+
+### Changed
+
+- Added `noreplace` directive to `/etc/default/wazuh-dashboard` for RPM packages to prevent overwriting user-modified configurations during package upgrades. [#668](https://github.com/wazuh/wazuh-dashboard/pull/668)
+
+## Wazuh dashboard v4.10.2 - OpenSearch Dashboards 2.16.0 - Revision 01
+
+### Added
+
+- Support for Wazuh 4.10.2
 
 ## Wazuh dashboard v4.10.1 - OpenSearch Dashboards 2.16.0 - Revision 01
 

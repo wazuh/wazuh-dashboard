@@ -102,6 +102,48 @@ find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 744 -exec chmod 740
 # -----------------------------------------------------------------------------
 
 %pre
+# Block installation of 5.x if any Wazuh < 5.0.0 is detected on disk.
+# NOTE: we check files on disk rather than rpm -qa because during
+# rpm -Uvh the old package header is removed from the DB before %pre runs.
+# Detection order:
+#   1. VERSION.json        — wazuh-dashboard 5.x+
+#   2. VERSION             — wazuh-dashboard 4.x (legacy file)
+#   3. plugin package.json — wazuh-dashboard 4.x+ (plugin metadata)
+print_upgrade_error() {
+    cat >&2 <<EOF
+==============================================================
+ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported.
+
+Detected installed version: ${1:-undetermined}
+
+A clean installation of Wazuh dashboard 5.x is required.
+Refer to the 5.x migration guide for more information.
+==============================================================
+EOF
+}
+
+if [ -f %{INSTALL_DIR}/VERSION.json ]; then
+  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+elif [ -f %{INSTALL_DIR}/VERSION ]; then
+  INSTALLED_VER=$(cat %{INSTALL_DIR}/VERSION 2>/dev/null)
+elif [ -f %{INSTALL_DIR}/plugins/wazuh/package.json ]; then
+  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+fi
+
+if [ -n "$INSTALLED_VER" ]; then
+  MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+  if [ "$MAJOR" -lt 5 ]; then
+    print_upgrade_error "$INSTALLED_VER"
+    exit 1
+  fi
+elif [ "$1" = "2" ] && [ -d %{INSTALL_DIR}/plugins ]; then
+  # Upgrade requested but version could not be determined from any source.
+  # Files may have been removed or corrupted. Block the upgrade; a fresh
+  # install ($1=1) is still allowed.
+  print_upgrade_error
+  exit 1
+fi
+
 # Create the wazuh-dashboard group if it doesn't exists
 if [ $1 = 1 ]; then
   if command -v getent > /dev/null 2>&1 && ! getent group %{GROUP} > /dev/null 2>&1; then
@@ -415,12 +457,16 @@ rm -fr %{buildroot}
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
 
 %changelog
+* Thu Sep 03 2026 support <info@wazuh.com> - 4.10.5
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-10-5.html
 * Thu Jul 09 2026 support <info@wazuh.com> - 4.14.7
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-7.html
 * Wed Jun 24 2026 support <info@wazuh.com> - 5.0.0
 - More info: https://documentation.wazuh.com/current/release-notes/release-5-0-0.html
-* Thu May 14 2026 support <info@wazuh.com> - 4.14.6
+* Tue Jun 09 2026 support <info@wazuh.com> - 4.14.6
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-6.html
+* Thu May 21 2026 support <info@wazuh.com> - 4.10.4
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-10-4.html
 * Thu Apr 23 2026 support <info@wazuh.com> - 4.14.5
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-5.html
 * Tue Mar 17 2026 support <info@wazuh.com> - 4.14.4
@@ -437,6 +483,8 @@ rm -fr %{buildroot}
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-13-1.html
 * Thu Sep 18 2025 support <info@wazuh.com> - 4.13.0
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-13-0.html
+* Fri Aug 22 2025 support <info@wazuh.com> - 4.10.3
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-10-3.html
 * Wed May 21 2025 support <info@wazuh.com> - 4.10.2
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-10-2.html
 * Wed May 07 2025 support <info@wazuh.com> - 4.12.0

@@ -110,7 +110,7 @@ permissions:
 
 jobs:
   setup-variables:
-    runs-on: wz-linux-amd64
+    runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     name: Setup variables
     outputs:
       CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
@@ -226,7 +226,7 @@ jobs:
           echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
 
   validate-job:
-    runs-on: wz-linux-amd64
+    runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     needs: setup-variables
     name: Validate inputs
     steps:
@@ -276,7 +276,7 @@ jobs:
 
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'wz-linux-arm64' || 'wz-linux-amd64' }}
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
     name: Generate packages
     steps:
       - name: Checkout code
@@ -353,7 +353,7 @@ jobs:
 
   test-package:
     needs: [setup-variables, build-package]
-    runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && 'wz-linux-arm64' || 'wz-linux-amd64' }}
+    runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
     strategy:
       fail-fast: false
     name: Test package
@@ -451,10 +451,13 @@ jobs:
         if: ${{ inputs.system == 'rpm' }}
         run: |
           if [ "${{ inputs.architecture }}" = "x86_64" ]; then
-            python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name centos_stream-9-amd64 --instance-name "centos_9_amd_large_aws" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard
+            INSTANCE_NAME="centos_9_amd_large_aws"
+            COMPOSITE_NAME="centos_stream-9-amd64"
           else
-            python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name centos_stream-8-arm64 --instance-name "centos_8_arm_large_aws" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --working-dir /tmp/dashboard
+            INSTANCE_NAME="centos_8_arm_large_aws"
+            COMPOSITE_NAME="centos_stream-8-arm64"
           fi
+          python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name "${COMPOSITE_NAME}" --instance-name "${INSTANCE_NAME}" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --label-creator github-actions --working-dir /tmp/dashboard --custom-tags "Product:wazuh-dashboard,Purpose:package-build,ExecutionId:${{ github.run_id }},Stage:ci"
           ansible_host=$(grep 'ansible_host:' /tmp/inventory.yaml | sed 's/.*: *//')
           ansible_port=$(grep 'ansible_port:' /tmp/inventory.yaml | sed 's/.*: *//')
           ansible_user=$(grep 'ansible_user:' /tmp/inventory.yaml | sed 's/.*: *//')
@@ -542,7 +545,7 @@ jobs:
 
   upload-package:
     needs: [setup-variables, test-package]
-    runs-on: ${{ inputs.architecture == 'arm64' && 'wz-linux-arm64' || 'wz-linux-amd64' }}
+    runs-on: ${{ inputs.architecture == 'arm64' && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
     name: Upload package
     steps:
       - name: Set up AWS CLI

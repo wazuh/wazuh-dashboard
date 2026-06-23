@@ -167,7 +167,7 @@ interface InitializationTaskRunData {
   createdAt: string | null;
   startedAt: string | null;
   finishedAt: string | null;
-  duration: number | null; // seconds
+  duration: number | null; // milliseconds
   data: any;
   error: string | null;
   enabled: boolean;
@@ -270,7 +270,7 @@ The UI allows exporting the checks to a JSON file to be shared easily.
       "createdAt": "2025-08-08T10:04:59.428Z",
       "startedAt": "2025-08-08T10:19:59.858Z",
       "finishedAt": "2025-08-08T10:19:59.948Z",
-      "duration": 0.09,
+      "duration": 90,
       "error": null,
       "enabled": true,
       "critical": true,
@@ -294,7 +294,7 @@ The UI allows exporting the checks to a JSON file to be shared easily.
       "createdAt": "2025-08-08T10:04:59.428Z",
       "startedAt": "2025-08-08T10:19:59.858Z",
       "finishedAt": "2025-08-08T10:19:59.948Z",
-      "duration": 0.09,
+      "duration": 90,
       "error": null,
       "enabled": true,
       "critical": true,

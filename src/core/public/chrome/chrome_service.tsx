@@ -401,7 +401,7 @@ export class ChromeService {
           homeHref={application.getUrlForApp('wz-home')}
           isVisible$={this.isVisible$}
           headerVariant$={this.headerVariant$}
-          opensearchDashboardsVersion={injectedMetadata.getWazuhVersion()}
+          opensearchDashboardsVersion={injectedMetadata.getWazuhBuildInfo().version}
           navLinks$={navLinks.getNavLinks$()}
           recentlyAccessed$={recentlyAccessed.get$()}
           navControlsLeft$={navControls.getLeft$()}

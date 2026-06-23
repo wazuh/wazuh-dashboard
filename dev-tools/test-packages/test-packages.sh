@@ -1,4 +1,5 @@
 #!/bin/sh
+set -u
 
 # Package name
 PACKAGE=""
@@ -8,25 +9,32 @@ CONTAINER_NAME="wazuh-dashboard"
 FILES="/etc/wazuh-dashboard/opensearch_dashboards.yml /usr/share/wazuh-dashboard"
 # Owner of the files
 FILE_OWNER="wazuh-dashboard"
+# Test mode flags
+NEGATIVE_TEST=false
+NEGATIVE_UNKNOWN_TEST=false
+REINSTALL_TEST=false
 
 # Remove container and image
 clean() {
-  docker stop $CONTAINER_NAME
-  # This is done because in the construction of packages arm sometimes fails because it is not finished destroying the container and when trying to delete the image fails because it is in use.
-  MAX_RETRIES=30
-  RETRY_COUNT=0
-  echo "Waiting for the container ($CONTAINER_NAME) to be removed"
-  while docker ps -a --format "{{.Names}}" | grep $CONTAINER_NAME; do
-    echo "The $(docker ps -a --format "{{.Names}}" | grep $CONTAINER_NAME) container has not been removed yet. Retry number $RETRY_COUNT."
-    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
-      echo "WARNING: Maximum retries reached while waiting for container to stop"
-      break
-    fi
-    sleep 2
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-  done
-  echo "Container removed. Removing the image"
-  docker rmi -f $CONTAINER_NAME
+  # Only clean if the container exists (negative test may not create one)
+  if docker ps -a --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+    docker stop $CONTAINER_NAME
+    # This is done because in the construction of packages arm sometimes fails because it is not finished destroying the container and when trying to delete the image fails because it is in use.
+    MAX_RETRIES=30
+    RETRY_COUNT=0
+    echo "Waiting for the container ($CONTAINER_NAME) to be removed"
+    while docker ps -a --format "{{.Names}}" | grep $CONTAINER_NAME; do
+      echo "The $(docker ps -a --format "{{.Names}}" | grep $CONTAINER_NAME) container has not been removed yet. Retry number $RETRY_COUNT."
+      if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+        echo "WARNING: Maximum retries reached while waiting for container to stop"
+        break
+      fi
+      sleep 2
+      RETRY_COUNT=$((RETRY_COUNT + 1))
+    done
+    echo "Container removed. Removing the image"
+    docker rmi -f $CONTAINER_NAME
+  fi
 }
 
 # Check if files exist and are owned by wazuh-dashboard
@@ -120,6 +128,108 @@ check_metadata_rpm() {
   echo "metadata package is correct: $metadataPackage"
 }
 
+# Block-4x-install test: assert 5.x install is BLOCKED when 4.x is pre-installed
+block_4x_install_test() {
+  BUILD_LOG=$(mktemp)
+
+  if [[ $PACKAGE == *".deb" ]]; then
+    set +e
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg BLOCK_4X_INSTALL=true -t "$CONTAINER_NAME" ./deb/ > "$BUILD_LOG" 2>&1
+    BUILD_EXIT_CODE=$?
+    set -e
+  elif [[ $PACKAGE == *".rpm" ]]; then
+    set +e
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg BLOCK_4X_INSTALL=true -t "$CONTAINER_NAME" ./rpm/ > "$BUILD_LOG" 2>&1
+    BUILD_EXIT_CODE=$?
+    set -e
+  else
+    echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm)"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  if [ "$BUILD_EXIT_CODE" -eq 0 ]; then
+    echo "ERROR: Installation should have been blocked but succeeded"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  if grep -F -q "ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported." "$BUILD_LOG"; then
+    BLOCK_MSG=$(grep -F 'ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported.' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
+    echo "  $BLOCK_MSG"
+  else
+    echo "ERROR: Expected error message not found in build output"
+    echo "--- Build output ---"
+    cat "$BUILD_LOG"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  echo "SUCCESS: 5.x installation correctly blocked when 4.x is installed"
+  rm -f "$BUILD_LOG"
+}
+
+# Block-unknown-install test: assert 5.x install is BLOCKED when remnants exist but version is unknown
+block_unknown_install_test() {
+  BUILD_LOG=$(mktemp)
+
+  if [[ $PACKAGE == *".deb" ]]; then
+    set +e
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg BLOCK_UNKNOWN_INSTALL=true -t "$CONTAINER_NAME" ./deb/ > "$BUILD_LOG" 2>&1
+    BUILD_EXIT_CODE=$?
+    set -e
+  elif [[ $PACKAGE == *".rpm" ]]; then
+    set +e
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg BLOCK_UNKNOWN_INSTALL=true -t "$CONTAINER_NAME" ./rpm/ > "$BUILD_LOG" 2>&1
+    BUILD_EXIT_CODE=$?
+    set -e
+  else
+    echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm)"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  if [ "$BUILD_EXIT_CODE" -eq 0 ]; then
+    echo "ERROR: Installation should have been blocked but succeeded"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  if grep -F -q "Detected installed version: undetermined" "$BUILD_LOG"; then
+    BLOCK_MSG=$(grep -F 'Detected installed version: undetermined' "$BUILD_LOG" | head -1 | sed 's/^ *#[0-9]* *[0-9.]* *//')
+    echo "  $BLOCK_MSG"
+  else
+    echo "ERROR: Expected error message not found in build output"
+    echo "--- Build output ---"
+    cat "$BUILD_LOG"
+    rm -f "$BUILD_LOG"
+    exit 1
+  fi
+
+  echo "SUCCESS: 5.x installation correctly blocked when previous install remnants exist with unknown version"
+  rm -f "$BUILD_LOG"
+}
+
+# Reinstall test: assert 5.x install over 5.x succeeds (same-major reinstall)
+same_major_reinstall_test() {
+  if [[ $PACKAGE == *".deb" ]]; then
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg ALLOW_SAME_MAJOR_REINSTALL=true -t "$CONTAINER_NAME" ./deb/ && \
+    docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME" && \
+    check_metadata_deb
+  elif [[ $PACKAGE == *".rpm" ]]; then
+    docker build --build-arg PACKAGE="$PACKAGE" --build-arg ALLOW_SAME_MAJOR_REINSTALL=true -t "$CONTAINER_NAME" ./rpm/ && \
+    docker run -it --rm -d --name "$CONTAINER_NAME" "$CONTAINER_NAME" && \
+    check_metadata_rpm
+  else
+    echo "ERROR: $PACKAGE is not a valid package (valid packages are .deb and .rpm)"
+    exit 1
+  fi
+
+  echo "SUCCESS: 5.x reinstall over 5.x succeeded"
+  files_exist
+  check_opensearch_dashboard_yml
+}
+
 # Run test
 test() {
 
@@ -147,12 +257,16 @@ help() {
   echo "Usage: $0 [OPTIONS]"
   echo
   echo "    -p, --package <path>       Set Wazuh Dashboard rpm package name,which has to be in the <repository>/dev-tools/test-packages/<DISTRIBUTION>/ folder."
+  echo "    --block-4x-install         Run block test: assert 5.x install is blocked when 4.x is pre-installed."
+  echo "    --block-unknown-install    Run block test: assert 5.x install is blocked when remnants exist but version is unknown."
+  echo "    --allow-same-major-reinstall Run reinstall test: assert 5.x reinstall over 5.x succeeds."
+  echo "    -h, --help                 Show this help."
   echo
   exit $1
 }
 
 main() {
-  while [ -n "${1}" ]; do
+  while [ $# -gt 0 ]; do
     case "${1}" in
     "-h" | "--help")
       help 0
@@ -165,6 +279,18 @@ main() {
         help 1
       fi
       ;;
+    "--block-4x-install")
+      NEGATIVE_TEST=true
+      shift
+      ;;
+    "--block-unknown-install")
+      NEGATIVE_UNKNOWN_TEST=true
+      shift
+      ;;
+    "--allow-same-major-reinstall")
+      REINSTALL_TEST=true
+      shift
+      ;;
     *)
       help 1
       ;;
@@ -175,7 +301,26 @@ main() {
     help 1
   fi
 
-  test
+  # Count how many test modes are active — only one allowed at a time
+  MODE_COUNT=0
+  [ "$NEGATIVE_TEST" = true ] && MODE_COUNT=$((MODE_COUNT + 1))
+  [ "$NEGATIVE_UNKNOWN_TEST" = true ] && MODE_COUNT=$((MODE_COUNT + 1))
+  [ "$REINSTALL_TEST" = true ] && MODE_COUNT=$((MODE_COUNT + 1))
+
+  if [ "$MODE_COUNT" -gt 1 ]; then
+    echo "ERROR: Only one test mode flag can be used at a time"
+    exit 1
+  fi
+
+  if [ "$NEGATIVE_TEST" = true ]; then
+    block_4x_install_test
+  elif [ "$NEGATIVE_UNKNOWN_TEST" = true ]; then
+    block_unknown_install_test
+  elif [ "$REINSTALL_TEST" = true ]; then
+    same_major_reinstall_test
+  else
+    test
+  fi
 
   clean
 }

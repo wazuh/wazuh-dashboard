@@ -39,6 +39,7 @@ import {
   UserProvidedValues,
 } from '../../server/types';
 import { AppCategory, Branding } from '../';
+import { WazuhBuildInfo } from '../../types/wazuh_build_info';
 
 export interface InjectedPluginMetadata {
   id: PluginName;
@@ -54,7 +55,7 @@ export interface InjectedMetadataParams {
     version: string;
     buildNumber: number;
     branch: string;
-    wazuhVersion: string;
+    wazuhBuildInfo: WazuhBuildInfo;
     basePath: string;
     serverBasePath: string;
     category?: AppCategory;
@@ -166,13 +167,13 @@ export class InjectedMetadataService {
       },
 
       // Wazuh
-      getWazuhVersion: () => {
-        return this.state.wazuhVersion;
+      getWazuhBuildInfo: () => {
+        return this.state.wazuhBuildInfo;
       },
 
       // Wazuh
       getWazuhDocVersion: () => {
-        return this.state.wazuhVersion?.split('.').slice(0, 2).join('.') || 'current';
+        return this.state.wazuhBuildInfo.version?.split('.').slice(0, 2).join('.') || 'current';
       },
 
       // Wazuh
@@ -218,7 +219,7 @@ export interface InjectedMetadataSetup {
     enabled: boolean;
   };
   // Wazuh
-  getWazuhVersion: () => string;
+  getWazuhBuildInfo: () => WazuhBuildInfo;
   getWazuhDocVersion: () => string;
   getHealthCheck: () => HealthCheckConfig;
 }

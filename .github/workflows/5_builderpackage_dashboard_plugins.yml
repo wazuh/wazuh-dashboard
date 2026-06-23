@@ -35,7 +35,7 @@ on:
 jobs:
   build-plugins:
     name: Build Plugin ${{ inputs.name }}
-    runs-on: wz-linux-amd64
+    runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     env:
       PLUGIN_REF: ${{ inputs.reference_plugins }}
     steps:
@@ -96,16 +96,36 @@ jobs:
           ref: ${{ env.PLUGIN_REF }}
           path: ${{ inputs.pathPlugin || format('plugins/{0}', inputs.name) }}
 
+      - name: Get commit SHA of the plugin of wazuh-dashboard-plugins
+        run: |
+          echo 'Getting commit sha'
+          if [  ${{ inputs.repo }} == 'wazuh/wazuh-dashboard-plugins' ]; then
+            COMMIT_SHA=$(cd ${{inputs.pathPlugin}}/${{ inputs.path }} && git rev-parse --short HEAD)
+          else
+            COMMIT_SHA=$(cd plugins/${{ inputs.name }} && git rev-parse --short HEAD)
+          fi
+          echo "COMMIT_SHA=$COMMIT_SHA"
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+
       - name: Move plugin to correct path and remove wazuh-dashboard-plugins parent folder
         if: ${{ inputs.repo == 'wazuh/wazuh-dashboard-plugins' }}
         run: |
           mv ${{inputs.pathPlugin}}/${{ inputs.path }} plugins/${{ inputs.name }}
           rm -rf ${{inputs.pathPlugin}}
 
+      # Workaround: AWS CodeBuild runners execute as root; OpenSearch Dashboards refuses to run as root
+      - name: Create non-root build user
+        run: |
+          useradd -m builduser
+          chown -R builduser:builduser .
+
       - name: Bootstrap with Plugins
         env:
           GIT_REF: ${{ env.PLUGIN_REF }}
-        run: yarn osd bootstrap --single-version=loose || yarn osd bootstrap --single-version=loose
+        run: |
+          chown -R builduser:builduser "$YARN_CACHE_LOCATION" 2>/dev/null || true
+          sudo -u builduser -H env PATH="$PATH" GIT_REF="$GIT_REF" yarn osd bootstrap --single-version=loose || \
+          sudo -u builduser -H env PATH="$PATH" GIT_REF="$GIT_REF" yarn osd bootstrap --single-version=loose
 
       - name: Build Plugin
         working-directory: plugins/${{ inputs.name }}
@@ -113,14 +133,22 @@ jobs:
           GIT_REF: ${{ env.PLUGIN_REF }}
         run: |
           set -o pipefail
-          OPENSEARCH_DASHBOARDS_VERSION=${{ inputs.version_opensearch }} yarn build 2>&1 | tee build.log
+          sudo -u builduser -H env PATH="$PATH" GIT_REF="$GIT_REF" OPENSEARCH_DASHBOARDS_VERSION="${{ inputs.version_opensearch }}" yarn build 2>&1 | tee build.log
+
+      - name: Build metadata
+        if: success()
+        working-directory: plugins/${{ inputs.name }}
+        run: |
+          jq -n --arg commit_sha "${{ env.COMMIT_SHA }}" '{ commit_sha: $commit_sha }' > build/metadata.json
 
       - name: Upload Plugin Artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.packageName }}
-          path: plugins/${{ inputs.name }}/build/*.zip
+          path: |
+            plugins/${{ inputs.name }}/build/*.zip
+            plugins/${{ inputs.name }}/build/metadata.json
           retention-days: 1
 
       - name: Upload Build Log
