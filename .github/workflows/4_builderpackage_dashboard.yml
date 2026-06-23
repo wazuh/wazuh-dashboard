@@ -255,6 +255,9 @@ jobs:
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@4.14.6
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   build-security-plugin:
     needs: [validate-job]
@@ -331,16 +334,28 @@ jobs:
           sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
           timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
 
+      - name: Create non-root build user
+        run: |
+          useradd -m builduser
+          usermod -aG docker builduser
+          chown -R builduser:builduser ${{ github.workspace }}
+          # Copy Docker Hub credentials so builduser can pull authenticated images
+          mkdir -p /home/builduser/.docker
+          cp /root/.docker/config.json /home/builduser/.docker/config.json
+          chown -R builduser:builduser /home/builduser/.docker
+
       - name: Build package
         run: |
           cd ${{ github.workspace }}/dev-tools/build-packages
-          bash ./build-packages.sh \
+          sudo -u builduser -H env PATH="$PATH" bash ./build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
             -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
             -s file://${{ github.workspace }}/artifacts/security-package.zip \
             -b file://${{ github.workspace }}/artifacts/dashboard-package.zip \
             --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+          # Workaround: Docker containers run as root internally, so output files are root-owned on the host.
+          chown -R builduser:builduser output 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
