@@ -1,6 +1,6 @@
 # Usage:
 # docker build \
-#         --build-arg NODE_VERSION=22.22.0 \
+#         --build-arg NODE_VERSION=22.22.3 \
 #         --build-arg WAZUH_DASHBOARD_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=main \
 #         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=main \
@@ -12,7 +12,7 @@
 #         -t wazuh-packages-to-base:5.0.0 \
 #         -f base-packages.Dockerfile .
 
-ARG NODE_VERSION=22.22.0
+ARG NODE_VERSION=22.22.3
 FROM node:${NODE_VERSION} AS base
 ARG ARCHITECTURE='amd'
 ARG WAZUH_DASHBOARD_BRANCH

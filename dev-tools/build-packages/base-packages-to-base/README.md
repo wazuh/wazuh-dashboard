@@ -37,7 +37,7 @@ bash run-docker-compose.sh \
     --alerting main \
     --notifications main \
     --arm \
-    --node-version 22.22.0
+    --node-version 22.22.3
 ```
 
 This example will create a packages folder that inside will have the packages divided by repository of the main git reference of each one.
