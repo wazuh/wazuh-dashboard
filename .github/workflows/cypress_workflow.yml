@@ -299,11 +299,11 @@ jobs:
       options: '--user 1001 --shm-size=4g'
     env:
       START_CMD: ${{ matrix.config == 'query_enhanced' &&
-        'node scripts/opensearch_dashboards --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --home.disableExperienceModal=true --opensearchDashboards.branding.useExpandedHeader=true' ||
+        'node scripts/opensearch_dashboards --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --home.disableExperienceModal=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         matrix.config == 'explore' &&
-        'node scripts/opensearch_dashboards --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --explore.enabled=true --explore.discoverTraces.enabled=true --home.disableExperienceModal=true --datasetManagement.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
+        'node scripts/opensearch_dashboards --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --explore.enabled=true --explore.discoverTraces.enabled=true --home.disableExperienceModal=true --datasetManagement.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         matrix.config == 'observability' &&
-        'node scripts/opensearch_dashboards --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --uiSettings.overrides[''home:useNewHomePage'']=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --explore.enabled=true --explore.discoverTraces.enabled=true --home.disableExperienceModal=true --datasetManagement.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
+        'node scripts/opensearch_dashboards --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=true --data_source.enabled=true --workspace.enabled=true --opensearch.ignoreVersionMismatch=true --data.savedQueriesNewUI.enabled=true --explore.enabled=true --explore.discoverTraces.enabled=true --home.disableExperienceModal=true --datasetManagement.enabled=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         matrix.config == 'dashboard' &&
         'node scripts/opensearch_dashboards --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --home.disableExperienceModal=true --opensearchDashboards.branding.useExpandedHeader=true' ||
         'node ../scripts/opensearch_dashboards --no-base-path --no-watch --savedObjects.maxImportPayloadBytes=10485760 --server.maxPayloadBytes=1759977 --logging.json=false --data.search.aggs.shardDelay.enabled=true --csp.warnLegacyBrowsers=false --uiSettings.overrides["query:enhancements:enabled"]=false --home.disableExperienceModal=true --opensearchDashboards.branding.useExpandedHeader=true' }}
@@ -436,6 +436,16 @@ jobs:
       - run: npx cypress cache path
 
       # Run tests based on configuration
+      # Cypress 10+ dropped --config ignoreTestFiles / excludeSpecPattern via CLI.
+      # Filter dashboard_sanity_test_spec.js out of SPEC before passing to cypress
+      # because it tests UI elements changed in this fork (only the MDS variant runs).
+      - name: Filter FTR spec list
+        if: matrix.test_location == 'ftr'
+        run: |
+          FILTERED_SPEC=$(echo "$SPEC" | tr ',' '\n' | grep -v 'dashboard_sanity_test_spec\.js$' | tr '\n' ',' | sed 's/,$//')
+          echo "SPEC=${FILTERED_SPEC}" >> $GITHUB_ENV
+        shell: bash
+
       - name: Run FT repo tests
         if: matrix.test_location == 'ftr'
         uses: cypress-io/github-action@v6
@@ -443,7 +453,7 @@ jobs:
           working-directory: ${{ env.FTR_PATH }}
           start: ${{ env.OPENSEARCH_SNAPSHOT_CMD }}, ${{ env.START_CMD }}
           wait-on: 'http://localhost:9200, http://localhost:5601'
-          command: yarn cypress:run-without-security --browser ${{ env.CYPRESS_BROWSER }} --config e2e.excludeSpecPattern="dashboard_sanity_test_spec.js" --spec ${{ env.SPEC }}
+          command: yarn cypress:run-without-security --browser ${{ env.CYPRESS_BROWSER }} --spec ${{ env.SPEC }}
 
       # Screenshots are only captured on failure, will change this once we do visual regression tests
       - name: Download OpenSearch
