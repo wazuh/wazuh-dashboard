@@ -254,7 +254,9 @@ export const runSideBarTests = () => {
 
           // On a new session, a syntax helper popover appears, which obstructs the typing within the query
           // editor. Clicking on a random element removes the popover.
-          cy.getElementByTestId('headerGlobalNav').should('be.visible').click();
+          // Wazuh: The headerGlobalNav wrapper has height 0 (fixed-position children don't contribute intrinsic
+          // height), so skip the visibility assertion and rely on force:true for the click.
+          cy.getElementByTestId('headerGlobalNav').click({ force: true });
 
           cy.wait(1000);
 

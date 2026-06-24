@@ -19,7 +19,9 @@ const visitAgentTraces = () => {
   const workspaceId = Cypress.env(`${workspaceName}:WORKSPACE_ID`);
   cy.visit(`/w/${workspaceId}/app/agentTraces/`);
   cy.osd.waitForLoader(true);
-  cy.getElementByTestId('headerGlobalNav').should('be.visible').click({ force: true });
+  // Wazuh: The headerGlobalNav wrapper has height 0 (fixed-position children don't contribute intrinsic
+  // height), so skip the visibility assertion and rely on force:true for the click.
+  cy.getElementByTestId('headerGlobalNav').click({ force: true });
 };
 
 const selectDatasetAndWaitForData = () => {
@@ -43,7 +45,7 @@ const selectDatasetAndWaitForData = () => {
 const enterStatsQueryAndRunIt = () => {
   // Agent traces uses a custom query panel editor, not the global query editor,
   // so we interact with the Monaco editor directly instead of cy.setQueryEditor().
-  cy.getElementByTestId('headerGlobalNav').should('be.visible').click({ force: true });
+  cy.getElementByTestId('headerGlobalNav').click({ force: true });
   cy.get('[data-test-subj="agentTracesQueryPanelEditor"] .react-monaco-editor-container')
     .should('be.visible')
     .click({ force: true });

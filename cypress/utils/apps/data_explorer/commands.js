@@ -56,8 +56,9 @@ Cypress.Commands.add(
   'submitFilterFromDropDown',
   (field, operator, value, isEnhancement = false) => {
     if (isEnhancement) {
-      cy.getElementByTestId('showFilterActions').click();
-      cy.getElementByTestId('addFilters').click();
+      // Wazuh: useExpandedHeader=true renders the filter bar twice; target the first instance.
+      cy.getElementByTestId('showFilterActions').first().click();
+      cy.getElementByTestId('addFilters').first().click();
     } else {
       cy.getElementByTestId('addFilter').click();
     }
