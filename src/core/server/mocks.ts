@@ -54,6 +54,8 @@ import { securityServiceMock } from './security/security_service.mock';
 import { crossCompatibilityServiceMock } from './cross_compatibility/cross_compatibility.mock';
 import { dynamicConfigServiceMock } from './config/dynamic_config_service.mock';
 import { workspaceServiceMock } from './workspace/mocks';
+// Wazuh
+import { healthCheckServiceMock } from './healthcheck/healthcheck/service.mock';
 
 export { configServiceMock } from './config/mocks';
 export { dynamicConfigServiceMock } from './config/mocks';
@@ -126,6 +128,10 @@ function pluginInitializerContextMock<T>(config: T = {} as T) {
         buildNum: 100,
         buildSha: 'buildSha',
         dist: false,
+        wazuhVersion: 'wazuhVersion',
+        wazuhRevision: '01',
+        wazuhStage: '',
+        wazuhIsProduction: false,
       },
       instanceUuid: 'instance-uuid',
     },
@@ -173,6 +179,7 @@ function createCoreSetupMock({
     security: securityServiceMock.createSetupContract(),
     dynamicConfigService: dynamicConfigServiceMock.createSetupContract(),
     workspace: workspaceServiceMock.createSetupContract(),
+    healthCheck: healthCheckServiceMock.createSetupContract(),
   };
 
   return mock;
@@ -191,6 +198,7 @@ function createCoreStartMock() {
     crossCompatibility: crossCompatibilityServiceMock.createStartContract(),
     dynamicConfig: dynamicConfigServiceMock.createStartContract(),
     workspace: workspaceServiceMock.createStartContract(),
+    healthCheck: healthCheckServiceMock.createStartContract(),
   };
 
   return mock;
@@ -214,6 +222,7 @@ function createInternalCoreSetupMock() {
     security: securityServiceMock.createSetupContract(),
     dynamicConfig: dynamicConfigServiceMock.createInternalSetupContract(),
     workspace: workspaceServiceMock.createInternalSetupContract(),
+    healthCheck: healthCheckServiceMock.createSetupContract(),
   };
   return setupDeps;
 }
@@ -231,6 +240,7 @@ function createInternalCoreStartMock() {
     crossCompatibility: crossCompatibilityServiceMock.createStartContract(),
     dynamicConfig: dynamicConfigServiceMock.createInternalStartContract(),
     workspace: workspaceServiceMock.createInternalStartContract(),
+    healthCheck: healthCheckServiceMock.createStartContract(),
   };
   return startDeps;
 }

@@ -128,8 +128,9 @@ export const runDisplayTests = () => {
           cy.getElementByTestId(
             'filter filter-enabled filter-key-category filter-value-Application filter-unpinned '
           ).should('be.visible');
-          cy.getElementByTestId('showFilterActions').click();
-          cy.getElementByTestId('pinAllFilters').click();
+          // Wazuh: useExpandedHeader=true renders the filter bar twice; target the first instance.
+          cy.getElementByTestId('showFilterActions').first().click();
+          cy.getElementByTestId('pinAllFilters').first().click();
           cy.getElementByTestId(
             'filter filter-enabled filter-key-category filter-value-Application filter-pinned '
           ).should('be.visible');

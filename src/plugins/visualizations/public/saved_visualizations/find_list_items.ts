@@ -43,12 +43,14 @@ export async function findListItems({
   size,
   savedObjectsClient,
   mapSavedObjectApiHits,
+  filter = '', // Wazuh - added filter parameter to findListItems function
 }: {
   search: string;
   size: number;
   visTypes: VisTypeAlias[];
   savedObjectsClient: SavedObjectsClientContract;
   mapSavedObjectApiHits: SavedObjectLoader['mapSavedObjectApiHits'];
+  filter?: string; // Wazuh - added filter parameter to findListItems function
 }) {
   const extensions = visTypes
     .map((v) => v.appExtensions?.visualizations)
@@ -65,6 +67,7 @@ export async function findListItems({
     type: searchOption('docTypes', 'visualization'),
     searchFields: searchOption('searchFields', 'title^3', 'description'),
     search: search ? `${search}*` : undefined,
+    filter, // Wazuh - pass filter parameter to savedObjectsClient.find
     perPage: size,
     page: 1,
     defaultSearchOperator: 'AND' as 'AND',

@@ -87,6 +87,7 @@ export function createSavedVisLoader(
         mapSavedObjectApiHits: this.mapSavedObjectApiHits.bind(this),
         savedObjectsClient,
         visTypes: visualizationTypes.getAliases(),
+        filter: 'not visualization.attributes.description:"*Provided by Wazuh*"', // Wazuh - added filter to exclude visualizations with description containing "Provided by Wazuh"
       });
     }
   }

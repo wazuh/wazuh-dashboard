@@ -277,7 +277,9 @@ cy.osd.add(
 
     // On a new session, a syntax helper popover appears, which obstructs the typing within the query
     // editor. Clicking on a random element removes the popover.
-    cy.getElementByTestId('headerGlobalNav').should('be.visible').click({ force: true });
+    // The headerGlobalNav wrapper has height 0 (fixed-position children don't contribute intrinsic
+    // height), so skip the visibility assertion and rely on force:true for the click.
+    cy.getElementByTestId('headerGlobalNav').click({ force: true });
     cy.wait(1000);
   }
 );
@@ -319,14 +321,19 @@ cy.osd.add('deleteWorkspaceByNameUsingEndpoint', (workspaceName, endpoint) => {
 cy.osd.add('waitForLoader', (isEnhancement = false) => {
   const opts = { log: false };
 
+  console.log(isEnhancement);
+
   Cypress.log({
     name: 'waitForPageLoad',
     displayName: 'wait',
     message: 'page load',
   });
 
-  // Use recentItemsSectionButton for query enhancement, otherwise use homeIcon
-  cy.getElementByTestId(isEnhancement ? 'recentItemsSectionButton' : 'homeIcon', {
+  // Wazuh
+  // home:useNewHomePage is permanently disabled in this fork, so the legacy header
+  // is always rendered — homeIcon is the correct load indicator in both cases.
+  // cy.getElementByTestId(isEnhancement ? 'recentItemsSectionButton' : 'homeIcon', {
+  cy.getElementByTestId('homeIcon', {
     timeout: 60000,
     ...opts,
   }).should('be.visible', { timeout: 60000 });

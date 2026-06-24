@@ -37,6 +37,10 @@ export interface PackageInfo {
   buildNum: number;
   buildSha: string;
   dist: boolean;
+  wazuhVersion: string;
+  wazuhRevision: string;
+  wazuhStage: string;
+  wazuhIsProduction: boolean;
 }
 
 /**
