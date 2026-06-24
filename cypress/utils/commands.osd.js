@@ -319,14 +319,19 @@ cy.osd.add('deleteWorkspaceByNameUsingEndpoint', (workspaceName, endpoint) => {
 cy.osd.add('waitForLoader', (isEnhancement = false) => {
   const opts = { log: false };
 
+  console.log(isEnhancement);
+
   Cypress.log({
     name: 'waitForPageLoad',
     displayName: 'wait',
     message: 'page load',
   });
 
-  // Use recentItemsSectionButton for query enhancement, otherwise use homeIcon
-  cy.getElementByTestId(isEnhancement ? 'recentItemsSectionButton' : 'homeIcon', {
+  // Wazuh
+  // home:useNewHomePage is permanently disabled in this fork, so the legacy header
+  // is always rendered — homeIcon is the correct load indicator in both cases.
+  // cy.getElementByTestId(isEnhancement ? 'recentItemsSectionButton' : 'homeIcon', {
+  cy.getElementByTestId('homeIcon', {
     timeout: 60000,
     ...opts,
   }).should('be.visible', { timeout: 60000 });
