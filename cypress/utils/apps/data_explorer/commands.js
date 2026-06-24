@@ -55,13 +55,18 @@ Cypress.Commands.add('waitForSearch', () => {
 Cypress.Commands.add(
   'submitFilterFromDropDown',
   (field, operator, value, isEnhancement = false) => {
-    if (isEnhancement) {
-      // Wazuh: useExpandedHeader=true renders the filter bar twice; target the first instance.
-      cy.getElementByTestId('showFilterActions').first().click();
-      cy.getElementByTestId('addFilters').first().click();
-    } else {
-      cy.getElementByTestId('addFilter').click();
-    }
+    // Wazuh: home:useNewHomePage is permanently false in this fork. The addFilters dropdown
+    // item is only added to the showFilterActions menu when useNewHeader=true (see
+    // filter_options.tsx:360). In the legacy filter bar addFilter (the direct button) is
+    // always rendered, so use it for both enhancement and non-enhancement modes.
+    // if (isEnhancement) {
+    //   // Wazuh: useExpandedHeader=true renders the filter bar twice; target the first instance.
+    //   cy.getElementByTestId('showFilterActions').first().click();
+    //   cy.getElementByTestId('addFilters').first().click();
+    // } else {
+    //   cy.getElementByTestId('addFilter').click();
+    // }
+    cy.getElementByTestId('addFilter').click();
 
     cy.getElementByTestId('filterFieldSuggestionList')
       .should('be.visible')
