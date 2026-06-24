@@ -35,7 +35,8 @@ export const config: PluginConfigDescriptor<ConfigSchema> = {
         settings.uiSettings.overrides = {
           ...(settings.uiSettings.overrides || {}),
           'theme:version': 'v9',
-          'home:useNewHomePage': true,
+          // Wazuh: home:useNewHomePage is locked to false via schema.literal(false) in this fork;
+          // omitting this override prevents a ValidationError crash on startup.
           'query:enhancements:enabled': true,
         };
       }

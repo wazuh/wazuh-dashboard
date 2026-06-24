@@ -34,7 +34,8 @@ describe('uiSettings deprecations', () => {
   it('removes home:useNewHomePage from overrides and keeps other overrides', () => {
     const { migrated, messages } = applyUiSettingsDeprecations({
       overrides: {
-        'home:useNewHomePage': true,
+        // Wazuh: The new home page is permanently disabled in this fork, so the legacy header is always rendered.
+        // 'home:useNewHomePage': true,
         'theme:version': 'v7',
       },
     });
