@@ -95,7 +95,6 @@ jobs:
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     name: Setup variables
     outputs:
-      CURRENT_DIR: ${{ steps.setup-variables.outputs.CURRENT_DIR }}
       VERSION: ${{ steps.setup-variables.outputs.VERSION }}
       PREVIOUS: ${{ steps.setup-variables.outputs.PREVIOUS }}
       REVISION: ${{ steps.setup-variables.outputs.REVISION }}
@@ -137,7 +136,6 @@ jobs:
       - name: Setup variables
         id: setup-variables
         run: |
-          CURRENT_DIR=$(pwd -P)
           VERSION=$(jq -r '.version' VERSION.json)
           # Check the corresponding previous version to be used in the upgrade test
           sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
@@ -186,7 +184,6 @@ jobs:
           else
             ARCHITECTURE_FLAG=--arm
           fi
-          echo "CURRENT_DIR=$CURRENT_DIR" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "PREVIOUS=$PREVIOUS" >> $GITHUB_OUTPUT
           echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
@@ -254,7 +251,7 @@ jobs:
 
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
-    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && format('github-actions-codebuild-runner-dashboard-arm-${{ github.run_id }}-${{ github.run_attempt }}') || format('github-actions-codebuild-runner-dashboard-amd64-${{ github.run_id }}-${{ github.run_attempt }}') }}
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd64-{0}-{1}', github.run_id, github.run_attempt) }}
     name: Generate packages
     steps:
       - name: Checkout code
@@ -270,49 +267,61 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard
+          path: ${{ github.workspace }}/artifacts/dashboard
 
       - name: Download security plugin artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
+          path: ${{ github.workspace }}/artifacts/security-plugin
 
       - name: Download main plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: ${{ github.workspace }}/artifacts/plugins
       - name: Download core plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
+          path: ${{ github.workspace }}/artifacts/plugins
       - name: Download check update plugin's artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-      - name: Download report plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_REPORT_PLUGIN }}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/report-plugin
+          path: ${{ github.workspace }}/artifacts/plugins
+
+      - name: Install zip
+        if: ${{ inputs.architecture == 'arm64' || inputs.architecture == 'aarch64' }}
+        run: sudo apt-get update && sudo apt-get install -y zip
 
       - name: Zip plugins
         run: |
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/wazuh-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/plugins
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/security-plugin
-          zip -r -j ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard-package.zip ${{ needs.setup-variables.outputs.CURRENT_DIR }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
+          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+
+      # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Start Docker daemon
+        if: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' }}
+        run: |
+          sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
+          timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
 
       - name: Build package
         run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages
+          cd ${{ github.workspace }}/dev-tools/build-packages
           bash ./build-packages.sh \
             -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
-            -a file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/wazuh-package.zip \
-            -s file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/security-package.zip \
-            -b file://${{needs.setup-variables.outputs.CURRENT_DIR}}/artifacts/dashboard-package.zip \
+            -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
+            -s file://${{ github.workspace }}/artifacts/security-package.zip \
+            -b file://${{ github.workspace }}/artifacts/dashboard-package.zip \
             --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
             --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
@@ -321,7 +330,7 @@ jobs:
         if: success()
         with:
           name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          path: ${{ github.workspace }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}
           retention-days: 30
           overwrite: true
 
@@ -330,7 +339,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
+          path: ${{ github.workspace }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
           retention-days: 30
           overwrite: true
 
@@ -348,33 +357,50 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          path: ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
+          path: ${{ github.workspace }}/dev-tools/test-packages
+
+      # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Start Docker daemon
+        run: |
+          sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
+          timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
 
       - name: Test package integrity
         run: |
-          cd ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages
-          cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{ inputs.system }}
+          cd ${{ github.workspace }}/dev-tools/test-packages
+          cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
       - name: DEB - Test package install/uninstall
         if: ${{ inputs.system == 'deb' }}
         run: |
-          sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          sudo dpkg -i ${{ github.workspace }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
           if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
             echo "Package installed"
           else
             echo "Package not installed"
             exit 1
           fi
-          sudo  systemctl daemon-reload
-          sudo  systemctl enable wazuh-dashboard
-          sudo  systemctl start wazuh-dashboard
-          if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
-            echo "Service running"
+          # Workaround: AWS CodeBuild runners do not use systemd as PID 1
+          if [ -d /run/systemd/system ]; then
+            sudo systemctl daemon-reload
+            sudo systemctl enable wazuh-dashboard
+            sudo systemctl start wazuh-dashboard
+            if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
+              echo "Service running"
+            else
+              echo "Service not running"
+              exit 1
+            fi
           else
-            echo "Service not running"
-            exit 1
+            echo "Skipping service start — systemd not available in this environment"
           fi
           sudo apt-get remove --purge wazuh-dashboard -y
           if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
@@ -393,11 +419,18 @@ jobs:
           sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
           sudo apt-get update
           sudo apt-get -y install wazuh-dashboard=${{needs.setup-variables.outputs.PREVIOUS}}
-          sudo  systemctl daemon-reload
-          sudo  systemctl enable wazuh-dashboard
-          sudo  systemctl start wazuh-dashboard
-          sudo dpkg -i ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          sudo systemctl restart wazuh-dashboard
+          # Workaround: AWS CodeBuild runners do not use systemd as PID 1
+          if [ -d /run/systemd/system ]; then
+            sudo systemctl daemon-reload
+            sudo systemctl enable wazuh-dashboard
+            sudo systemctl start wazuh-dashboard
+          else
+            echo "Skipping service start — systemd not available in this environment"
+          fi
+          sudo dpkg -i ${{ github.workspace }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}
+          if [ -d /run/systemd/system ]; then
+            sudo systemctl restart wazuh-dashboard
+          fi
 
           if dpkg -s wazuh-dashboard | grep '^Version:' | grep -q "${{needs.setup-variables.outputs.VERSION}}"; then
             echo "Package upgraded"
@@ -406,11 +439,15 @@ jobs:
             exit 1
           fi
 
-          if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
-            echo "Service running"
+          if [ -d /run/systemd/system ]; then
+            if sudo systemctl status wazuh-dashboard | grep -q "active (running)"; then
+              echo "Service running"
+            else
+              echo "Service not running"
+              exit 1
+            fi
           else
-            echo "Service not running"
-            exit 1
+            echo "Skipping service status check — systemd not available in this environment"
           fi
 
       - name: RPM - Clone automation repo
@@ -460,7 +497,7 @@ jobs:
         run: |
           # echo 'Installing package...' is necessary to init the ssh connection prior to running scp
           ${{ steps.setup_rpm_env.outputs.ssh_command }} "echo 'Installing package...'"
-          ${{ steps.setup_rpm_env.outputs.scp_command }} ${{ needs.setup-variables.outputs.CURRENT_DIR }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}} ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
+          ${{ steps.setup_rpm_env.outputs.scp_command }} ${{ github.workspace }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}} ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
 
           ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo rpm -i ./${{needs.setup-variables.outputs.PACKAGE_NAME}}; \
               if rpm -q wazuh-dashboard &>/dev/null; then \
