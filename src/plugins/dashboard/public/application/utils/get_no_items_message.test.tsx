@@ -31,8 +31,12 @@ describe('dashboard listing table with no item', () => {
     const component = mountWithIntl(getNoItemsMessage(false, jest.fn(), application));
 
     expect(component).toMatchSnapshot();
-    component.find(EuiLink).simulate('click');
 
-    expect(application.navigateToApp).toHaveBeenCalledWith('sample-data');
+    // Wazuh - Temporary: Sample Data App link is hidden in Wazuh 5.0 until updated for new features.
+    // Restore the following assertions when the Sample Data App is re-enabled:
+    // component.find(EuiLink).simulate('click');
+    // expect(application.navigateToApp).toHaveBeenCalledWith('sample-data');
+    expect(component.find(EuiLink).length).toBe(0);
+    expect(application.navigateToApp).not.toHaveBeenCalled();
   });
 });

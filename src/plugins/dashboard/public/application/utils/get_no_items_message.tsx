@@ -57,6 +57,7 @@ export const getNoItemsMessage = (
                 }}
               />
             </p>
+            {/* Wazuh - Sample Data App is hidden in Wazuh 5.0 until updated for new features
             <p>
               <FormattedMessage
                 id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
@@ -74,6 +75,7 @@ export const getNoItemsMessage = (
                 }}
               />
             </p>
+            */}
           </EuiText>
         </Fragment>
       }
