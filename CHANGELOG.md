@@ -14,7 +14,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 5.0.0
 - Health check service [#811](https://github.com/wazuh/wazuh-dashboard/pull/811) [#866](https://github.com/wazuh/wazuh-dashboard/pull/866) [#961](https://github.com/wazuh/wazuh-dashboard/pull/961) [#1031](https://github.com/wazuh/wazuh-dashboard/pull/1031) [#1179](https://github.com/wazuh/wazuh-dashboard/pull/1179) [#1366](https://github.com/wazuh/wazuh-dashboard/pull/1366)
-- Added Health Check app [#870](https://github.com/wazuh/wazuh-dashboard/pull/870) [#946](https://github.com/wazuh/wazuh-dashboard/pull/946) [#1366](https://github.com/wazuh/wazuh-dashboard/pull/1366)
+- Added Health Check app [#870](https://github.com/wazuh/wazuh-dashboard/pull/870) [#946](https://github.com/wazuh/wazuh-dashboard/pull/946) [#1366](https://github.com/wazuh/wazuh-dashboard/pull/1366) [#1379](https://github.com/wazuh/wazuh-dashboard/pull/1379)
 - Added manager host configuration for the default configuration file [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 - Set v9 theme as default [#1092](https://github.com/wazuh/wazuh-dashboard/pull/1092)
 - Added wazuh-dashboard-alerting and wazuh-dashboard-notifications as build arguments in the Docker package builder's `docker-compose.yml` [#1376](https://github.com/wazuh/wazuh-dashboard/pull/1376)
@@ -27,6 +27,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 ### Removed
 
 - Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system
+- Removed the Anomaly Detection plugin from the default Wazuh dashboard package [#1382](https://github.com/wazuh/wazuh-dashboard/pull/1382)
 
 ### Changed
 
@@ -42,7 +43,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.14.7
 
-## Wazuh dashboard v4.14.6 - OpenSearch Dashboards 2.19.5 - Revision 01
+## Wazuh dashboard v4.14.6 - OpenSearch Dashboards 2.19.5 - Revision 02
 
 ### Added
 
