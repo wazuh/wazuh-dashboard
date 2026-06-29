@@ -263,6 +263,7 @@ jobs:
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@change/5301-4.14.6-github-artifacts-migration-to-s3-dashboard
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
+      workflow_name: '4_builderpackage_dashboard'
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -275,6 +276,7 @@ jobs:
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@change/5301-4.14.6-github-artifacts-migration-to-s3-dashboard
     with:
       reference: ${{ inputs.reference_security_plugins }}
+      workflow_name: '4_builderpackage_dashboard'
 
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
