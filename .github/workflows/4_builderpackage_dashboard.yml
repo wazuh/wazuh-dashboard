@@ -106,9 +106,7 @@ on:
 
 env:
   CI_DEV_INTERNAL_BUCKET: s3://xdrsiem-ci-dev-internal
-  CI_ARTIFACTS_REPO: wazuh-dashboard
-  # Workflow name of the base workflow used to build the artifacts. This is used to locate the artifacts in S3.
-  CI_BASE_WORKFLOW: 4_builderpackage_dashboard
+  EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard
 
 permissions:
   id-token: write
@@ -252,7 +250,7 @@ jobs:
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
-      WORKFLOW_NAME: '4_builderpackage_dashboard'
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
     secrets: inherit
 
   build-main-plugins:
@@ -263,7 +261,7 @@ jobs:
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@change/5301-4.14.6-github-artifacts-migration-to-s3-dashboard
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
-      workflow_name: '4_builderpackage_dashboard'
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -276,7 +274,7 @@ jobs:
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@change/5301-4.14.6-github-artifacts-migration-to-s3-dashboard
     with:
       reference: ${{ inputs.reference_security_plugins }}
-      workflow_name: '4_builderpackage_dashboard'
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
 
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
@@ -300,11 +298,11 @@ jobs:
 
       - name: Download artifacts from S3
         run: |
-          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }} ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }} ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }} ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }} ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
           echo "Dashboard artifact: ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}"
           echo "Security plugin artifact: ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}"
           echo "Main plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}"
@@ -362,7 +360,7 @@ jobs:
         if: ${{ success() }}
         run: |
           artifact_path="${{ github.workspace }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
-          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
 
           aws s3 cp $artifact_path $bucket_path
           if [ "${{ inputs.checksum }}" = "true" ]; then
@@ -389,7 +387,7 @@ jobs:
 
       - name: Download artifacts from S3
         run: |
-          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
           package_path="${{ github.workspace }}/dev-tools/test-packages/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
 
           aws s3 cp $bucket_path $package_path
@@ -565,7 +563,7 @@ jobs:
 
       - name: Download artifacts from S3
         run: |
-          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
           package_path="${{ github.workspace }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
 
           aws s3 cp $bucket_path $package_path

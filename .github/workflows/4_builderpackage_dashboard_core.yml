@@ -23,8 +23,8 @@ on:
         required: true
         default: 'amd64'
         type: string
-      WORKFLOW_NAME:
-        description: 'The name of the workflow that is calling this workflow'
+      execution_repository:
+        description: 'Repository and workflow run to upload the artifact to (format: repo/workflow). This is used to locate the artifacts in S3.'
         required: true
         default: ''
         type: string
@@ -44,8 +44,8 @@ on:
 env:
   CI_DEV_INTERNAL_BUCKET: s3://xdrsiem-ci-dev-internal
   CI_ARTIFACTS_REPO: wazuh-dashboard
-  # Workflow name of the base workflow used to build the artifacts. This is used to locate the artifacts in S3.
-  CI_BASE_WORKFLOW: 4_builderpackage_dashboard_core
+  # Repository and workflow run to upload the artifact to (format: repo/workflow). This is used to locate the artifacts in S3.
+  EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard_core
 
 jobs:
   build:
@@ -125,7 +125,7 @@ jobs:
         run: |
           artifact_path=${{ github.workspace }}/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
 
-          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ inputs.WORKFLOW_NAME || env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ env.ARTIFACT_BUILD_NAME }}"
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ inputs.execution_repository || env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ env.ARTIFACT_BUILD_NAME }}"
 
           aws s3 cp $artifact_path $bucket_path
 
