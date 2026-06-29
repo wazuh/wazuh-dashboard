@@ -555,11 +555,10 @@ jobs:
     name: Upload package
     steps:
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: ${{ secrets.CI_AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_QA_AUTOMATION_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Download artifacts from S3
         run: |
