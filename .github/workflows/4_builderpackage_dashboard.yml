@@ -105,7 +105,7 @@ on:
         required: false
 
 env:
-  CI_DEV_INTERNAL_BUCKET: s3://xdrsiem-ci-dev-internal
+  CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
   EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard
 
 permissions:
@@ -262,9 +262,7 @@ jobs:
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
       execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    secrets: inherit
 
   build-security-plugin:
     needs: [validate-job]
@@ -275,6 +273,7 @@ jobs:
     with:
       reference: ${{ inputs.reference_security_plugins }}
       execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
 
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
