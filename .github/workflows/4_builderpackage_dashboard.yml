@@ -253,9 +253,6 @@ jobs:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
       WORKFLOW_NAME: '4_builderpackage_dashboard'
-    secrets:
-      AWS_IAM_ROLE: ${{ secrets.AWS_IAM_ROLE }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
 
   build-main-plugins:
     needs: [validate-job]
@@ -268,8 +265,6 @@ jobs:
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      AWS_IAM_ROLE: ${{ secrets.AWS_IAM_ROLE }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
 
   build-security-plugin:
     needs: [validate-job]
@@ -279,9 +274,6 @@ jobs:
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@change/5301-4.14.6-github-artifacts-migration-to-s3-dashboard
     with:
       reference: ${{ inputs.reference_security_plugins }}
-    secrets:
-      AWS_IAM_ROLE: ${{ secrets.AWS_IAM_ROLE }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
 
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
