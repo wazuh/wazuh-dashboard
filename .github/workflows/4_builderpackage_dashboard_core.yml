@@ -28,13 +28,6 @@ on:
         required: true
         default: ''
         type: string
-    secrets:
-      AWS_IAM_ROLE:
-        description: 'AWS IAM role for uploading artifacts to S3'
-        required: true
-      AWS_REGION:
-        description: 'AWS region for uploading artifacts to S3'
-        required: true
 
   workflow_dispatch:
     inputs:
