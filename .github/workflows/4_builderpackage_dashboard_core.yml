@@ -23,6 +23,18 @@ on:
         required: true
         default: 'amd64'
         type: string
+      WORKFLOW_NAME:
+        description: 'The name of the workflow that is calling this workflow'
+        required: true
+        default: ''
+        type: string
+    secrets:
+      AWS_IAM_ROLE:
+        description: 'AWS IAM role for uploading artifacts to S3'
+        required: true
+      AWS_REGION:
+        description: 'AWS region for uploading artifacts to S3'
+        required: true
 
   workflow_dispatch:
     inputs:
@@ -35,6 +47,12 @@ on:
         required: true
         default: 'amd64'
         type: string
+
+env:
+  CI_DEV_INTERNAL_BUCKET: s3://xdrsiem-ci-dev-internal
+  CI_ARTIFACTS_REPO: wazuh-dashboard
+  # Workflow name of the base workflow used to build the artifacts. This is used to locate the artifacts in S3.
+  CI_BASE_WORKFLOW: 4_builderpackage_dashboard_core
 
 jobs:
   build:
@@ -104,10 +122,18 @@ jobs:
       - name: Rename artifact
         run: mv target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }} target/${{ env.ARTIFACT_BUILD_NAME }}
 
-      - uses: actions/upload-artifact@v4
-        if: success()
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          name: ${{ env.ARTIFACT_BUILD_NAME }}
-          path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
-          retention-days: 30
-          overwrite: true
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload artifact to S3
+        run: |
+          artifact_path=${{ github.workspace }}/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
+
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.CI_ARTIFACTS_REPO }}/${{ inputs.WORKFLOW_NAME || env.CI_BASE_WORKFLOW }}/${{ github.run_id }}/${{ env.ARTIFACT_BUILD_NAME }}"
+
+          aws s3 cp $artifact_path $bucket_path
+
+          echo "Artifact uploaded to S3: $bucket_path"
