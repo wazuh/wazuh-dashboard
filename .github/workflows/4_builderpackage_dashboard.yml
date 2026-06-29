@@ -253,6 +253,7 @@ jobs:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
       WORKFLOW_NAME: '4_builderpackage_dashboard'
+    secrets: inherit
 
   build-main-plugins:
     needs: [validate-job]
