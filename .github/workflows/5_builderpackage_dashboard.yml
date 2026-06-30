@@ -360,7 +360,7 @@ jobs:
 
       - name: Download artifacts from S3
         run: |
-          folders=$(aws s3 ls "${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}" | grep PRE | awk '{print $2}' | tr -d '/')
+          folders=$(aws s3 ls "${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/" | grep PRE | awk '{print $2}' | tr -d '/')
           for folder in $folders; do
             echo "Downloading artifacts from S3 for folder: $folder"
             if [[ "$folder" == wazuh-dashboard-plugins* ]]; then
