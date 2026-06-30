@@ -42,8 +42,7 @@ on:
         type: string
 
 env:
-  CI_DEV_INTERNAL_BUCKET: s3://xdrsiem-ci-dev-internal
-  CI_ARTIFACTS_REPO: wazuh-dashboard
+  CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
   # Repository and workflow run to upload the artifact to (format: repo/workflow). This is used to locate the artifacts in S3.
   EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard_core
 
