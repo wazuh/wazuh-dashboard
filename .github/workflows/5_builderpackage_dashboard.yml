@@ -736,18 +736,12 @@ jobs:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Download  artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{needs.build-package.outputs.PACKAGE_NAME}}
-          path: ./
-
-      - name: Download  checksum
-        if: ${{ inputs.checksum }}
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{needs.build-package.outputs.PACKAGE_NAME}}.sha512
-          path: ./
+      - name: Download artifacts from S3
+        run: |
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.build-package.outputs.PACKAGE_NAME }} ./
+          if [ "${{ inputs.checksum }}" = "true" ]; then
+            aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.build-package.outputs.PACKAGE_NAME }}.sha512 ./
+          fi
 
       - name: Upload package
         run: |
