@@ -281,6 +281,7 @@ jobs:
       CHECKOUT_TO: ${{  github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
       execution_repository: wazuh-dashboard/4_builderpackage_dashboard
+    secrets: inherit
 
   # Build plugins in parallel to the dashboard build
   # If need to add more plugins from the wazuh-dashboard-plugins repo:
@@ -333,6 +334,7 @@ jobs:
       repo: ${{ matrix.plugin.repo }}
       pathPlugin: ${{ matrix.plugin.pathPlugin }}
       execution_repository: wazuh-dashboard/4_builderpackage_dashboard
+    secrets: inherit
 
   build-package:
     needs: [setup-variables, get-outputs-plugins, build-dashboard, build-plugins]
