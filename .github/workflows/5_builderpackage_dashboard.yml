@@ -98,6 +98,10 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
+  EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard
+
 jobs:
   validate-job:
     runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
@@ -115,11 +119,10 @@ jobs:
           fi
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: ${{ secrets.CI_AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
   # This job retrieves the necessary information about the plugins to be used in the build process.
   # if need to add more plugins:
@@ -277,6 +280,7 @@ jobs:
     with:
       CHECKOUT_TO: ${{  github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
+      execution_repository: wazuh-dashboard/4_builderpackage_dashboard
 
   # Build plugins in parallel to the dashboard build
   # If need to add more plugins from the wazuh-dashboard-plugins repo:
@@ -328,6 +332,7 @@ jobs:
       path: ${{ matrix.plugin.path }}
       repo: ${{ matrix.plugin.repo }}
       pathPlugin: ${{ matrix.plugin.pathPlugin }}
+      execution_repository: wazuh-dashboard/4_builderpackage_dashboard
 
   build-package:
     needs: [setup-variables, get-outputs-plugins, build-dashboard, build-plugins]
@@ -345,64 +350,34 @@ jobs:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download dashboard artifact
-        uses: actions/download-artifact@v4
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          path: ${{ github.workspace }}/artifacts/dashboard
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Download security plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_SECURITY }}
-          path: ${{ github.workspace }}/artifacts/security-plugin
-
-      - name: Download main plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_WAZUH }}
-          path: ${{ github.workspace }}/artifacts/plugins
-      - name: Download core plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_CORE }}
-          path: ${{ github.workspace }}/artifacts/plugins
-      - name: Download check update plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_CHECK_UPDATES }}
-          path: ${{ github.workspace }}/artifacts/plugins
-      - name: Download report plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_REPORTING }}
-          path: ${{ github.workspace }}/artifacts/report-plugin
-      - name: Download security analytics plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_SECURITY_ANALYTICS }}
-          path: ${{ github.workspace }}/artifacts/security-analytics-plugin
-      - name: Download alerting plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_ALERTING }}
-          path: ${{ github.workspace }}/artifacts/alerting-plugin
-      - name: Download notifications plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_NOTIFICATIONS }}
-          path: ${{ github.workspace }}/artifacts/notifications-plugin
+      - name: Download artifacts from S3
+        run: |
+          folders=$(aws s3 ls "${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}" | grep PRE | awk '{print $2}' | tr -d '/')
+          for folder in $folders; do
+            echo "Downloading artifacts from S3 for folder: $folder"
+            if [[ "$folder" == wazuh-dashboard-plugins* ]]; then
+              aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/$folder ${{ github.workspace }}/artifacts/wazuh-dashboard-plugins --recursive
+            else
+              aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/$folder ${{ github.workspace }}/artifacts/$folder --recursive
+            fi
+          done
 
       - name: Generate all commits SHAs
         id: get-all-commit-shas
         run: |
           DASHBOARD_SHA=$(git rev-parse --short HEAD)
-          SECURITY_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/security-plugin/metadata.json)
-          MAIN_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/plugins/metadata.json)
-          REPORTING_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/report-plugin/metadata.json)
-          SECURITY_ANALYTICS_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/security-analytics-plugin/metadata.json)
-          ALERTING_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/alerting-plugin/metadata.json)
-          NOTIFICATIONS_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/notifications-plugin/metadata.json)
+          SECURITY_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/wazuh-security-dashboards-plugin/metadata.json)
+          MAIN_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/wazuh-dashboard-plugins/metadata.json)
+          REPORTING_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/reports-dashboards/metadata.json)
+          SECURITY_ANALYTICS_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/security-analytics-dashboards/metadata.json)
+          ALERTING_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/wazuh-dashboard-alerting/metadata.json)
+          NOTIFICATIONS_PLUGIN_SHA=$(jq -r '.commit_sha' ${{ github.workspace }}/artifacts/wazuh-dashboard-notifications/metadata.json)
           ALL_SHAS="$DASHBOARD_SHA-$MAIN_PLUGIN_SHA-$SECURITY_PLUGIN_SHA-$REPORTING_PLUGIN_SHA-$SECURITY_ANALYTICS_PLUGIN_SHA-$ALERTING_PLUGIN_SHA-$NOTIFICATIONS_PLUGIN_SHA"
           echo "DASHBOARD_SHA=$DASHBOARD_SHA"
           echo "SECURITY_PLUGIN_SHA=$SECURITY_PLUGIN_SHA"
@@ -425,13 +400,13 @@ jobs:
 
       - name: Zip plugins
         run: |
-          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
-          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
-          zip -r -j ${{ github.workspace }}/artifacts/report-package.zip ${{ github.workspace }}/artifacts/report-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/wazuh-dashboard-plugins
+          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/wazuh-security-dashboards-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/report-package.zip ${{ github.workspace }}/artifacts/reports-dashboards
           zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          zip -r -j ${{ github.workspace }}/artifacts/security-analytics-package.zip ${{ github.workspace }}/artifacts/security-analytics-plugin
-          zip -r -j ${{ github.workspace }}/artifacts/alerting-package.zip ${{ github.workspace }}/artifacts/alerting-plugin
-          zip -r -j ${{ github.workspace }}/artifacts/notifications-package.zip ${{ github.workspace }}/artifacts/notifications-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/security-analytics-package.zip ${{ github.workspace }}/artifacts/security-analytics-dashboards
+          zip -r -j ${{ github.workspace }}/artifacts/alerting-package.zip ${{ github.workspace }}/artifacts/wazuh-dashboard-alerting
+          zip -r -j ${{ github.workspace }}/artifacts/notifications-package.zip ${{ github.workspace }}/artifacts/wazuh-dashboard-notifications
 
       # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
       - name: Login to Docker Hub
@@ -482,23 +457,13 @@ jobs:
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME_PATH=${{ github.workspace }}/dev-tools/build-packages/output/${PACKAGE_NAME}" >> $GITHUB_OUTPUT
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload package to S3
         if: success()
-        with:
-          name: ${{steps.get-package-name.outputs.PACKAGE_NAME}}
-          path: ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}}
-          retention-days: 30
-          overwrite: true
-
-      - name: Upload checksum
-        if: success() && ${{ inputs.checksum }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{steps.get-package-name.outputs.PACKAGE_NAME}}.sha512
-          path: ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}}.sha512
-          retention-days: 30
-          overwrite: true
+        run: |
+          aws s3 cp ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}} ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/$PACKAGE_NAME
+          if [ "${{ inputs.checksum }}" = "true" ]; then
+            aws s3 cp ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}}.sha512 ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/$PACKAGE_NAME.sha512
+          fi
 
   test-package:
     needs: [setup-variables, build-package]
@@ -506,6 +471,8 @@ jobs:
     strategy:
       fail-fast: false
     name: Test package
+    permissions:
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -523,11 +490,15 @@ jobs:
           sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
           timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
 
-      - name: Download  artifact
-        uses: actions/download-artifact@v4
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          name: ${{needs.build-package.outputs.PACKAGE_NAME}}
-          path: ${{ github.workspace }}/dev-tools/test-packages
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Download artifact from S3
+        run: |
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.build-package.outputs.PACKAGE_NAME }} ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}/
 
       - name: Test package integrity
         run: |
@@ -755,11 +726,10 @@ jobs:
     name: Upload package
     steps:
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: ${{ secrets.CI_AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Download  artifact
         uses: actions/download-artifact@v4

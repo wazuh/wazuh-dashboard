@@ -31,10 +31,22 @@ on:
         type: string
         description: 'Path to the plugins folder ( only for wazuh-dashboard-plugins repo )'
         required: false
+      execution_repository:
+        description: 'Repository and workflow run to upload the artifact to (format: repo/workflow). This is used to locate the artifacts in S3.'
+        required: true
+        default: ''
+        type: string
+
+env:
+  CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
+  # Repository and workflow run to upload the artifact to (format: repo/workflow). This is used to locate the artifacts in S3.
+  EXECUTION_REPOSITORY: ${{ inputs.execution_repository || 'wazuh-dashboard/4_builderpackage_dashboard_plugins' }}
 
 jobs:
   build-plugins:
     name: Build Plugin ${{ inputs.name }}
+    permissions:
+      id-token: write
     runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     env:
       PLUGIN_REF: ${{ inputs.reference_plugins }}
@@ -141,20 +153,20 @@ jobs:
         run: |
           jq -n --arg commit_sha "${{ env.COMMIT_SHA }}" '{ commit_sha: $commit_sha }' > build/metadata.json
 
-      - name: Upload Plugin Artifact
-        if: success()
-        uses: actions/upload-artifact@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          name: ${{ inputs.packageName }}
-          path: |
-            plugins/${{ inputs.name }}/build/*.zip
-            plugins/${{ inputs.name }}/build/metadata.json
-          retention-days: 1
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload artifact to S3
+        if: success()
+        run: |
+          echo "Uploading plugin artifact to S3"
+          aws s3 cp plugins/${{ inputs.name }}/build s3://${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ inputs.name }} --recursive
 
       - name: Upload Build Log
         if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ inputs.name }}-${{ inputs.version_opensearch }}-failed-log
-          path: plugins/${{ inputs.name }}/build.log
-          retention-days: 1
+        run: |
+          echo "Uploading build log to S3"
+          aws s3 cp plugins/${{ inputs.name }}/build.log s3://${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ inputs.name }}/build.log
