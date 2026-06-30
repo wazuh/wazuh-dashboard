@@ -102,6 +102,14 @@ on:
         type: string
         required: false
 
+env:
+  CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
+  EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   setup-variables:
     runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
@@ -193,30 +201,34 @@ jobs:
   build-base:
     needs: [validate-job]
     name: Build dashboard
-    uses: wazuh/wazuh-dashboard/.github/workflows/4_builderpackage_dashboard_core.yml@4.10.5
+    uses: wazuh/wazuh-dashboard/.github/workflows/4_builderpackage_dashboard_core.yml@change/5301-4.10.5-github-artifacts-migration-to-s3-dashboard
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
 
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@4.10.5
+      id-token: write
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@change/5301-4.10.5-github-artifacts-migration-to-s3-plugins
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
     permissions:
       pull-requests: write
-    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@4.10.5
+      id-token: write
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@change/5301-4.10.5-github-artifacts-migration-to-s3-security-plugin
     with:
       reference: ${{ inputs.reference_security_plugins }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
 
   build-and-test-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
@@ -232,40 +244,30 @@ jobs:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download dashboard artifact
-        uses: actions/download-artifact@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          path: ${{ github.workspace }}/artifacts/dashboard
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Download security plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          path: ${{ github.workspace }}/artifacts/security-plugin
-
-      - name: Download main plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: ${{ github.workspace }}/artifacts/plugins
-      - name: Download core plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: ${{ github.workspace }}/artifacts/plugins
-      - name: Download check update plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: ${{ github.workspace }}/artifacts/plugins
+      - name: Download artifacts from S3
+        run: |
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }} ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }} ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          echo "Dashboard artifact: ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}"
+          echo "Security plugin artifact: ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}"
+          echo "Main plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}"
+          echo "Core plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}"
+          echo "Check updates plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}"
 
       - name: Zip plugins
         run: |
           zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
           zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
           zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-
 
       # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
       - name: Login to Docker Hub
@@ -307,11 +309,10 @@ jobs:
             -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: ${{ secrets.CI_AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Upload package
         run: |
