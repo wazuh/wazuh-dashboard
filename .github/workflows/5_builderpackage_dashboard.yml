@@ -119,7 +119,7 @@ jobs:
           fi
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -353,7 +353,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -497,7 +497,7 @@ jobs:
           timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -509,7 +509,6 @@ jobs:
       - name: Test package integrity
         run: |
           cd ${{ github.workspace }}/dev-tools/test-packages
-          cp ./${{needs.build-package.outputs.PACKAGE_NAME}}  ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}
           bash ./test-packages.sh \
             -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
@@ -580,7 +579,7 @@ jobs:
           pip3 install --retries 3 -r deployability/deps/requirements.txt
 
       - name: RPM - Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         if: ${{ inputs.system == 'rpm' }}
         with:
           aws-region: 'us-east-1'
@@ -732,7 +731,7 @@ jobs:
     name: Upload package
     steps:
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
