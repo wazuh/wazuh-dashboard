@@ -365,8 +365,12 @@ jobs:
             echo "Downloading artifacts from S3 for folder: $folder"
             if [[ "$folder" == wazuh-dashboard-plugins* ]]; then
               aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/$folder ${{ github.workspace }}/artifacts/wazuh-dashboard-plugins --recursive
+              echo "Downloaded artifacts for wazuh-dashboard-plugins:"
+              ls -l ${{ github.workspace }}/artifacts/wazuh-dashboard-plugins
             else
               aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/$folder ${{ github.workspace }}/artifacts/$folder --recursive
+              echo "Downloaded artifacts for $folder:"
+              ls -l ${{ github.workspace }}/artifacts/$folder
             fi
           done
 
