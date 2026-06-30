@@ -205,6 +205,7 @@ jobs:
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
 
   build-main-plugins:
     needs: [validate-job]
