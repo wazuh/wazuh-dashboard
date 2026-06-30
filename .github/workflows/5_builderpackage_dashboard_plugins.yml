@@ -163,10 +163,10 @@ jobs:
         if: success()
         run: |
           echo "Uploading plugin artifact to S3"
-          aws s3 cp plugins/${{ inputs.name }}/build s3://${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ inputs.name }} --recursive
+          aws s3 cp plugins/${{ inputs.name }}/build ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ inputs.name }} --recursive
 
       - name: Upload Build Log
         if: failure()
         run: |
           echo "Uploading build log to S3"
-          aws s3 cp plugins/${{ inputs.name }}/build.log s3://${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ inputs.name }}/build.log
+          aws s3 cp plugins/${{ inputs.name }}/build.log ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ inputs.name }}/build.log
