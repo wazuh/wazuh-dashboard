@@ -8,7 +8,7 @@ set -euo pipefail
 
 PACKAGE_NAME="$1"
 
-dpkg -i "/test-packages/${PACKAGE_NAME}"
+dpkg -i "/test-packages/deb/${PACKAGE_NAME}"
 if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
   echo "Package installed"
 else

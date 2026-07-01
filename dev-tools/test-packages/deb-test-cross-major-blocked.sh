@@ -31,7 +31,7 @@ fi
 
 # Attempt 5.x upgrade — MUST fail
 set +e
-OUTPUT=$(dpkg -i "/test-packages/${PACKAGE_NAME}" 2>&1)
+OUTPUT=$(dpkg -i "/test-packages/deb/${PACKAGE_NAME}" 2>&1)
 EXIT_CODE=$?
 set -e
 
