@@ -202,6 +202,7 @@ jobs:
     needs: [validate-job]
     name: Build dashboard
     uses: wazuh/wazuh-dashboard/.github/workflows/4_builderpackage_dashboard_core.yml@4.10.5
+    with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
     secrets: inherit
@@ -213,6 +214,7 @@ jobs:
       pull-requests: write
       id-token: write
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@4.10.5
+    with:
       reference: ${{ inputs.reference_wazuh_plugins }}
       execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
     secrets: inherit
@@ -224,6 +226,7 @@ jobs:
       pull-requests: write
       id-token: write
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@4.10.5
+    with:
       reference: ${{ inputs.reference_security_plugins }}
       execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
     secrets: inherit
