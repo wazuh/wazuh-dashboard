@@ -44,7 +44,7 @@ on:
 env:
   CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
   # Repository and workflow run to upload the artifact to (format: repo/workflow). This is used to locate the artifacts in S3.
-  EXECUTION_REPOSITORY: ${{ inputs.execution_repository || 'wazuh-dashboard/4_builderpackage_dashboard_core' }}
+  EXECUTION_REPOSITORY: ${{ inputs.execution_repository || 'wazuh-dashboard/5_builderpackage_dashboard_core' }}
 
 jobs:
   build:

@@ -100,7 +100,7 @@ permissions:
 
 env:
   CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
-  EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard
+  EXECUTION_REPOSITORY: wazuh-dashboard/5_builderpackage_dashboard
 
 jobs:
   validate-job:
@@ -280,7 +280,7 @@ jobs:
     with:
       CHECKOUT_TO: ${{  github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
-      execution_repository: wazuh-dashboard/4_builderpackage_dashboard
+      execution_repository: wazuh-dashboard/5_builderpackage_dashboard
     secrets: inherit
 
   # Build plugins in parallel to the dashboard build
@@ -333,7 +333,7 @@ jobs:
       path: ${{ matrix.plugin.path }}
       repo: ${{ matrix.plugin.repo }}
       pathPlugin: ${{ matrix.plugin.pathPlugin }}
-      execution_repository: wazuh-dashboard/4_builderpackage_dashboard
+      execution_repository: wazuh-dashboard/5_builderpackage_dashboard
     secrets: inherit
 
   build-package:
