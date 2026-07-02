@@ -104,6 +104,10 @@ on:
         type: string
         required: false
 
+env:
+  CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
+  EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard
+
 permissions:
   id-token: write
   contents: read
@@ -252,27 +256,32 @@ jobs:
     with:
       CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
       ARCHITECTURE: ${{ inputs.architecture }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
 
   build-main-plugins:
     needs: [validate-job]
     name: Build plugins
     permissions:
       pull-requests: write
+      id-token: write
     uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@4.14.7
     with:
       reference: ${{ inputs.reference_wazuh_plugins }}
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
 
   build-security-plugin:
     needs: [validate-job]
     name: Build security plugin
     permissions:
       pull-requests: write
+      id-token: write
     uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@4.14.7
     with:
       reference: ${{ inputs.reference_security_plugins }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
 
   build-package:
     needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
@@ -288,33 +297,24 @@ jobs:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download dashboard artifact
-        uses: actions/download-artifact@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
-          path: ${{ github.workspace }}/artifacts/dashboard
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Download security plugin artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
-          path: ${{ github.workspace }}/artifacts/security-plugin
-
-      - name: Download main plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
-          path: ${{ github.workspace }}/artifacts/plugins
-      - name: Download core plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
-          path: ${{ github.workspace }}/artifacts/plugins
-      - name: Download check update plugin's artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
-          path: ${{ github.workspace }}/artifacts/plugins
+      - name: Download artifacts from S3
+        run: |
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }} ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }} ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          echo "Dashboard artifact: ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}"
+          echo "Security plugin artifact: ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}"
+          echo "Main plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}"
+          echo "Core plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}"
+          echo "Check updates plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}"
 
       # Workaround: AWS CodeBuild ARM runners do not have zip pre-installed
       - name: Install zip
@@ -363,23 +363,18 @@ jobs:
           # Workaround: Docker containers run as root internally, so output files are root-owned on the host.
           chown -R builduser:builduser output 2>/dev/null || true
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          path: ${{ github.workspace }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          retention-days: 30
-          overwrite: true
+      - name: Upload artifacts to S3
+        if: ${{ success() }}
+        run: |
+          artifact_path="${{ github.workspace }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
 
-      - name: Upload checksum
-        if: success() && ${{ inputs.checksum }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
-          path: ${{ github.workspace }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
-          retention-days: 30
-          overwrite: true
+          aws s3 cp $artifact_path $bucket_path
+          if [ "${{ inputs.checksum }}" = "true" ]; then
+            aws s3 cp $artifact_path.sha512 $bucket_path.sha512
+          fi
+
+          echo "Uploaded $artifact_path to $bucket_path"
 
   test-package:
     needs: [setup-variables, build-package]
@@ -391,11 +386,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download  artifact
-        uses: actions/download-artifact@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          path: ${{ github.workspace }}/dev-tools/test-packages
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Download artifacts from S3
+        run: |
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+          package_path="${{ github.workspace }}/dev-tools/test-packages/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+
+          aws s3 cp $bucket_path $package_path
+
+          echo "Downloaded $bucket_path to $package_path"
 
       # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
       - name: Login to Docker Hub
@@ -558,24 +562,23 @@ jobs:
     name: Upload package
     steps:
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
-          aws-region: ${{ secrets.CI_AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Download  artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}
-          path: ./
+      - name: Download artifacts from S3
+        run: |
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+          package_path="${{ github.workspace }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
 
-      - name: Download  checksum
-        if: ${{ inputs.checksum }}
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512
-          path: ./
+          aws s3 cp $bucket_path $package_path
+          echo "Downloaded $bucket_path to $package_path"
+
+          if [ "${{ inputs.checksum }}" = "true" ]; then
+            aws s3 cp $bucket_path.sha512 $package_path.sha512
+            echo "Downloaded $bucket_path.sha512 to $package_path.sha512"
+          fi
 
       - name: Upload package
         run: |

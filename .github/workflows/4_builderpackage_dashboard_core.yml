@@ -23,6 +23,11 @@ on:
         required: true
         default: 'amd64'
         type: string
+      execution_repository:
+        description: 'Repository and workflow run to upload the artifact to (format: repo/workflow). This is used to locate the artifacts in S3.'
+        required: true
+        default: ''
+        type: string
 
   workflow_dispatch:
     inputs:
@@ -35,6 +40,11 @@ on:
         required: true
         default: 'amd64'
         type: string
+
+env:
+  CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
+  # Repository and workflow run to upload the artifact to (format: repo/workflow). This is used to locate the artifacts in S3.
+  EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard_core
 
 jobs:
   build:
@@ -104,10 +114,18 @@ jobs:
       - name: Rename artifact
         run: mv target/opensearch-dashboards-${{ env.VERSION }}-linux-${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.${{ matrix.DISTRIBUTION }} target/${{ env.ARTIFACT_BUILD_NAME }}
 
-      - uses: actions/upload-artifact@v4
-        if: success()
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          name: ${{ env.ARTIFACT_BUILD_NAME }}
-          path: ./artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
-          retention-days: 30
-          overwrite: true
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload artifact to S3
+        run: |
+          artifact_path=${{ github.workspace }}/artifacts/target/${{ env.ARTIFACT_BUILD_NAME }}
+
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ inputs.execution_repository || env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ env.ARTIFACT_BUILD_NAME }}"
+
+          aws s3 cp $artifact_path $bucket_path
+
+          echo "Artifact uploaded to S3: $bucket_path"
