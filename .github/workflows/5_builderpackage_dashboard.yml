@@ -466,9 +466,9 @@ jobs:
       - name: Upload package to S3
         if: success()
         run: |
-          aws s3 cp ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}} ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/$PACKAGE_NAME
+          aws s3 cp ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}} ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{steps.get-package-name.outputs.PACKAGE_NAME}}
           if [ "${{ inputs.checksum }}" = "true" ]; then
-            aws s3 cp ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}}.sha512 ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/$PACKAGE_NAME.sha512
+            aws s3 cp ${{steps.get-package-name.outputs.PACKAGE_NAME_PATH}}.sha512 ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{steps.get-package-name.outputs.PACKAGE_NAME}}.sha512
           fi
 
   test-package:
