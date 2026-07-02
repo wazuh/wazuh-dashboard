@@ -33,6 +33,7 @@ jobs:
     name: Prepare source and warm cache
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -114,6 +115,7 @@ jobs:
     needs: [prepare-source]
     runs-on: windows-latest
     timeout-minutes: 30
+    if: github.event.pull_request.draft == false
     steps:
       - name: Configure git's autocrlf
         run: |
@@ -411,6 +413,7 @@ jobs:
             name: Windows
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
+    if: github.event.pull_request.draft == false
     env:
       # Unset OSD_OPTIMIZER_MAX_WORKERS so integration tests that check worker count
       # see the value passed in code (maxWorkerCount: 1) rather than the CI override
@@ -523,6 +526,7 @@ jobs:
     name: Lint and validate
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
