@@ -15,6 +15,10 @@ on:
       - 'changelogs/fragments/**'
     types: [opened, synchronize, reopened, ready_for_review]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   OSD_OPTIMIZER_THEMES: v8light
   TEST_BROWSER_HEADLESS: 1
