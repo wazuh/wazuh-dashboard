@@ -24,7 +24,7 @@ systemctl daemon-reload
 systemctl enable wazuh-dashboard
 systemctl start wazuh-dashboard
 
-dpkg -i "/test-packages/${PACKAGE_NAME}"
+dpkg -i "/test-packages/deb/${PACKAGE_NAME}"
 systemctl restart wazuh-dashboard
 
 if dpkg -s wazuh-dashboard | grep '^Version:' | grep -q "${VERSION}"; then
