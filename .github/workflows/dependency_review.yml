@@ -21,6 +21,7 @@ permissions:
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4

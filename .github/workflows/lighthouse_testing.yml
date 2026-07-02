@@ -20,6 +20,7 @@ env:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
