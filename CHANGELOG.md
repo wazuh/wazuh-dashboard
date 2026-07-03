@@ -28,5 +28,14 @@
 - Changed log level of the cross compatibility service on start [#1330](https://github.com/wazuh/wazuh-dashboard/pull/1330)
 - Changed pre install scripts to block Wazuh dashboard installation if there's an existing installation prior to 5.x [#1328](https://github.com/wazuh/wazuh-dashboard/pull/1328) [#1365](https://github.com/wazuh/wazuh-dashboard/pull/1365)
 
-
 ## Prior versions
+
+- [v4.14.6](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.6/CHANGELOG.md)
+- [v4.14.5](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.5/CHANGELOG.md)
+- [v4.14.4](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.4/CHANGELOG.md)
+- [v4.14.3](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.3/CHANGELOG.md)
+- [v4.14.2](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.2/CHANGELOG.md)
+- [v4.14.1](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.1/CHANGELOG.md)
+- [v4.14.0](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.0/CHANGELOG.md)
+- [v4.13.1](https://github.com/wazuh/wazuh-dashboard/blob/v4.13.1/CHANGELOG.md)
+- [v4.13.0](https://github.com/wazuh/wazuh-dashboard/blob/v4.13.0/CHANGELOG.md)
