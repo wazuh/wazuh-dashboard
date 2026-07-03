@@ -41,7 +41,6 @@ function mockProps() {
           wazuhVersion: '',
           wazuhRevision: '01',
           wazuhStage: '',
-          wazuhIsProduction: false,
         },
         mode: {
           name: 'production' as 'development' | 'production',

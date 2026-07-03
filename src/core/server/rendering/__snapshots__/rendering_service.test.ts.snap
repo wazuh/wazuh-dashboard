@@ -30,6 +30,8 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhRevision": Any<String>,
+      "wazuhStage": Any<String>,
       "wazuhVersion": Any<String>,
     },
   },
@@ -62,7 +64,11 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "5.0.1",
+  "wazuhBuildInfo": Object {
+    "revision": Any<String>,
+    "stage": Any<String>,
+    "version": Any<String>,
+  },
 }
 `;
 
@@ -96,6 +102,8 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhRevision": Any<String>,
+      "wazuhStage": Any<String>,
       "wazuhVersion": Any<String>,
     },
   },
@@ -128,7 +136,11 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "5.0.1",
+  "wazuhBuildInfo": Object {
+    "revision": Any<String>,
+    "stage": Any<String>,
+    "version": Any<String>,
+  },
 }
 `;
 
@@ -162,6 +174,8 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhRevision": Any<String>,
+      "wazuhStage": Any<String>,
       "wazuhVersion": Any<String>,
     },
   },
@@ -194,7 +208,11 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "5.0.1",
+  "wazuhBuildInfo": Object {
+    "revision": Any<String>,
+    "stage": Any<String>,
+    "version": Any<String>,
+  },
 }
 `;
 
@@ -228,6 +246,8 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhRevision": Any<String>,
+      "wazuhStage": Any<String>,
       "wazuhVersion": Any<String>,
     },
   },
@@ -264,7 +284,11 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "5.0.1",
+  "wazuhBuildInfo": Object {
+    "revision": Any<String>,
+    "stage": Any<String>,
+    "version": Any<String>,
+  },
 }
 `;
 
@@ -298,6 +322,8 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhRevision": Any<String>,
+      "wazuhStage": Any<String>,
       "wazuhVersion": Any<String>,
     },
   },
@@ -330,7 +356,11 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "5.0.1",
+  "wazuhBuildInfo": Object {
+    "revision": Any<String>,
+    "stage": Any<String>,
+    "version": Any<String>,
+  },
 }
 `;
 
@@ -364,6 +394,8 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhRevision": Any<String>,
+      "wazuhStage": Any<String>,
       "wazuhVersion": Any<String>,
     },
   },
@@ -396,7 +428,11 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "5.0.1",
+  "wazuhBuildInfo": Object {
+    "revision": Any<String>,
+    "stage": Any<String>,
+    "version": Any<String>,
+  },
 }
 `;
 
@@ -430,6 +466,8 @@ Object {
       "buildSha": Any<String>,
       "dist": Any<Boolean>,
       "version": Any<String>,
+      "wazuhRevision": Any<String>,
+      "wazuhStage": Any<String>,
       "wazuhVersion": Any<String>,
     },
   },
@@ -462,6 +500,10 @@ Object {
   "uiPlugins": Array [],
   "vars": Object {},
   "version": Any<String>,
-  "wazuhVersion": "5.0.1",
+  "wazuhBuildInfo": Object {
+    "revision": Any<String>,
+    "stage": Any<String>,
+    "version": Any<String>,
+  },
 }
 `;

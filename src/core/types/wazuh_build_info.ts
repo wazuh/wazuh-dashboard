@@ -12,5 +12,4 @@ export interface WazuhBuildInfo {
   version: string;
   revision: string;
   stage: string;
-  isProduction: boolean;
 }
