@@ -37,7 +37,6 @@ export const mockWazuhBuildInfo: WazuhBuildInfo = {
   version: '4.x.x',
   revision: '01',
   stage: '',
-  isProduction: false,
 };
 
 const createSetupContractMock = () => {
