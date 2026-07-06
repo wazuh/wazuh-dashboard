@@ -131,7 +131,6 @@ function pluginInitializerContextMock<T>(config: T = {} as T) {
         wazuhVersion: 'wazuhVersion',
         wazuhRevision: '01',
         wazuhStage: '',
-        wazuhIsProduction: false,
       },
       instanceUuid: 'instance-uuid',
     },
