@@ -17,14 +17,20 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main" ]
+    types: [opened, synchronize, reopened, ready_for_review]
   schedule:
     - cron: '00 8 * * 5'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
     name: Analyze
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    if: github.event.pull_request.draft == false
     permissions:
       actions: read
       contents: read
