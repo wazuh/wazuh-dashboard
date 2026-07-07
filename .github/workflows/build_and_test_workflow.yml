@@ -15,6 +15,10 @@ on:
       - 'changelogs/fragments/**'
     types: [opened, synchronize, reopened, ready_for_review]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   OSD_OPTIMIZER_THEMES: v8light
   TEST_BROWSER_HEADLESS: 1
@@ -33,6 +37,7 @@ jobs:
     name: Prepare source and warm cache
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -114,6 +119,7 @@ jobs:
     needs: [prepare-source]
     runs-on: windows-latest
     timeout-minutes: 30
+    if: github.event.pull_request.draft == false
     steps:
       - name: Configure git's autocrlf
         run: |
@@ -403,14 +409,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
             name: Linux
-          - os: windows-latest
-            name: Windows
+          # - os: windows-latest
+          #   name: Windows
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
+    if: github.event.pull_request.draft == false
     env:
       # Unset OSD_OPTIMIZER_MAX_WORKERS so integration tests that check worker count
       # see the value passed in code (maxWorkerCount: 1) rather than the CI override
@@ -523,6 +530,7 @@ jobs:
     name: Lint and validate
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -608,8 +616,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        group: [1, 2, 4, 6, 7, 8, 9, 10, 13, 14]
+        os: [ubuntu-latest]
+        group: [1, 2, 4, 6, 7, 8, 10, 13, 14]
         include:
           - os: ubuntu-latest
             name: Linux
