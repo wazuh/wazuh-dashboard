@@ -59,8 +59,9 @@ expect.addSnapshotSerializer(createReplaceSerializer(/yarn (\w+) v[\d\.]+/g, 'ya
 expect.addSnapshotSerializer(createStripAnsiSerializer());
 
 const processProcOutput = (all: string | undefined) => {
-  const regexp = /\n\s*\(node:\d+\)\s*\[DEP0180\] DeprecationWarning: fs.Stats constructor is deprecated.\n\s*\(Use `node --trace-deprecation ...` to show where the warning was created\)/;
-  return all?.replace(regexp, '');
+  const deprecationWarningRegexp = /\n\s*\(node:\d+\)\s*\[DEP0180\] DeprecationWarning: fs.Stats constructor is deprecated.\n\s*\(Use `node --trace-deprecation ...` to show where the warning was created\)/;
+  const browserslistWarningRegexp = /\n\s*Browserslist: caniuse-lite is outdated\. Please run:\n\s*npx update-browserslist-db@latest\n\s*Why you should do it regularly: https:\/\/github\.com\/browserslist\/update-db#readme/;
+  return all?.replace(deprecationWarningRegexp, '').replace(browserslistWarningRegexp, '');
 };
 
 beforeEach(async () => {
