@@ -8,7 +8,11 @@ import { unparse } from 'papaparse';
 import moment from 'moment';
 import { saveAs } from 'file-saver';
 import { useDiscoverContext } from '../../view_components/context';
-import { DownloadCsvFormId, MAX_DOWNLOAD_CSV_COUNT } from './constants';
+import {
+  DownloadCsvFormId,
+  MAX_DOWNLOAD_CSV_COUNT,
+  REPORTS_CSV_MAX_ROWS_SETTING,
+} from './constants';
 import { OpenSearchSearchHit } from '../../doc_views/doc_views_types';
 import { useSelector } from '../../utils/state_management';
 import { getLegacyDisplayedColumns } from '../default_discover_table/helper';
@@ -71,6 +75,8 @@ export const useDiscoverDownloadCsv = ({
   const { fetchForMaxCsvOption } = useDiscoverContext();
   const { uiSettings } = getServices();
   const [isLoading, setIsLoading] = useState(false);
+  const maxCsvRows =
+    uiSettings.get(REPORTS_CSV_MAX_ROWS_SETTING, MAX_DOWNLOAD_CSV_COUNT) ?? MAX_DOWNLOAD_CSV_COUNT;
   const displayedColumnNames = useSelector((state) => {
     const displayedColumns = getLegacyDisplayedColumns(
       state.discover.columns,
@@ -88,7 +94,7 @@ export const useDiscoverDownloadCsv = ({
         setIsLoading(true);
         onLoading();
         if (!hits) throw new Error('No hits');
-        const size = Math.min(hits || 0, MAX_DOWNLOAD_CSV_COUNT);
+        const size = Math.min(hits || 0, maxCsvRows);
         rowsToDownload = await fetchForMaxCsvOption(size);
       }
       const csvRowData = rowsToDownload.map(
@@ -117,5 +123,6 @@ export const useDiscoverDownloadCsv = ({
   return {
     downloadCsvForOption,
     isLoading,
+    maxCsvRows,
   };
 };
