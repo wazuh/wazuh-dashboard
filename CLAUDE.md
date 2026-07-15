@@ -67,7 +67,7 @@ Real scripts here (a single workspace, unlike the per-plugin plugins repo):
 ```bash
 yarn osd bootstrap                              # install deps + build internal packages
 yarn osd bootstrap --single-version=loose       # when mixing plugin versions
-yarn start                                       # dev server :5601 (needs a running OpenSearch)
+yarn start                                       # raw OSD dev server :5601 (needs OpenSearch — see "Local run model" below)
 yarn start --run-examples                        # dev server with example plugins
 yarn test:jest [path]                            # unit tests
 yarn test:jest_integration                       # integration tests
@@ -117,6 +117,30 @@ Enforced by tooling — run the linter/formatter, don't hand-format:
   and bootstrapped alongside the platform.
 - Package assembly lives under [`dev-tools/build-packages/`](dev-tools/build-packages/)
   and [`dev-tools/build-dev-image/`](dev-tools/build-dev-image/).
+
+## Local run model — the dev environment lives in the plugins repo
+
+**To run/develop the whole stack locally, use the sibling `wazuh-dashboard-plugins`
+repo's Docker dev env — not a `yarn start` from here.** The `yarn start` above is
+the raw OSD dev server (needs you to provide OpenSearch yourself); the canonical,
+supported way to bring up this platform together with the Wazuh plugins is:
+
+```bash
+cd ../wazuh-dashboard-plugins/docker/osd-dev
+./dev.sh up --base [abs-path]          # runs THIS wazuh-dashboard as the platform base
+                                       # (auto-detected from the sibling checkout)
+# mount external plugin repos on demand (repeatable):
+#   -r wazuh-dashboard-security-analytics -r wazuh-dashboard-notifications ...
+# ./dev.sh --help lists every flag. OSD comes up on https://0.0.0.0:5601
+```
+
+- The dev env there starts the OSD platform + the Wazuh-owned plugins (`main`,
+  `wazuh-core`, `wazuh-check-updates`) and mounts any external plugin repos passed
+  with `-r`. It is a **hybrid model, not a monorepo**.
+- This repo (`wazuh-dashboard`) is consumed as the `--base` platform; the other
+  dashboard-plugin fork repos are mounted alongside it. None of those repos owns a
+  dev environment — orchestration is centralized in `wazuh-dashboard-plugins`.
+- See `../wazuh-dashboard-plugins/docker/osd-dev/README.md` for the full flag set.
 
 ## Git / PR workflow
 
