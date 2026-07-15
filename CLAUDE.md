@@ -1,157 +1,165 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Wazuh-owned AI context for **`wazuh-dashboard`**. Keep it short: this file points
+to the source-of-truth docs instead of duplicating them. Read the linked doc
+before doing non-trivial work.
 
-## Project Overview
+## What this repo is
 
-OpenSearch Dashboards is a browser-based data visualization and exploration tool for OpenSearch. It is a large-scale Node.js + React monorepo with a plugin-based architecture. The project was forked from Kibana and adapted for the OpenSearch ecosystem.
+The **platform**: a fork of **OpenSearch Dashboards (OSD)** adapted for Wazuh. It
+is _not_ the Wazuh app — the app lives in the sibling repo
+`wazuh-dashboard-plugins`, whose plugins are installed into this platform's
+external `./plugins/` directory.
 
-## Common Commands
+- OSD base version: `package.json` → `version` (e.g. `3.6.0`).
+- Wazuh version: `VERSION.json` and `package.json` → `wazuh` (e.g. `5.0.0`,
+  revision `04`).
+- Node: see [`.nvmrc`](.nvmrc) (currently 22.22.0). Package manager: Yarn v1
+  (`packageManager` = `yarn@1.22.19`), Yarn **workspaces** (single dependency
+  tree, unlike the plugins repo).
+- Default branch `main`; work happens on version branches (`4.14.x`, `5.0.0`,
+  `6.0.0`, …).
 
-```bash
-# Bootstrap (install deps + build internal packages) — run after pulling changes
-yarn osd bootstrap
+## Architecture — read this before importing anything
 
-# Start dev server (requires a running OpenSearch instance on localhost:9200)
-yarn start
+Four top-level code areas — the #1 source of confusion is `src/plugins/` vs
+`./plugins/`:
 
-# Run all unit tests
-yarn test:jest
+| Path            | Role                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------- |
+| `src/core/`     | The platform itself: HTTP, plugin system, saved objects, config, logging. Exposes `setup`/`start` contracts. Has `public/` + `server/`. |
+| `src/plugins/`  | ~68 **built-in** OSD plugins, part of the main bundle (data, dashboard, discover, …).                    |
+| `packages/`     | Internal `@osd/*` workspace packages (optimizer, dev-utils, plugin-helpers, i18n, …).                    |
+| `./plugins/`    | **External plugins install target** — where `wazuh-dashboard-plugins` (and other Wazuh dashboard plugins) are placed and bootstrapped. |
 
-# Run a single test file
-yarn test:jest path/to/file.test.ts
+**Do NOT confuse `src/plugins/` (built-in) with `./plugins/` (external Wazuh
+plugins).** `packages/osd-agents/` is an unrelated experimental Bedrock agent —
+**not** a Claude skill.
 
-# Run integration tests
-yarn test:jest_integration
+### `public/` vs `server/` vs `common/` (import rules — strict)
 
-# Lint (ESLint + Stylelint)
-yarn lint
+Every plugin (built-in or external) splits into layers bundled **separately**:
 
-# Lint with autofix
-node scripts/eslint --fix
+- **`public/`** — runs in the **browser** (React, EUI/OUI, `core.http`). Uses
+  DOM/`window`.
+- **`server/`** — runs in **Node.js** (Hapi routes under `/api/`, saved objects,
+  services). Uses `fs`, server context, secrets.
+- **`common/`** — **isomorphic** code shared by both: constants, types, pure
+  helpers. No DOM, no Node-only APIs.
 
-# Type check
-yarn typecheck
+Rules: `public/` must **never** import from `server/` and vice-versa; both may
+import from `common/`; cross-plugin access goes **layer-to-layer** and only via a
+plugin's declared `setup()`/`start()` contracts + `requiredPlugins` /
+`optionalPlugins` in `opensearch_dashboards.json` — never reach into internal
+paths.
 
-# Run Cypress functional tests (no security plugin)
-yarn cypress:run-without-security
+### Plugin lifecycle
 
-# Run a specific Cypress test
-yarn cypress:run-without-security --spec path/to/test.ts
+`setup(core, deps)` (register routes, saved objects, UI apps, services) →
+`start(core, deps)` (start listeners / expose runtime APIs) → `stop()` (cleanup).
+Use `core.getStartServices()` in app mount handlers instead of storing `start`
+references as class fields.
 
-# Clean build artifacts and node_modules
-yarn osd clean
+## Commands
 
-# Accept Core API signature changes after modifying Core public/server APIs
-yarn docs:acceptApiChanges
-
-# Start dev server with example plugins loaded
-yarn start --run-examples
-
-# Start OpenSearch snapshot for local development
-yarn opensearch snapshot
-
-# Pre-commit checks (lint + type check)
-node scripts/precommit_hook.js --fix
-```
-
-## Architecture
-
-### Monorepo Structure
-
-- **`src/core/`** — Core platform providing HTTP, plugin system, saved objects, logging, config, and both public (browser) and server APIs. Plugins depend on Core's `setup` and `start` contracts.
-- **`src/plugins/`** — Built-in plugins (~67). Each plugin has `public/` (React UI) and/or `server/` (Hapi routes) directories.
-- **`packages/`** — Internal workspace packages (prefixed `osd-`): optimizer, dev-utils, plugin-helpers, i18n, test utilities, Monaco editor integration, etc.
-- **`examples/`** — Example plugins demonstrating plugin development patterns. Load with `yarn start --run-examples`.
-- **`test/`** — Test infrastructure: `functional/` (Selenium FTR), `api_integration/`, `plugin_functional/`.
-- **`cypress/`** — Cypress end-to-end tests (preferred over Selenium for new tests).
-
-### Plugin System
-
-Every plugin has an `opensearch_dashboards.json` manifest declaring its `id`, `requiredPlugins`, `optionalPlugins`, and whether it has `server`/`ui` sides.
-
-Plugin lifecycle:
-1. **`setup(core, deps)`** — Registration phase. Register routes, saved object types, UI applications, and services here.
-2. **`start(core, deps)`** — Running phase. Start listeners or expose runtime APIs.
-3. **`stop()`** — Cleanup.
-
-Standard plugin file structure:
-```
-my_plugin/
-├── opensearch_dashboards.json    # Manifest
-├── public/
-│   ├── index.ts                  # Exports plugin initializer + types
-│   ├── plugin.ts                 # Plugin class (setup/start/stop)
-│   ├── applications/             # UI apps (lazy-loaded via dynamic import)
-│   └── services/                 # Client-side services
-└── server/
-    ├── index.ts                  # Exports plugin + config
-    ├── plugin.ts                 # Server plugin class
-    ├── routes/                   # HTTP API routes (must start with /api/)
-    ├── saved_objects/            # Saved object type definitions + migrations
-    └── services/                 # Server-side services
-```
-
-Use `core.getStartServices()` in application mount handlers rather than storing `start` references as class fields.
-
-### Key Technologies
-
-- **Frontend:** React 18, React Router 5, Redux, RxJS, EUI/OUI component library
-- **Backend:** Node.js 22, Hapi.js
-- **Build:** Webpack/Rspack, Babel, `@osd/optimizer`
-- **Package manager:** Yarn 1 (workspaces)
-
-## Code Conventions
-
-- **Filenames:** Always `snake_case` (e.g., `index_pattern.ts`, not `IndexPattern.ts`).
-- **Language:** TypeScript for all new code. Avoid `any` (use `unknown` or generics). Avoid non-null assertions (`!.`) and `@ts-ignore`.
-- **Exports:** Use named exports, not default exports.
-- **Modules:** ES2015 import/export syntax. Only import top-level module APIs, never reach into internal paths.
-- **Strings:** Single quotes, 100-char print width, ES5 trailing commas (enforced by Prettier).
-- **API routes:** Must start with `/api/`, use `snake_case` for paths, params, and body fields.
-- **HTML attributes:** `id` and `data-test-subj` values should be camelCase.
-- **SASS:** Import `.scss` files at the top of the component file. Use a 3-letter prefix on class names for scoping (e.g., `plgComponent`).
-- **React:** Prefer functional components. Name action props as `on<Subject><Change>`.
-- **Saved objects types:** Define in `server/saved_objects/`, one file per type, with migration functions keyed by version.
-
-## Testing Conventions
-
-- **Unit tests** (`*.test.ts`): Jest. Aim for 80%+ coverage (enforced by Codecov). Use react-testing-library for components, not enzyme snapshots.
-- **Integration tests** (`**/integration_tests/**/*.test.ts`): Jest, run with `yarn test:jest_integration`.
-- **Functional tests**: Cypress (preferred). Selenium is legacy — do not write new Selenium tests.
-- **Cypress best practices:** Use `data-test-subj` attributes for selectors. Use `cy.intercept()` instead of hard-coded delays. Always use UTC time.
-
-## Core API Changes
-
-When modifying `src/core/public/` or `src/core/server/` APIs, run `yarn docs:acceptApiChanges` to regenerate API review files, then commit the updated `.api.md` files.
-
-## Pull Request Requirements
-
-- All commits must include a DCO sign-off: `Signed-off-by: Name <email>` (use `git commit -s`).
-- PRs must include appropriate test coverage and pass CI checks.
-- Do not write new Selenium/FTR tests; use Cypress instead.
-
-## Analyzing CI Failures for a PR
-
-When given a PR link, use this sequence:
+Real scripts here (a single workspace, unlike the per-plugin plugins repo):
 
 ```bash
-# 1. Get overall check status — tells you which workflows failed
-gh pr checks <pr-url>
-
-# 2. Read the bot comment for the structured failure list (fastest path)
-gh pr view <pr-url> --comments --json body \
-  | jq -r '.[] | select(.body | contains("ci-test-failure-summary")) | .body'
-
-# 3. If you need Cypress failures too (no bot comment for those yet):
-gh run list --pr <pr-number> --json databaseId,name,conclusion \
-  | jq '.[] | select(.conclusion == "failure")'
-gh run download <run-id> -n "cypress-junit-*" --dir cypress-results
-node scripts/summarize_jest_failures.js --dir=cypress-results
+yarn osd bootstrap                              # install deps + build internal packages
+yarn osd bootstrap --single-version=loose       # when mixing plugin versions
+yarn start                                       # dev server :5601 (needs a running OpenSearch)
+yarn start --run-examples                        # dev server with example plugins
+yarn test:jest [path]                            # unit tests
+yarn test:jest_integration                       # integration tests
+yarn lint                                         # eslint + stylelint
+node scripts/eslint --fix                         # eslint autofix
+yarn typecheck                                     # node scripts/ts_error_checker.js
+yarn cypress:run-without-security                  # preferred E2E
+node scripts/precommit_hook.js --fix               # pre-commit (lint + typecheck)
+yarn build --linux --skip-os-packages --release    # base package
 ```
 
-**What the bot comment covers:** Jest unit test failures from `build-test` jobs (all 4 groups, Linux + Windows). Posted automatically by the `pr-test-results-comment` job and updated on every push — including a ✅ green banner when tests recover.
+Unlike the plugins repo, unit tests generally run **on the host** here (the full
+OSD checkout ships `setup_node_env`). When modifying `src/core/public/` or
+`src/core/server/` APIs, run `yarn docs:acceptApiChanges` and commit the updated
+`*.api.md` files.
 
-**What requires manual artifact download:** Cypress failures, FTR functional test failures, lint/typecheck failures (those appear only in the step logs — use `gh run view <run-id> --log-failed`).
+## Code conventions
 
-**FTR Cypress groups 1–9** (`ftr-cypress-junit-*`): test source lives in `opensearch-project/opensearch-dashboards-functional-test`, not this repo — check there if you need to read the test implementation.
+Enforced by tooling — run the linter/formatter, don't hand-format:
+
+- **Filenames:** `snake_case` (e.g. `index_pattern.ts`, not `IndexPattern.ts`) —
+  this differs from the plugins repo's kebab-case.
+- TypeScript-first; avoid `any` (prefer `unknown`/generics), `!.` and
+  `@ts-ignore`. **Named exports**, no default exports.
+- Single quotes; 100-char print width; ES5 trailing commas (Prettier —
+  [`.prettierrc`](.prettierrc)).
+- **API routes** start with `/api/`, `snake_case` paths/params/body fields.
+- `id` and `data-test-subj` values are camelCase.
+- SASS: import `.scss` at the top of the component; 3-letter scoping prefix on
+  class names.
+- React: prefer functional components; action props named `on<Subject><Change>`.
+- English everywhere (code, comments, commits, docs). Full style in
+  [`src/core/CONVENTIONS.md`](src/core/CONVENTIONS.md).
+
+## Testing
+
+- **Unit** (`*.test.ts[x]`): Jest, react-testing-library (not enzyme snapshots);
+  aim for 80%+ coverage. See [`src/core/TESTING.md`](src/core/TESTING.md).
+- **Integration** (`**/integration_tests/**`): `yarn test:jest_integration`.
+- **Functional:** Cypress (preferred). **Do not write new Selenium/FTR tests.**
+  Use `data-test-subj` selectors, `cy.intercept()` (no hard-coded delays), UTC.
+
+## Two-repo model & build tooling
+
+- Wazuh plugins are cloned and moved into `./plugins/` (see
+  [`dev-tools/build-dev-image/install-plugins.sh`](dev-tools/build-dev-image/install-plugins.sh))
+  and bootstrapped alongside the platform.
+- Package assembly lives under [`dev-tools/build-packages/`](dev-tools/build-packages/)
+  and [`dev-tools/build-dev-image/`](dev-tools/build-dev-image/).
+
+## Git / PR workflow
+
+Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Essentials:
+
+- Branch names: `<type>/<issue#>-<kebab-desc>` (`fix/`, `enhancement/`, `feat/`,
+  `bug/`, `change/`, `doc/`). PR base = the target **version branch**, not always
+  `main` — confirm it.
+- **Sign commits** (DCO `--signoff`). Imperative, capitalized subject.
+- Open PRs as **Draft** (CI skips drafts); run lint + tests locally, then "Ready
+  for review". Squash merge for single-purpose PRs.
+- UI changes require a screenshot/video in the PR (`## Screenshot` section of the
+  [PR template](.github/pull_request_template.md)).
+- **Changelog:** the Wazuh user-facing changelog is [`CHANGELOG.md`](CHANGELOG.md)
+  (entries **link to the issue, not the PR**). The `changelogs/fragments/*.yml`
+  system and the PR's `## Changelog` section are inherited upstream OSD tooling —
+  Wazuh maintains `CHANGELOG.md` by hand; use `- skip` (or a conventional
+  `feat:`/`fix:` line) in the PR `## Changelog` section.
+- Issues arrive as URLs and may live in another repo. Issues from
+  `internal-devel-requests` are internal: don't expose their link in the PR
+  ("Issues Resolved" empty) and add no CHANGELOG entry.
+
+## Fork coexistence
+
+The inherited upstream OSD `CLAUDE.md` described OpenSearch only. This file is
+Wazuh-owned; on upstream syncs, **Wazuh content wins** and relevant upstream
+technical notes are folded into the sections above.
+
+## AI working rules
+
+- Before proposing a PR: `yarn lint` + `yarn typecheck` + `yarn test:jest` pass
+  for the touched areas.
+- Never weaken auth/CSP/security; never commit secrets or credentials.
+- Never force-push shared branches; never commit without DCO sign-off.
+- Respect the `public`/`server`/`common` import rules above — when in doubt, put
+  shared code in `common/`.
+
+## Source-of-truth docs
+
+- [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md), [`README.md`](README.md),
+  [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- [`src/core/CONVENTIONS.md`](src/core/CONVENTIONS.md),
+  [`src/core/TESTING.md`](src/core/TESTING.md),
+  [`src/core/PRINCIPLES.md`](src/core/PRINCIPLES.md).
+- [`packages/osd-plugin-helpers/README.md`](packages/osd-plugin-helpers/README.md),
+  [`dev-tools/build-dev-image/README.md`](dev-tools/build-dev-image/README.md).
