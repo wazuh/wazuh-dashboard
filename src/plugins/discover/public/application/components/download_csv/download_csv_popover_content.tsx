@@ -14,12 +14,14 @@ export interface DiscoverDownloadCsvPopoverContentProps {
   downloadForOption: (option: DownloadCsvFormId) => Promise<void>;
   hitsCount: number;
   rowsCount: number;
+  maxCount?: number;
 }
 
 export const DiscoverDownloadCsvPopoverContent = ({
   downloadForOption,
   hitsCount,
   rowsCount,
+  maxCount = MAX_DOWNLOAD_CSV_COUNT,
 }: DiscoverDownloadCsvPopoverContentProps) => {
   const [selectedOption, setSelectedOption] = useState<DownloadCsvFormId>(
     DownloadCsvFormId.Visible
@@ -30,13 +32,13 @@ export const DiscoverDownloadCsvPopoverContent = ({
     maxCountString: string;
     rowsCountString: string;
   }>(() => {
-    const maxCount = Math.min(hitsCount, MAX_DOWNLOAD_CSV_COUNT);
+    const boundedMaxCount = Math.min(hitsCount, maxCount);
     return {
-      showMaxOption: maxCount > rowsCount,
-      maxCountString: maxCount.toLocaleString(),
+      showMaxOption: boundedMaxCount > rowsCount,
+      maxCountString: boundedMaxCount.toLocaleString(),
       rowsCountString: rowsCount.toLocaleString(),
     };
-  }, [hitsCount, rowsCount]);
+  }, [hitsCount, rowsCount, maxCount]);
 
   const downloadOptions = useMemo(() => {
     const options = [
@@ -85,7 +87,7 @@ export const DiscoverDownloadCsvPopoverContent = ({
           onChange={setSelectedOption as (option: string) => void}
           idSelected={selectedOption}
         />
-        {showMaxOption && <DiscoverDownloadCsvCallout />}
+        {showMaxOption && <DiscoverDownloadCsvCallout max={maxCount} />}
         <EuiSmallButton
           data-test-subj="dscDownloadCsvSubmit"
           className="dscDownloadCsvPopoverContent__submit"

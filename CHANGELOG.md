@@ -8,6 +8,7 @@
 - Added manager host configuration for the default configuration file [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)
 - Set v9 theme as default [#1092](https://github.com/wazuh/wazuh-dashboard/pull/1092)
 - Added version, revision, and stage to the Wazuh build metadata [#1327](https://github.com/wazuh/wazuh-dashboard/pull/1327) [#1421](https://github.com/wazuh/wazuh-dashboard/pull/1421)
+- Made the Discover CSV download row limit configurable via the `reports.csv.maxRows` setting [#1434](https://github.com/wazuh/wazuh-dashboard/issues/1434)
 
 ### Fixed
 

@@ -22,7 +22,7 @@ export interface DiscoverDownloadCsvProps {
 export const DiscoverDownloadCsv = ({ indexPattern, hits, rows }: DiscoverDownloadCsvProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const { onSuccess, onError, onLoading } = useDiscoverDownloadCsvToasts();
-  const { isLoading, downloadCsvForOption } = useDiscoverDownloadCsv({
+  const { isLoading, downloadCsvForOption, maxCsvRows } = useDiscoverDownloadCsv({
     rows,
     hits,
     indexPattern,
@@ -59,6 +59,7 @@ export const DiscoverDownloadCsv = ({ indexPattern, hits, rows }: DiscoverDownlo
       <DiscoverDownloadCsvPopoverContent
         rowsCount={rows?.length || 0}
         hitsCount={hits || 0}
+        maxCount={maxCsvRows}
         downloadForOption={handleDownloadCsvForOption}
       />
     </EuiPopover>
