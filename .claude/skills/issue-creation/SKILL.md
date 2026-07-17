@@ -52,20 +52,15 @@ Reference the chosen file under
 fill it verbatim; do not inline template bodies in this skill.
 
 > **repo-specific (wazuh-dashboard):** templates are classic `.md` issue forms
-> (not YAML issue forms). Frontmatter `labels:` per template (may be stale —
-> see step 4 for the real labels to actually apply):
-> - `bug_template.md` → `bug, untriaged`
-> - `feature_template.md` → `enhancement`
-> - `compatibility_request.md` → `compatibility, level/task, type/research`
-> - `new_release.md` → `level/task, type/enhancement`
-> - `task_template.md` → `level/task, type/task`
->
-> `feature_template.md`'s bare `enhancement` and `compatibility_request.md`'s
-> bare `compatibility` do **not** exist as real labels in this repo (confirmed
-> via `gh label list --repo wazuh/wazuh-dashboard`) — only the prefixed
-> `type/enhancement` does. `bug_template.md`'s bare `bug` label IS real here
-> (unlike every sibling repo in this cross-repo initiative) — this repo
-> uniquely has both `bug` and `type/bug`.
+> (not YAML issue forms). `feature_template.md`'s bare `enhancement` and
+> `compatibility_request.md`'s bare `compatibility` do **not** exist as real
+> labels in this repo (confirmed via `gh label list --repo wazuh/wazuh-dashboard`)
+> — only the prefixed `type/enhancement` does; see step 4 for the real labels
+> to apply. `bug_template.md`'s bare `bug` label IS real here (unlike every
+> sibling repo in this cross-repo initiative) — this repo uniquely has both
+> `bug` and `type/bug`. `new_release.md` and `task_template.md`'s other
+> declared labels (`level/task`, `type/enhancement`, `type/task`) are all real
+> as declared.
 
 ### 4. Labels
 
