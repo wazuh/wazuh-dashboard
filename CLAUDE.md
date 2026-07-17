@@ -152,16 +152,18 @@ Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Essentials:
 - **Sign commits** (DCO `--signoff`). Imperative, capitalized subject.
 - Open PRs as **Draft** (CI skips drafts); run lint + tests locally, then "Ready
   for review". Squash merge for single-purpose PRs.
-- UI changes require a screenshot/video in the PR (`## Screenshot` section of the
-  [PR template](.github/pull_request_template.md)).
+- UI changes require a screenshot/video in the PR (`### Results and Evidence`
+  section of the [PR template](.github/pull_request_template.md)); manual
+  verification steps go in `### How to Test`.
 - **Changelog:** the Wazuh user-facing changelog is [`CHANGELOG.md`](CHANGELOG.md)
-  (entries **link to the issue, not the PR**). The `changelogs/fragments/*.yml`
-  system and the PR's `## Changelog` section are inherited upstream OSD tooling —
-  Wazuh maintains `CHANGELOG.md` by hand; use `- skip` (or a conventional
-  `feat:`/`fix:` line) in the PR `## Changelog` section.
+  (entries **link to the issue, not the PR**). Wazuh maintains `CHANGELOG.md` by
+  hand. The PR template no longer carries a `## Changelog` section; the
+  `changelogs/fragments/*.yml` system remains inherited upstream OSD tooling for
+  upstream OpenSearch PRs only.
 - Issues arrive as URLs and may live in another repo. Issues from
   `internal-devel-requests` are internal: don't expose their link in the PR
-  ("Issues Resolved" empty) and add no CHANGELOG entry.
+  (leave the `## Description` closing reference empty) and add no CHANGELOG
+  entry.
 
 ## Fork coexistence
 
