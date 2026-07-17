@@ -13,8 +13,12 @@
 
 # Temporary files and directories
 tmp/
+.claude/*
+!.claude/settings.json
+!.claude/skills/
 .claude/settings.local.json
 CLAUDE.local.md
+tmp/
 .DS_Store
 .node_binaries
 .native_modules
