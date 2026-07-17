@@ -58,6 +58,16 @@ fill it verbatim; do not inline template bodies in this skill.
 > - `compatibility_request.md` → `compatibility, level/task, type/research`
 > - `new_release.md` → `level/task, type/enhancement`
 > - `task_template.md` → `level/task, type/task`
+>
+> **Label frontmatter is stale, do not repeat it verbatim without checking**
+> — `feature_template.md` declares a bare `enhancement` label, but this
+> repo's actual label set has no such label — only the prefixed
+> `type/enhancement` (confirmed via `gh label list --repo wazuh/wazuh-dashboard`).
+> GitHub only applies a template's `labels:` frontmatter if that exact label
+> already exists in the repo, so filing via `feature_template.md` as-is
+> silently applies no type label. `bug_template.md`'s bare `bug` label IS
+> real here (unlike every sibling repo in this cross-repo initiative) — this
+> repo uniquely has both `bug` and `type/bug`.
 
 ### 4. Labels
 
