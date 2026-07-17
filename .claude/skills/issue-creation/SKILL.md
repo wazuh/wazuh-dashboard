@@ -16,7 +16,7 @@ Copy this checklist and track progress:
 - [ ] 1. Classify intent → choose issue template (ask only if ambiguous)
 - [ ] 2. Issue-first check: search existing issues for duplicates
 - [ ] 3. Fill the chosen .github/ISSUE_TEMPLATE/*.md verbatim
-- [ ] 4. Keep the template's default labels; add a triage label only if named
+- [ ] 4. Apply the real Wazuh label for the intent (`type/bug` / `type/enhancement` / `level/task`) + `untriaged`; ignore stale frontmatter labels
 - [ ] 5. Emit the ready-to-file body + report (default stop; gh issue create only if asked)
 ```
 
@@ -52,28 +52,40 @@ Reference the chosen file under
 fill it verbatim; do not inline template bodies in this skill.
 
 > **repo-specific (wazuh-dashboard):** templates are classic `.md` issue forms
-> (not YAML issue forms). Label sets per template:
+> (not YAML issue forms). Frontmatter `labels:` per template (may be stale —
+> see step 4 for the real labels to actually apply):
 > - `bug_template.md` → `bug, untriaged`
 > - `feature_template.md` → `enhancement`
 > - `compatibility_request.md` → `compatibility, level/task, type/research`
 > - `new_release.md` → `level/task, type/enhancement`
 > - `task_template.md` → `level/task, type/task`
 >
-> **Label frontmatter is stale, do not repeat it verbatim without checking**
-> — `feature_template.md` declares a bare `enhancement` label, but this
-> repo's actual label set has no such label — only the prefixed
-> `type/enhancement` (confirmed via `gh label list --repo wazuh/wazuh-dashboard`).
-> GitHub only applies a template's `labels:` frontmatter if that exact label
-> already exists in the repo, so filing via `feature_template.md` as-is
-> silently applies no type label. `bug_template.md`'s bare `bug` label IS
-> real here (unlike every sibling repo in this cross-repo initiative) — this
-> repo uniquely has both `bug` and `type/bug`.
+> `feature_template.md`'s bare `enhancement` and `compatibility_request.md`'s
+> bare `compatibility` do **not** exist as real labels in this repo (confirmed
+> via `gh label list --repo wazuh/wazuh-dashboard`) — only the prefixed
+> `type/enhancement` does. `bug_template.md`'s bare `bug` label IS real here
+> (unlike every sibling repo in this cross-repo initiative) — this repo
+> uniquely has both `bug` and `type/bug`.
 
 ### 4. Labels
 
-Keep the template's default labels as-is; add an extra triage label only if
-the user explicitly names one. Do not invent labels or an approval workflow —
-there is no `status:*` label convention in this repo.
+Several issue templates in this repo were inherited from the upstream
+OpenSearch Dashboards fork and still declare stale labels in their
+frontmatter (bare `enhancement`, `compatibility`) that don't exist as real
+labels here — GitHub silently drops any label that doesn't exist instead of
+erroring, so filing the template as-is can result in no type label at all.
+Standardize on the real Wazuh label set instead of trusting the frontmatter
+verbatim:
+
+| Intent | Real label to apply |
+|--------|--------|
+| Bug / defect | `type/bug` (this repo's bare `bug` label is also real, but prefer `type/bug` for consistency with the rest of the label set) |
+| Feature / enhancement | `type/enhancement` |
+| Engineering task / chore | `level/task` |
+| Every issue | `untriaged` — applied automatically on open/reopen/transfer by `.github/workflows/add-untriaged.yml`, no manual action needed |
+
+Do not invent labels beyond this set, and do not invent an approval
+workflow — there is no `status:*` label convention in this repo.
 
 ### 5. Emit the ready-to-file body + report
 
