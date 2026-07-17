@@ -2,7 +2,7 @@
 name: 🛠️ Task
 about: Track an engineering task or improvement (not a bug, feature request, compatibility request, or release)
 title: ''
-labels: level/task, type/task
+labels: level/task
 assignees: ''
 ---
 
