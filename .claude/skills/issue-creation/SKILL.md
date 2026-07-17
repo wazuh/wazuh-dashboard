@@ -31,7 +31,7 @@ ambiguous between two rows.
 | New capability/idea | `feature_template.md` | `enhancement` |
 | Support a new OpenSearch version | `compatibility_request.md` | `compatibility, level/task, type/research` |
 | Track a Wazuh release | `new_release.md` | `level/task, type/enhancement` |
-| Engineering task/improvement (not a bug, feature, compatibility, or release) | `task_template.md` | `level/task, type/task` |
+| Engineering task/improvement (not a bug, feature, compatibility, or release) | `task_template.md` | `level/task` |
 
 ### 2. Issue-first duplicate check
 
@@ -59,8 +59,9 @@ fill it verbatim; do not inline template bodies in this skill.
 > to apply. `bug_template.md`'s bare `bug` label IS real here (unlike every
 > sibling repo in this cross-repo initiative) — this repo uniquely has both
 > `bug` and `type/bug`. `new_release.md` and `task_template.md`'s other
-> declared labels (`level/task`, `type/enhancement`, `type/task`) are all real
-> as declared.
+> declared labels (`level/task`, `type/enhancement`) are all real as declared
+> — there is no `type/task` label in this repo, matching every sibling repo
+> in this cross-repo initiative.
 
 ### 4. Labels
 
