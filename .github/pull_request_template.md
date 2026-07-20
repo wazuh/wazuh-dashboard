@@ -57,12 +57,19 @@ If applicable, describe any new unit or integration tests added as part of this 
 - Any relevant details about test coverage
 -->
 
-### Review Checklist
+## Review Checklist
 
-- [ ] All tests pass
-  - [ ] `yarn test:jest`
-  - [ ] `yarn test:jest_integration`
-- [ ] New functionality includes testing.
-- [ ] New functionality has been documented.
-- [ ] Update [CHANGELOG.md](./../CHANGELOG.md)
-- [ ] Commits are signed per the DCO using --signoff
+<!--
+List any manual tests completed to verify the functionality of the changes. Include any manual tests that are still required for final approval.
+-->
+
+- [ ] Code changes reviewed
+- [ ] Relevant evidence provided
+- [ ] Tests cover the new functionality
+- [ ] Configuration changes documented
+- [ ] Developer documentation reflects the changes
+- [ ] Meets requirements and/or definition of done
+- [ ] No unresolved dependencies with other issues
+- [ ] PR is linked to the relevant issue(s)
+- [ ] Correct labels applied (e.g., `no-changelog`)
+- [ ] ...
