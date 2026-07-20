@@ -57,15 +57,6 @@ If applicable, describe any new unit or integration tests added as part of this 
 - Any relevant details about test coverage
 -->
 
-### How to Test
-
-<!--
-Describe the manual steps a reviewer can follow to verify this change works, such as:
-- Steps to reproduce/validate the change
-- Environment or setup needed (branch, data, feature flags, etc.)
-- Expected result
--->
-
 ### Review Checklist
 
 - [ ] All tests pass
