@@ -25,13 +25,13 @@ Copy this checklist and track progress:
 Map the user's intent to a template. Ask the user only when genuinely
 ambiguous between two rows.
 
-| Intent | Template | Labels (from template frontmatter) |
-|--------|----------|--------|
-| Defect/regression | `bug_template.md` | `bug, untriaged` |
-| New capability/idea | `feature_template.md` | `enhancement` |
-| Support a new OpenSearch version | `compatibility_request.md` | `compatibility, level/task, type/research` |
-| Track a Wazuh release | `new_release.md` | `level/task, type/enhancement` |
-| Engineering task/improvement (not a bug, feature, compatibility, or release) | `task_template.md` | `level/task` |
+| Intent                                                                       | Template                   | Labels (from template frontmatter)         |
+| ---------------------------------------------------------------------------- | -------------------------- | ------------------------------------------ |
+| Defect/regression                                                            | `bug_template.md`          | `bug, untriaged`                           |
+| New capability/idea                                                          | `feature_template.md`      | `enhancement`                              |
+| Support a new OpenSearch version                                             | `compatibility_request.md` | `compatibility, level/task, type/research` |
+| Track a Wazuh release                                                        | `new_release.md`           | `level/task, type/enhancement`             |
+| Engineering task/improvement (not a bug, feature, compatibility, or release) | `task_template.md`         | `level/task`                               |
 
 ### 2. Issue-first duplicate check
 
@@ -73,12 +73,12 @@ erroring, so filing the template as-is can result in no type label at all.
 Standardize on the real Wazuh label set instead of trusting the frontmatter
 verbatim:
 
-| Intent | Real label to apply |
-|--------|--------|
-| Bug / defect | `type/bug` (this repo's bare `bug` label is also real, but prefer `type/bug` for consistency with the rest of the label set) |
-| Feature / enhancement | `type/enhancement` |
-| Engineering task / chore | `level/task` |
-| Every issue | `untriaged` — applied automatically on open/reopen/transfer by `.github/workflows/add-untriaged.yml`, no manual action needed |
+| Intent                   | Real label to apply                                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Bug / defect             | `type/bug` (this repo's bare `bug` label is also real, but prefer `type/bug` for consistency with the rest of the label set)  |
+| Feature / enhancement    | `type/enhancement`                                                                                                            |
+| Engineering task / chore | `level/task`                                                                                                                  |
+| Every issue              | `untriaged` — applied automatically on open/reopen/transfer by `.github/workflows/add-untriaged.yml`, no manual action needed |
 
 Do not invent labels beyond this set, and do not invent an approval
 workflow — there is no `status:*` label convention in this repo.
