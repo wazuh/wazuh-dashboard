@@ -1,8 +1,8 @@
-## [v5.0.1]
+## [v5.1.0]
 
 ### Added
 
-- Support for Wazuh 5.0.1
+- Support for Wazuh 5.1.0
 
 ## Prior versions
 
