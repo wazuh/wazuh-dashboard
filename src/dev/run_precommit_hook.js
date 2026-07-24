@@ -31,6 +31,7 @@
 import { run, combineErrors } from '@osd/dev-utils';
 import * as Eslint from './eslint';
 import * as Stylelint from './stylelint';
+import * as Prettier from './prettier';
 import {
   getFilesForCommit,
   getUnstagedFiles,
@@ -65,7 +66,7 @@ run(
       errors.push(error);
     }
 
-    for (const Linter of [Eslint, Stylelint]) {
+    for (const Linter of [Eslint, Stylelint, Prettier]) {
       const filesToLint = Linter.pickFilesToLint(log, files);
       if (filesToLint.length > 0) {
         try {
