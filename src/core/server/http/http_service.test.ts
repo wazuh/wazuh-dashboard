@@ -123,10 +123,11 @@ test('spins up notReady server until started if configured with `autoListen:true
     route: jest.fn(),
   };
 
+  const notReadyBasePath = {};
   mockHttpServer
     .mockImplementationOnce(() => httpServer)
     .mockImplementationOnce(() => ({
-      setup: () => ({ server: notReadyHapiServer }),
+      setup: () => ({ server: notReadyHapiServer, basePath: notReadyBasePath }),
     }));
 
   const service = new HttpService({
@@ -137,7 +138,24 @@ test('spins up notReady server until started if configured with `autoListen:true
     dynamicConfigService,
   });
 
-  await service.setup(setupDeps);
+  // Wazuh: the built-in 503 "not ready" route was replaced with an injectable
+  // `enhanceNotReadyServer` hook (used by the healthcheck plugin), so the caller
+  // is responsible for registering routes on the notReady server.
+  const enhanceNotReadyServer = jest.fn((server) => {
+    server.route({
+      path: '/{p*}',
+      method: '*',
+      handler: (_req: any, responseToolkit: any) =>
+        responseToolkit
+          .response('OpenSearch Dashboards server is not ready yet')
+          .code(503)
+          .header('Retry-After', '30'),
+    });
+  });
+
+  await service.setup({ ...setupDeps, enhanceNotReadyServer });
+
+  expect(enhanceNotReadyServer).toHaveBeenCalledWith(notReadyHapiServer, notReadyBasePath);
 
   const mockResponse: any = {
     code: jest.fn().mockImplementation(() => mockResponse),
