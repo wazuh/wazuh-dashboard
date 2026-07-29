@@ -57,7 +57,6 @@ export interface RenderingMetadata {
       version: string;
       revision: string;
       stage: string;
-      isProduction: boolean;
     };
     basePath: string;
     serverBasePath: string;

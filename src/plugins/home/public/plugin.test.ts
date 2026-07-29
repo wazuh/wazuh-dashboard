@@ -108,6 +108,20 @@ describe('HomePublicPlugin', () => {
         urlForwarding: urlForwardingPluginMock.createSetupContract(),
         contentManagement: contentManagementPluginMocks.createSetupContract(),
       });
+      // Wazuh: the built-in `home` landing page app was removed in favor of a
+      // custom home experience, so only the sample-data app is registered
+      // unconditionally (the search overview app is only registered when the
+      // nav group is enabled).
+      expect(coreMocks.application.register).toBeCalledTimes(1);
+    });
+
+    test('wires up and registers search overview app when new navigation is enabled', async () => {
+      const coreMocks = coreMock.createSetup();
+      coreMocks.chrome.navGroup.getNavGroupEnabled.mockReturnValue(true);
+      await new HomePublicPlugin(mockInitializerContext).setup(coreMocks, {
+        urlForwarding: urlForwardingPluginMock.createSetupContract(),
+        contentManagement: contentManagementPluginMocks.createSetupContract(),
+      });
       expect(coreMocks.application.register).toBeCalledTimes(2);
     });
 
