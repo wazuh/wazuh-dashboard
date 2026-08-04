@@ -26,6 +26,15 @@ else
   exit 1
 fi
 
+if runuser wazuh-dashboard --shell="/bin/bash" \
+  --command="/usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore list" \
+  | grep -q "^wazuh_ai_assistant.encryptionKey$"; then
+  echo "AI assistant encryption key present in keystore"
+else
+  echo "AI assistant encryption key missing from keystore"
+  exit 1
+fi
+
 apt-get remove --purge wazuh-dashboard -y
 if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
   echo "Package not uninstalled"

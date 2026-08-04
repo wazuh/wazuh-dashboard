@@ -644,6 +644,14 @@ jobs:
                 echo 'Service not running' ;\
                 exit 1 ;\
               fi; \
+              if sudo runuser wazuh-dashboard --shell='/bin/bash' \
+                --command='/usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore list' \
+                | grep -q '^wazuh_ai_assistant.encryptionKey$'; then \
+                echo 'AI assistant encryption key present in keystore'; \
+              else \
+                echo 'AI assistant encryption key missing from keystore'; \
+                exit 1; \
+              fi; \
               sudo yum remove wazuh-dashboard -y ;\
               sudo rm -rf /var/lib/wazuh-dashboard/ ; \
               sudo rm -rf /usr/share/wazuh-dashboard/ ; \
