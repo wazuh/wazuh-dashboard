@@ -24,7 +24,7 @@
 
 | Issue                                                       | Comment                                                                                                                                                 |
 | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|                                                             | Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system |
+| [#699](https://github.com/wazuh/wazuh-dashboard/issues/699) | Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system |
 | [#1382](https://github.com/wazuh/wazuh-dashboard/pull/1382) | Removed the Anomaly Detection plugin from the default Wazuh dashboard package                                                                           |
 
 ### Changed
