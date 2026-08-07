@@ -178,6 +178,28 @@ if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
   runuser %{USER} --shell="/bin/bash" --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore create" > /dev/null 2>&1
   runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" > /dev/null 2>&1
   runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" > /dev/null 2>&1
+  WD_ENC_KEY=""
+  if command -v openssl > /dev/null 2>&1; then
+    WD_ENC_KEY=$(openssl rand -base64 32 2>/dev/null | tr -d '\n') || WD_ENC_KEY=""
+  fi
+  if [ -z "${WD_ENC_KEY}" ] && [ -r /dev/urandom ] && command -v base64 > /dev/null 2>&1; then
+    WD_ENC_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '\n') || WD_ENC_KEY=""
+  fi
+  if [ -z "${WD_ENC_KEY}" ] && [ -x %{INSTALL_DIR}/node/bin/node ]; then
+    WD_ENC_KEY=$(%{INSTALL_DIR}/node/bin/node -e \
+      "process.stdout.write(require('crypto').randomBytes(32).toString('base64'))" 2>/dev/null) || WD_ENC_KEY=""
+  fi
+  # base64 of exactly 32 raw bytes is always 44 characters (with one '=' pad)
+  if [ ${#WD_ENC_KEY} -eq 44 ]; then
+    echo "${WD_ENC_KEY}" | runuser %{USER} --shell="/bin/bash" \
+      --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore add wazuh_ai_assistant.encryptionKey --stdin" \
+      > /dev/null 2>&1 \
+      || echo "wazuh-dashboard: warning: failed to store wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
+  else
+    echo "wazuh-dashboard: warning: unable to generate wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
+  fi
+  unset WD_ENC_KEY
+  true
 fi
 
 # -----------------------------------------------------------------------------
@@ -457,6 +479,8 @@ rm -fr %{buildroot}
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
 
 %changelog
+* Wed Sep 16 2026 support <info@wazuh.com> - 4.14.9
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-14-9.html
 * Wed Sep 09 2026 support <info@wazuh.com> - 5.0.1
 - More info: https://documentation.wazuh.com/current/release-notes/release-5-0-1.html
 * Thu Sep 03 2026 support <info@wazuh.com> - 4.10.5
