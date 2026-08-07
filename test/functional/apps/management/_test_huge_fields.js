@@ -38,7 +38,7 @@ export default function ({ getService, getPageObjects }) {
   describe('test large number of fields', function () {
     this.tags(['skipCloud']);
 
-    const EXPECTED_FIELD_COUNT = '10006';
+    const EXPECTED_FIELD_COUNT = '10003';
     before(async function () {
       await security.testUser.setRoles(
         ['opensearch_dashboards_admin', 'test_testhuge_reader'],

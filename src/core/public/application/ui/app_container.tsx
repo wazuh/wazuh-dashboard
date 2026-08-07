@@ -101,10 +101,16 @@ export const AppContainer: FunctionComponent<Props> = ({
       unmount();
     }
 
+    // Wazuh: track whether the cleanup has already run so that a slow async mount
+    // can detect it resolved after the user navigated away and self cleanup.
+    let cancelled = false;
+
     const mount = async () => {
       setShowSpinner(true);
       try {
-        unmountRef.current =
+        // Wazuh: if the app is unmounted while the mount() promise is in flight,
+        // we need to call the returned unmount function directly.
+        const appUnmount =
           (await mounter.mount({
             appBasePath: mounter.appBasePath,
             history: createScopedHistory(appPath),
@@ -119,12 +125,21 @@ export const AppContainer: FunctionComponent<Props> = ({
               setAppDescriptionControls(appId, menuMount),
             setHeaderBottomControls: (menuMount) => setAppBottomControls(appId, menuMount),
           })) || null;
+        // Wazuh: cleanup already ran while mount() was in flight, so call umount directly now.
+        if (cancelled) {
+          appUnmount?.();
+        } else {
+          unmountRef.current = appUnmount;
+        }
       } catch (e) {
-        // TODO: add error UI
-        // eslint-disable-next-line no-console
-        console.error(e);
+        if (!cancelled) {
+          // TODO: add error UI
+          // eslint-disable-next-line no-console
+          console.error(e);
+        }
       } finally {
-        if (elementRef.current) {
+        // Wazuh: cleanup already ran while mount() was in flight, so don't try to update state.
+        if (!cancelled && elementRef.current) {
           setShowSpinner(false);
           setIsMounting(false);
         }
@@ -133,7 +148,12 @@ export const AppContainer: FunctionComponent<Props> = ({
 
     mount();
 
-    return unmount;
+    return () => {
+      // Wazuh: track whether the cleanup has already run so that a slow async mount
+      // can detect it resolved after the user navigated away and self cleanup.
+      cancelled = true;
+      unmount();
+    };
   }, [
     appId,
     appStatus,

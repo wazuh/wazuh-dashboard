@@ -140,6 +140,7 @@ jobs:
       NAME_PLUGIN_WAZUH: ${{ steps.get-plugins.outputs.NAME_PLUGIN_WAZUH }}
       NAME_PLUGIN_CORE: ${{ steps.get-plugins.outputs.NAME_PLUGIN_CORE }}
       NAME_PLUGIN_CHECK_UPDATES: ${{ steps.get-plugins.outputs.NAME_PLUGIN_CHECK_UPDATES }}
+      NAME_PLUGIN_AI_ASSISTANT: ${{ steps.get-plugins.outputs.NAME_PLUGIN_AI_ASSISTANT }}
       NAME_PLUGIN_SECURITY: ${{ steps.get-plugins.outputs.NAME_PLUGIN_SECURITY }}
       NAME_PLUGIN_REPORTING: ${{ steps.get-plugins.outputs.NAME_PLUGIN_REPORTING }}
       NAME_PLUGIN_SECURITY_ANALYTICS: ${{ steps.get-plugins.outputs.NAME_PLUGIN_SECURITY_ANALYTICS }}
@@ -165,6 +166,10 @@ jobs:
             packageName: wazuh-dashboard-plugins_wazuh-check-updates
             repository: https://github.com/wazuh/wazuh-dashboard-plugins.git
             outputNamePackage: NAME_PLUGIN_CHECK_UPDATES
+          - name: plugins-ai-assistant
+            packageName: wazuh-dashboard-plugins_wazuh-ai-assistant
+            repository: https://github.com/wazuh/wazuh-dashboard-plugins.git
+            outputNamePackage: NAME_PLUGIN_AI_ASSISTANT
           - name: reporting
             packageName: wazuh-dashboard-reporting
             repository: https://github.com/wazuh/wazuh-dashboard-reporting.git
@@ -309,6 +314,11 @@ jobs:
             repo: wazuh/wazuh-dashboard-plugins
             pathPlugin: plugins/wazuh-dashboard-plugins
             path: plugins/wazuh-core
+          - name: wazuh-dashboard-plugins_wazuh-ai-assistant
+            packageName: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_AI_ASSISTANT }}
+            repo: wazuh/wazuh-dashboard-plugins
+            pathPlugin: plugins/wazuh-dashboard-plugins
+            path: plugins/wazuh-ai-assistant
           - name: reports-dashboards
             packageName: ${{ needs.get-outputs-plugins.outputs.NAME_PLUGIN_REPORTING }}
             repo: wazuh/wazuh-dashboard-reporting
@@ -633,6 +643,14 @@ jobs:
               else \
                 echo 'Service not running' ;\
                 exit 1 ;\
+              fi; \
+              if sudo runuser wazuh-dashboard --shell='/bin/bash' \
+                --command='/usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore list' \
+                | grep -q '^wazuh_ai_assistant.encryptionKey$'; then \
+                echo 'AI assistant encryption key present in keystore'; \
+              else \
+                echo 'AI assistant encryption key missing from keystore'; \
+                exit 1; \
               fi; \
               sudo yum remove wazuh-dashboard -y ;\
               sudo rm -rf /var/lib/wazuh-dashboard/ ; \
