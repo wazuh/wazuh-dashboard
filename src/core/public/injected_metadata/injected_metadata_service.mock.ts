@@ -29,7 +29,7 @@
  */
 
 import type { PublicMethodsOf } from '@osd/utility-types';
-import { healthCheckConfig } from 'src/core/server/healthcheck/healthcheck/health_check.mock';
+import { healthCheckConfig } from '../../server/healthcheck/healthcheck/health_check.mock';
 import { WazuhBuildInfo } from '../../types/wazuh_build_info';
 import { InjectedMetadataService, InjectedMetadataSetup } from './injected_metadata_service';
 
@@ -37,7 +37,6 @@ export const mockWazuhBuildInfo: WazuhBuildInfo = {
   version: '4.x.x',
   revision: '01',
   stage: '',
-  isProduction: false,
 };
 
 const createSetupContractMock = () => {
