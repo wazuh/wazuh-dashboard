@@ -578,7 +578,8 @@ jobs:
         env:
           username: 'wazuh-devel-xdrsiem-dashboard'
         run: |
-          git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git -b $(bash dev-tools/product_version.sh)
+          # git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git -b $(bash dev-tools/product_version.sh)
+          git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git -b enhancement/2842-refactor-allocator-as-a-python-package-for-improved-dependency-management
           # Workaround: AWS CodeBuild ARM runners do not have pip3 or openssh-client pre-installed
           if ! command -v pip3 &>/dev/null || ! command -v ssh &>/dev/null; then
             sudo apt-get update
