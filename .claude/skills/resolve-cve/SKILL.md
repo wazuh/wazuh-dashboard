@@ -15,8 +15,7 @@ CVE issues and ask which to resolve.
 > **repo-specific (wazuh-dashboard):** this is the **platform**, a single Yarn
 > **workspace** with one root `package.json` + one root `yarn.lock` (unlike the
 > plugins repo's three independent plugins). Dependencies install/build via
-> **`yarn osd bootstrap`**. Forced versions live in the **root `package.json`
-> `resolutions`** block. Tests generally run **on the host** here (the full OSD
+> **`yarn osd bootstrap`**. Forced versions live in the **root `package.json` > `resolutions`** block. Tests generally run **on the host** here (the full OSD
 > checkout ships `setup_node_env`).
 
 ## Workflow
