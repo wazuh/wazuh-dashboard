@@ -36,6 +36,7 @@
 | [#1278](https://github.com/wazuh/wazuh-dashboard/pull/1278) [#1279](https://github.com/wazuh/wazuh-dashboard/pull/1279) | Excluded Wazuh dashboards and visualizations listing                                                               |
 | [#1330](https://github.com/wazuh/wazuh-dashboard/pull/1330)                                                             | Changed log level of the cross compatibility service on start                                                      |
 | [#1328](https://github.com/wazuh/wazuh-dashboard/pull/1328) [#1365](https://github.com/wazuh/wazuh-dashboard/pull/1365) | Changed pre install scripts to block Wazuh dashboard installation if there's an existing installation prior to 5.x |
+| [#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979)                                                   | Changed the sidecar flyout to displace open flyouts instead of covering them                                       |
 
 ## Prior versions
 
