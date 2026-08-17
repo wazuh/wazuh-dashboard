@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject } from 'rxjs';
 import classNames from 'classnames';
@@ -56,6 +56,33 @@ export const Sidecar = ({ sidecarConfig$, options, setSidecarConfig, i18n, mount
           },
     [sidecarConfig]
   );
+
+  // WAZUH
+  // Other overlays (e.g. EuiFlyout) are rendered outside this component's DOM
+  // subtree, so they can't be shifted via a padding/width style the way the
+  // app-wrapper is. Expose the docked side and size on `document.body` so
+  // global CSS can displace them instead of letting the sidecar cover them.
+  useEffect(() => {
+    const { body } = document;
+    const isSideDocked =
+      sidecarConfig &&
+      !sidecarConfig.isHidden &&
+      (sidecarConfig.dockedMode === SIDECAR_DOCKED_MODE.LEFT ||
+        sidecarConfig.dockedMode === SIDECAR_DOCKED_MODE.RIGHT);
+
+    if (isSideDocked) {
+      body.dataset.osdSidecarDockedMode = sidecarConfig!.dockedMode;
+      body.style.setProperty('--osdSidecarSize', `${sidecarConfig!.paddingSize}px`);
+    } else {
+      delete body.dataset.osdSidecarDockedMode;
+      body.style.removeProperty('--osdSidecarSize');
+    }
+
+    return () => {
+      delete body.dataset.osdSidecarDockedMode;
+      body.style.removeProperty('--osdSidecarSize');
+    };
+  }, [sidecarConfig]);
 
   return (
     <i18n.Context>
