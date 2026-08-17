@@ -58,6 +58,8 @@ export const HealthCheckNavButton = ({
 
   const isPlacedInLeftNav = coreStart.uiSettings.get('home:useNewHomePage');
 
+  const shouldRenderIndicator = status === 'yellow' || status === 'red';
+
   const overallStatusIndicator = (
     <EuiIcon
       style={{
@@ -65,7 +67,7 @@ export const HealthCheckNavButton = ({
         alignItems: 'center',
         justifyContent: 'center',
       }}
-      type="dot"
+      type="pulse"
       color={mapTaskStatusToHealthColor(status)}
       aria-hidden
     />
@@ -150,6 +152,10 @@ export const HealthCheckNavButton = ({
   );
 
   const switchPopover = () => setPopoverOpen((prevState) => !prevState);
+
+  if (!shouldRenderIndicator) {
+    return null;
+  }
 
   return (
     <I18nProvider>
