@@ -107,10 +107,6 @@ export const HealthCheckNavButton = ({
   ) : (
     button
   );
-  const healthColors = {
-    yellow: 'warning',
-    red: 'failure',
-  };
   const contextMenuPanel = (
     <EuiContextMenuPanel>
       <OuiDescriptionList type="row" align="left">
@@ -122,11 +118,17 @@ export const HealthCheckNavButton = ({
                 check.result === TASK.RUN_RESULT.YELLOW.value)
           )
           .map((check) => {
+            const [category, name] = check.name.split(':');
             return (
-              <OuiDescriptionListTitle>
-                <EuiToolTip title="Check result" content={check.error || ''}>
-                  <EuiHealth color={healthColors[check.result]}>
-                    {check.name.split(':')[0]}: <b>{check.name.split(':')[1]}</b>
+              <OuiDescriptionListTitle key={check.name}>
+                <EuiToolTip position="left" title="Check result" content={check.error || ''}>
+                  <EuiHealth
+                    color={mapTaskStatusToHealthColor(check.result)}
+                    style={{ cursor: 'default' }}
+                  >
+                    <span style={{ whiteSpace: 'nowrap' }}>
+                      {category}: <b>{name}</b>
+                    </span>
                   </EuiHealth>
                 </EuiToolTip>
               </OuiDescriptionListTitle>
