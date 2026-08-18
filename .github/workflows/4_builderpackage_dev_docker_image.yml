@@ -120,6 +120,12 @@ jobs:
     runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     needs: [extract-versions, build]
     steps:
+      # Workaround: AWS CodeBuild runners do not start the Docker daemon automatically
+      - name: Start Docker daemon
+        run: |
+          sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
+          timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
