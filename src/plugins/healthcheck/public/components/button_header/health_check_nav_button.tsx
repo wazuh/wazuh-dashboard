@@ -12,14 +12,11 @@ import {
   EuiIcon,
   EuiPopover,
   EuiToolTip,
-  EuiText,
-  EuiSpacer,
   EuiLink,
   EuiHealth,
   OuiDescriptionList,
   OuiDescriptionListTitle,
-  OuiDescriptionListDescription,
-  EuiHorizontalRule
+  EuiHorizontalRule,
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
@@ -30,7 +27,6 @@ import { mapTaskStatusToHealthColor } from '../services/health';
 import { RedirectAppLinks } from '../../../../opensearch_dashboards_react/public';
 import { getCore } from '../../dashboards_services';
 import { PLUGIN_ID, PLUGIN_NAME } from '../../../common';
-import { BadgeResults } from '../utils/badge_results';
 import { TASK } from '../../constants';
 
 export interface HealthCheckNavButtonProps {
@@ -113,36 +109,31 @@ export const HealthCheckNavButton = ({
   );
   const healthColors = {
     yellow: 'warning',
-    red: 'failure'
-  }
+    red: 'failure',
+  };
   const contextMenuPanel = (
     <EuiContextMenuPanel>
-
-      {/* <h3>
-          <FormattedMessage
-            id="healthcheck.status.contextMenu"
-            defaultMessage="Health check status: "
-          />
-          <BadgeResults result={status} isEnabled={checks.some((check) => check.enabled)} />
-        </h3> */}
-      <OuiDescriptionList type='row' align='left'>
-        {
-          checks
-            .filter(check => (check.enabled && (check.result === TASK.RUN_RESULT.RED.value || check.result === TASK.RUN_RESULT.YELLOW.value)))
-            .map((check) => {
-              return <OuiDescriptionListTitle>
-                  <EuiToolTip title="Check result" content={check.error || ''}>
-                    <EuiHealth color={healthColors[check.result]}>{
-                    check.name.split(':')[0]}: <b>{check.name.split(':')[1]}</b>
-                    </EuiHealth>
-                  </EuiToolTip>
-                </OuiDescriptionListTitle>
-                {/* <OuiDescriptionListDescription></OuiDescriptionListDescription> */}
-
-            })
-        }
+      <OuiDescriptionList type="row" align="left">
+        {checks
+          .filter(
+            (check) =>
+              check.enabled &&
+              (check.result === TASK.RUN_RESULT.RED.value ||
+                check.result === TASK.RUN_RESULT.YELLOW.value)
+          )
+          .map((check) => {
+            return (
+              <OuiDescriptionListTitle>
+                <EuiToolTip title="Check result" content={check.error || ''}>
+                  <EuiHealth color={healthColors[check.result]}>
+                    {check.name.split(':')[0]}: <b>{check.name.split(':')[1]}</b>
+                  </EuiHealth>
+                </EuiToolTip>
+              </OuiDescriptionListTitle>
+            );
+          })}
       </OuiDescriptionList>
-      <EuiHorizontalRule size='full' margin='s'/>
+      <EuiHorizontalRule size="full" margin="s" />
       <span>
         <FormattedMessage
           id="healthcheck.status.goToHealthCheckApp"
