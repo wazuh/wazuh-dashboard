@@ -13,7 +13,13 @@ import {
   EuiPopover,
   EuiToolTip,
   EuiText,
+  EuiSpacer,
   EuiLink,
+  EuiHealth,
+  OuiDescriptionList,
+  OuiDescriptionListTitle,
+  OuiDescriptionListDescription,
+  EuiHorizontalRule
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
@@ -105,34 +111,53 @@ export const HealthCheckNavButton = ({
   ) : (
     button
   );
-
+  const healthColors = {
+    yellow: 'warning',
+    red: 'failure'
+  }
   const contextMenuPanel = (
     <EuiContextMenuPanel>
-      <EuiText textAlign="center">
-        <h3>
+
+      {/* <h3>
           <FormattedMessage
             id="healthcheck.status.contextMenu"
             defaultMessage="Health check status: "
           />
           <BadgeResults result={status} isEnabled={checks.some((check) => check.enabled)} />
-        </h3>
+        </h3> */}
+      <OuiDescriptionList type='row' align='left'>
+        {
+          checks
+            .filter(check => (check.enabled && (check.result === TASK.RUN_RESULT.RED.value || check.result === TASK.RUN_RESULT.YELLOW.value)))
+            .map((check) => {
+              return <OuiDescriptionListTitle>
+                  <EuiToolTip title="Check result" content={check.error || ''}>
+                    <EuiHealth color={healthColors[check.result]}>{
+                    check.name.split(':')[0]}: <b>{check.name.split(':')[1]}</b>
+                    </EuiHealth>
+                  </EuiToolTip>
+                </OuiDescriptionListTitle>
+                {/* <OuiDescriptionListDescription></OuiDescriptionListDescription> */}
 
-        <span>
-          <FormattedMessage
-            id="healthcheck.status.goToHealthCheckApp"
-            defaultMessage="For more details, go to the {link}"
-            values={{
-              link: (
-                <RedirectAppLinks application={core.application}>
-                  <EuiLink href={getCore().application.getUrlForApp(PLUGIN_ID)}>
-                    {PLUGIN_NAME}
-                  </EuiLink>
-                </RedirectAppLinks>
-              ),
-            }}
-          />
-        </span>
-      </EuiText>
+            })
+        }
+      </OuiDescriptionList>
+      <EuiHorizontalRule size='full' margin='s'/>
+      <span>
+        <FormattedMessage
+          id="healthcheck.status.goToHealthCheckApp"
+          defaultMessage="For more details, go to the {link}"
+          values={{
+            link: (
+              <RedirectAppLinks application={core.application}>
+                <EuiLink href={getCore().application.getUrlForApp(PLUGIN_ID)}>
+                  {PLUGIN_NAME}
+                </EuiLink>
+              </RedirectAppLinks>
+            ),
+          }}
+        />
+      </span>
     </EuiContextMenuPanel>
   );
 
