@@ -54,10 +54,10 @@
 // these attributes/custom property in sync with its own config while docked
 // left or right (not for `--dockedTakeover`, which is meant to cover
 // everything), so displace any open flyout by that same amount here.
-body[data-osd-sidecar-docked-mode='right'] .euiFlyout:not(.euiFlyout--left) {
-  right: var(--osdSidecarSize, 0);
+body[data-osd-sidecar-docked-mode="right"] .euiFlyout:not(.euiFlyout--left) {
+  right: var(--osd-sidecar-size, 0);
 }
 
-body[data-osd-sidecar-docked-mode='left'] .euiFlyout--left {
-  left: var(--osdSidecarSize, 0);
+body[data-osd-sidecar-docked-mode="left"] .euiFlyout--left {
+  left: var(--osd-sidecar-size, 0);
 }
