@@ -25,6 +25,7 @@ import { RedirectAppLinks } from '../../../../opensearch_dashboards_react/public
 import { getCore } from '../../dashboards_services';
 import { PLUGIN_ID, PLUGIN_NAME } from '../../../common';
 import { BadgeResults } from '../utils/badge_results';
+import { TASK } from '../../constants';
 
 export interface HealthCheckNavButtonProps {
   coreStart: CoreStart;
@@ -58,7 +59,8 @@ export const HealthCheckNavButton = ({
 
   const isPlacedInLeftNav = coreStart.uiSettings.get('home:useNewHomePage');
 
-  const shouldRenderIndicator = status === 'yellow' || status === 'red';
+  const shouldRenderIndicator =
+    status === TASK.RUN_RESULT.YELLOW.value || status === TASK.RUN_RESULT.RED.value;
 
   const overallStatusIndicator = (
     <EuiIcon
