@@ -37,6 +37,7 @@
 | [#1330](https://github.com/wazuh/wazuh-dashboard/pull/1330)                                                             | Changed log level of the cross compatibility service on start                                                      |
 | [#1328](https://github.com/wazuh/wazuh-dashboard/pull/1328) [#1365](https://github.com/wazuh/wazuh-dashboard/pull/1365) | Changed pre install scripts to block Wazuh dashboard installation if there's an existing installation prior to 5.x |
 | [#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979)                                                   | Changed the sidecar flyout to displace open flyouts instead of covering them                                       |
+| [#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989)                                                   | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus`                   |
 
 ## Prior versions
 
