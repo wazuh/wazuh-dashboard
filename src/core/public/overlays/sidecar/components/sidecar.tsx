@@ -91,6 +91,7 @@ export const Sidecar = ({ sidecarConfig$, options, setSidecarConfig, i18n, mount
           onResize={handleResize}
           dockedMode={sidecarConfig?.dockedMode}
           flyoutSize={sidecarConfig?.paddingSize ?? 0}
+          className={options.classNameButton}
         />
         <MountWrapper mount={mount} className="osdSidecarMountWrapper" />
       </div>
