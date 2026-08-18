@@ -8,12 +8,6 @@
   flex-shrink: 0;
   z-index: $euiZLevel1;
 
-  // Wazuh: suppress the native focus ring left over from the .focus() call on click/drag;
-  // keep it for keyboard users via :focus-visible
-  &:focus:not(:focus-visible) {
-    outline: none;
-  }
-
   &::before,
   &::after {
     content: "";

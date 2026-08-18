@@ -21,7 +21,7 @@ const RESIZE_DEBOUNCE_DELAY = 50;
 export const ResizableButton = ({ dockedMode, onResize, flyoutSize }: Props) => {
   const isHorizontal = dockedMode !== SIDECAR_DOCKED_MODE.TAKEOVER;
 
-  const classes = classNames('sidecar-resizableButton', {
+  const classes = classNames('sidecar-resizableButton', 'osd-resetFocusState', {
     'resizableButton--vertical': !isHorizontal,
     'resizableButton--horizontal': isHorizontal,
   });
