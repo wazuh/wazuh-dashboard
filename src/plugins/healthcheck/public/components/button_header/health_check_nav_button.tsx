@@ -155,11 +155,24 @@ export const HealthCheckNavButton = ({
           defaultMessage="For more details, go to the {link}"
           values={{
             link: (
-              <RedirectAppLinks application={core.application}>
-                <EuiLink href={getCore().application.getUrlForApp(PLUGIN_ID)}>
-                  {PLUGIN_NAME}
-                </EuiLink>
-              </RedirectAppLinks>
+              // RedirectAppLinks turns the click into an SPA navigation and calls
+              // preventDefault when it does. Closing from outside of it therefore runs
+              // after the navigation, and only when it actually happened: modified
+              // clicks, which open a new tab, leave the popover open.
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
+              <span
+                onClick={(event) => {
+                  if (event.defaultPrevented) {
+                    setPopoverOpen(false);
+                  }
+                }}
+              >
+                <RedirectAppLinks application={core.application}>
+                  <EuiLink href={getCore().application.getUrlForApp(PLUGIN_ID)}>
+                    {PLUGIN_NAME}
+                  </EuiLink>
+                </RedirectAppLinks>
+              </span>
             ),
           }}
         />

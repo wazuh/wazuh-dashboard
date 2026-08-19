@@ -9,6 +9,7 @@ import { BehaviorSubject } from 'rxjs';
 import { HealthCheckStatus, TaskInfo } from 'src/core/common/healthcheck';
 import { HealthCheckNavButton, HealthCheckNavButtonProps } from './health_check_nav_button';
 import { setCore } from '../../dashboards_services';
+import { PLUGIN_NAME } from '../../../common';
 
 jest.mock('@elastic/eui', () => {
   const actual = jest.requireActual('@elastic/eui');
@@ -139,7 +140,34 @@ describe('HealthCheckNavButton', () => {
       fireEvent.click(getByRole('dialog'));
       expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
-      fireEvent.click(getByRole('link', { name: 'Health Check' }));
+      fireEvent.click(getByText('For more details, go to the', { exact: false }));
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('closes the popover when the Health Check link is clicked', async () => {
+      const { getByRole, getByTestId, queryByRole } = renderButton('yellow', checks);
+      const trigger = getByTestId('healthcheckNavButton');
+
+      fireEvent.click(trigger);
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(getByRole('link', { name: PLUGIN_NAME }));
+
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      await waitFor(() => expect(queryByRole('dialog')).toBeNull());
+    });
+
+    // A modified click opens the link in a new tab, so the current page — and the
+    // popover on it — should stay as it is.
+    it('keeps the popover open when the link is opened in a new tab', () => {
+      const { getByRole, getByTestId } = renderButton('yellow', checks);
+      const trigger = getByTestId('healthcheckNavButton');
+
+      fireEvent.click(trigger);
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(getByRole('link', { name: PLUGIN_NAME }), { ctrlKey: true });
+
       expect(trigger).toHaveAttribute('aria-expanded', 'true');
     });
   });
