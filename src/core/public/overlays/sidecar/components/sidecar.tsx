@@ -72,15 +72,15 @@ export const Sidecar = ({ sidecarConfig$, options, setSidecarConfig, i18n, mount
 
     if (isSideDocked) {
       body.dataset.osdSidecarDockedMode = sidecarConfig!.dockedMode;
-      body.style.setProperty('--osdSidecarSize', `${sidecarConfig!.paddingSize}px`);
+      body.style.setProperty('--osd-sidecar-size', `${sidecarConfig!.paddingSize}px`);
     } else {
       delete body.dataset.osdSidecarDockedMode;
-      body.style.removeProperty('--osdSidecarSize');
+      body.style.removeProperty('--osd-sidecar-size');
     }
 
     return () => {
       delete body.dataset.osdSidecarDockedMode;
-      body.style.removeProperty('--osdSidecarSize');
+      body.style.removeProperty('--osd-sidecar-size');
     };
   }, [sidecarConfig]);
 
