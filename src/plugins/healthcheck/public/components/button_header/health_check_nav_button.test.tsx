@@ -4,9 +4,9 @@
  */
 
 import React from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { BehaviorSubject } from 'rxjs';
-import { HealthCheckStatus } from 'src/core/common/healthcheck';
+import { HealthCheckStatus, TaskInfo } from 'src/core/common/healthcheck';
 import { HealthCheckNavButton, HealthCheckNavButtonProps } from './health_check_nav_button';
 import { setCore } from '../../dashboards_services';
 
@@ -25,18 +25,37 @@ const coreStart = {
   application: {
     getUrlForApp: jest.fn().mockReturnValue('/app/healthcheck'),
     navigateToUrl: jest.fn(),
+    // Needed by RedirectAppLinks, which is only mounted once the popover opens.
+    currentAppId$: new BehaviorSubject('healthcheck'),
   },
 } as any;
 
-const buildStatus = (status: HealthCheckStatus['status']): HealthCheckStatus => ({
-  status,
-  checks: [],
+const buildCheck = (name: string, result: TaskInfo['result']): TaskInfo => ({
+  name,
+  status: 'finished',
+  result,
+  createdAt: null,
+  startedAt: null,
+  finishedAt: null,
+  duration: null,
+  data: null,
+  error: `${name} failed`,
+  enabled: true,
+  critical: false,
 });
 
-const renderButton = (status: HealthCheckStatus['status']) => {
+const buildStatus = (
+  status: HealthCheckStatus['status'],
+  checks: TaskInfo[] = []
+): HealthCheckStatus => ({
+  status,
+  checks,
+});
+
+const renderButton = (status: HealthCheckStatus['status'], checks: TaskInfo[] = []) => {
   const props: HealthCheckNavButtonProps = {
     coreStart,
-    status$: new BehaviorSubject<HealthCheckStatus>(buildStatus(status)),
+    status$: new BehaviorSubject<HealthCheckStatus>(buildStatus(status, checks)),
     fetch: jest.fn().mockResolvedValue(undefined),
     getConfig: jest.fn().mockResolvedValue({ interval: 0 }),
   };
@@ -71,5 +90,87 @@ describe('HealthCheckNavButton', () => {
     const icon = getByTestId('healthcheck-icon');
     expect(icon).toHaveAttribute('data-icon-type', 'pulse');
     expect(icon).toHaveAttribute('data-icon-color', 'danger');
+  });
+
+  describe('popover', () => {
+    const checks = [buildCheck('server-api:run-as', 'yellow')];
+
+    // `aria-expanded` mirrors the open state synchronously. The panel itself stays
+    // mounted while OuiPopover plays its closing transition, so its presence in the
+    // DOM is not a reliable signal that the popover is still open.
+    it('opens the popover when the button is clicked', async () => {
+      const { getByTestId, queryByRole } = renderButton('yellow', checks);
+      const trigger = getByTestId('healthcheckNavButton');
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      expect(queryByRole('dialog')).toBeNull();
+
+      fireEvent.click(trigger);
+
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      expect(await waitFor(() => queryByRole('dialog'))).toBeInTheDocument();
+    });
+
+    it('closes the popover when the button is clicked again', async () => {
+      const { getByTestId, queryByRole } = renderButton('yellow', checks);
+      const trigger = getByTestId('healthcheckNavButton');
+
+      fireEvent.click(trigger);
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(trigger);
+
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      await waitFor(() => expect(queryByRole('dialog')).toBeNull());
+    });
+
+    // The panel is rendered in a portal, but React events bubble along the React tree,
+    // so a toggle handler on an ancestor of OuiPopover also receives clicks coming from
+    // the panel and closes it. The trigger must own the toggle instead. See #1504.
+    it('keeps the popover open when clicking inside the panel', () => {
+      const { getByRole, getByTestId, getByText } = renderButton('yellow', checks);
+      const trigger = getByTestId('healthcheckNavButton');
+
+      fireEvent.click(trigger);
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(getByText('run-as'));
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(getByRole('dialog'));
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(getByRole('link', { name: 'Health Check' }));
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    });
+  });
+
+  describe('popover when placed in the left nav', () => {
+    const checks = [buildCheck('server-api:run-as', 'yellow')];
+
+    beforeEach(() => {
+      coreStart.uiSettings.get.mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      coreStart.uiSettings.get.mockReturnValue(false);
+    });
+
+    it('toggles the popover from the button and ignores clicks inside the panel', () => {
+      const { getByRole, getByTestId, getByText } = renderButton('yellow', checks);
+      const trigger = getByTestId('healthcheckNavButton');
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+      fireEvent.click(trigger);
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(getByText('run-as'));
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(getByRole('dialog'));
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(trigger);
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    });
   });
 });

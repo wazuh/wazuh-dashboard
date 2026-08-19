@@ -94,19 +94,32 @@ export const HealthCheckNavButton = ({
       {overallStatusIndicator}
     </EuiToolTip>
   );
+  const switchPopover = () => setPopoverOpen((prevState) => !prevState);
+
   const innerElement = isPlacedInLeftNav ? (
     <EuiButtonEmpty
       size="xs"
       flush="both"
       className="accountNavButton"
+      data-test-subj="healthcheckNavButton"
       aria-expanded={isPopoverOpen}
       aria-haspopup="true"
+      onClick={switchPopover}
     >
       {button}
     </EuiButtonEmpty>
   ) : (
-    button
+    <EuiHeaderSectionItemButton
+      size="l"
+      data-test-subj="healthcheckNavButton"
+      aria-expanded={isPopoverOpen}
+      aria-haspopup="true"
+      onClick={switchPopover}
+    >
+      {button}
+    </EuiHeaderSectionItemButton>
   );
+
   const contextMenuPanel = (
     <EuiContextMenuPanel>
       <OuiDescriptionList type="row" align="left">
@@ -171,29 +184,9 @@ export const HealthCheckNavButton = ({
     </EuiPopover>
   );
 
-  const switchPopover = () => setPopoverOpen((prevState) => !prevState);
-
   if (!shouldRenderIndicator) {
     return null;
   }
 
-  return (
-    <I18nProvider>
-      <div
-        // https://github.com/wazuh/wazuh-dashboard/pull/946#issuecomment-3381930040
-        role="button"
-        tabIndex={0}
-        onClick={switchPopover}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') switchPopover();
-        }}
-      >
-        {isPlacedInLeftNav ? (
-          popover
-        ) : (
-          <EuiHeaderSectionItemButton size="l">{popover}</EuiHeaderSectionItemButton>
-        )}
-      </div>
-    </I18nProvider>
-  );
+  return <I18nProvider>{popover}</I18nProvider>;
 };
