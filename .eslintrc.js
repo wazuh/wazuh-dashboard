@@ -29,6 +29,16 @@
  */
 
 /**
+ * For new files created by Wazuh Contributors
+ */
+const OSD_WAZUH = `
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+`;
+
+/**
  * For new files created by OpenSearch Contributors
  */
 const OSD_NEW_HEADER = `
@@ -157,7 +167,7 @@ module.exports = {
         '@osd/eslint/require-license-header': [
           'error',
           {
-            licenses: [OSD_NEW_HEADER, OSD_HEADER],
+            licenses: [OSD_NEW_HEADER, OSD_HEADER, OSD_WAZUH],
           },
         ],
         '@osd/eslint/disallow-license-headers': [
