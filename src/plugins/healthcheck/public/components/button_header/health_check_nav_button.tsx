@@ -12,8 +12,11 @@ import {
   EuiIcon,
   EuiPopover,
   EuiToolTip,
-  EuiText,
   EuiLink,
+  EuiHealth,
+  OuiDescriptionList,
+  OuiDescriptionListTitle,
+  EuiHorizontalRule,
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
@@ -24,7 +27,7 @@ import { mapTaskStatusToHealthColor } from '../services/health';
 import { RedirectAppLinks } from '../../../../opensearch_dashboards_react/public';
 import { getCore } from '../../dashboards_services';
 import { PLUGIN_ID, PLUGIN_NAME } from '../../../common';
-import { BadgeResults } from '../utils/badge_results';
+import { TASK } from '../../constants';
 
 export interface HealthCheckNavButtonProps {
   coreStart: CoreStart;
@@ -58,6 +61,9 @@ export const HealthCheckNavButton = ({
 
   const isPlacedInLeftNav = coreStart.uiSettings.get('home:useNewHomePage');
 
+  const shouldRenderIndicator =
+    status === TASK.RUN_RESULT.YELLOW.value || status === TASK.RUN_RESULT.RED.value;
+
   const overallStatusIndicator = (
     <EuiIcon
       style={{
@@ -65,7 +71,7 @@ export const HealthCheckNavButton = ({
         alignItems: 'center',
         justifyContent: 'center',
       }}
-      type="dot"
+      type="pulse"
       color={mapTaskStatusToHealthColor(status)}
       aria-hidden
     />
@@ -88,47 +94,89 @@ export const HealthCheckNavButton = ({
       {overallStatusIndicator}
     </EuiToolTip>
   );
+  const switchPopover = () => setPopoverOpen((prevState) => !prevState);
+
   const innerElement = isPlacedInLeftNav ? (
     <EuiButtonEmpty
       size="xs"
       flush="both"
       className="accountNavButton"
+      data-test-subj="healthcheckNavButton"
       aria-expanded={isPopoverOpen}
       aria-haspopup="true"
+      onClick={switchPopover}
     >
       {button}
     </EuiButtonEmpty>
   ) : (
-    button
+    <EuiHeaderSectionItemButton
+      size="l"
+      data-test-subj="healthcheckNavButton"
+      aria-expanded={isPopoverOpen}
+      aria-haspopup="true"
+      onClick={switchPopover}
+    >
+      {button}
+    </EuiHeaderSectionItemButton>
   );
 
   const contextMenuPanel = (
     <EuiContextMenuPanel>
-      <EuiText textAlign="center">
-        <h3>
-          <FormattedMessage
-            id="healthcheck.status.contextMenu"
-            defaultMessage="Health check status: "
-          />
-          <BadgeResults result={status} isEnabled={checks.some((check) => check.enabled)} />
-        </h3>
-
-        <span>
-          <FormattedMessage
-            id="healthcheck.status.goToHealthCheckApp"
-            defaultMessage="For more details, go to the {link}"
-            values={{
-              link: (
+      <OuiDescriptionList type="row" align="left">
+        {checks
+          .filter(
+            (check) =>
+              check.enabled &&
+              (check.result === TASK.RUN_RESULT.RED.value ||
+                check.result === TASK.RUN_RESULT.YELLOW.value)
+          )
+          .map((check) => {
+            const [category, name] = check.name.split(':');
+            return (
+              <OuiDescriptionListTitle key={check.name}>
+                <EuiToolTip position="left" title="Check result" content={check.error || ''}>
+                  <EuiHealth
+                    color={mapTaskStatusToHealthColor(check.result)}
+                    style={{ cursor: 'default' }}
+                  >
+                    <span style={{ whiteSpace: 'nowrap' }}>
+                      {category}: <b>{name}</b>
+                    </span>
+                  </EuiHealth>
+                </EuiToolTip>
+              </OuiDescriptionListTitle>
+            );
+          })}
+      </OuiDescriptionList>
+      <EuiHorizontalRule size="full" margin="s" />
+      <span>
+        <FormattedMessage
+          id="healthcheck.status.goToHealthCheckApp"
+          defaultMessage="For more details, go to the {link}"
+          values={{
+            link: (
+              // RedirectAppLinks turns the click into an SPA navigation and calls
+              // preventDefault when it does. Closing from outside of it therefore runs
+              // after the navigation, and only when it actually happened: modified
+              // clicks, which open a new tab, leave the popover open.
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
+              <span
+                onClick={(event) => {
+                  if (event.defaultPrevented) {
+                    setPopoverOpen(false);
+                  }
+                }}
+              >
                 <RedirectAppLinks application={core.application}>
                   <EuiLink href={getCore().application.getUrlForApp(PLUGIN_ID)}>
                     {PLUGIN_NAME}
                   </EuiLink>
                 </RedirectAppLinks>
-              ),
-            }}
-          />
-        </span>
-      </EuiText>
+              </span>
+            ),
+          }}
+        />
+      </span>
     </EuiContextMenuPanel>
   );
 
@@ -149,25 +197,9 @@ export const HealthCheckNavButton = ({
     </EuiPopover>
   );
 
-  const switchPopover = () => setPopoverOpen((prevState) => !prevState);
+  if (!shouldRenderIndicator) {
+    return null;
+  }
 
-  return (
-    <I18nProvider>
-      <div
-        // https://github.com/wazuh/wazuh-dashboard/pull/946#issuecomment-3381930040
-        role="button"
-        tabIndex={0}
-        onClick={switchPopover}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') switchPopover();
-        }}
-      >
-        {isPlacedInLeftNav ? (
-          popover
-        ) : (
-          <EuiHeaderSectionItemButton size="l">{popover}</EuiHeaderSectionItemButton>
-        )}
-      </div>
-    </I18nProvider>
-  );
+  return <I18nProvider>{popover}</I18nProvider>;
 };
