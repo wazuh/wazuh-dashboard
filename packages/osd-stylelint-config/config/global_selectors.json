@@ -29,11 +29,16 @@
       "src/plugins/explore/public/application/pages/metrics/promql_builder/promql_builder.scss",
       "src/plugins/chat/public/components/tool_result_renderer.scss",
       "src/plugins/explore/public/application/pages/logs/ppl_builder/ppl_builder.scss",
-      "src/plugins/explore/public/application/components/query_builder/query_builder.scss"
+      "src/plugins/explore/public/application/components/query_builder/query_builder.scss",
+      "src/core/public/overlays/sidecar/components/sidecar.scss"
     ]
   },
   "/\\.explore/": {
     "explanation": "\"explore\" prefix is preserved for Explore plugin",
-    "approved": ["src/plugins/explore/", "src/plugins/agent_traces/", "examples/expressions_example/public/index.scss"]
+    "approved": [
+      "src/plugins/explore/",
+      "src/plugins/agent_traces/",
+      "examples/expressions_example/public/index.scss"
+    ]
   }
 }

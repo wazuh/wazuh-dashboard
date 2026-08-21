@@ -96,6 +96,7 @@ export interface OverlaySidecarStart {
  */
 export interface OverlaySidecarOpenOptions {
   className?: string;
+  classNameButton?: string;
   'data-test-subj'?: string;
   config: ISidecarConfig;
 }
