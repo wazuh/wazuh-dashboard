@@ -329,3 +329,20 @@ jobs:
           aws s3 cp ${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
           s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
+
+      - name: Upload package to S3 internal repository
+        run: |
+          echo "Uploading package to internal repository"
+          artifact_path="${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+          aws s3 cp $artifact_path $bucket_path
+          echo "Artifact uploaded to S3: $bucket_path"
+
+      - name: Upload SHA512 to S3 internal repository
+        if: ${{ inputs.checksum }}
+        run: |
+          echo "Uploading checksum to internal repository"
+          artifact_path="${{ github.workspace }}/dev-tools/build-packages/output/${{ inputs.system }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}.sha512"
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}.sha512"
+          aws s3 cp $artifact_path $bucket_path
+          echo "Artifact uploaded to S3: $bucket_path"
