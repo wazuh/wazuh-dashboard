@@ -5,7 +5,7 @@
 # Validate input parameters
 if [ -z $1 ] || [ -z $2 ]
 then
-   echo usage: ./signoff-check.sh commit1 commit2
+   echo usage: ./signoff_check.sh commit1 commit2
    echo
    echo Checks all of the commits between commit1 \(exclusive\) and commit2 \(inclusive\)
    echo were made with the --signoff flag enabled
