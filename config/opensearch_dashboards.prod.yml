@@ -4,18 +4,27 @@ opensearch.hosts: https://localhost:9200
 opensearch.ssl.verificationMode: certificate
 #opensearch.username:
 #opensearch.password:
-opensearch.requestHeadersAllowlist: ["securitytenant","Authorization"]
+opensearch.requestHeadersAllowlist: ['securitytenant', 'Authorization']
 opensearch_security.multitenancy.enabled: false
-opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+opensearch_security.readonly_mode.roles: ['kibana_read_only']
 server.ssl.enabled: true
-server.ssl.key: "/etc/wazuh-dashboard/certs/dashboard-key.pem"
-server.ssl.certificate: "/etc/wazuh-dashboard/certs/dashboard.pem"
-opensearch.ssl.certificateAuthorities: ["/etc/wazuh-dashboard/certs/root-ca.pem"]
+server.ssl.key: '/etc/wazuh-dashboard/certs/dashboard-key.pem'
+server.ssl.certificate: '/etc/wazuh-dashboard/certs/dashboard.pem'
+opensearch.ssl.certificateAuthorities: ['/etc/wazuh-dashboard/certs/root-ca.pem']
 uiSettings.overrides.defaultRoute: /app/wz-home
 # Session expiration settings
 opensearch_security.cookie.ttl: 900000
 opensearch_security.session.ttl: 900000
 opensearch_security.session.keepalive: true
+
+# HTTP hardening
+# isSameSite applies to the platform session cookie (security_authentication)
+# and to the Wazuh server API cookies (wz-token, wz-user, wz-api).
+# Use None only when embedding the dashboard in a cross-origin iframe; None
+# requires HTTPS. The Secure flag is derived from the server protocol and needs
+# no setting here; set opensearch_security.cookie.secure explicitly only when a
+# reverse proxy terminates TLS in front of the dashboard.
+opensearch_security.cookie.isSameSite: Lax
 
 # Define the Wazuh server hosts
 wazuh_core.hosts:
