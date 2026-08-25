@@ -14,11 +14,12 @@
 
 ### Fixed
 
-| Issue                                                       | Comment                                                                                      |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [#1276](https://github.com/wazuh/wazuh-dashboard/pull/1276) | Fixed health check padding styles                                                            |
-| [#1285](https://github.com/wazuh/wazuh-dashboard/pull/1285) | Sanitized redirect path to prevent open redirect                                             |
-| [#1400](https://github.com/wazuh/wazuh-dashboard/pull/1400) | Prevent infinite remount loop when navigating from an app before its bundle finishes loading |
+| Issue                                                         | Comment                                                                                      |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [#1520](https://github.com/wazuh/wazuh-dashboard/issues/1520) | Set the session cookie `SameSite` policy in the default configuration file                   |
+| [#1276](https://github.com/wazuh/wazuh-dashboard/pull/1276)   | Fixed health check padding styles                                                            |
+| [#1285](https://github.com/wazuh/wazuh-dashboard/pull/1285)   | Sanitized redirect path to prevent open redirect                                             |
+| [#1400](https://github.com/wazuh/wazuh-dashboard/pull/1400)   | Prevent infinite remount loop when navigating from an app before its bundle finishes loading |
 
 ### Removed
 
