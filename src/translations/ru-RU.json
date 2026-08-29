@@ -297,6 +297,7 @@
     "core.ui.chrome.headerGlobalNav.viewRecentItemsTooltip": "Недавние",
     "core.ui.configure.label": "Настройка",
     "core.ui.customNavList.label": "Пользовательское",
+    "core.ui.dashboardManagementNavList.label": "Управление панелями",
     "core.ui.detect.label": "Обнаружение",
     "core.ui.EmptyRecentlyViewed": "Нет недавно просмотренных элементов",
     "core.ui.enterpriseSearchNavList.label": "Корпоративный поиск",
@@ -309,6 +310,7 @@
     "core.ui.errorUrlOverflow.optionsToFixError.enableOptionText.advancedSettingsLinkText": "Расширенные настройки",
     "core.ui.errorUrlOverflow.optionsToFixError.removeStuffFromDashboardText": "Упростите редактируемый объект, удалив содержимое или фильтры.",
     "core.ui.errorUrlOverflow.optionsToFixErrorDescription": "Что можно попробовать:",
+    "core.ui.exploreNavList.label": "Исследование",
     "core.ui.group.all.description": "Если неясно, с чего начать в OpenSearch, или нужны сценарии сразу из нескольких областей.",
     "core.ui.group.all.title": "Аналитика",
     "core.ui.group.dataAdministration.description": "Применение политик и средств защиты к данным.",
@@ -2637,6 +2639,11 @@
     "visualize.topNavMenu.shareVisualizationButtonLabel": "Поделиться",
     "visualize.visualizationLoadingFailedErrorMessage": "Не удалось загрузить визуализацию",
     "visualize.visualizeDescription": "Создавайте визуализации и агрегируйте данные в индексах OpenSearch.",
-    "visualize.visualizeListingDeleteErrorTitle": "Ошибка удаления визуализации"
+    "visualize.visualizeListingDeleteErrorTitle": "Ошибка удаления визуализации",
+    "core.ui.welcomeMessage": "Загрузка ...",
+    "core.ui.welcomeErrorMessage": "{applicationTitle} не загрузился. Проверьте вывод сервера для подробностей.",
+    "discover.applicationTitle": "Поиск",
+    "visualize.applicationTitle": "Визуализации",
+    "dashboard.applicationTitle": "Панели мониторинга"
   }
 }
