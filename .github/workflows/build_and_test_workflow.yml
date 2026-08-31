@@ -1,0 +1,935 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Build and test
+
+# trigger on every PR for all branches.
+on:
+  pull_request:
+    branches: ['**']
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.lycheeignore'
+      - 'CODEOWNERS'
+      - 'changelogs/fragments/**'
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  OSD_OPTIMIZER_THEMES: v8light
+  TEST_BROWSER_HEADLESS: 1
+  CI: 1
+  GCS_UPLOAD_PREFIX: fake
+  TEST_OPENSEARCH_DASHBOARDS_HOST: localhost
+  TEST_OPENSEARCH_DASHBOARDS_PORT: 6610
+  TEST_OPENSEARCH_TRANSPORT_PORT: 9403
+  TEST_OPENSEARCH_PORT: 9400
+  OSD_SNAPSHOT_SKIP_VERIFY_CHECKSUM: true
+  OSD_OPTIMIZER_MAX_WORKERS: 8
+  NODE_OPTIONS: '--max-old-space-size=8192 --max-semi-space-size=64 --dns-result-order=ipv4first'
+
+jobs:
+  prepare-source:
+    name: Prepare source and warm cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          filter: blob:none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      - name: Restore Yarn Cache
+        id: yarn-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-Linux-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: yarn-Linux-
+
+      # Only bootstrap + save on cache miss (yarn.lock changed).
+      # On cache hit, skip both — downstream jobs already have a warm cache.
+      - name: Run bootstrap
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Save Yarn Cache
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-Linux-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Create source archive
+        run: |
+          tar czf /tmp/source-archive.tar.gz \
+            --exclude='./.git' \
+            --exclude='./node_modules' \
+            --exclude='./src/plugins/*/node_modules' \
+            --exclude='./packages/*/node_modules' \
+            --exclude='./test/*/plugins/*/node_modules' \
+            --exclude='./examples/*/node_modules' \
+            --exclude='./cypress' \
+            --exclude='./data' \
+            --exclude='./.github' --exclude='./coverage' \
+            --exclude='./.opensearch' --exclude='./opensearch-build' \
+            --exclude='**/target' \
+            .
+          mv /tmp/source-archive.tar.gz .
+          ls -lh source-archive.tar.gz
+
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-archive
+          path: source-archive.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+  prepare-windows-cache:
+    name: Warm Windows yarn cache
+    needs: [prepare-source]
+    runs-on: windows-latest
+    timeout-minutes: 30
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Configure git's autocrlf
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Download source archive
+        uses: actions/download-artifact@v4
+        timeout-minutes: 5
+        with:
+          name: source-archive
+
+      - name: Extract source archive
+        shell: bash
+        run: |
+          tar xzf source-archive.tar.gz && rm source-archive.tar.gz
+          git init -q && git -c user.name=ci -c user.email=ci commit -q --allow-empty -m "source archive"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        shell: bash
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      - name: Restore Yarn Cache
+        id: yarn-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-Windows-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: yarn-Windows-
+
+      # Only bootstrap + save on cache miss (yarn.lock changed).
+      # On cache hit, downstream Windows jobs already have a warm cache.
+      - name: Run bootstrap
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Save Yarn Cache
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-Windows-${{ hashFiles('**/yarn.lock') }}
+
+  build-test:
+    name: Build and Verify on ${{ matrix.name }} (ciGroup${{ matrix.group }})
+    needs: [prepare-source, prepare-windows-cache]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        group: [1, 2, 3, 4]
+        include:
+          - os: ubuntu-latest
+            name: Linux
+          # - os: windows-latest
+          #   name: Windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    if: github.event.pull_request.draft == false
+    env:
+      # Override just OSD_OPTIMIZER_MAX_WORKERS for ciGroup1 because it contains a test that checks number of workers
+      OSD_OPTIMIZER_MAX_WORKERS: ${{ matrix.group != 1 && 8 || '' }}
+    steps:
+      - name: Configure git's autocrlf (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Configure pagefile size (Windows only)
+        if: matrix.os == 'windows-latest'
+        uses: al-cheb/configure-pagefile-action@v1.3
+        with:
+          minimum-size: 16GB
+          maximum-size: 64GB
+          disk-root: 'C:'
+
+      - name: Download source archive
+        uses: actions/download-artifact@v4
+        timeout-minutes: 5
+        with:
+          name: source-archive
+
+      - name: Extract source archive
+        shell: bash
+        run: |
+          tar xzf source-archive.tar.gz && rm source-archive.tar.gz
+          git init -q && git -c user.name=ci -c user.email=ci commit -q --allow-empty -m "source archive"
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        shell: bash
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      # Linux: restore-only (prepare-source handles the save)
+      - name: Restore Yarn Cache (Linux)
+        if: matrix.os != 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      # Windows: restore-only (prepare-windows-cache handles the save)
+      - name: Restore Yarn Cache (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      - name: Run bootstrap (Linux)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Run bootstrap (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      # Linux: include coverage for Codecov reporting.
+      # Windows: skip coverage to avoid ~2x overhead; Linux results are sufficient for coverage.
+      - name: Run unit tests group ${{ matrix.group }} with coverage (Linux)
+        if: matrix.os != 'windows-latest'
+        id: unit-tests
+        run: node scripts/jest --ci --colors --runInBand --coverage --ci-group=${{ matrix.group }}
+
+      - name: Run unit tests group ${{ matrix.group }} (Windows)
+        if: matrix.os == 'windows-latest'
+        id: unit-tests-windows
+        run: node scripts/jest --ci --colors --runInBand --ci-group=${{ matrix.group }}
+
+      - name: Run mocha tests with coverage
+        # ciGroup 1 of unit-tests is shorter
+        if: matrix.group == 1
+        id: mocha-tests
+        run: yarn test:mocha:coverage
+
+      - name: Upload Code Coverage
+        id: upload-code-coverage
+        if: matrix.os != 'windows-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./target/opensearch-dashboards-coverage
+          flags: ${{ matrix.name }}_${{ matrix.group }}
+
+      # Upload JUnit XML so the reports are accessible to humans and AI agents via
+      # `gh run download -n junit-jest-group<N>-<OS>`. Retention is 7 days (vs the
+      # default 1 day used for screenshot artifacts) to give teams time to triage.
+      - name: Upload JUnit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-jest-group${{ matrix.group }}-${{ matrix.name }}
+          path: target/junit/**/*.xml
+          retention-days: 7
+          if-no-files-found: ignore
+          overwrite: true
+
+      # Write a human- and AI-readable Markdown summary of any failing tests
+      # to the GitHub Actions step summary panel.
+      - name: Generate test failure summary
+        if: failure()
+        shell: bash
+        run: node scripts/summarize_jest_failures.js
+
+  build-plugins-artifact:
+    name: Build plugin bundles
+    needs: [prepare-source]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Download source archive
+        uses: actions/download-artifact@v4
+        timeout-minutes: 5
+        with:
+          name: source-archive
+
+      - name: Extract source archive
+        shell: bash
+        run: |
+          tar xzf source-archive.tar.gz && rm source-archive.tar.gz
+          git init -q && git -c user.name=ci -c user.email=ci commit -q --allow-empty -m "source archive"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      - name: Restore Yarn Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-Linux-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-Linux-
+
+      - name: Run bootstrap
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Build plugins
+        run: node scripts/build_opensearch_dashboards_platform_plugins --no-examples --workers 10
+
+      - name: Upload plugin bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-bundles
+          path: |
+            src/core/target/public
+            src/plugins/*/target/public
+            packages/*/target/public
+          retention-days: 1
+          if-no-files-found: error
+
+  integration-tests:
+    name: Run integration tests on ${{ matrix.name }}
+    needs: [prepare-source, prepare-windows-cache]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        include:
+          - os: ubuntu-latest
+            name: Linux
+          # - os: windows-latest
+          #   name: Windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    if: github.event.pull_request.draft == false
+    env:
+      # Unset OSD_OPTIMIZER_MAX_WORKERS so integration tests that check worker count
+      # see the value passed in code (maxWorkerCount: 1) rather than the CI override
+      OSD_OPTIMIZER_MAX_WORKERS: ''
+    steps:
+      - name: Configure git's autocrlf (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Configure pagefile size (Windows only)
+        if: matrix.os == 'windows-latest'
+        uses: al-cheb/configure-pagefile-action@v1.3
+        with:
+          minimum-size: 16GB
+          maximum-size: 64GB
+          disk-root: 'C:'
+
+      - name: Download source archive
+        uses: actions/download-artifact@v4
+        timeout-minutes: 5
+        with:
+          name: source-archive
+
+      - name: Extract source archive
+        shell: bash
+        run: |
+          tar xzf source-archive.tar.gz && rm source-archive.tar.gz
+          git init -q && git -c user.name=ci -c user.email=ci commit -q --allow-empty -m "source archive"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        shell: bash
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      # Linux: restore-only (prepare-source handles the save)
+      - name: Restore Yarn Cache (Linux)
+        if: matrix.os != 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      # Windows: restore-only (prepare-windows-cache handles the save)
+      - name: Restore Yarn Cache (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      - name: Run bootstrap (Linux)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Run bootstrap (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Run integration tests
+        shell: bash
+        run: yarn test:jest_integration:ci
+
+      - name: Upload JUnit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-jest-integration-${{ matrix.name }}
+          path: target/junit/**/*.xml
+          retention-days: 7
+          if-no-files-found: ignore
+          overwrite: true
+
+  lint-and-validate:
+    name: Lint and validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          filter: blob:none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      - name: Restore Yarn Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      - name: Run bootstrap
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Check for yarn.lock changes
+        run: |
+          if [[ `git status --porcelain yarn.lock` ]]; then
+            echo -e "\033[31mThe yarn.lock file is out of sync!\033[0m"
+            git diff
+            exit 1
+          fi
+
+      - name: Generate dev docs
+        run: yarn docs:generateDevDocs
+
+      - name: Check for dev docs changes
+        run: |
+          if [[ `git status --porcelain docs/_sidebar.md` ]]; then
+            echo -e "\033[31mThe dev docs are out of sync; run yarn docs:generateDevDocs and amend the PR.\033[0m"
+            git diff
+            exit 1
+          fi
+
+      - name: Run TypeScript error check
+        id: typeScript-error-check
+        run: yarn typecheck
+
+      - name: Run linter
+        id: linter
+        run: yarn lint
+
+      - name: Validate NOTICE file
+        id: notice-validate
+        run: yarn notice:validate
+
+      - name: Validate licenses
+        id: i18n-licenses
+        run: yarn checkLicenses
+
+      - name: Check i18n
+        id: i18n-check
+        run: yarn i18n:check
+
+  functional-tests:
+    name: Run functional tests on ${{ matrix.name }} (ciGroup${{ matrix.group }})
+    needs: [prepare-source, prepare-windows-cache, build-plugins-artifact]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        group: [1, 2, 4, 6, 7, 8, 10, 13, 14]
+        include:
+          - os: ubuntu-latest
+            name: Linux
+          # Wazuh: Remove Windows functional test
+          # - os: windows-latest
+          #   name: Windows
+          # exclude:
+          # Windows FTR coverage is provided by ciGroup1 (smoke test that OSD starts
+          # and serves on Windows) and the Windows build artifact job. ciGroup2-13
+          # run browser rendering tests which are platform-agnostic and fully covered
+          # by Linux FTR. Removing them saves ~13 Windows jobs (~6-57 min each) per run.
+          # - { os: windows-latest, group: 2 }
+          # - { os: windows-latest, group: 3 }
+          # - { os: windows-latest, group: 4 }
+          # - { os: windows-latest, group: 5 }
+          # - { os: windows-latest, group: 6 }
+          # - { os: windows-latest, group: 7 }
+          # - { os: windows-latest, group: 8 }
+          # - { os: windows-latest, group: 9 }
+          # - { os: windows-latest, group: 10 }
+          # - { os: windows-latest, group: 11 }
+          # - { os: windows-latest, group: 12 }
+          # - { os: windows-latest, group: 13 }
+          # - { os: windows-latest, group: 14 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    if: github.event.pull_request.draft == false
+    steps:
+      - run: echo Running functional tests for ciGroup${{ matrix.group }}
+
+      - name: Configure git's autocrlf (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Configure pagefile size (Windows only)
+        if: matrix.os == 'windows-latest'
+        uses: al-cheb/configure-pagefile-action@v1.3
+        with:
+          minimum-size: 16GB
+          maximum-size: 64GB
+          disk-root: 'C:'
+
+      - name: Download source archive
+        uses: actions/download-artifact@v4
+        timeout-minutes: 5
+        with:
+          name: source-archive
+
+      - name: Extract source archive
+        shell: bash
+        run: |
+          tar xzf source-archive.tar.gz && rm source-archive.tar.gz
+          git init -q && git -c user.name=ci -c user.email=ci commit -q --allow-empty -m "source archive"
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        shell: bash
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      # Linux: restore-only (prepare-source handles the save)
+      - name: Restore Yarn Cache (Linux)
+        if: matrix.os != 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      # Windows: restore-only (prepare-windows-cache handles the save)
+      - name: Restore Yarn Cache (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      # Lock Chrome version until ChromeDriver's release pipeline is fixed
+      - name: Download Chrome
+        id: download-chrome
+        uses: abhi1693/setup-browser@v0.3.5
+        with:
+          browser: chrome
+          # v122
+          version: 1250586
+
+      - name: Setup Chrome (Linux)
+        if: matrix.os != 'windows-latest'
+        run: |
+          sudo rm -rf /usr/bin/google-chrome /opt/google/chrome
+          sudo ln -s ${{steps.download-chrome.outputs.path}}/${{steps.download-chrome.outputs.binary}} /usr/bin/google-chrome
+
+      - name: Setup Chrome (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          New-Item -Force -Type Directory "$Env:Programfiles/Google/Chrome/Application"
+          Remove-Item -Recurse -Force "$Env:Programfiles/Google/Chrome/Application/*"
+          Copy-Item -Force -Recurse "${{steps.download-chrome.outputs.path}}/*" "$Env:Programfiles/Google/Chrome/Application"
+
+      - name: Setup chromedriver
+        run: node scripts/upgrade_chromedriver.js
+
+      - name: Run bootstrap (Linux)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Run bootstrap (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Download plugin bundles
+        uses: actions/download-artifact@v4
+        timeout-minutes: 5
+        with:
+          name: plugin-bundles
+
+      - name: Run CI test group ${{ matrix.group }}
+        id: ftr-tests
+        run: node scripts/functional_tests.js --config test/functional/config.js --include ciGroup${{ matrix.group }}
+        env:
+          CI_GROUP: ciGroup${{ matrix.group }}
+          CI_PARALLEL_PROCESS_NUMBER: ciGroup${{ matrix.group }}
+          JOB: ci${{ matrix.group }}
+          CACHE_DIR: ciGroup${{ matrix.group }}
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failure-artifacts-ci${{ matrix.group }}
+          path: |
+            test/*/failure_debug/
+            test/*/screenshots/
+          overwrite: true
+
+  plugin-functional-tests:
+    name: Run plugin functional tests on ${{ matrix.name }}
+    needs: [prepare-source, prepare-windows-cache]
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        include:
+          - os: ubuntu-latest
+            name: Linux
+          # - os: windows-latest
+          #   name: Windows
+    runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
+    steps:
+      - run: echo Running plugin functional tests
+
+      - name: Configure git's autocrlf (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Configure pagefile size (Windows only)
+        if: matrix.os == 'windows-latest'
+        uses: al-cheb/configure-pagefile-action@v1.3
+        with:
+          minimum-size: 16GB
+          maximum-size: 64GB
+          disk-root: 'C:'
+
+      - name: Download source archive
+        uses: actions/download-artifact@v4
+        timeout-minutes: 5
+        with:
+          name: source-archive
+
+      - name: Extract source archive
+        shell: bash
+        run: |
+          tar xzf source-archive.tar.gz && rm source-archive.tar.gz
+          git init -q && git -c user.name=ci -c user.email=ci commit -q --allow-empty -m "source archive"
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Yarn
+        run: |
+          npm uninstall -g yarn
+          npm i -g yarn@1.22.10
+          yarn config set network-timeout 1000000 -g
+
+      - name: Configure Yarn Cache
+        shell: bash
+        run: echo "YARN_CACHE_LOCATION=$(yarn cache dir)" >> $GITHUB_ENV
+
+      # Linux: restore-only (prepare-source handles the save)
+      - name: Restore Yarn Cache (Linux)
+        if: matrix.os != 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      # Windows: restore-only (prepare-windows-cache handles the save)
+      - name: Restore Yarn Cache (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.YARN_CACHE_LOCATION }}
+          key: yarn-${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}-
+
+      # Lock Chrome version until ChromeDriver's release pipeline is fixed
+      - name: Download Chrome
+        id: download-chrome
+        uses: abhi1693/setup-browser@v0.3.5
+        with:
+          browser: chrome
+          # v122
+          version: 1250586
+
+      - name: Setup Chrome (Linux)
+        if: matrix.os != 'windows-latest'
+        run: |
+          sudo rm -rf /usr/bin/google-chrome /opt/google/chrome
+          sudo ln -s ${{steps.download-chrome.outputs.path}}/${{steps.download-chrome.outputs.binary}} /usr/bin/google-chrome
+
+      - name: Setup Chrome (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          New-Item -Force -Type Directory "$Env:Programfiles/Google/Chrome/Application"
+          Remove-Item -Recurse -Force "$Env:Programfiles/Google/Chrome/Application/*"
+          Copy-Item -Force -Recurse "${{steps.download-chrome.outputs.path}}/*" "$Env:Programfiles/Google/Chrome/Application"
+
+      - name: Setup chromedriver
+        run: node scripts/upgrade_chromedriver.js
+
+      - name: Run bootstrap (Linux)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Run bootstrap (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            yarn osd bootstrap && exit 0
+            echo "Bootstrap attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          exit 1
+
+      - name: Build plugins
+        run: node scripts/build_opensearch_dashboards_platform_plugins --no-examples --workers 10 --scan-dir "./test/plugin_functional/plugins"
+
+      - name: Run functional plugin tests
+        id: plugin-ftr-tests
+        run: node scripts/functional_tests.js --config test/plugin_functional/config.ts
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failure-artifacts-plugin-functional-${{ matrix.os }}
+          path: |
+            test/*/failure_debug/
+            test/*/screenshots/
+          overwrite: true

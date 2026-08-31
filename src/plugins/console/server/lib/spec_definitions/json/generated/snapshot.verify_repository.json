@@ -1,0 +1,15 @@
+{
+  "snapshot.verify_repository": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "timeout": ""
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "_snapshot/{repository}/_verify"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/snapshots/verify-snapshot-repository/"
+  }
+}

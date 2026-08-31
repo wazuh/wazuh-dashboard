@@ -1,0 +1,197 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import { omit } from 'lodash';
+import { DiscoveredPlugin } from '../../server';
+import { PluginOpaqueId, PackageInfo, EnvironmentMode } from '../../server/types';
+import { CoreContext } from '../core_system';
+import { PluginWrapper } from './plugin';
+import { PluginsServiceSetupDeps, PluginsServiceStartDeps } from './plugins_service';
+import { CoreSetup, CoreStart } from '../';
+
+/**
+ * The available core services passed to a `PluginInitializer`
+ *
+ * @public
+ */
+export interface PluginInitializerContext<ConfigSchema extends object = object> {
+  /**
+   * A symbol used to identify this plugin in the system. Needed when registering handlers or context providers.
+   */
+  readonly opaqueId: PluginOpaqueId;
+  readonly env: {
+    mode: Readonly<EnvironmentMode>;
+    packageInfo: Readonly<PackageInfo>;
+  };
+  readonly config: {
+    get: <T extends object = ConfigSchema>() => T;
+  };
+}
+
+/**
+ * Provides a plugin-specific context passed to the plugin's construtor. This is currently
+ * empty but should provide static services in the future, such as config and logging.
+ *
+ * @param coreContext
+ * @param opaqueId
+ * @param pluginManifest
+ * @param pluginConfig
+ * @internal
+ */
+export function createPluginInitializerContext(
+  coreContext: CoreContext,
+  opaqueId: PluginOpaqueId,
+  pluginManifest: DiscoveredPlugin,
+  pluginConfig: {
+    [key: string]: unknown;
+  }
+): PluginInitializerContext {
+  return {
+    opaqueId,
+    env: coreContext.env,
+    config: {
+      get<T>() {
+        return (pluginConfig as unknown) as T;
+      },
+    },
+  };
+}
+
+/**
+ * Provides a plugin-specific context passed to the plugin's `setup` lifecycle event. Currently
+ * this returns a shallow copy the service setup contracts, but in the future could provide
+ * plugin-scoped versions of the service.
+ *
+ * @param coreContext
+ * @param deps
+ * @param plugin
+ * @internal
+ */
+export function createPluginSetupContext<
+  TSetup,
+  TStart,
+  TPluginsSetup extends object,
+  TPluginsStart extends object
+>(
+  coreContext: CoreContext,
+  deps: PluginsServiceSetupDeps,
+  plugin: PluginWrapper<TSetup, TStart, TPluginsSetup, TPluginsStart>
+): CoreSetup {
+  return {
+    application: {
+      register: (app) => deps.application.register(plugin.opaqueId, app),
+      registerAppUpdater: (statusUpdater$) => deps.application.registerAppUpdater(statusUpdater$),
+      registerMountContext: (contextName, provider) =>
+        deps.application.registerMountContext(plugin.opaqueId, contextName, provider),
+    },
+    chrome: deps.chrome,
+    context: deps.context,
+    fatalErrors: deps.fatalErrors,
+    http: deps.http,
+    notifications: deps.notifications,
+    uiSettings: deps.uiSettings,
+    injectedMetadata: {
+      getInjectedVar: deps.injectedMetadata.getInjectedVar,
+      getBranding: deps.injectedMetadata.getBranding,
+      getWazuhBuildInfo: deps.injectedMetadata.getWazuhBuildInfo,
+    },
+    getStartServices: () => plugin.startDependencies,
+    workspaces: deps.workspaces,
+    keyboardShortcut: deps.keyboardShortcut,
+    chat: deps.chat,
+    telemetry: deps.telemetry,
+    // Wazuh
+    healthCheck: deps.healthCheck,
+  };
+}
+
+/**
+ * Provides a plugin-specific context passed to the plugin's `start` lifecycle event. Currently
+ * this returns a shallow copy the service start contracts, but in the future could provide
+ * plugin-scoped versions of the service.
+ *
+ * @param coreContext
+ * @param deps
+ * @param plugin
+ * @internal
+ */
+export function createPluginStartContext<
+  TSetup,
+  TStart,
+  TPluginsSetup extends object,
+  TPluginsStart extends object
+>(
+  coreContext: CoreContext,
+  deps: PluginsServiceStartDeps,
+  plugin: PluginWrapper<TSetup, TStart, TPluginsSetup, TPluginsStart>
+): CoreStart {
+  return {
+    application: {
+      applications$: deps.application.applications$,
+      currentAppId$: deps.application.currentAppId$,
+      capabilities: deps.application.capabilities,
+      navigateToApp: deps.application.navigateToApp,
+      navigateToUrl: deps.application.navigateToUrl,
+      getUrlForApp: deps.application.getUrlForApp,
+      setAppLeftControls: deps.application.setAppLeftControls,
+      setAppCenterControls: deps.application.setAppCenterControls,
+      setAppRightControls: deps.application.setAppRightControls,
+      setAppBadgeControls: deps.application.setAppBadgeControls,
+      setAppDescriptionControls: deps.application.setAppDescriptionControls,
+      setAppBottomControls: deps.application.setAppBottomControls,
+      registerMountContext: (contextName, provider) =>
+        deps.application.registerMountContext(plugin.opaqueId, contextName, provider),
+    },
+    docLinks: deps.docLinks,
+    http: deps.http,
+    chrome: omit(deps.chrome, 'getComponent'),
+    i18n: deps.i18n,
+    notifications: deps.notifications,
+    overlays: deps.overlays,
+    uiSettings: deps.uiSettings,
+    savedObjects: deps.savedObjects,
+    injectedMetadata: {
+      getInjectedVar: deps.injectedMetadata.getInjectedVar,
+      getBranding: deps.injectedMetadata.getBranding,
+      getWazuhBuildInfo: deps.injectedMetadata.getWazuhBuildInfo,
+    },
+    fatalErrors: deps.fatalErrors,
+    workspaces: deps.workspaces,
+    keyboardShortcut: deps.keyboardShortcut,
+    chat: deps.chat,
+    telemetry: {
+      isEnabled: () => deps.telemetry.isEnabled(),
+      // Auto-inject plugin name - plugins don't need to pass pluginId
+      getPluginRecorder: () => deps.telemetry.getPluginRecorder(plugin.name),
+    },
+    // Wazuh
+    healthCheck: deps.healthCheck,
+  };
+}

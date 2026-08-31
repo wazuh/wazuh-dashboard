@@ -1,0 +1,16 @@
+{
+  "cluster.put_settings": {
+    "url_params": {
+      "flat_settings": "__flag__",
+      "cluster_manager_timeout": "",
+      "timeout": ""
+    },
+    "methods": [
+      "PUT"
+    ],
+    "patterns": [
+      "_cluster/settings"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/cluster-api/cluster-settings/"
+  }
+}

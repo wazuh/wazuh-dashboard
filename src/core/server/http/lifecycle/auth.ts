@@ -1,0 +1,234 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import { Lifecycle, Request, ResponseToolkit } from '@hapi/hapi';
+import { Logger } from '../../logging';
+import {
+  HapiResponseAdapter,
+  OpenSearchDashboardsRequest,
+  IOpenSearchDashboardsResponse,
+  lifecycleResponseFactory,
+  LifecycleResponseFactory,
+  isOpenSearchDashboardsResponse,
+  ResponseHeaders,
+} from '../router';
+
+/** @public */
+export enum AuthResultType {
+  authenticated = 'authenticated',
+  notHandled = 'notHandled',
+  redirected = 'redirected',
+}
+
+/** @public */
+export interface Authenticated extends AuthResultParams {
+  type: AuthResultType.authenticated;
+}
+
+/** @public */
+export interface AuthNotHandled {
+  type: AuthResultType.notHandled;
+}
+
+/** @public */
+export interface AuthRedirected extends AuthRedirectedParams {
+  type: AuthResultType.redirected;
+}
+
+/** @public */
+export type AuthResult = Authenticated | AuthNotHandled | AuthRedirected;
+
+const authResult = {
+  authenticated(data: AuthResultParams = {}): AuthResult {
+    return {
+      type: AuthResultType.authenticated,
+      state: data.state,
+      requestHeaders: data.requestHeaders,
+      responseHeaders: data.responseHeaders,
+    };
+  },
+  notHandled(): AuthResult {
+    return {
+      type: AuthResultType.notHandled,
+    };
+  },
+  redirected(headers: { location: string } & ResponseHeaders): AuthResult {
+    return {
+      type: AuthResultType.redirected,
+      headers,
+    };
+  },
+  isAuthenticated(result: AuthResult): result is Authenticated {
+    return result?.type === AuthResultType.authenticated;
+  },
+  isNotHandled(result: AuthResult): result is AuthNotHandled {
+    return result?.type === AuthResultType.notHandled;
+  },
+  isRedirected(result: AuthResult): result is AuthRedirected {
+    return result?.type === AuthResultType.redirected;
+  },
+};
+
+/**
+ * Auth Headers map
+ * @public
+ */
+
+export type AuthHeaders = Record<string, string | string[]>;
+
+/**
+ * Result of successful authentication.
+ * @public
+ */
+export interface AuthResultParams {
+  /**
+   * Data to associate with an incoming request. Any downstream plugin may get access to the data.
+   */
+  state?: Record<string, any>;
+  /**
+   * Auth specific headers to attach to a request object.
+   * Used to perform a request to  on behalf of an authenticated user.
+   */
+  requestHeaders?: AuthHeaders;
+  /**
+   * Auth specific headers to attach to a response object.
+   * Used to send back authentication mechanism related headers to a client when needed.
+   */
+  responseHeaders?: AuthHeaders;
+}
+
+/**
+ * Result of auth redirection.
+ * @public
+ */
+export interface AuthRedirectedParams {
+  /**
+   * Headers to attach for auth redirect.
+   * Must include "location" header
+   */
+  headers: { location: string } & ResponseHeaders;
+}
+
+/**
+ * @public
+ * A tool set defining an outcome of Auth interceptor for incoming request.
+ */
+export interface AuthToolkit {
+  /** Authentication is successful with given credentials, allow request to pass through */
+  authenticated: (data?: AuthResultParams) => AuthResult;
+  /**
+   * User has no credentials.
+   * Allows user to access a resource when authRequired: 'optional'
+   * Rejects a request when authRequired: true
+   * */
+  notHandled: () => AuthResult;
+  /**
+   * Redirects user to another location to complete authentication when authRequired: true
+   * Allows user to access a resource without redirection when authRequired: 'optional'
+   * */
+  redirected: (headers: { location: string } & ResponseHeaders) => AuthResult;
+}
+
+const toolkit: AuthToolkit = {
+  authenticated: authResult.authenticated,
+  notHandled: authResult.notHandled,
+  redirected: authResult.redirected,
+};
+
+/**
+ * See {@link AuthToolkit}.
+ * @public
+ */
+export type AuthenticationHandler = (
+  request: OpenSearchDashboardsRequest,
+  response: LifecycleResponseFactory,
+  toolkit: AuthToolkit
+) =>
+  | AuthResult
+  | IOpenSearchDashboardsResponse
+  | Promise<AuthResult | IOpenSearchDashboardsResponse>;
+
+/** @public */
+export function adoptToHapiAuthFormat(
+  fn: AuthenticationHandler,
+  log: Logger,
+  onAuth: (request: Request, data: AuthResultParams) => void = () => undefined
+) {
+  return async function interceptAuth(
+    request: Request,
+    responseToolkit: ResponseToolkit
+  ): Promise<Lifecycle.ReturnValue> {
+    const hapiResponseAdapter = new HapiResponseAdapter(responseToolkit);
+    const opensearchDashboardsRequest = OpenSearchDashboardsRequest.from(request, undefined, false);
+
+    try {
+      const result = await fn(opensearchDashboardsRequest, lifecycleResponseFactory, toolkit);
+
+      if (isOpenSearchDashboardsResponse(result)) {
+        return hapiResponseAdapter.handle(result);
+      }
+
+      if (authResult.isAuthenticated(result)) {
+        onAuth(request, {
+          state: result.state,
+          requestHeaders: result.requestHeaders,
+          responseHeaders: result.responseHeaders,
+        });
+        return responseToolkit.authenticated({ credentials: result.state || {} });
+      }
+
+      if (authResult.isRedirected(result)) {
+        // we cannot redirect a user when resources with optional auth requested
+        if (opensearchDashboardsRequest.route.options.authRequired === 'optional') {
+          return responseToolkit.continue;
+        }
+
+        return hapiResponseAdapter.handle(
+          lifecycleResponseFactory.redirected({
+            headers: result.headers,
+          })
+        );
+      }
+
+      if (authResult.isNotHandled(result)) {
+        if (opensearchDashboardsRequest.route.options.authRequired === 'optional') {
+          return responseToolkit.continue;
+        }
+        return hapiResponseAdapter.handle(lifecycleResponseFactory.unauthorized());
+      }
+      throw new Error(
+        `Unexpected result from Authenticate. Expected AuthResult or OpenSearchDashboardsResponse, but given: ${result}.`
+      );
+    } catch (error) {
+      log.error(error);
+      return hapiResponseAdapter.toInternalError();
+    }
+  };
+}

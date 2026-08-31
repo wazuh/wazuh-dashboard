@@ -1,0 +1,79 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ImportTypeSelector should render 1`] = `
+<div>
+  <fieldset>
+    <legend
+      class="euiFormLegend"
+    >
+      <span
+        class="euiTitle euiTitle--xsmall"
+      >
+        Import type
+      </span>
+    </legend>
+    <fieldset
+      class="euiButtonGroup euiButtonGroup--medium euiButtonGroup--text euiButtonGroup--fullWidth"
+    >
+      <legend
+        class="euiScreenReaderOnly"
+      >
+        Import type
+      </legend>
+      <div
+        class="euiButtonGroup__buttons"
+      >
+        <label
+          class="euiButtonGroupButton euiButtonGroupButton--text euiButtonGroupButton--fill euiButtonGroupButton-isSelected"
+          for="generated-id"
+        >
+          <span
+            class="euiButtonContent euiButton__content"
+          >
+            <span
+              class="euiButton__text euiButtonGroupButton__textShift"
+              data-text="Upload"
+              title="Upload"
+            >
+              <input
+                checked=""
+                class="euiScreenReaderOnly"
+                data-test-subj="file"
+                id="generated-id"
+                name="generated-id"
+                type="radio"
+                value=""
+              />
+              Upload
+            </span>
+          </span>
+        </label>
+        <label
+          class="euiButtonGroupButton euiButtonGroupButton--text"
+          for="generated-id"
+        >
+          <span
+            class="euiButtonContent euiButton__content"
+          >
+            <span
+              class="euiButton__text euiButtonGroupButton__textShift"
+              data-text="Text"
+              title="Text"
+            >
+              <input
+                class="euiScreenReaderOnly"
+                data-test-subj="text"
+                id="generated-id"
+                name="generated-id"
+                type="radio"
+                value=""
+              />
+              Text
+            </span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
+  </fieldset>
+</div>
+`;

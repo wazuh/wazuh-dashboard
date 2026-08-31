@@ -1,0 +1,21 @@
+{
+  "id": "visTypeVega",
+  "version": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "requiredPlugins": [
+    "data",
+    "visualizations",
+    "mapsLegacy",
+    "expressions",
+    "inspector",
+    "uiActions"
+  ],
+  "optionalPlugins": ["home", "usageCollection", "dataSource"],
+  "requiredBundles": [
+    "opensearchDashboardsUtils",
+    "opensearchDashboardsReact",
+    "visDefaultEditor",
+    "visAugmenter"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "dashboard",
+  "version": "opensearchDashboards",
+  "requiredPlugins": [
+    "data",
+    "embeddable",
+    "inspector",
+    "opensearchDashboardsLegacy",
+    "urlForwarding",
+    "navigation",
+    "uiActions",
+    "savedObjects"
+  ],
+  "optionalPlugins": ["home", "share", "usageCollection"],
+  "server": true,
+  "ui": true,
+  "requiredBundles": ["opensearchDashboardsUtils", "opensearchDashboardsReact", "home"]
+}

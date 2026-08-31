@@ -1,0 +1,19 @@
+{
+  "id": "dataExplorer",
+  "version": "1.0.0",
+  "opensearchDashboardsVersion": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "requiredPlugins": [
+    "data",
+    "navigation",
+    "embeddable",
+    "expressions",
+    "usageCollection"
+  ],
+  "optionalPlugins": [],
+  "requiredBundles": [
+    "opensearchDashboardsReact",
+    "opensearchDashboardsUtils"
+  ]
+}

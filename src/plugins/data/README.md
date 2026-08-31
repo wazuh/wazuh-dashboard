@@ -1,0 +1,238 @@
+# data
+
+The data plugin provides common data access services, such as `search` and `query`, for solutions and application developers.
+
+## Autocomplete
+
+The autocomplete service provides suggestions for field names and values.
+
+It is wired into the `TopNavMenu` component, but can be used independently.
+
+### Fetch Query Suggestions
+
+The `getQuerySuggestions` function helps to construct a query. 
+
+```.ts
+
+    // `inputValue` is the user input
+    const querySuggestions = await autocomplete.getQuerySuggestions({
+        language: 'kuery',
+        indexPatterns: [indexPattern],
+        query: inputValue,
+    });
+
+```
+
+### Fetch Value Suggestions
+
+The `getValueSuggestions` function returns suggestions for field values.
+This is helpful when you want to provide a user with options, for example when constructing a filter. 
+
+```.ts
+
+    // `inputValue` is the user input
+    const valueSuggestions = await autocomplete.getValueSuggestions({
+      indexPattern,
+      field,
+      query: inputValue,
+    });
+
+```
+
+## Field Formats
+
+Coming soon.
+
+## Index Patterns
+
+Coming soon.
+
+## Query
+
+The query service is responsible for managing the configuration of a search query (`QueryState`): filters, time range, query string, and settings such as the auto refresh behavior and saved queries.
+
+It contains sub-services for each of those configurations:
+ - `data.query.filterManager` - Manages the `filters` component of a `QueryState`. The global filter state (filters that are persisted between applications) are owned by this service.
+ - `data.query.timefilter` - Responsible for the time range filter and the auto refresh behavior settings.
+ - `data.query.queryString` - Responsible for the query string and query language settings.
+ - `data.query.savedQueries` - Responsible for persisting a `QueryState` into a `SavedObject`, so it can be restored and used by other applications.
+
+ Any changes to the `QueryState` are published on the `data.query.state$`, which is useful when wanting to persist global state or run a search upon data changes.
+
+ A simple use case is:
+
+ ```.ts
+ function searchOnChange(indexPattern: IndexPattern, aggConfigs: AggConfigs) {
+    data.query.state$.subscribe(() => {
+
+        // Constuct the query portion of the search request
+        const query = data.query.getOpenSearchQuery(indexPattern);
+        
+        // Construct a request
+        const request = {
+            params: {
+                index: indexPattern.title,
+                body: {
+                    aggs: aggConfigs.toDsl(),
+                    query,
+                },
+            },
+        };
+
+        // Search with the `data.query` config
+        const search$ = data.search.search(request);
+
+        ...
+    });
+ }
+
+ ```
+
+## Search
+
+Provides access to OpenSearch using the high-level `SearchSource` API or low-level `Search Strategies`.
+
+### SearchSource
+
+The `SearchSource` API is a convenient way to construct and run an OpenSearch search query.
+
+```.tsx
+
+    const searchSource = await data.search.searchSource.create();
+    const searchResponse = await searchSource
+      .setParent(undefined)
+      .setField('index', indexPattern)
+      .setField('filter', filters)
+      .fetch();
+
+```
+
+### Low-level search
+
+#### Default Search Strategy
+
+One benefit of using the low-level search API is that it allows for a better and more responsive user experience with partial responses.
+In OSS only the final result is returned. 
+
+```.ts
+    import { isCompleteResponse } from '../plugins/data/public';
+
+    const search$ = data.search.search(request)
+        .subscribe({
+        next: (response) => {
+            if (isCompleteResponse(response)) {
+                // Final result
+                search$.unsubscribe();
+            } else {
+                // Partial result - you can update the UI, but data is still loading
+            }
+        },
+        error: (e: Error) => {
+            // Show customized toast notifications. 
+            // You may choose to handle errors differently if you prefer. 
+            data.search.showError(e);
+        },
+    });
+```
+
+## Correlations
+
+The correlations service provides functionality for managing relationships between different datasets in OpenSearch Dashboards. Correlations enable users to establish and track connections between various data sources like traces, logs, metrics, and other observability data.
+
+### Correlation Saved Object Type
+
+Correlations are stored as saved objects with the type `correlations`. Each correlation object defines relationships between multiple datasets and includes metadata about how they are connected.
+
+#### Sample Correlation Object
+
+```,json
+{
+  "id": "trace-to-logs-correlation-5678",
+  "type": "correlations",
+  "migrationVersion": "1.0.0",
+  "updatedAt": "2025-07-16T10:15:30.000Z",
+  "attributes": {
+    "correlationType": "trace-to-logs-ss4o_traces-nginx-*",
+    "entities": [
+      {
+        "tracesDataset": {
+          "id": "references[0].id"
+        }
+      },
+      {
+        "logsDataset": {
+          "id": "references[1].id",
+          "meta": {
+            "logServiceNameField": "service.name",
+            "logSpanIdField": "span_id",
+            "logTraceIdField": "trace_id",
+            "timestamp": "@timestamp"
+          }
+        }
+      },
+      {
+        "pluginDataConnection": {
+          "id": "references[2].id"
+        }
+      }
+    ]
+  },
+  "references": [
+    {
+      "name": "entities[0].index",
+      "type": "index-pattern",
+      "id": "6ff30050-72ec-11f0-b9fd-951b6e375a38"
+    },
+    {
+      "name": "entities[1].index",
+      "type": "index-pattern",
+      "id": "72048c50-731a-11f0-8fdf-87b448b7eb0b"
+    },
+    {
+      "name": "pluginDataConnection",
+      "type": "data-connection",
+      "id": "1234567890"
+    }
+  ]
+}
+```
+
+### Basic Usage
+
+#### Finding Correlations by Dataset
+
+Example to find dataset, can be extended to other CRUD operations via saved object apis
+
+```,ts
+async function findCorrelationsByDataset(
+  savedObjectsClient: SavedObjectsClientContract,
+  datasetId: string,
+  size: number = 10
+) {
+  try {
+    const allCorrelationsResponse = await savedObjectsClient.find({
+      type: 'correlations',
+      fields: ['correlations', 'references'],
+      perPage: size,
+    });
+
+    const filteredCorrelations = allCorrelationsResponse.savedObjects.filter((correlation) => {
+      const correlationAttrs = correlation.attributes as CorrelationAttributes;
+      const hasReference = correlation.references?.some((ref) => ref.id === datasetId);
+      const hasEntityReference = correlationAttrs?.correlations?.entities?.some(
+        (entity: { id: string }) => entity.id === datasetId
+      );
+      
+      return hasReference || hasEntityReference;
+    });
+
+    return {
+      ...allCorrelationsResponse,
+      savedObjects: filteredCorrelations
+    };
+  } catch (error) {
+    console.error('Failed to find correlations:', error);
+    throw error;
+  }
+}
+```

@@ -1,0 +1,16 @@
+{
+  "ingest.simulate": {
+    "url_params": {
+      "verbose": "__flag__"
+    },
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "patterns": [
+      "_ingest/pipeline/_simulate",
+      "_ingest/pipeline/{id}/_simulate"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/ingest-apis/simulate-ingest/"
+  }
+}

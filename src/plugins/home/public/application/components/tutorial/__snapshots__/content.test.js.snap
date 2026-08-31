@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render content with markdown 1`] = `
+<Markdown
+  allowListedRules={
+    Array [
+      "backticks",
+      "emphasis",
+      "link",
+      "list",
+    ]
+  }
+  className="euiText"
+  markdown="I am *some* [content](https://en.wikipedia.org/wiki/Content) with \`markdown\`"
+  openLinksInNewTab={true}
+  whiteListedRules={
+    Array [
+      "backticks",
+      "emphasis",
+      "link",
+      "list",
+    ]
+  }
+/>
+`;

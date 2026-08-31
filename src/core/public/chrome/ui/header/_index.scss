@@ -1,0 +1,26 @@
+:not(.headerIsExpanded):not(.headerIsDense) {
+  @include euiHeaderAffordForFixed($osdHeaderOffset);
+}
+
+.headerIsExpanded {
+  @include euiHeaderAffordForFixed($osdHeaderOffsetExpanded);
+}
+
+.headerGlobalNav .euiHeaderSectionItem:empty {
+  min-width: 0;
+}
+
+.chrHeaderHelpMenu__version {
+  text-transform: none;
+}
+
+.chrHeaderBadge__wrapper {
+  align-self: center;
+  margin-right: $euiSize;
+}
+
+.header__toggleNavButtonSection {
+  .euiBody--collapsibleNavIsDocked & {
+    display: none;
+  }
+}

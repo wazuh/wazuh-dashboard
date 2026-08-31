@@ -1,0 +1,82 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AddData render 1`] = `
+<section
+  aria-labelledby="osdOverviewDataAdd__title"
+  className="osdOverviewDataAdd"
+>
+  <EuiFlexGroup
+    alignItems="center"
+  >
+    <EuiFlexItem
+      grow={1}
+    >
+      <EuiTitle
+        size="s"
+      >
+        <h2
+          id="osdOverviewDataAdd__title"
+        >
+          <FormattedMessage
+            defaultMessage="Ingest your data"
+            id="opensearchDashboardsOverview.addData.sectionTitle"
+            values={Object {}}
+          />
+        </h2>
+      </EuiTitle>
+    </EuiFlexItem>
+  </EuiFlexGroup>
+  <EuiSpacer
+    size="m"
+  />
+  <EuiFlexGroup
+    className="osdOverviewDataAdd__content"
+  >
+    <EuiFlexItem
+      key="home_tutorial_directory"
+    >
+      <RedirectAppLinks>
+        <Synopsis
+          description="Get started with sample data, visualizations, and dashboards."
+          iconType="indexOpen"
+          id="home_tutorial_directory"
+          isBeta={false}
+          title="Ingest data"
+          url="/app/home#/tutorial_directory"
+          wrapInPanel={true}
+        />
+      </RedirectAppLinks>
+    </EuiFlexItem>
+    <EuiFlexItem
+      key="ingestManager"
+    >
+      <RedirectAppLinks>
+        <Synopsis
+          description="Add and manage your fleet of Elastic Agents and integrations."
+          iconType="indexManagementApp"
+          id="ingestManager"
+          isBeta={false}
+          title="Add Elastic Agent"
+          url="/app/ingestManager"
+          wrapInPanel={true}
+        />
+      </RedirectAppLinks>
+    </EuiFlexItem>
+    <EuiFlexItem
+      key="ml_file_data_visualizer"
+    >
+      <RedirectAppLinks>
+        <Synopsis
+          description="Import your own CSV, NDJSON, or log file"
+          iconType="document"
+          id="ml_file_data_visualizer"
+          isBeta={false}
+          title="Upload a file"
+          url="/app/ml#/filedatavisualizer"
+          wrapInPanel={true}
+        />
+      </RedirectAppLinks>
+    </EuiFlexItem>
+  </EuiFlexGroup>
+</section>
+`;

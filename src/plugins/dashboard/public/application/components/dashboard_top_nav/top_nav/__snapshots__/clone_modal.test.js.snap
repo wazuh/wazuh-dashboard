@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders DashboardCloneModal 1`] = `
+<EuiModal
+  className="dshCloneModal"
+  data-test-subj="dashboardCloneModal"
+  onClose={[Function]}
+>
+  <EuiModalHeader>
+    <EuiModalHeaderTitle>
+      <EuiText
+        size="s"
+      >
+        <h2>
+          <FormattedMessage
+            defaultMessage="Clone dashboard"
+            id="dashboard.topNav.cloneModal.cloneDashboardModalHeaderTitle"
+            values={Object {}}
+          />
+        </h2>
+      </EuiText>
+    </EuiModalHeaderTitle>
+  </EuiModalHeader>
+  <EuiModalBody>
+    <EuiText
+      size="s"
+    >
+      <p>
+        <FormattedMessage
+          defaultMessage="Please enter a new name for your dashboard."
+          id="dashboard.topNav.cloneModal.enterNewNameForDashboardDescription"
+          values={Object {}}
+        />
+      </p>
+    </EuiText>
+    <EuiSpacer />
+    <EuiCompressedFieldText
+      aria-label="Cloned Dashboard Title"
+      autoFocus={true}
+      data-test-subj="clonedDashboardTitle"
+      isInvalid={false}
+      onChange={[Function]}
+      value="dash title"
+    />
+  </EuiModalBody>
+  <EuiModalFooter>
+    <EuiSmallButtonEmpty
+      data-test-subj="cloneCancelButton"
+      onClick={[Function]}
+    >
+      <FormattedMessage
+        defaultMessage="Cancel"
+        id="dashboard.topNav.cloneModal.cancelButtonLabel"
+        values={Object {}}
+      />
+    </EuiSmallButtonEmpty>
+    <EuiSmallButton
+      data-test-subj="cloneConfirmButton"
+      fill={true}
+      isLoading={false}
+      onClick={[Function]}
+    >
+      <FormattedMessage
+        defaultMessage="Confirm Clone"
+        id="dashboard.topNav.cloneModal.confirmButtonLabel"
+        values={Object {}}
+      />
+    </EuiSmallButton>
+  </EuiModalFooter>
+</EuiModal>
+`;

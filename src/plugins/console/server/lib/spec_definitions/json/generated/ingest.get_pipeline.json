@@ -1,0 +1,15 @@
+{
+  "ingest.get_pipeline": {
+    "url_params": {
+      "cluster_manager_timeout": ""
+    },
+    "methods": [
+      "GET"
+    ],
+    "patterns": [
+      "_ingest/pipeline",
+      "_ingest/pipeline/{id}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/ingest-apis/get-ingest/"
+  }
+}

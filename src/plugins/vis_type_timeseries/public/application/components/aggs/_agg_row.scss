@@ -1,0 +1,19 @@
+.tvbAggRow {
+  @include tvbEditorRepeatingRow;
+}
+
+.tvbAggRow--split {
+  padding-left: $euiSizeXL;
+}
+
+.tvbAggRow__visibilityIcon {
+  margin-top: $euiSizeXS;
+}
+
+.tvbAggRow__children {
+  padding-top: $euiSizeS - 2px;
+}
+
+.tvbAggRow__unavailable {
+  margin-top: -$euiSizeXS;
+}

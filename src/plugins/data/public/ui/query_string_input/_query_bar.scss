@@ -1,0 +1,101 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+.osdQueryBar__wrap {
+  .euiToolTipAnchor {
+    height: 100%;
+  }
+
+  &.euiFormControlLayout--group.euiFormControlLayout--compressed {
+    overflow: initial;
+  }
+
+  @include euiBreakpoint("m", "l", "xl", "xxl", "xxxl") {
+    max-width: 100%;
+    z-index: $euiZContentMenu;
+  }
+}
+
+// Uses the append style, but no bordering
+.dqlQueryBar__languageSwitcherButton {
+  border-right: none !important;
+}
+
+.osdQueryBar__textareaWrap {
+  overflow: visible !important; // Override EUI form control
+  display: flex;
+  flex: 1 1 100%;
+  position: relative;
+}
+
+.osdQueryBar__textarea {
+  z-index: $euiZContentMenu;
+  resize: none !important; // When in the group, it will autosize
+  height: $euiFormControlLayoutGroupInputCompressedHeight;
+
+  // Unlike most inputs within layout control groups, the text area still needs a border.
+  // These adjusts help it sit above the control groups shadow to line up correctly.
+  padding: $euiSizeXS $euiSizeS $euiSizeXS;
+  transform: translateY(-1px) translateX(-1px);
+
+  &:not(:focus):not(:invalid) {
+    @include euiYScrollWithShadows;
+  }
+
+  &:not(:focus) {
+    white-space: nowrap;
+    overflow-y: hidden;
+    overflow-x: hidden;
+  }
+
+  // When focused, let it scroll
+  &:focus {
+    overflow-x: auto;
+    overflow-y: auto;
+    white-space: normal;
+  }
+}
+
+@include euiBreakpoint("xs", "s") {
+  .osdQueryBar--withDatePicker {
+    > :first-child {
+      // Change the order of the query bar and date picker so that the date picker is top
+      // and the query bar still aligns with filters
+      order: 1;
+
+      // EUI Flexbox adds too much margin between responded items, this just moves it up
+      margin-top: $euiSizeS * -1;
+    }
+  }
+}
+
+// IE specific fix for the datepicker to not collapse
+@include euiBreakpoint("m", "l", "xl", "xxl", "xxl") {
+  .osdQueryBar__datePickerWrapper {
+    max-width: 40vw;
+    flex-grow: 0 !important;
+    flex-basis: auto !important;
+
+    > div {
+      width: auto;
+    }
+
+    &.osdQueryBar__datePickerWrapper-isHidden {
+      width: 0;
+      overflow: hidden;
+      max-width: 0;
+    }
+  }
+}
+
+.osdQueryBar--hideEmpty:empty {
+  display: none;
+}

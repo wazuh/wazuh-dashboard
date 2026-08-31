@@ -1,0 +1,34 @@
+/**
+ * stretch the root element of the OpenSearch Dashboards application to set the base-size that
+ * flexed children should keep. Only works when paired with root styles applied
+ * by core service from new platform
+ */
+// SASSTODO: Naming here is too embedded and high up that changing them could cause major breaks
+#opensearch-dashboards-body {
+  min-height: 100%;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-flow: column nowrap;
+  margin: 0 auto;
+  min-height: calc(100vh - #{$osdHeaderOffset});
+
+  .headerIsExpanded & {
+    min-height: calc(100vh - #{$osdHeaderOffsetExpanded});
+  }
+
+  &.hidden-chrome {
+    min-height: 100vh;
+  }
+}
+
+.app-wrapper-panel {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+
+  > * {
+    flex-shrink: 0;
+  }
+}

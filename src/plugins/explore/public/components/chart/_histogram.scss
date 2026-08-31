@@ -1,0 +1,95 @@
+.exploreHistogram__header--partial {
+  font-weight: $euiFontWeightRegular;
+  min-width: $euiSize * 12;
+}
+
+.exploreChart__wrapper {
+  &--enhancement {
+    gap: $ouiSizeXXS;
+    flex-grow: 0;
+    flex-wrap: nowrap;
+  }
+
+  .exploreChart__chartheader {
+    align-items: center;
+
+    &Content {
+      justify-content: flex-start;
+    }
+  }
+}
+
+.exploreChart__TimechartHeader {
+  padding-bottom: calc($euiSizeXS / 2);
+
+  &__logCount {
+    margin-right: auto !important;
+
+    &__text {
+      font-weight: 600;
+    }
+  }
+
+  &__selection {
+    background-color: $euiColorEmptyShade;
+
+    &__prependText {
+      font-weight: 600;
+    }
+  }
+
+  &__breakdown {
+    min-width: $euiSize * 15;
+
+    &__prependText {
+      font-weight: 600;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+
+    &__errorIcon {
+      // stylelint-disable-next-line @osd/stylelint/no_modifying_global_selectors
+      .euiToolTipAnchor > .euiIcon {
+        height: 30px !important;
+      }
+    }
+  }
+}
+
+// Traces charts container styles
+.exploreTracesChart {
+  &__container {
+    min-height: 120px;
+    max-height: 120px;
+  }
+
+  &__section {
+    height: 120px;
+  }
+
+  &__histogram {
+    height: 100%;
+  }
+
+  &__loading {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__spacer {
+    width: 32px;
+  }
+
+  &__headerItem {
+    text-align: center;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+}

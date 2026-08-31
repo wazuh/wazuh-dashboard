@@ -1,0 +1,14 @@
+{
+  "update_by_query_rethrottle": {
+    "url_params": {
+      "requests_per_second": ""
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "_update_by_query/{task_id}/_rethrottle"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/document-apis/update-by-query/"
+  }
+}

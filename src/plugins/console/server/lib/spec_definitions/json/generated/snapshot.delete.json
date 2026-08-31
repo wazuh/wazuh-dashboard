@@ -1,0 +1,14 @@
+{
+  "snapshot.delete": {
+    "url_params": {
+      "cluster_manager_timeout": ""
+    },
+    "methods": [
+      "DELETE"
+    ],
+    "patterns": [
+      "_snapshot/{repository}/{snapshot}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/snapshots/delete-snapshot/"
+  }
+}

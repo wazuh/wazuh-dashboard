@@ -1,0 +1,22 @@
+{
+  "name": "@osd/std",
+  "browser": "./target/web/index.js",
+  "main": "./target/node/index.js",
+  "types": "./target/types/index.d.ts",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "sideEffects": false,
+  "dependencies": {
+    "json11": "^2.0.2",
+    "lodash": "^4.18.0"
+  },
+  "devDependencies": {
+    "@osd/utility-types": "1.0.0",
+    "tsd": "^0.21.0"
+  },
+  "@osd/pm": {
+    "node": true,
+    "web": true
+  }
+}

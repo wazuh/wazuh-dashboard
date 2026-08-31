@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "../../build/tsbuildinfo/packages/osd-test"
+  },
+  "include": [
+    "types/**/*",
+    "src/**/*",
+    "index.d.ts"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "scripts_painless_execute": {
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "patterns": [
+      "_scripts/painless/_execute"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/script-apis/exec-script/"
+  }
+}

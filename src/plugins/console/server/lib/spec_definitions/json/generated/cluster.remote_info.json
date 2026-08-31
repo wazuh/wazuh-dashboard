@@ -1,0 +1,11 @@
+{
+  "cluster.remote_info": {
+    "methods": [
+      "GET"
+    ],
+    "patterns": [
+      "_remote/info"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/remote-info/"
+  }
+}

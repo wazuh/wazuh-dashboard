@@ -1,0 +1,27 @@
+{
+  "indices.put_settings": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "timeout": "",
+      "preserve_existing": "__flag__",
+      "ignore_unavailable": "__flag__",
+      "allow_no_indices": "__flag__",
+      "expand_wildcards": [
+        "open",
+        "closed",
+        "hidden",
+        "none",
+        "all"
+      ],
+      "flat_settings": "__flag__"
+    },
+    "methods": [
+      "PUT"
+    ],
+    "patterns": [
+      "_settings",
+      "{indices}/_settings"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/index-apis/update-settings/"
+  }
+}

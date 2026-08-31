@@ -1,0 +1,10 @@
+{
+  "id": "dataSource",
+  "version": "opensearchDashboards",
+  "opensearchDashboardsVersion": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "requiredPlugins": ["opensearchDashboardsUtils"],
+  "optionalPlugins": [],
+  "extraPublicDirs": ["common","common/data_sources", "common/data_connections", "common/util"]
+}

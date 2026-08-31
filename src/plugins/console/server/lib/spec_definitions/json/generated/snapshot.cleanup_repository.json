@@ -1,0 +1,15 @@
+{
+  "snapshot.cleanup_repository": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "timeout": ""
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "_snapshot/{repository}/_cleanup"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/tuning-your-cluster/availability-and-recovery/snapshots/snapshot-restore/"
+  }
+}

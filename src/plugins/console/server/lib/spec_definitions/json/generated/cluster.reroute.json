@@ -1,0 +1,19 @@
+{
+  "cluster.reroute": {
+    "url_params": {
+      "dry_run": "__flag__",
+      "explain": "__flag__",
+      "retry_failed": "__flag__",
+      "metric": [],
+      "cluster_manager_timeout": "",
+      "timeout": ""
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "_cluster/reroute"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/cluster-api/index/"
+  }
+}

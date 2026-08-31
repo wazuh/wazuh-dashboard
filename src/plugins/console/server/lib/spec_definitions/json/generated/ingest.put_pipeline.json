@@ -1,0 +1,15 @@
+{
+  "ingest.put_pipeline": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "timeout": ""
+    },
+    "methods": [
+      "PUT"
+    ],
+    "patterns": [
+      "_ingest/pipeline/{id}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/ingest-apis/create-update-ingest/"
+  }
+}

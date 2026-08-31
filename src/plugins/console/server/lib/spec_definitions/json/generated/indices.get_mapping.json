@@ -1,0 +1,25 @@
+{
+  "indices.get_mapping": {
+    "url_params": {
+      "ignore_unavailable": "__flag__",
+      "allow_no_indices": "__flag__",
+      "expand_wildcards": [
+        "open",
+        "closed",
+        "hidden",
+        "none",
+        "all"
+      ],
+      "cluster_manager_timeout": "",
+      "local": "__flag__"
+    },
+    "methods": [
+      "GET"
+    ],
+    "patterns": [
+      "_mapping",
+      "{indices}/_mapping"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/field-types/mappings/#get-a-mapping"
+  }
+}

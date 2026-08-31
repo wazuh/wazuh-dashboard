@@ -1,0 +1,109 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import Path from 'path';
+import { fromRoot } from '../../../core/server/utils';
+
+import { InternalCoreSetup } from '../internal_types';
+import { CoreContext } from '../core_context';
+import { Logger } from '../logging';
+
+/** @internal */
+export class CoreApp {
+  private readonly logger: Logger;
+  private readonly coreContext: CoreContext;
+  constructor(core: CoreContext) {
+    this.coreContext = core;
+    this.logger = core.logger.get('core-app');
+  }
+  setup(coreSetup: InternalCoreSetup) {
+    this.logger.debug('Setting up core app.');
+    this.registerDefaultRoutes(coreSetup);
+    this.registerStaticDirs(coreSetup);
+  }
+
+  private registerDefaultRoutes(coreSetup: InternalCoreSetup) {
+    const httpSetup = coreSetup.http;
+    const router = httpSetup.createRouter('/');
+    router.get({ path: '/', validate: false }, async (context, req, res) => {
+      let defaultRoute = await context.core.uiSettings.client.get<string>('defaultRoute');
+      // TODO: [RENAMEME] Temporary code for backwards compatibility.
+      // https://github.com/opensearch-project/OpenSearch-Dashboards/issues/334
+      defaultRoute = defaultRoute.replace('kibana_overview', 'opensearch_dashboards_overview');
+      const basePath = httpSetup.basePath.get(req);
+      const url = `${basePath}${defaultRoute}`;
+
+      return res.redirected({
+        headers: {
+          location: url,
+        },
+      });
+    });
+    router.get({ path: '/core', validate: false }, async (context, req, res) =>
+      res.ok({ body: { version: '0.0.1' } })
+    );
+
+    const anonymousStatusPage = coreSetup.status.isStatusPageAnonymous();
+    coreSetup.httpResources.createRegistrar(router).register(
+      {
+        path: '/status',
+        validate: false,
+        options: {
+          authRequired: !anonymousStatusPage,
+        },
+      },
+      async (context, request, response) => {
+        if (anonymousStatusPage) {
+          return response.renderAnonymousCoreApp();
+        } else {
+          return response.renderCoreApp();
+        }
+      }
+    );
+  }
+  private registerStaticDirs(coreSetup: InternalCoreSetup) {
+    coreSetup.http.registerStaticDir('/ui/{path*}', Path.resolve(__dirname, './assets'));
+    coreSetup.http.registerStaticDir('/ui/assets/{path*}', fromRoot('assets'));
+
+    coreSetup.http.registerStaticDir(
+      '/node_modules/@osd/ui-framework/dist/{path*}',
+      fromRoot('node_modules/@osd/ui-framework/dist')
+    );
+
+    // Register worker files directory for code editor with buildHash for cache-busting
+    // Serves from: build/opensearch-dashboards/node_modules/@osd/monaco/target/public/
+    // Uses buildNum for cache invalidation on version changes (same pattern as bundles)
+    const buildHash = this.coreContext.env.packageInfo.buildNum.toString();
+    coreSetup.http.registerStaticDir(
+      `/${buildHash}/editor/workers/{path*}`,
+      fromRoot('node_modules/@osd/monaco/target/public')
+    );
+  }
+}

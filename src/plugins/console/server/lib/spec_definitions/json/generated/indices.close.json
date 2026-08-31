@@ -1,0 +1,25 @@
+{
+  "indices.close": {
+    "url_params": {
+      "timeout": "",
+      "cluster_manager_timeout": "",
+      "ignore_unavailable": "__flag__",
+      "allow_no_indices": "__flag__",
+      "expand_wildcards": [
+        "open",
+        "closed",
+        "hidden",
+        "none",
+        "all"
+      ],
+      "wait_for_active_shards": ""
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "{indices}/_close"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/index-apis/close-index/"
+  }
+}

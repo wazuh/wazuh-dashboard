@@ -1,0 +1,173 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+/**
+ * Components using the @osd/i18n module require access to the intl context.
+ * This is not available when mounting single components in Enzyme.
+ * These helper functions aim to address that and wrap a valid,
+ * intl context around them.
+ */
+
+import { I18nProvider, InjectedIntl, intlShape, __IntlProvider } from '@osd/i18n/react';
+import { mount, ReactWrapper, render, shallow } from 'enzyme';
+import React, { ReactElement, ValidationMap } from 'react';
+import { IntlProvider } from 'react-intl';
+
+// Cast IntlProvider to accept children prop for React 18 compatibility
+// The old @types/react-intl doesn't include children in the props
+const TypedIntlProvider = IntlProvider as React.ComponentType<
+  React.ComponentProps<typeof IntlProvider> & { children?: React.ReactNode }
+>;
+
+// Use fake component to extract `intl` property to use in tests.
+const { intl } = (mount(
+  <I18nProvider>
+    <br />
+  </I18nProvider>
+).find('IntlProvider') as ReactWrapper<{}, {}, __IntlProvider>)
+  .instance()
+  .getChildContext();
+
+function getOptions(context = {}, childContextTypes: ValidationMap<any> = {}, props = {}) {
+  return {
+    context: {
+      ...context,
+      intl,
+    },
+    childContextTypes: {
+      ...childContextTypes,
+      intl: intlShape,
+    },
+    ...props,
+  };
+}
+
+/**
+ * When using @osd/i18n `injectI18n` on components, props.intl is required.
+ */
+export function nodeWithIntlProp<T>(
+  node: ReactElement<T>
+): ReactElement<T & { intl: InjectedIntl }> {
+  return React.cloneElement<any>(node, { intl });
+}
+
+/**
+ *  Creates the wrapped IntlProvider instance
+ *
+ *  @param node The React element or cheerio wrapper
+ *  @return The wrapped IntlProvider instance
+ */
+export function wrapWithIntl<T>(node: ReactElement<T>) {
+  return <TypedIntlProvider locale="en">{node}</TypedIntlProvider>;
+}
+
+/**
+ *  Creates the wrapper instance using shallow with provided intl object into context
+ *
+ *  @param node The React element or cheerio wrapper
+ *  @param options properties to pass into shallow wrapper
+ *  @return The wrapper instance around the rendered output with intl object in context
+ */
+export function shallowWithIntl<T>(
+  node: ReactElement<T>,
+  {
+    context,
+    childContextTypes,
+    ...props
+  }: {
+    context?: any;
+    childContextTypes?: ValidationMap<any>;
+  } = {}
+): ReactWrapper<any, any> {
+  const options = getOptions(context, childContextTypes, props);
+
+  return (shallow(nodeWithIntlProp(node), options) as unknown) as ReactWrapper<any, any>;
+}
+
+/**
+ *  Creates the wrapper instance using mount with provided intl object into context
+ *
+ *  @param node The React element or cheerio wrapper
+ *  @param options properties to pass into mount wrapper
+ *  @return The wrapper instance around the rendered output with intl object in context
+ */
+export function mountWithIntl<T>(
+  node: ReactElement<T>,
+  {
+    context,
+    childContextTypes,
+    ...props
+  }: {
+    context?: any;
+    childContextTypes?: ValidationMap<any>;
+  } = {}
+): ReactWrapper<any, any> {
+  const options = getOptions(context, childContextTypes, props);
+
+  return (mount(nodeWithIntlProp(node), options) as unknown) as ReactWrapper<any, any>;
+}
+
+/**
+ *  Creates the wrapper instance using render with provided intl object into context
+ *
+ *  @param node The React element or cheerio wrapper
+ *  @param options properties to pass into render wrapper
+ *  @return The wrapper instance around the rendered output with intl object in context
+ */
+export function renderWithIntl<T>(
+  node: ReactElement<T>,
+  {
+    context,
+    childContextTypes,
+    ...props
+  }: {
+    context?: any;
+    childContextTypes?: ValidationMap<any>;
+  } = {}
+) {
+  const options = getOptions(context, childContextTypes, props);
+
+  return render(nodeWithIntlProp(node), options);
+}
+
+export const nextTick = () => new Promise((res) => process.nextTick(res));
+
+export function shallowWithI18nProvider<T>(child: ReactElement<T>): ReturnType<typeof shallow> {
+  const wrapped = shallow(<I18nProvider>{child}</I18nProvider>);
+  const name = typeof child.type === 'string' ? child.type : child.type.name;
+  return wrapped.find(name).dive();
+}
+
+export function mountWithI18nProvider<T>(child: ReactElement<T>): ReturnType<typeof mount> {
+  const wrapped = mount(<I18nProvider>{child}</I18nProvider>);
+  const name = typeof child.type === 'string' ? child.type : child.type.name;
+  // Type assertion needed due to enzyme's bundled @types/react conflicting with React 18 types
+  return wrapped.find(name) as ReturnType<typeof mount>;
+}

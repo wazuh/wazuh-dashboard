@@ -1,0 +1,22 @@
+{
+  "id": "data",
+  "version": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "requiredPlugins": ["expressions", "uiActions"],
+  "optionalPlugins": ["usageCollection", "dataSource", "contextProvider"],
+  "extraPublicDirs": [
+    "common", 
+    "common/utils/abort_utils", 
+    "common/index_patterns/utils.ts", 
+    "common/data_frames", 
+    "common/datasets"
+  ],
+  "requiredBundles": [
+    "usageCollection",
+    "opensearchDashboardsUtils",
+    "opensearchDashboardsReact",
+    "inspector",
+    "dataSource"
+  ]
+}

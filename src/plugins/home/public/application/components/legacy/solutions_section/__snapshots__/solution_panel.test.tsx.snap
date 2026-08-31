@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SolutionPanel renders the solution panel for the given solution 1`] = `
+<EuiFlexItem
+  className="homSolutions__group homSolutions__group--single homSolutions__item"
+  data-test-subj="homSolutionPanel homSolutionPanel_opensearchDashboards"
+  grow={1}
+  key="opensearchDashboards"
+>
+  <a
+    className="homSolutionPanel homSolutionPanel--opensearchDashboards"
+    href="opensearch_dashboards_landing_page"
+    onClick={[Function]}
+  >
+    <EuiPanel
+      className="homSolutionPanel__inner"
+      paddingSize="none"
+    >
+      <EuiFlexGroup
+        gutterSize="none"
+      >
+        <EuiFlexItem
+          className="homSolutionPanel__header"
+          grow={1}
+        >
+          <SolutionTitle
+            branding={
+              Object {
+                "applicationTitle": "custom title",
+                "darkMode": false,
+                "mark": Object {
+                  "darkModeUrl": "/darkModeLogo",
+                  "defaultUrl": "/defaultModeLogo",
+                },
+              }
+            }
+            iconType="inputOutput"
+            subtitle="Visualize & analyze"
+            title="OpenSearch Dashboards"
+          />
+        </EuiFlexItem>
+        <EuiFlexItem
+          className="homSolutionPanel__content"
+          grow={1}
+        >
+          <EuiText
+            key="Analyze data in dashboards"
+            size="s"
+          >
+            <p>
+              Analyze data in dashboards
+            </p>
+          </EuiText>
+        </EuiFlexItem>
+      </EuiFlexGroup>
+    </EuiPanel>
+  </a>
+</EuiFlexItem>
+`;

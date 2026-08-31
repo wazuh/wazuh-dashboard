@@ -1,0 +1,393 @@
+/*
+ * Copyright OpenSearch Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* eslint-disable no-console */
+import { schema } from '@osd/config-schema';
+import {
+  IOpenSearchDashboardsResponse,
+  IRouter,
+  ResponseError,
+} from '../../../../../src/core/server';
+import { DataConnectionType } from '../../../data_source/common/data_connections';
+import {
+  DATACONNECTIONS_BASE,
+  DATACONNECTIONS_UPDATE_STATUS,
+  EDIT,
+} from '../../framework/utils/shared';
+
+export function registerNonMdsDataConnectionsRoute(router: IRouter) {
+  router.get(
+    {
+      path: `${DATACONNECTIONS_BASE}/{name}`,
+      validate: {
+        params: schema.object({
+          name: schema.string(),
+        }),
+      },
+    },
+    async (context, request, response): Promise<any> => {
+      try {
+        // @ts-expect-error TS2339 TODO(ts-error): fixme
+        const dataConnectionsresponse = await context.opensearch_data_source_management.dataSourceManagementClient
+          .asScoped(request)
+          .callAsCurrentUser('ppl.getDataConnectionById', {
+            dataconnection: request.params.name,
+          });
+        return response.ok({
+          body: dataConnectionsresponse,
+        });
+      } catch (error: any) {
+        console.error('Issue in fetching data connection:', error);
+        return response.custom({
+          statusCode: error.statusCode || 500,
+          body: error.message,
+        });
+      }
+    }
+  );
+
+  router.delete(
+    {
+      path: `${DATACONNECTIONS_BASE}/{name}`,
+      validate: {
+        params: schema.object({
+          name: schema.string(),
+        }),
+      },
+    },
+    async (context, request, response): Promise<any> => {
+      try {
+        // @ts-expect-error TS2339 TODO(ts-error): fixme
+        const dataConnectionsresponse = await context.opensearch_data_source_management.dataSourceManagementClient
+          .asScoped(request)
+          .callAsCurrentUser('ppl.deleteDataConnection', {
+            dataconnection: request.params.name,
+          });
+        return response.ok({
+          body: dataConnectionsresponse,
+        });
+      } catch (error: any) {
+        console.error('Issue in deleting data connection:', error);
+        return response.custom({
+          statusCode: error.statusCode || 500,
+          body: error.message,
+        });
+      }
+    }
+  );
+
+  router.post(
+    {
+      path: `${DATACONNECTIONS_BASE}${EDIT}`,
+      validate: {
+        body: schema.object({
+          name: schema.string(),
+          allowedRoles: schema.arrayOf(schema.string()),
+        }),
+      },
+    },
+    async (context, request, response): Promise<any> => {
+      try {
+        // @ts-expect-error TS2339 TODO(ts-error): fixme
+        const dataConnectionsresponse = await context.opensearch_data_source_management.dataSourceManagementClient
+          .asScoped(request)
+          .callAsCurrentUser('ppl.modifyDataConnection', {
+            body: {
+              name: request.body.name,
+              allowedRoles: request.body.allowedRoles,
+            },
+          });
+        return response.ok({
+          body: dataConnectionsresponse,
+        });
+      } catch (error: any) {
+        console.error('Issue in modifying data connection:', error);
+        return response.custom({
+          statusCode: error.statusCode || 500,
+          body: error.message,
+        });
+      }
+    }
+  );
+
+  router.post(
+    {
+      path: `${DATACONNECTIONS_BASE}${EDIT}${DATACONNECTIONS_UPDATE_STATUS}`,
+      validate: {
+        body: schema.object({
+          name: schema.string(),
+          status: schema.string(),
+        }),
+      },
+    },
+    async (context, request, response): Promise<any> => {
+      try {
+        // @ts-expect-error TS2339 TODO(ts-error): fixme
+        const dataConnectionsresponse = await context.opensearch_data_source_management.dataSourceManagementClient
+          .asScoped(request)
+          .callAsCurrentUser('ppl.modifyDataConnection', {
+            body: {
+              name: request.body.name,
+              status: request.body.status,
+            },
+          });
+        return response.ok({
+          body: dataConnectionsresponse,
+        });
+      } catch (error: any) {
+        console.error('Issue in modifying data connection:', error);
+        return response.custom({
+          statusCode: error.statusCode || 500,
+          body: error.message,
+        });
+      }
+    }
+  );
+
+  router.get(
+    {
+      path: `${DATACONNECTIONS_BASE}`,
+      validate: false,
+    },
+    async (context, request, response): Promise<any> => {
+      try {
+        // @ts-expect-error TS2339 TODO(ts-error): fixme
+        const dataConnectionsresponse = await context.opensearch_data_source_management.dataSourceManagementClient
+          .asScoped(request)
+          .callAsCurrentUser('ppl.getDataConnections');
+        return response.ok({
+          body: dataConnectionsresponse,
+        });
+      } catch (error: any) {
+        console.error('Issue in fetching data sources:', error);
+        return response.custom({
+          statusCode: error.statusCode || 500,
+          body: error.response,
+        });
+      }
+    }
+  );
+}
+
+export function registerDataConnectionsRoute(router: IRouter, dataSourceEnabled: boolean) {
+  router.post(
+    {
+      path: `${DATACONNECTIONS_BASE}`,
+      validate: {
+        body: schema.object({
+          name: schema.string(),
+          connector: schema.string(),
+          allowedRoles: schema.arrayOf(schema.string()),
+          properties: schema.any(),
+        }),
+      },
+    },
+    async (
+      context,
+      request,
+      response
+    ): Promise<IOpenSearchDashboardsResponse<any | ResponseError>> => {
+      try {
+        // @ts-expect-error TS2339 TODO(ts-error): fixme
+        const client = context.opensearch_data_source_management.dataSourceManagementClient.asScoped(
+          request
+        ).callAsCurrentUser;
+
+        const dataConnectionsresponse = await client('ppl.createDataSource', {
+          body: {
+            name: request.body.name,
+            connector: request.body.connector,
+            allowedRoles: request.body.allowedRoles,
+            properties: request.body.properties,
+          },
+        });
+
+        // Create data-connection saved object for Prometheus datasources
+        if (dataSourceEnabled && request.body.connector === 'prometheus') {
+          await context.core.savedObjects.client.create('data-connection', {
+            connectionId: request.body.name,
+            type: DataConnectionType.Prometheus,
+          });
+        }
+
+        return response.ok({ body: dataConnectionsresponse });
+      } catch (error: any) {
+        console.error('Issue in creating data source:', error);
+        return response.custom({ statusCode: error.statusCode || 500, body: error.response });
+      }
+    }
+  );
+
+  router.get(
+    {
+      path: `${DATACONNECTIONS_BASE}/dataSourceMDSId={dataSourceMDSId?}`,
+      validate: {
+        params: schema.object({
+          dataSourceMDSId: schema.maybe(schema.string({ defaultValue: '' })),
+        }),
+      },
+    },
+    async (context, request, response): Promise<any> => {
+      const dataSourceMDSId = request.params.dataSourceMDSId;
+      try {
+        let dataConnectionsresponse;
+        if (dataSourceEnabled && dataSourceMDSId) {
+          const client = await context.dataSource.opensearch.legacy.getClient(dataSourceMDSId);
+          dataConnectionsresponse = await client.callAPI('ppl.getDataConnections', {
+            requestTimeout: 5000, // Enforce timeout to avoid hanging requests
+          });
+        } else {
+          // @ts-expect-error TS2339 TODO(ts-error): fixme
+          dataConnectionsresponse = await context.opensearch_data_source_management.dataSourceManagementClient
+            .asScoped(request)
+            .callAsCurrentUser('ppl.getDataConnections');
+        }
+        return response.ok({
+          body: dataConnectionsresponse,
+        });
+      } catch (error: any) {
+        console.error('Issue in fetching data sources:', error);
+        const statusCode = error.statusCode || error.body?.statusCode || 500;
+        const errorBody = error.body ||
+          error.response || { message: error.message || 'Unknown error occurred' };
+
+        return response.custom({
+          statusCode,
+          body: {
+            error: errorBody,
+            message: errorBody.message || error.message,
+          },
+        });
+      }
+    }
+  );
+
+  router.get(
+    {
+      path: `${DATACONNECTIONS_BASE}/{name}/dataSourceMDSId={dataSourceMDSId?}`,
+      validate: {
+        params: schema.object({
+          name: schema.string(),
+          dataSourceMDSId: schema.maybe(schema.string({ defaultValue: '' })),
+        }),
+      },
+    },
+    async (context, request, response): Promise<any> => {
+      const dataSourceMDSId = request.params.dataSourceMDSId;
+      try {
+        let dataConnectionsresponse;
+        if (dataSourceEnabled && dataSourceMDSId) {
+          const client = await context.dataSource.opensearch.legacy.getClient(dataSourceMDSId);
+          dataConnectionsresponse = await client.callAPI('ppl.getDataConnectionById', {
+            dataconnection: request.params.name,
+          });
+        } else {
+          // @ts-expect-error TS2339 TODO(ts-error): fixme
+          dataConnectionsresponse = await context.opensearch_data_source_management.dataSourceManagementClient
+            .asScoped(request)
+            .callAsCurrentUser('ppl.getDataConnectionById', {
+              dataconnection: request.params.name,
+            });
+        }
+        return response.ok({
+          body: dataConnectionsresponse,
+        });
+      } catch (error: any) {
+        console.error('Issue in fetching data sources:', error);
+        const statusCode = error.statusCode || error.body?.statusCode || 500;
+        const errorBody = error.body ||
+          error.response || { message: error.message || 'Unknown error occurred' };
+
+        return response.custom({
+          statusCode,
+          body: {
+            error: errorBody,
+            message: errorBody.message || error.message,
+          },
+        });
+      }
+    }
+  );
+
+  router.delete(
+    {
+      path: `${DATACONNECTIONS_BASE}/{name}/dataSourceMDSId={dataSourceMDSId?}`,
+      validate: {
+        params: schema.object({
+          name: schema.string(),
+          dataSourceMDSId: schema.maybe(schema.string({ defaultValue: '' })),
+        }),
+      },
+    },
+    async (context, request, response): Promise<any> => {
+      const dataSourceMDSId = request.params.dataSourceMDSId;
+      try {
+        if (dataSourceEnabled && dataSourceMDSId) {
+          const client = context.dataSource.opensearch.legacy.getClient(dataSourceMDSId);
+          await client.callAPI('ppl.deleteDataConnection', {
+            dataconnection: request.params.name,
+          });
+        } else {
+          // @ts-expect-error TS2339 TODO(ts-error): fixme
+          const dataConnectionsresponse = await context.opensearch_data_source_management.dataSourceManagementClient
+            .asScoped(request)
+            .callAsCurrentUser('ppl.deleteDataConnection', {
+              dataconnection: request.params.name,
+            });
+          if (!dataSourceEnabled) {
+            return response.ok({
+              body: dataConnectionsresponse,
+            });
+          }
+        }
+      } catch (error: any) {
+        const statusCode = error.statusCode || error.body?.statusCode || 500;
+
+        if (statusCode !== 404) {
+          console.error('Issue in deleting data connection from backend:', error);
+          const errorBody = error.body ||
+            error.response || { message: error.message || 'Unknown error occurred' };
+
+          return response.custom({
+            statusCode,
+            body: {
+              error: errorBody,
+              message: errorBody.message || error.message,
+            },
+          });
+        }
+        console.log('Backend data connection not found, proceeding with saved object deletion');
+      }
+
+      try {
+        const savedObjects = await context.core.savedObjects.client.find({
+          type: 'data-connection',
+          search: request.params.name,
+          searchFields: ['connectionId'],
+        });
+
+        if (savedObjects.total > 0) {
+          await context.core.savedObjects.client.delete(
+            'data-connection',
+            savedObjects.saved_objects[0].id
+          );
+        }
+
+        return response.ok({
+          body: { success: true, deleted: request.params.name },
+        });
+      } catch (error: any) {
+        console.error('Issue in deleting saved object:', error);
+        return response.custom({
+          statusCode: error.statusCode || 500,
+          body: {
+            error: error.message || 'Unknown error occurred',
+            message: error.message || 'Failed to delete saved object',
+          },
+        });
+      }
+    }
+  );
+}

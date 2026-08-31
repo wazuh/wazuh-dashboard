@@ -1,0 +1,18 @@
+{
+  "indices.rollover": {
+    "url_params": {
+      "timeout": "",
+      "dry_run": "__flag__",
+      "cluster_manager_timeout": "",
+      "wait_for_active_shards": ""
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "{alias}/_rollover",
+      "{alias}/_rollover/{new_index}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/index-apis/index/"
+  }
+}

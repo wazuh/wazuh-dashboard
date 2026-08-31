@@ -1,0 +1,26 @@
+{
+  "indices.put_mapping": {
+    "url_params": {
+      "timeout": "",
+      "cluster_manager_timeout": "",
+      "ignore_unavailable": "__flag__",
+      "allow_no_indices": "__flag__",
+      "expand_wildcards": [
+        "open",
+        "closed",
+        "hidden",
+        "none",
+        "all"
+      ],
+      "write_index_only": "__flag__"
+    },
+    "methods": [
+      "PUT",
+      "POST"
+    ],
+    "patterns": [
+      "{indices}/_mapping"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/index-apis/put-mapping/"
+  }
+}

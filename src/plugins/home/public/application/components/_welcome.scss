@@ -1,0 +1,39 @@
+.homWelcome {
+  @include opensearchDashboardsFullScreenGraphics($euiZLevel6);
+}
+
+.homWelcome__header {
+  position: relative;
+  padding: $euiSizeXL;
+  z-index: 10;
+}
+
+.homWelcome__logo {
+  margin-bottom: $euiSizeXL;
+
+  @include opensearchDashboardsCircleLogo;
+  @include euiBottomShadowMedium;
+}
+
+.homWelcome__customLogoContainer {
+  height: 80px;
+  padding: 10px;
+}
+
+.homWelcome__customLogo {
+  height: 100%;
+  max-width: 100%;
+}
+
+.homWelcome__footerAction {
+  margin-right: $euiSizeS;
+}
+
+.homWelcome__content {
+  position: relative;
+  margin: auto;
+  max-width: 512px;
+  padding-left: $euiSizeXL;
+  padding-right: $euiSizeXL;
+  z-index: 10;
+}

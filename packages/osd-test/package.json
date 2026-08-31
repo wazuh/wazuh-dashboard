@@ -1,0 +1,43 @@
+{
+  "name": "@osd/test",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "main": "./target/index.js",
+  "scripts": {
+    "build": "babel src --out-dir target --delete-dir-on-start --extensions .ts,.js,.tsx --ignore *.test.js,**/__tests__/** --source-maps=inline",
+    "osd:bootstrap": "yarn build",
+    "osd:watch": "yarn build --watch"
+  },
+  "opensearchDashboards": {
+    "devOnly": true
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.22.9",
+    "@osd/babel-preset": "1.0.0",
+    "@osd/dev-utils": "1.0.0",
+    "@osd/utils": "1.0.0",
+    "@types/joi": "^13.4.2",
+    "@types/lodash": "4.14.165",
+    "@types/parse-link-header": "^1.0.0",
+    "@types/strip-ansi": "^5.2.1",
+    "@types/xml2js": "^0.4.5",
+    "diff": "^4.0.1"
+  },
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "dedent": "^0.7.0",
+    "del": "^6.1.1",
+    "exit-hook": "^2.2.0",
+    "getopts": "^2.2.5",
+    "glob": "^7.1.7",
+    "joi": "^14.3.1",
+    "lodash": "^4.18.0",
+    "parse-link-header": "^2.0.0",
+    "rxjs": "^6.5.5",
+    "strip-ansi": "^6.0.0",
+    "tar-fs": "^2.1.4",
+    "xml2js": "^0.5.0",
+    "zlib": "^1.0.5"
+  }
+}

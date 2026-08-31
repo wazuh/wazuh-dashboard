@@ -1,0 +1,177 @@
+// These are the various types in the dropdown, they each get a color
+$osdTypeaheadTypes: (
+  field: $euiColorWarning,
+  value: $euiColorSecondary,
+  operator: $euiColorPrimary,
+  conjunction: $euiColorVis3,
+);
+
+.osdTypeahead.osdTypeahead--small {
+  max-height: 20vh;
+}
+
+.osdTypeahead__popover--top {
+  @include euiBottomShadowFlat;
+
+  border-top-left-radius: $euiBorderRadius;
+  border-top-right-radius: $euiBorderRadius;
+}
+
+.osdTypeahead__popover--bottom {
+  @include euiBottomShadow($adjustBorders: true);
+
+  border-bottom-left-radius: $euiBorderRadius;
+  border-bottom-right-radius: $euiBorderRadius;
+}
+
+.osdTypeahead {
+  max-height: 60vh;
+
+  .osdTypeahead__popover {
+    max-height: inherit;
+
+    @include euiScrollBar;
+
+    border: 1px solid;
+    border-color: $euiBorderColor;
+    color: $euiTextColor;
+    background-color: $euiColorEmptyShade;
+    position: relative;
+    z-index: $euiZContentMenu;
+    width: 100%;
+    overflow-y: auto;
+
+    .osdTypeahead__item {
+      height: $euiSizeXL;
+      white-space: nowrap;
+      font-size: $euiFontSizeXS;
+      vertical-align: middle;
+      padding: 0;
+      border-bottom: none;
+      line-height: normal;
+    }
+
+    .osdTypeahead__item:hover {
+      cursor: pointer;
+    }
+
+    .osdTypeahead__item:last-child {
+      border-bottom: none;
+      border-radius: 0 0 $euiBorderRadius $euiBorderRadius;
+    }
+
+    .osdTypeahead__item:first-child {
+      border-bottom: none;
+      border-radius: $euiBorderRadius $euiBorderRadius 0 0;
+    }
+
+    .osdTypeahead__item.active {
+      background-color: $euiColorLightestShade;
+
+      .osdSuggestionItem__callout {
+        background: $euiColorEmptyShade;
+      }
+
+      .osdSuggestionItem__text {
+        color: $euiColorFullShade;
+      }
+
+      .osdSuggestionItem__type {
+        color: $euiColorFullShade;
+      }
+
+      @each $name, $color in $osdTypeaheadTypes {
+        .osdSuggestionItem--#{$name} {
+          .osdSuggestionItem__type {
+            background-color: tintOrShade($color, 80%, 60%);
+          }
+        }
+      }
+    }
+  }
+}
+
+.osdSuggestionItem {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  font-size: $euiFontSizeXS;
+  white-space: nowrap;
+
+  @each $name, $color in $osdTypeaheadTypes {
+    &.osdSuggestionItem--#{$name} {
+      .osdSuggestionItem__type {
+        background-color: tintOrShade($color, 90%, 50%);
+        color: makeGraphicContrastColor($color, tintOrShade($color, 90%, 50%));
+      }
+    }
+  }
+
+  &.osdSuggestionItem--recentSearch {
+    .osdSuggestionItem__type {
+      background-color: $euiColorLightShade;
+      color: $euiColorMediumShade;
+    }
+
+    /* stylelint-disable-next-line selector-class-pattern */
+    .SuggestionItem__text {
+      width: auto;
+    }
+  }
+}
+
+.osdSuggestionItem__text,
+.osdSuggestionItem__type,
+.osdSuggestionItem__description {
+  flex-grow: 1;
+  flex-basis: 0%;
+  display: flex;
+  flex-direction: column;
+}
+
+.osdSuggestionItem__type {
+  flex: 0 0 auto;
+  width: $euiSizeXL;
+  height: $euiSizeXL;
+  text-align: center;
+  overflow: hidden;
+  padding: $euiSizeXS;
+  justify-content: center;
+  align-items: center;
+}
+
+.osdSuggestionItem__text {
+  flex-grow: 0; /* 2 */
+  flex-basis: auto; /* 2 */
+  font-family: $euiCodeFontFamily;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: $euiSizeXS $euiSizeS;
+  color: $euiTextColor;
+}
+
+.osdSuggestionItem__description {
+  color: $euiColorDarkShade;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: $euiSizeXL;
+
+  &:empty {
+    flex-grow: 0;
+    margin-left: 0;
+  }
+}
+
+.osdSuggestionItem__callout {
+  font-family: $euiCodeFontFamily;
+  background: $euiColorLightestShade;
+  color: $euiColorFullShade;
+  padding: 0 $euiSizeXS;
+  display: inline-block;
+}
+
+.osdSuggestionItem--value .osdSuggestionItem__text {
+  flex-basis: 50%;
+  flex-grow: 1;
+}

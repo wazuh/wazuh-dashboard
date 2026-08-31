@@ -1,0 +1,9 @@
+{
+  "id": "urlGeneratorsExplorer",
+  "version": "0.0.1",
+  "opensearchDashboardsVersion": "opensearchDashboards",
+  "server": false,
+  "ui": true,
+  "requiredPlugins": ["share", "urlGeneratorsExamples", "developerExamples"],
+  "optionalPlugins": []
+}

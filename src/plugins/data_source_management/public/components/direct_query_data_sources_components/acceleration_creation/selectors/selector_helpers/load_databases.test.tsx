@@ -1,0 +1,132 @@
+/*
+ * Copyright OpenSearch Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { mount } from 'enzyme';
+import { act } from 'react';
+import React from 'react';
+import { EuiButtonIcon, EuiLoadingSpinner } from '@elastic/eui';
+import { SelectorLoadDatabases } from './load_databases';
+import { HttpStart, NotificationsStart } from 'opensearch-dashboards/public';
+import { DirectQueryLoadingStatus } from '../../../../../../framework/types';
+import { useLoadDatabasesToCache } from '../../../../../../framework/catalog_cache/cache_loader';
+
+jest.mock('../../../../../../framework/catalog_cache/cache_loader');
+
+const mockHttp: HttpStart = ({} as unknown) as HttpStart;
+const mockNotifications: NotificationsStart = ({
+  toasts: {
+    addWarning: jest.fn(),
+  },
+} as unknown) as NotificationsStart;
+
+const defaultProps = {
+  dataSourceName: 'test_source',
+  loadDatabases: jest.fn(),
+  loadingComboBoxes: {
+    dataSource: false,
+    database: false,
+    dataTable: false,
+  },
+  setLoadingComboBoxes: jest.fn(),
+  tableFieldsLoading: false,
+  dataSourceMDSId: 'test_id',
+  http: mockHttp,
+  notifications: mockNotifications,
+};
+
+const startDatabasesLoading = jest.fn();
+const stopDatabasesLoading = jest.fn();
+
+(useLoadDatabasesToCache as jest.Mock).mockReturnValue({
+  loadStatus: DirectQueryLoadingStatus.INITIAL,
+  startLoading: startDatabasesLoading,
+  stopLoading: stopDatabasesLoading,
+});
+
+describe('SelectorLoadDatabases', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders correctly with default options', () => {
+    const wrapper = mount(<SelectorLoadDatabases {...defaultProps} />);
+    expect(wrapper.find(EuiButtonIcon).exists()).toBe(true);
+    expect(wrapper.find(EuiLoadingSpinner).exists()).toBe(false);
+  });
+
+  it('shows loading spinner when isLoading is true', async () => {
+    const wrapper = mount(<SelectorLoadDatabases {...defaultProps} />);
+    await act(async () => {
+      wrapper.find(EuiButtonIcon).simulate('click');
+    });
+    wrapper.update();
+    expect(wrapper.find(EuiLoadingSpinner).exists()).toBe(true);
+    expect(wrapper.find(EuiButtonIcon).exists()).toBe(false);
+  });
+
+  it('calls startDatabasesLoading on refresh button click', async () => {
+    const wrapper = mount(<SelectorLoadDatabases {...defaultProps} />);
+    await act(async () => {
+      wrapper.find(EuiButtonIcon).simulate('click');
+    });
+    expect(startDatabasesLoading).toHaveBeenCalledWith({
+      dataSourceName: defaultProps.dataSourceName,
+      dataSourceMDSId: defaultProps.dataSourceMDSId,
+    });
+  });
+
+  it('sets loading state correctly based on loadDatabasesStatus', async () => {
+    // Start with INITIAL status, then transition to SUCCESS
+    const mockLoadStatus = { current: DirectQueryLoadingStatus.INITIAL };
+
+    (useLoadDatabasesToCache as jest.Mock).mockImplementation(() => ({
+      loadStatus: mockLoadStatus.current,
+      startLoading: startDatabasesLoading,
+      stopLoading: stopDatabasesLoading,
+    }));
+
+    // @ts-expect-error TS7034 TODO(ts-error): fixme
+    let wrapper;
+    await act(async () => {
+      wrapper = mount(<SelectorLoadDatabases {...defaultProps} />);
+    });
+    // @ts-expect-error TS7005 TODO(ts-error): fixme
+    wrapper!.update();
+
+    // Click button to start loading
+    await act(async () => {
+      // @ts-expect-error TS7005 TODO(ts-error): fixme
+      wrapper!.find(EuiButtonIcon).simulate('click');
+    });
+    // @ts-expect-error TS7005 TODO(ts-error): fixme
+    wrapper!.update();
+
+    // Verify loading state
+    // @ts-expect-error TS7005 TODO(ts-error): fixme
+    expect(wrapper!.find(EuiLoadingSpinner).exists()).toBe(true);
+
+    // Simulate SUCCESS status from the hook
+    mockLoadStatus.current = DirectQueryLoadingStatus.SUCCESS;
+
+    await act(async () => {
+      // @ts-expect-error TS7005 TODO(ts-error): fixme
+      wrapper!.setProps({}); // Trigger re-render with new status
+    });
+    // @ts-expect-error TS7005 TODO(ts-error): fixme
+    wrapper!.update();
+
+    expect(defaultProps.loadDatabases).toHaveBeenCalled();
+    // @ts-expect-error TS7005 TODO(ts-error): fixme
+    expect(wrapper!.find(EuiLoadingSpinner).exists()).toBe(false);
+    // @ts-expect-error TS7005 TODO(ts-error): fixme
+    expect(wrapper!.find(EuiButtonIcon).exists()).toBe(true);
+  });
+
+  it('stops loading on unmount', () => {
+    const wrapper = mount(<SelectorLoadDatabases {...defaultProps} />);
+    wrapper.unmount();
+    expect(stopDatabasesLoading).toHaveBeenCalled();
+  });
+});

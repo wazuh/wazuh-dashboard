@@ -1,0 +1,17 @@
+{
+  "indices.clone": {
+    "url_params": {
+      "timeout": "",
+      "cluster_manager_timeout": "",
+      "wait_for_active_shards": ""
+    },
+    "methods": [
+      "PUT",
+      "POST"
+    ],
+    "patterns": [
+      "{indices}/_clone/{target}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/index-apis/clone/"
+  }
+}

@@ -1,0 +1,120 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`display help for start servers CLI displays as expected 1`] = `
+"Start Functional Test Servers
+
+Usage:
+  node scripts/functional_tests_server --help
+  node scripts/functional_tests_server [--config <file>]
+  node scripts/functional_tests_server [options] [-- --<other args>]
+
+Options:
+  --help                           Display this menu and exit. 
+  --config <file>                  Pass in a config 
+  --opensearchFrom <snapshot|source|path> Build OpenSearch from source, snapshot or path to existing install dir. Default: $TEST_OPENSEARCH_FROM or snapshot
+  --opensearch-dashboards-install-dir <dir> Run OpenSearch Dashboards from existing install directory instead of from source. 
+  --verbose                        Log everything. 
+  --debug                          Run in debug mode. 
+  --quiet                          Only log errors. 
+  --silent                         Log nothing."
+`;
+
+exports[`process options for start servers CLI accepts debug option 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "debug": true,
+  "extraOsdOpts": undefined,
+  "opensearchFrom": "snapshot",
+}
+`;
+
+exports[`process options for start servers CLI accepts empty config value if default passed 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": undefined,
+  "opensearchFrom": "snapshot",
+}
+`;
+
+exports[`process options for start servers CLI accepts extra server options 1`] = `
+Object {
+  "_": Object {
+    "server.foo": "bar",
+  },
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": Object {
+    "server.foo": "bar",
+  },
+  "opensearchFrom": "snapshot",
+}
+`;
+
+exports[`process options for start servers CLI accepts quiet option 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": undefined,
+  "opensearchFrom": "snapshot",
+  "quiet": true,
+}
+`;
+
+exports[`process options for start servers CLI accepts silent option 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": undefined,
+  "opensearchFrom": "snapshot",
+  "silent": true,
+}
+`;
+
+exports[`process options for start servers CLI accepts source value for $TEST_OPENSEARCH_FROM 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": undefined,
+  "opensearchFrom": "source",
+}
+`;
+
+exports[`process options for start servers CLI accepts source value for opensearchFrom 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": undefined,
+  "opensearchFrom": "source",
+}
+`;
+
+exports[`process options for start servers CLI accepts string value for opensearch-dashboards-install-dir 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": undefined,
+  "installDir": "foo",
+  "opensearchFrom": "snapshot",
+}
+`;
+
+exports[`process options for start servers CLI accepts verbose option 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": undefined,
+  "opensearchFrom": "snapshot",
+  "verbose": true,
+}
+`;
+
+exports[`process options for start servers CLI prioritizes source flag over $TEST_OPENSEARCH_FROM 1`] = `
+Object {
+  "config": <absolute path>/foo,
+  "createLogger": [Function],
+  "extraOsdOpts": undefined,
+  "opensearchFrom": "snapshot",
+}
+`;

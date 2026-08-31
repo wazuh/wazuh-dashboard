@@ -1,0 +1,15 @@
+{
+  "ingest.delete_pipeline": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "timeout": ""
+    },
+    "methods": [
+      "DELETE"
+    ],
+    "patterns": [
+      "_ingest/pipeline/{id}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/ingest-apis/delete-ingest/"
+  }
+}

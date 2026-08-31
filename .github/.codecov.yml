@@ -1,0 +1,11 @@
+# https://docs.codecov.com/docs/codecov-yaml
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2% # the leniency in hitting the target
+

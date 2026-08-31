@@ -1,0 +1,16 @@
+{
+  "indices.delete_alias": {
+    "url_params": {
+      "timeout": "",
+      "cluster_manager_timeout": ""
+    },
+    "methods": [
+      "DELETE"
+    ],
+    "patterns": [
+      "{indices}/_alias/{name}",
+      "{indices}/_aliases/{name}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/im-plugin/index-alias/#delete-aliases"
+  }
+}

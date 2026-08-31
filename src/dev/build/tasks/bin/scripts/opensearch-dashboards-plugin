@@ -1,0 +1,31 @@
+#!/bin/sh
+
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# The OpenSearch Contributors require contributions made to
+# this file be licensed under the Apache-2.0 license or a
+# compatible open source license.
+#
+# Any modifications Copyright OpenSearch Contributors. See
+# GitHub history for details.
+#
+
+SCRIPT="$0"
+
+# SCRIPT may be an arbitrarily deep series of symlinks. Loop until we have the concrete path.
+while [ -h "$SCRIPT" ] ; do
+  loc=$(ls -ld "$SCRIPT")
+  # Drop everything prior to ->
+  link=$(expr "$loc" : '.*-> \(.*\)$')
+  if expr "$link" : '/.*' > /dev/null; then
+    SCRIPT="$link"
+  else
+    SCRIPT=$(dirname "$SCRIPT")/"$link"
+  fi
+done
+
+# Get an absolute path for OSD_HOME
+OSD_HOME="$(cd "$(dirname "${SCRIPT}")/.."; pwd)"
+
+OSD_NODE_OPTS_PREFIX="--no-warnings" OSD_USE_NODE_JS_FILE_PATH=/src/cli_plugin/dist NODE_ENV=production exec ${OSD_HOME}/bin/use_node "${@}"

@@ -1,0 +1,17 @@
+{
+  "snapshot.status": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "ignore_unavailable": "__flag__"
+    },
+    "methods": [
+      "GET"
+    ],
+    "patterns": [
+      "_snapshot/_status",
+      "_snapshot/{repository}/_status",
+      "_snapshot/{repository}/{snapshot}/_status"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/snapshots/get-snapshot-status/"
+  }
+}

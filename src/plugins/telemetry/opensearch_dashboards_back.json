@@ -1,0 +1,15 @@
+{
+  "id": "telemetry",
+  "version": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "requiredPlugins": [
+    "telemetryCollectionManager",
+    "usageCollection"
+  ],
+  "extraPublicDirs": ["common/constants"],
+  "requiredBundles": [
+    "opensearchDashboardsUtils",
+    "opensearchDashboardsReact"
+  ]
+}

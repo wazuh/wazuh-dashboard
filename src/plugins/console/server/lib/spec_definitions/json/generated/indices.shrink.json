@@ -1,0 +1,18 @@
+{
+  "indices.shrink": {
+    "url_params": {
+      "copy_settings": "__flag__",
+      "timeout": "",
+      "cluster_manager_timeout": "",
+      "wait_for_active_shards": ""
+    },
+    "methods": [
+      "PUT",
+      "POST"
+    ],
+    "patterns": [
+      "{indices}/_shrink/{target}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/index-apis/shrink-index/"
+  }
+}

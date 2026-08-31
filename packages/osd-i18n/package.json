@@ -1,0 +1,32 @@
+{
+  "name": "@osd/i18n",
+  "browser": "./target/web/browser.js",
+  "main": "./target/node/index.js",
+  "types": "./target/types/index.d.ts",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "devDependencies": {
+    "@babel/cli": "^7.22.9",
+    "@babel/core": "^7.22.9",
+    "@osd/babel-preset": "1.0.0",
+    "@osd/dev-utils": "1.0.0",
+    "@types/intl-relativeformat": "^2.1.0",
+    "@types/react-intl": "^2.3.15",
+    "del": "^6.1.1",
+    "getopts": "^2.2.5",
+    "supports-color": "^7.0.0"
+  },
+  "dependencies": {
+    "intl-format-cache": "^2.1.0",
+    "intl-messageformat": "^2.2.0",
+    "intl-relativeformat": "^2.1.0",
+    "prop-types": "^15.7.2",
+    "react": "^18.2.0",
+    "react-intl": "^2.8.0"
+  },
+  "@osd/pm": {
+    "node": true,
+    "web": true
+  }
+}

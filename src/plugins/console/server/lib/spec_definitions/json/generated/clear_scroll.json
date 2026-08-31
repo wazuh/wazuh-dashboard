@@ -1,0 +1,11 @@
+{
+  "clear_scroll": {
+    "methods": [
+      "DELETE"
+    ],
+    "patterns": [
+      "_search/scroll"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/scroll/"
+  }
+}

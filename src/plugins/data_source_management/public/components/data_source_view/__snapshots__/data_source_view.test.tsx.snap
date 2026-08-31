@@ -1,0 +1,847 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DataSourceView Should render successfully when provided datasource has not been filtered out 1`] = `
+<DataSourceView
+  dataSourceFilter={[Function]}
+  fullWidth={false}
+  hideLocalCluster={false}
+  notifications={
+    Object {
+      "add": [MockFunction],
+      "addDanger": [MockFunction],
+      "addError": [MockFunction],
+      "addInfo": [MockFunction],
+      "addSuccess": [MockFunction],
+      "addWarning": [MockFunction],
+      "get$": [MockFunction],
+      "remove": [MockFunction],
+    }
+  }
+  onSelectedDataSources={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Array [
+            Object {
+              "id": "test1",
+              "label": undefined,
+            },
+          ],
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  scope="global"
+  selectedOption={
+    Array [
+      Object {
+        "id": "test1",
+      },
+    ]
+  }
+>
+  <EuiPopover
+    anchorPosition="downLeft"
+    button={
+      <DataSourceMenuPopoverButton
+        className="dataSourceView"
+        isDisabled={true}
+        label=""
+        onClick={[Function]}
+      />
+    }
+    closePopover={[Function]}
+    display="inlineBlock"
+    hasArrow={true}
+    id="dataSourceViewPopover"
+    isOpen={false}
+    ownFocus={true}
+    panelPaddingSize="none"
+  >
+    <div
+      className="euiPopover euiPopover--anchorDownLeft"
+      id="dataSourceViewPopover"
+    >
+      <div
+        className="euiPopover__anchor"
+      >
+        <DataSourceMenuPopoverButton
+          className="dataSourceView"
+          isDisabled={true}
+          label=""
+          onClick={[Function]}
+        >
+          <div
+            className="dataSourceMenuPopoverButton dataSourceMenu-isDisabled"
+            data-label="Data source"
+          >
+            <EuiButton
+              aria-label="Data source selector"
+              className="dataSourceMenuPopoverButtonLabel"
+              color="text"
+              data-test-subj="dataSourceViewButton"
+              iconSide="left"
+              iconType="database"
+              isDisabled={true}
+              onClick={[Function]}
+              size="s"
+            >
+              <EuiButtonDisplay
+                aria-label="Data source selector"
+                baseClassName="euiButton"
+                className="dataSourceMenuPopoverButtonLabel"
+                color="text"
+                data-test-subj="dataSourceViewButton"
+                disabled={true}
+                element="button"
+                iconSide="left"
+                iconType="database"
+                isDisabled={true}
+                onClick={[Function]}
+                size="s"
+                type="button"
+              >
+                <button
+                  aria-label="Data source selector"
+                  className="euiButton euiButton--text euiButton--small euiButton-isDisabled dataSourceMenuPopoverButtonLabel"
+                  data-test-subj="dataSourceViewButton"
+                  disabled={true}
+                  onClick={[Function]}
+                  style={
+                    Object {
+                      "minWidth": undefined,
+                    }
+                  }
+                  type="button"
+                >
+                  <EuiButtonContent
+                    className="euiButton__content"
+                    iconGap="m"
+                    iconSide="left"
+                    iconType="database"
+                    textProps={
+                      Object {
+                        "className": "euiButton__text",
+                      }
+                    }
+                  >
+                    <span
+                      className="euiButtonContent euiButton__content"
+                    >
+                      <EuiIcon
+                        className="euiButtonContent__icon"
+                        color="inherit"
+                        size="m"
+                        type="database"
+                      >
+                        <span
+                          className="euiButtonContent__icon"
+                          color="inherit"
+                          data-euiicon-type="database"
+                          size="m"
+                        />
+                      </EuiIcon>
+                      <span
+                        className="euiButton__text"
+                      />
+                    </span>
+                  </EuiButtonContent>
+                </button>
+              </EuiButtonDisplay>
+            </EuiButton>
+          </div>
+        </DataSourceMenuPopoverButton>
+      </div>
+    </div>
+  </EuiPopover>
+</DataSourceView>
+`;
+
+exports[`DataSourceView Should return error when provided datasource has been filtered out 1`] = `
+<DataSourceView
+  dataSourceFilter={[Function]}
+  fullWidth={false}
+  hideLocalCluster={false}
+  notifications={
+    Object {
+      "add": [MockFunction],
+      "addDanger": [MockFunction],
+      "addError": [MockFunction],
+      "addInfo": [MockFunction],
+      "addSuccess": [MockFunction],
+      "addWarning": [MockFunction],
+      "get$": [MockFunction],
+      "remove": [MockFunction],
+    }
+  }
+  onSelectedDataSources={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Array [
+            Object {
+              "id": "test1",
+              "label": "test1",
+            },
+          ],
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  scope="global"
+  selectedOption={
+    Array [
+      Object {
+        "id": "test1",
+        "label": "test1",
+      },
+    ]
+  }
+>
+  <EuiPopover
+    anchorPosition="downLeft"
+    button={
+      <DataSourceMenuPopoverButton
+        className="dataSourceView"
+        isDisabled={true}
+        label="test1"
+        onClick={[Function]}
+      />
+    }
+    closePopover={[Function]}
+    display="inlineBlock"
+    hasArrow={true}
+    id="dataSourceViewPopover"
+    isOpen={false}
+    ownFocus={true}
+    panelPaddingSize="none"
+  >
+    <div
+      className="euiPopover euiPopover--anchorDownLeft"
+      id="dataSourceViewPopover"
+    >
+      <div
+        className="euiPopover__anchor"
+      >
+        <DataSourceMenuPopoverButton
+          className="dataSourceView"
+          isDisabled={true}
+          label="test1"
+          onClick={[Function]}
+        >
+          <div
+            className="dataSourceMenuPopoverButton dataSourceMenu-isDisabled"
+            data-label="Data source"
+          >
+            <EuiButton
+              aria-label="Data source selector"
+              className="dataSourceMenuPopoverButtonLabel"
+              color="text"
+              data-test-subj="dataSourceViewButton"
+              iconSide="left"
+              iconType="database"
+              isDisabled={true}
+              onClick={[Function]}
+              size="s"
+            >
+              <EuiButtonDisplay
+                aria-label="Data source selector"
+                baseClassName="euiButton"
+                className="dataSourceMenuPopoverButtonLabel"
+                color="text"
+                data-test-subj="dataSourceViewButton"
+                disabled={true}
+                element="button"
+                iconSide="left"
+                iconType="database"
+                isDisabled={true}
+                onClick={[Function]}
+                size="s"
+                type="button"
+              >
+                <button
+                  aria-label="Data source selector"
+                  className="euiButton euiButton--text euiButton--small euiButton-isDisabled dataSourceMenuPopoverButtonLabel"
+                  data-test-subj="dataSourceViewButton"
+                  disabled={true}
+                  onClick={[Function]}
+                  style={
+                    Object {
+                      "minWidth": undefined,
+                    }
+                  }
+                  type="button"
+                >
+                  <EuiButtonContent
+                    className="euiButton__content"
+                    iconGap="m"
+                    iconSide="left"
+                    iconType="database"
+                    textProps={
+                      Object {
+                        "className": "euiButton__text",
+                      }
+                    }
+                  >
+                    <span
+                      className="euiButtonContent euiButton__content"
+                    >
+                      <EuiIcon
+                        className="euiButtonContent__icon"
+                        color="inherit"
+                        size="m"
+                        type="database"
+                      >
+                        <span
+                          className="euiButtonContent__icon"
+                          color="inherit"
+                          data-euiicon-type="database"
+                          size="m"
+                        />
+                      </EuiIcon>
+                      <span
+                        className="euiButton__text"
+                      >
+                        test1
+                      </span>
+                    </span>
+                  </EuiButtonContent>
+                </button>
+              </EuiButtonDisplay>
+            </EuiButton>
+          </div>
+        </DataSourceMenuPopoverButton>
+      </div>
+    </div>
+  </EuiPopover>
+</DataSourceView>
+`;
+
+exports[`DataSourceView When selected option is local cluster and hide local Cluster is true, should return error 1`] = `
+<DataSourceView
+  fullWidth={false}
+  hideLocalCluster={true}
+  onSelectedDataSources={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Array [],
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  scope="global"
+  selectedOption={
+    Array [
+      Object {
+        "id": "",
+      },
+    ]
+  }
+>
+  <EuiPopover
+    anchorPosition="downLeft"
+    button={
+      <DataSourceMenuPopoverButton
+        className="dataSourceView"
+        isDisabled={true}
+        label=""
+        onClick={[Function]}
+      />
+    }
+    closePopover={[Function]}
+    display="inlineBlock"
+    hasArrow={true}
+    id="dataSourceViewPopover"
+    isOpen={false}
+    ownFocus={true}
+    panelPaddingSize="none"
+  >
+    <div
+      className="euiPopover euiPopover--anchorDownLeft"
+      id="dataSourceViewPopover"
+    >
+      <div
+        className="euiPopover__anchor"
+      >
+        <DataSourceMenuPopoverButton
+          className="dataSourceView"
+          isDisabled={true}
+          label=""
+          onClick={[Function]}
+        >
+          <div
+            className="dataSourceMenuPopoverButton dataSourceMenu-isDisabled"
+            data-label="Data source"
+          >
+            <EuiButton
+              aria-label="Data source selector"
+              className="dataSourceMenuPopoverButtonLabel"
+              color="text"
+              data-test-subj="dataSourceViewButton"
+              iconSide="left"
+              iconType="database"
+              isDisabled={true}
+              onClick={[Function]}
+              size="s"
+            >
+              <EuiButtonDisplay
+                aria-label="Data source selector"
+                baseClassName="euiButton"
+                className="dataSourceMenuPopoverButtonLabel"
+                color="text"
+                data-test-subj="dataSourceViewButton"
+                disabled={true}
+                element="button"
+                iconSide="left"
+                iconType="database"
+                isDisabled={true}
+                onClick={[Function]}
+                size="s"
+                type="button"
+              >
+                <button
+                  aria-label="Data source selector"
+                  className="euiButton euiButton--text euiButton--small euiButton-isDisabled dataSourceMenuPopoverButtonLabel"
+                  data-test-subj="dataSourceViewButton"
+                  disabled={true}
+                  onClick={[Function]}
+                  style={
+                    Object {
+                      "minWidth": undefined,
+                    }
+                  }
+                  type="button"
+                >
+                  <EuiButtonContent
+                    className="euiButton__content"
+                    iconGap="m"
+                    iconSide="left"
+                    iconType="database"
+                    textProps={
+                      Object {
+                        "className": "euiButton__text",
+                      }
+                    }
+                  >
+                    <span
+                      className="euiButtonContent euiButton__content"
+                    >
+                      <EuiIcon
+                        className="euiButtonContent__icon"
+                        color="inherit"
+                        size="m"
+                        type="database"
+                      >
+                        <span
+                          className="euiButtonContent__icon"
+                          color="inherit"
+                          data-euiicon-type="database"
+                          size="m"
+                        />
+                      </EuiIcon>
+                      <span
+                        className="euiButton__text"
+                      />
+                    </span>
+                  </EuiButtonContent>
+                </button>
+              </EuiButtonDisplay>
+            </EuiButton>
+          </div>
+        </DataSourceMenuPopoverButton>
+      </div>
+    </div>
+  </EuiPopover>
+</DataSourceView>
+`;
+
+exports[`DataSourceView should call getDataSourceById when only pass id with no label 1`] = `
+<DataSourceView
+  fullWidth={false}
+  hideLocalCluster={false}
+  notifications={
+    Object {
+      "add": [MockFunction],
+      "addDanger": [MockFunction],
+      "addError": [MockFunction],
+      "addInfo": [MockFunction],
+      "addSuccess": [MockFunction],
+      "addWarning": [MockFunction],
+      "get$": [MockFunction],
+      "remove": [MockFunction],
+    }
+  }
+  onSelectedDataSources={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Array [
+            Object {
+              "id": "test1",
+              "label": undefined,
+            },
+          ],
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  savedObjectsClient={
+    Object {
+      "get": [MockFunction],
+    }
+  }
+  scope="global"
+  selectedOption={
+    Array [
+      Object {
+        "id": "test1",
+      },
+    ]
+  }
+>
+  <EuiPopover
+    anchorPosition="downLeft"
+    button={
+      <DataSourceMenuPopoverButton
+        className="dataSourceView"
+        isDisabled={true}
+        label=""
+        onClick={[Function]}
+      />
+    }
+    closePopover={[Function]}
+    display="inlineBlock"
+    hasArrow={true}
+    id="dataSourceViewPopover"
+    isOpen={false}
+    ownFocus={true}
+    panelPaddingSize="none"
+  >
+    <div
+      className="euiPopover euiPopover--anchorDownLeft"
+      id="dataSourceViewPopover"
+    >
+      <div
+        className="euiPopover__anchor"
+      >
+        <DataSourceMenuPopoverButton
+          className="dataSourceView"
+          isDisabled={true}
+          label=""
+          onClick={[Function]}
+        >
+          <div
+            className="dataSourceMenuPopoverButton dataSourceMenu-isDisabled"
+            data-label="Data source"
+          >
+            <EuiButton
+              aria-label="Data source selector"
+              className="dataSourceMenuPopoverButtonLabel"
+              color="text"
+              data-test-subj="dataSourceViewButton"
+              iconSide="left"
+              iconType="database"
+              isDisabled={true}
+              onClick={[Function]}
+              size="s"
+            >
+              <EuiButtonDisplay
+                aria-label="Data source selector"
+                baseClassName="euiButton"
+                className="dataSourceMenuPopoverButtonLabel"
+                color="text"
+                data-test-subj="dataSourceViewButton"
+                disabled={true}
+                element="button"
+                iconSide="left"
+                iconType="database"
+                isDisabled={true}
+                onClick={[Function]}
+                size="s"
+                type="button"
+              >
+                <button
+                  aria-label="Data source selector"
+                  className="euiButton euiButton--text euiButton--small euiButton-isDisabled dataSourceMenuPopoverButtonLabel"
+                  data-test-subj="dataSourceViewButton"
+                  disabled={true}
+                  onClick={[Function]}
+                  style={
+                    Object {
+                      "minWidth": undefined,
+                    }
+                  }
+                  type="button"
+                >
+                  <EuiButtonContent
+                    className="euiButton__content"
+                    iconGap="m"
+                    iconSide="left"
+                    iconType="database"
+                    textProps={
+                      Object {
+                        "className": "euiButton__text",
+                      }
+                    }
+                  >
+                    <span
+                      className="euiButtonContent euiButton__content"
+                    >
+                      <EuiIcon
+                        className="euiButtonContent__icon"
+                        color="inherit"
+                        size="m"
+                        type="database"
+                      >
+                        <span
+                          className="euiButtonContent__icon"
+                          color="inherit"
+                          data-euiicon-type="database"
+                          size="m"
+                        />
+                      </EuiIcon>
+                      <span
+                        className="euiButton__text"
+                      />
+                    </span>
+                  </EuiButtonContent>
+                </button>
+              </EuiButtonDisplay>
+            </EuiButton>
+          </div>
+        </DataSourceMenuPopoverButton>
+      </div>
+    </div>
+  </EuiPopover>
+</DataSourceView>
+`;
+
+exports[`DataSourceView should call notification warning when there is data source fetch error 1`] = `
+<DataSourceView
+  fullWidth={false}
+  hideLocalCluster={false}
+  notifications={
+    Object {
+      "add": [MockFunction] {
+        "calls": Array [
+          Array [
+            Object {
+              "color": "danger",
+              "text": MountPoint {
+                "reactNode": <React.Fragment>
+                  <EuiFlexGroup
+                    gutterSize="s"
+                    justifyContent="flexEnd"
+                  >
+                    <EuiFlexItem
+                      grow={false}
+                    >
+                      <EuiButton
+                        onClick={[Function]}
+                        size="s"
+                      >
+                        Refresh the page
+                      </EuiButton>
+                    </EuiFlexItem>
+                  </EuiFlexGroup>
+                </React.Fragment>,
+              },
+              "title": "Failed to fetch data sources",
+            },
+          ],
+        ],
+        "results": Array [
+          Object {
+            "type": "return",
+            "value": undefined,
+          },
+        ],
+      },
+      "addDanger": [MockFunction],
+      "addError": [MockFunction],
+      "addInfo": [MockFunction],
+      "addSuccess": [MockFunction],
+      "addWarning": [MockFunction],
+      "get$": [MockFunction],
+      "remove": [MockFunction],
+    }
+  }
+  onSelectedDataSources={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Array [],
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  savedObjectsClient={
+    Object {
+      "get": [MockFunction],
+    }
+  }
+  scope="global"
+  selectedOption={
+    Array [
+      Object {
+        "id": "test1",
+      },
+    ]
+  }
+>
+  <DataSourceErrorMenu>
+    <EuiPopover
+      anchorPosition="downLeft"
+      button={
+        <EuiButtonIcon
+          aria-label="dataSourceErrorMenuHeaderLink"
+          className="euiHeaderLink"
+          data-test-subj="dataSourceErrorMenuHeaderLink"
+          iconType={[Function]}
+          onClick={[Function]}
+          size="s"
+        />
+      }
+      closePopover={[Function]}
+      data-test-subj="dataSourceErrorPopover"
+      display="inlineBlock"
+      hasArrow={true}
+      id="dataSourceErrorPopover"
+      isOpen={false}
+      ownFocus={true}
+      panelPaddingSize="none"
+    >
+      <div
+        className="euiPopover euiPopover--anchorDownLeft"
+        data-test-subj="dataSourceErrorPopover"
+        id="dataSourceErrorPopover"
+      >
+        <div
+          className="euiPopover__anchor"
+        >
+          <EuiButtonIcon
+            aria-label="dataSourceErrorMenuHeaderLink"
+            className="euiHeaderLink"
+            data-test-subj="dataSourceErrorMenuHeaderLink"
+            iconType={[Function]}
+            onClick={[Function]}
+            size="s"
+          >
+            <button
+              aria-label="dataSourceErrorMenuHeaderLink"
+              className="euiButtonIcon euiButtonIcon--primary euiButtonIcon--empty euiButtonIcon--small euiHeaderLink"
+              data-test-subj="dataSourceErrorMenuHeaderLink"
+              disabled={false}
+              onClick={[Function]}
+              type="button"
+            >
+              <EuiIcon
+                aria-hidden="true"
+                className="euiButtonIcon__icon"
+                color="inherit"
+                size="m"
+                type={[Function]}
+              >
+                <span
+                  aria-hidden="true"
+                  className="euiButtonIcon__icon"
+                  color="inherit"
+                  data-euiicon-type="iconType"
+                  size="m"
+                />
+              </EuiIcon>
+            </button>
+          </EuiButtonIcon>
+        </div>
+      </div>
+    </EuiPopover>
+  </DataSourceErrorMenu>
+</DataSourceView>
+`;
+
+exports[`DataSourceView should render normally with local cluster not hidden 1`] = `
+<EuiPopover
+  anchorPosition="downLeft"
+  button={
+    <DataSourceMenuPopoverButton
+      className="dataSourceView"
+      isDisabled={true}
+      label="test1"
+      onClick={[Function]}
+    />
+  }
+  closePopover={[Function]}
+  display="inlineBlock"
+  hasArrow={true}
+  id="dataSourceViewPopover"
+  isOpen={false}
+  ownFocus={true}
+  panelPaddingSize="none"
+>
+  <DataSourceDropDownHeader
+    totalDataSourceCount={1}
+  />
+  <EuiContextMenuPanel
+    className="dataSourceViewOuiPanel"
+    hasFocus={true}
+    items={Array []}
+  >
+    <EuiPanel
+      borderRadius="none"
+      color="subdued"
+      paddingSize="none"
+    >
+      <EuiSelectable
+        data-test-subj="dataSourceView"
+        isPreFiltered={false}
+        options={
+          Array [
+            Object {
+              "checked": "on",
+              "disabled": true,
+              "id": "test1",
+              "label": "test1",
+            },
+          ]
+        }
+        renderOption={[Function]}
+        searchable={false}
+        singleSelection={true}
+      >
+        <Component />
+      </EuiSelectable>
+    </EuiPanel>
+  </EuiContextMenuPanel>
+</EuiPopover>
+`;

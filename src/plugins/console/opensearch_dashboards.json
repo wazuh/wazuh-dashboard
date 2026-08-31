@@ -1,0 +1,14 @@
+{
+  "id": "console",
+  "version": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "requiredPlugins": ["devTools", "data"],
+  "optionalPlugins": ["usageCollection", "home", "dataSource"],
+  "requiredBundles": [
+    "opensearchUiShared",
+    "opensearchDashboardsReact",
+    "opensearchDashboardsUtils",
+    "home"
+  ]
+}

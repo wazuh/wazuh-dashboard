@@ -1,0 +1,596 @@
+# This workflow automates the build of the Wazuh Dashboard package along with
+# its plugins.
+#
+# This workflow:
+# - Download, build, package, test, and upload the Wazuh dashboard along
+#   with its plugins.
+# - Customizable through inputs to adapt to different environments
+#   (production, staging, various architectures).
+# - Ensure that each component is built with the exact reference provided and
+#   validated before the final packaging.
+#
+# - Allows customization of:
+#   - Operating system (`deb` or `rpm`)
+#   - Architecture (`amd64`, `x86_64`, `aarch64`, `arm64`)
+#   - Package revision
+#   - Plugin references (branches, tags, or commits)
+#   - Staging, upload, and checksum options.
+
+run-name: Build ${{ inputs.system }} wazuh-dashboard on ${{ inputs.architecture }} ${{ inputs.is_stage && '- is stage' || '' }} ${{ inputs.checksum && '- checksum' || '' }} ${{ inputs.id }}
+name: (4.x) Build Wazuh dashboard package with plugins (on demand)
+
+on:
+  workflow_dispatch:
+    inputs:
+      system:
+        type: choice
+        description: 'Package OS'
+        required: true
+        options:
+          - deb
+          - rpm
+        default: 'deb'
+      architecture:
+        type: choice
+        description: 'Package architecture'
+        required: true
+        options:
+          - amd64
+          - x86_64
+          - aarch64
+          - arm64
+        default: amd64
+      revision:
+        type: string
+        description: 'Package revision'
+        required: true
+        default: '0'
+      reference_security_plugins:
+        type: string
+        description: 'Branch/tag/commit of the wazuh-security-dashboards-plugin repository to build the security plugin'
+        required: true
+        default: 'main'
+      reference_wazuh_plugins:
+        type: string
+        description: 'Branch/tag/commit of the wazuh-dashboard-plugins repository to build the main plugins'
+        required: true
+        default: 'main'
+      is_stage:
+        type: boolean
+        description: 'Set production nomenclature'
+        required: true
+        default: false
+      checksum:
+        type: boolean
+        description: 'Generate package checksum'
+        required: true
+        default: false
+      id:
+        description: 'ID used to identify the workflow uniquely.'
+        type: string
+        required: false
+
+  workflow_call:
+    inputs:
+      system:
+        type: string
+        required: true
+        default: 'deb'
+      architecture:
+        type: string
+        required: true
+        default: amd64
+      revision:
+        type: string
+        required: true
+        default: '0'
+      reference_security_plugins:
+        type: string
+        required: true
+        default: 'main'
+      reference_wazuh_plugins:
+        type: string
+        required: true
+        default: 'main'
+      is_stage:
+        type: boolean
+        required: true
+        default: false
+      checksum:
+        type: boolean
+        required: true
+        default: false
+      id:
+        type: string
+        required: false
+
+env:
+  CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
+  EXECUTION_REPOSITORY: wazuh-dashboard/4_builderpackage_dashboard
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  setup-variables:
+    runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
+    name: Setup variables
+    outputs:
+      VERSION: ${{ steps.setup-variables.outputs.VERSION }}
+      PREVIOUS: ${{ steps.setup-variables.outputs.PREVIOUS }}
+      REVISION: ${{ steps.setup-variables.outputs.REVISION }}
+      COMMIT_SHA: ${{ steps.setup-variables.outputs.COMMIT_SHA }}
+      PLUGINS_SHA: ${{ steps.setup-variables.outputs.PLUGINS_SHA }}
+      SECURITY_SHA: ${{ steps.setup-variables.outputs.SECURITY_SHA }}
+      PRODUCTION: ${{ steps.setup-variables.outputs.PRODUCTION }}
+      WAZUH_DASHBOARD_SLIM: ${{ steps.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+      WAZUH_SECURITY_PLUGIN: ${{ steps.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+      WAZUH_PLUGINS_WAZUH: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+      WAZUH_PLUGINS_CORE: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+      WAZUH_PLUGINS_CHECK_UPDATES: ${{ steps.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+      PACKAGE_NAME: ${{ steps.setup-variables.outputs.PACKAGE_NAME }}
+      ARCHITECTURE_FLAG: ${{ steps.setup-variables.outputs.ARCHITECTURE_FLAG }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Get SHA of wazuh-dashboard-plugins
+        id: get-plugins-sha
+        run: |
+          git clone -b ${{ inputs.reference_wazuh_plugins }} --single-branch https://github.com/wazuh/wazuh-dashboard-plugins.git wzdp
+          cd wzdp
+          echo "WAZUH_PLUGINS_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Get SHA of wazuh-security-dashboards-plugin
+        id: get-security-sha
+        run: |
+          git clone -b ${{ inputs.reference_security_plugins }} --single-branch https://github.com/wazuh/wazuh-security-dashboards-plugin.git wzsp
+          cd wzsp
+          echo "WAZUH_SECURITY_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup variables
+        id: setup-variables
+        run: |
+          VERSION=$(jq -r '.version' VERSION.json)
+          # Check the corresponding previous version to be used in the upgrade test
+          sudo curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | sudo gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && sudo chmod 644 /usr/share/keyrings/wazuh.gpg
+          sudo echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | sudo tee -a /etc/apt/sources.list.d/wazuh.list
+          sudo apt-get update
+          PREVIOUS=$(apt-cache madison wazuh-dashboard | grep -A 1 "$VERSION" | tail -1 | awk '{print $3}')
+          if [ -z "$PREVIOUS" ]; then
+            MAJOR_MINOR=$(echo "$VERSION" | cut -d '.' -f 1,2)$(echo ".")
+            PREVIOUS=$(apt-cache madison wazuh-dashboard | grep "$MAJOR_MINOR" | head -1 | awk '{print $3}')
+          fi
+          if [ -z "$PREVIOUS" ]; then
+            PREVIOUS=$(apt-cache madison wazuh-dashboard | head -1 | awk '{print $3}')
+          fi
+          if [ -z "$PREVIOUS" ]; then
+            echo "::warning No previous version::No previous version found for this architecture. Upgrade test will be skipped."
+          fi
+          REVISION=$(yarn --silent wzd-revision)
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          PLUGINS_SHA=${{steps.get-plugins-sha.outputs.WAZUH_PLUGINS_SHA}}
+          SECURITY_SHA=${{steps.get-security-sha.outputs.WAZUH_SECURITY_SHA}}
+          if [ "${{ inputs.is_stage }}" = "true" ]; then
+            PRODUCTION=--production
+          else
+            PRODUCTION=""
+          fi
+          WAZUH_DASHBOARD_SLIM=wazuh-dashboard_${VERSION}-${REVISION}_${{ (inputs.ARCHITECTURE == 'x86_64' || inputs.ARCHITECTURE == 'amd64') && 'x64' || 'arm64' }}.tar.gz
+          WAZUH_SECURITY_PLUGIN=wazuh-security-dashboards-plugin_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_security_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_WAZUH=wazuh-dashboard-plugins_wazuh_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_CORE=wazuh-dashboard-plugins_wazuh-core_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          WAZUH_PLUGINS_CHECK_UPDATES=wazuh-dashboard-plugins_wazuh-check-updates_${VERSION}-${REVISION}_$(echo ${{ inputs.reference_wazuh_plugins }} | sed 's/\//-/g').zip
+          if [ "${{ inputs.system }}" = "deb" ]; then
+            if [ "${{ inputs.is_stage }}" = "true" ]; then
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
+            else
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.deb
+            fi
+          else
+            if [ "${{ inputs.is_stage }}" = "true" ]; then
+              PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
+            else
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${COMMIT_SHA}-${PLUGINS_SHA}-${SECURITY_SHA}.rpm
+            fi
+          fi
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "amd64" ]]; then
+            ARCHITECTURE_FLAG=""
+          else
+            ARCHITECTURE_FLAG=--arm
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "PREVIOUS=$PREVIOUS" >> $GITHUB_OUTPUT
+          echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "PLUGINS_SHA=$PLUGINS_SHA" >> $GITHUB_OUTPUT
+          echo "SECURITY_SHA=$SECURITY_SHA" >> $GITHUB_OUTPUT
+          echo "PRODUCTION=$PRODUCTION" >> $GITHUB_OUTPUT
+          echo "WAZUH_DASHBOARD_SLIM=$WAZUH_DASHBOARD_SLIM" >> $GITHUB_OUTPUT
+          echo "WAZUH_SECURITY_PLUGIN=$WAZUH_SECURITY_PLUGIN" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_WAZUH=$WAZUH_PLUGINS_WAZUH" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CORE=$WAZUH_PLUGINS_CORE" >> $GITHUB_OUTPUT
+          echo "WAZUH_PLUGINS_CHECK_UPDATES=$WAZUH_PLUGINS_CHECK_UPDATES" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "ARCHITECTURE_FLAG=$ARCHITECTURE_FLAG" >> $GITHUB_OUTPUT
+
+  validate-job:
+    runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
+    needs: setup-variables
+    name: Validate inputs
+    steps:
+      - name: Validate inputs
+        run: |
+          if [[ "${{ inputs.architecture }}" == "amd64" || "${{ inputs.architecture }}" == "arm64" ]] && [[ "${{ inputs.system }}" == "rpm" ]]; then
+            echo "Invalid combination of architecture and system"
+            exit 1
+          fi
+          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "aarch64" ]] && [[ "${{ inputs.system }}" == "deb" ]]; then
+            echo "Invalid combination of architecture and system"
+            exit 1
+          fi
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.CI_INTERNAL_DEVELOPMENT_BUCKET_USER_SECRET_KEY }}
+          aws-region: ${{ secrets.CI_AWS_REGION }}
+
+  build-base:
+    needs: [validate-job]
+    name: Build dashboard
+    uses: wazuh/wazuh-dashboard/.github/workflows/4_builderpackage_dashboard_core.yml@4.14.9
+    with:
+      CHECKOUT_TO: ${{ github.head_ref || github.ref_name }}
+      ARCHITECTURE: ${{ inputs.architecture }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
+
+  build-main-plugins:
+    needs: [validate-job]
+    name: Build plugins
+    permissions:
+      pull-requests: write
+      id-token: write
+    uses: wazuh/wazuh-dashboard-plugins/.github/workflows/4_builderpackage_plugins.yml@4.14.9
+    with:
+      reference: ${{ inputs.reference_wazuh_plugins }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
+
+  build-security-plugin:
+    needs: [validate-job]
+    name: Build security plugin
+    permissions:
+      pull-requests: write
+      id-token: write
+    uses: wazuh/wazuh-security-dashboards-plugin/.github/workflows/4_builderpackage_security_plugin.yml@4.14.9
+    with:
+      reference: ${{ inputs.reference_security_plugins }}
+      execution_repository: 'wazuh-dashboard/4_builderpackage_dashboard'
+    secrets: inherit
+
+  build-package:
+    needs: [setup-variables, build-main-plugins, build-base, build-security-plugin]
+    runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
+    name: Generate packages
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Download artifacts from S3
+        run: |
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }} ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }} ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }} ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}
+          echo "Dashboard artifact: ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}"
+          echo "Security plugin artifact: ${{ github.workspace }}/artifacts/security-plugin/${{ needs.setup-variables.outputs.WAZUH_SECURITY_PLUGIN }}"
+          echo "Main plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_WAZUH }}"
+          echo "Core plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CORE }}"
+          echo "Check updates plugin artifact: ${{ github.workspace }}/artifacts/plugins/${{ needs.setup-variables.outputs.WAZUH_PLUGINS_CHECK_UPDATES }}"
+
+      # Workaround: AWS CodeBuild ARM runners do not have zip pre-installed
+      - name: Install zip
+        if: ${{ inputs.architecture == 'arm64' || inputs.architecture == 'aarch64' }}
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Zip plugins
+        run: |
+          zip -r -j ${{ github.workspace }}/artifacts/wazuh-package.zip ${{ github.workspace }}/artifacts/plugins
+          zip -r -j ${{ github.workspace }}/artifacts/security-package.zip ${{ github.workspace }}/artifacts/security-plugin
+          zip -r -j ${{ github.workspace }}/artifacts/dashboard-package.zip ${{ github.workspace }}/artifacts/dashboard/${{ needs.setup-variables.outputs.WAZUH_DASHBOARD_SLIM }}
+
+      # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Start Docker daemon
+        if: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' }}
+        run: |
+          sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
+          timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
+
+      - name: Create non-root build user
+        run: |
+          useradd -m builduser
+          usermod -aG docker builduser
+          chown -R builduser:builduser ${{ github.workspace }}
+          # Copy Docker Hub credentials so builduser can pull authenticated images
+          mkdir -p /home/builduser/.docker
+          cp /root/.docker/config.json /home/builduser/.docker/config.json
+          chown -R builduser:builduser /home/builduser/.docker
+
+      - name: Build package
+        run: |
+          cd ${{ github.workspace }}/dev-tools/build-packages
+          sudo -u builduser -H env PATH="$PATH" bash ./build-packages.sh \
+            -r ${{ inputs.revision }} ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG }} \
+            -a file://${{ github.workspace }}/artifacts/wazuh-package.zip \
+            -s file://${{ github.workspace }}/artifacts/security-package.zip \
+            -b file://${{ github.workspace }}/artifacts/dashboard-package.zip \
+            --commit-sha ${{needs.setup-variables.outputs.COMMIT_SHA}}-${{needs.setup-variables.outputs.PLUGINS_SHA}}-${{needs.setup-variables.outputs.SECURITY_SHA}} \
+            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+          # Workaround: Docker containers run as root internally, so output files are root-owned on the host.
+          chown -R builduser:builduser output 2>/dev/null || true
+
+      - name: Upload artifacts to S3
+        if: ${{ success() }}
+        run: |
+          artifact_path="${{ github.workspace }}/dev-tools/build-packages/output/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+
+          aws s3 cp $artifact_path $bucket_path
+          if [ "${{ inputs.checksum }}" = "true" ]; then
+            aws s3 cp $artifact_path.sha512 $bucket_path.sha512
+          fi
+
+          echo "Uploaded $artifact_path to $bucket_path"
+
+  test-package:
+    needs: [setup-variables, build-package]
+    runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
+    strategy:
+      fail-fast: false
+    name: Test package
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Download artifacts from S3
+        run: |
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+          package_path="${{ github.workspace }}/dev-tools/test-packages/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+
+          aws s3 cp $bucket_path $package_path
+
+          echo "Downloaded $bucket_path to $package_path"
+
+      # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Start Docker daemon
+        run: |
+          sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
+          timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
+
+      - name: Test package integrity
+        run: |
+          cd ${{ github.workspace }}/dev-tools/test-packages
+          cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}  ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}
+          bash ./test-packages.sh \
+            -p ${{needs.setup-variables.outputs.PACKAGE_NAME}}
+
+      - name: DEB - Test package install/uninstall
+        if: ${{ inputs.system == 'deb' }}
+        run: |
+          bash ${{ github.workspace }}/dev-tools/test-packages/run_in_systemd_container.sh \
+            "${{ github.workspace }}" \
+            "bash /test-packages/deb-test-install-uninstall.sh '${{needs.setup-variables.outputs.PACKAGE_NAME}}'"
+
+      - name: DEB - Test package upgrade
+        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
+        run: |
+          bash ${{ github.workspace }}/dev-tools/test-packages/run_in_systemd_container.sh \
+            "${{ github.workspace }}" \
+            "bash /test-packages/deb-test-upgrade.sh \
+              '${{needs.setup-variables.outputs.PACKAGE_NAME}}' \
+              '${{needs.setup-variables.outputs.PREVIOUS}}' \
+              '${{needs.setup-variables.outputs.VERSION}}'"
+
+      - name: RPM - Clone automation repo
+        if: ${{ inputs.system == 'rpm' }}
+        env:
+          username: 'wazuh-devel-xdrsiem-dashboard'
+        run: |
+          git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git -b $(bash dev-tools/product_version.sh)
+          # Workaround: AWS CodeBuild ARM runners do not have pip3 or openssh-client pre-installed
+          if ! command -v pip3 &>/dev/null || ! command -v ssh &>/dev/null; then
+            sudo apt-get update
+            command -v pip3 &>/dev/null || sudo apt-get install -y python3-pip
+            command -v ssh &>/dev/null || sudo apt-get install -y openssh-client
+          fi
+          cd wazuh-automation
+          sudo pip3 install -r deployability/deps/requirements.txt
+
+      - name: RPM - Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: ${{ inputs.system == 'rpm' }}
+        with:
+          aws-region: 'us-east-1'
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          role-session-name: 'Dashboard-smoke-test'
+
+      - name: RPM - Setup environment
+        if: ${{ inputs.system == 'rpm' }}
+        run: |
+          if [ "${{ inputs.architecture }}" = "x86_64" ]; then
+            INSTANCE_NAME="centos_9_amd_large_aws"
+            COMPOSITE_NAME="centos_stream-9-amd64"
+          else
+            INSTANCE_NAME="centos_8_arm_large_aws"
+            COMPOSITE_NAME="centos_stream-8-arm64"
+          fi
+          python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name "${COMPOSITE_NAME}" --instance-name "${INSTANCE_NAME}" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --label-creator github-actions --working-dir /tmp/dashboard --custom-tags "Product:wazuh-dashboard,Purpose:package-build,ExecutionId:${{ github.run_id }},Stage:ci"
+          ansible_host=$(grep 'ansible_host:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_port=$(grep 'ansible_port:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_user=$(grep 'ansible_user:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_ssh_private_key_file=$(grep 'ansible_ssh_private_key_file:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ssh_command="ssh -o StrictHostKeyChecking=no -i $ansible_ssh_private_key_file -p $ansible_port $ansible_user@$ansible_host"
+          scp_command="scp -o StrictHostKeyChecking=no -i $ansible_ssh_private_key_file -P $ansible_port"
+          echo "ansible_host=$ansible_host" >> $GITHUB_OUTPUT
+          echo "ansible_port=$ansible_port" >> $GITHUB_OUTPUT
+          echo "ansible_user=$ansible_user" >> $GITHUB_OUTPUT
+          echo "ansible_ssh_private_key_file=$ansible_ssh_private_key_file" >> $GITHUB_OUTPUT
+          echo "ssh_command=$ssh_command" >> $GITHUB_OUTPUT
+          echo "scp_command=$scp_command" >> $GITHUB_OUTPUT
+        id: setup_rpm_env
+
+      - name: RPM - Test package install/uninstall
+        if: ${{ inputs.system == 'rpm' }}
+        run: |
+          # echo 'Installing package...' is necessary to init the ssh connection prior to running scp
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} "echo 'Installing package...'"
+          ${{ steps.setup_rpm_env.outputs.scp_command }} ${{ github.workspace }}/dev-tools/test-packages/${{needs.setup-variables.outputs.PACKAGE_NAME}} ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
+
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo rpm -i ./${{needs.setup-variables.outputs.PACKAGE_NAME}}; \
+              if rpm -q wazuh-dashboard &>/dev/null; then \
+                echo 'Package installed'; \
+              else \
+                echo 'Package not installed'; \
+                exit 1; \
+              fi; \
+              sudo  systemctl daemon-reload;\
+              sudo  systemctl enable wazuh-dashboard;\
+              sudo  systemctl start wazuh-dashboard;\
+              if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
+                echo 'Service running'; \
+              else \
+                echo 'Service not running' ;\
+                exit 1 ;\
+              fi; \
+              sudo yum remove wazuh-dashboard -y ;\
+              sudo rm -rf /var/lib/wazuh-dashboard/ ; \
+              sudo rm -rf /usr/share/wazuh-dashboard/ ; \
+              sudo rm -rf /etc/wazuh-dashboard/; \
+              if rpm -q wazuh-dashboard &>/dev/null; then \
+                echo 'Package not uninstalled'; \
+                exit 1; \
+              else \
+                echo 'Package uninstalled'; \
+              fi
+              "
+
+      - name: RPM - Test package upgrade
+        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'rpm' }}
+        run: |
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install libcap; \
+            sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
+            sudo echo -e '[wazuh]\ngpgcheck=1\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\nenabled=1\nname=EL-$releasever - Wazuh\nbaseurl=https://packages.wazuh.com/4.x/yum/\nprotect=1' | sudo tee /etc/yum.repos.d/wazuh.repo; \
+            sudo yum install -y wazuh-dashboard-${{needs.setup-variables.outputs.PREVIOUS}}; \
+            sudo  systemctl daemon-reload; \
+            sudo  systemctl enable wazuh-dashboard; \
+            sudo  systemctl start wazuh-dashboard; \
+            sudo yum install -y ${{needs.setup-variables.outputs.PACKAGE_NAME}}; \
+            sudo systemctl restart wazuh-dashboard; \
+            if rpm -q wazuh-dashboard | grep -q '${{needs.setup-variables.outputs.VERSION}}'; then \
+              echo 'Package upgraded'; \
+            else \
+              echo 'Package not upgraded'; \
+              exit 1; \
+            fi; \
+            if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
+              echo 'Service running'; \
+            else \
+              echo 'Service not running'; \
+              exit 1; \
+            fi
+            "
+      - name: Destroy Allocator Machine
+        #DO NOT DELETE. This ensures that the generated instance is destroyed even if the job fails.
+        if: ${{ always() }}
+        ########################################
+        run: |
+          if [ "${{ inputs.system }}" = "rpm" ]; then
+            echo "Destroying Allocator Machine"
+            cd wazuh-automation/deployability
+            python3 modules/allocation/main.py --action delete --track-output "/tmp/track.yaml"
+          fi
+
+  upload-package:
+    needs: [setup-variables, test-package]
+    runs-on: ${{ inputs.architecture == 'arm64' && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
+    name: Upload package
+    steps:
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Download artifacts from S3
+        run: |
+          bucket_path="${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+          package_path="${{ github.workspace }}/${{ needs.setup-variables.outputs.PACKAGE_NAME }}"
+
+          aws s3 cp $bucket_path $package_path
+          echo "Downloaded $bucket_path to $package_path"
+
+          if [ "${{ inputs.checksum }}" = "true" ]; then
+            aws s3 cp $bucket_path.sha512 $package_path.sha512
+            echo "Downloaded $bucket_path.sha512 to $package_path.sha512"
+          fi
+
+      - name: Upload package
+        run: |
+          echo "Uploading package"
+          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
+          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}"
+          echo "S3 URI: ${s3uri}"
+
+      - name: Upload SHA512
+        if: ${{ inputs.checksum }}
+        run: |
+          echo "Uploading checksum"
+          aws s3 cp ./${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/
+          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/4.x/main/packages/${{needs.setup-variables.outputs.PACKAGE_NAME}}.sha512"
+          echo "S3 sha512 URI: ${s3uri}"

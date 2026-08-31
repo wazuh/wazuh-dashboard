@@ -1,0 +1,14 @@
+{
+  "get_script": {
+    "url_params": {
+      "cluster_manager_timeout": ""
+    },
+    "methods": [
+      "GET"
+    ],
+    "patterns": [
+      "_scripts/{id}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/script-apis/get-stored-script/"
+  }
+}

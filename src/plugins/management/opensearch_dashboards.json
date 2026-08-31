@@ -1,0 +1,9 @@
+{
+  "id": "management",
+  "version": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "optionalPlugins": ["home", "managementOverview"],
+  "requiredBundles": ["opensearchDashboardsReact", "opensearchDashboardsUtils"],
+  "requiredPlugins": ["navigation"]
+}

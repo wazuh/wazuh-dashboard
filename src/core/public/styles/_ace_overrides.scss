@@ -1,0 +1,241 @@
+// SASSTODO: Replace with an EUI editor
+// Intentionally not using the EuiCodeBlock colors here because they actually change
+// hue from light to dark theme. So some colors would change while others wouldn't.
+// Seemed weird, so just hexing all the colors but using the `makeHighContrastColor()`
+// function to ensure accessible contrast.
+
+// In order to override the TM (Textmate) theme of Ace/Brace, everywhere,
+// it is being scoped by a known outer selector
+.coreSystemRootDomElement {
+  .ace-tm {
+    $aceBackground: tintOrShade($euiColorLightShade, 50%, 0%);
+    $aceActiveLineBackground: transparentize($euiColorLightShade, 0.3);
+    $aceUrlColor: makeHighContrastColor(#00a69b, $aceBackground);
+    $aceVarColor: makeHighContrastColor(#0079a5, $aceBackground);
+    $aceStringColor: makeHighContrastColor(#009926, $aceBackground);
+
+    background-color: $euiColorLightestShade;
+    color: $euiTextColor;
+    /* stylelint-disable-next-line @osd/stylelint/no_restricted_properties */
+    font-family: var(--font-code);
+
+    .ace_scrollbar {
+      @include euiScrollBar;
+    }
+
+    .ace_gutter-active-line,
+    .ace_marker-layer .ace_active-line {
+      background-color: $aceActiveLineBackground;
+    }
+
+    .ace_snippet-marker {
+      width: 100%;
+      background-color: $aceBackground;
+      border: none;
+    }
+
+    .ace_indent-guide {
+      background:
+        linear-gradient(
+          to left,
+          $euiColorMediumShade 0%,
+          $euiColorMediumShade 1px,
+          transparent 1px,
+          transparent 100%
+        );
+    }
+
+    .ace_search {
+      z-index: $euiZLevel1 + 1;
+    }
+
+    .ace_layer.ace_marker-layer {
+      overflow: visible;
+    }
+
+    .ace_warning {
+      color: $euiColorDanger;
+    }
+
+    .ace_method {
+      color: makeHighContrastColor(#dd0a73, $aceBackground);
+    }
+
+    .ace_url,
+    .ace_start_triple_quote,
+    .ace_end_triple_quote {
+      color: $aceUrlColor;
+    }
+
+    .ace_multi_string {
+      color: $aceStringColor;
+      font-style: italic;
+    }
+
+    .ace_gutter {
+      background-color: $euiColorEmptyShade;
+      color: $euiColorDarkShade;
+      border-left: 1px solid $aceBackground;
+    }
+
+    .ace_print-margin {
+      width: 1px;
+      background: $euiColorLightShade;
+    }
+
+    .ace_fold {
+      background-color: #6b72e6;
+    }
+
+    .ace_cursor {
+      color: $euiColorFullShade;
+    }
+
+    .ace_invisible {
+      color: $euiColorLightShade;
+    }
+
+    .ace_storage,
+    .ace_keyword {
+      color: $aceVarColor;
+    }
+
+    .ace_constant {
+      color: makeHighContrastColor(#900, $aceBackground);
+    }
+
+    .ace_constant.ace_buildin {
+      color: makeHighContrastColor(rgb(88, 72, 246), $aceBackground);
+    }
+
+    .ace_constant.ace_language {
+      color: makeHighContrastColor(rgb(88, 92, 246), $aceBackground);
+    }
+
+    .ace_constant.ace_library {
+      color: $aceStringColor;
+    }
+
+    .ace_invalid {
+      background-color: euiCallOutColor("danger", "background");
+      color: euiCallOutColor("danger", "foreground");
+    }
+
+    .ace_support.ace_function {
+      color: makeHighContrastColor(rgb(60, 76, 114), $aceBackground);
+    }
+
+    .ace_support.ace_constant {
+      color: $aceStringColor;
+    }
+
+    .ace_support.ace_type,
+    .ace_support.ace_class {
+      color: makeHighContrastColor(rgb(109, 121, 222), $aceBackground);
+    }
+
+    .ace_keyword.ace_operator {
+      color: makeHighContrastColor($euiColorDarkShade, $aceBackground);
+    }
+
+    .ace_string {
+      color: $aceStringColor;
+    }
+
+    .ace_comment {
+      color: makeHighContrastColor(rgb(76, 136, 107), $aceBackground);
+    }
+
+    .ace_comment.ace_doc {
+      color: $aceVarColor;
+    }
+
+    .ace_comment.ace_doc.ace_tag {
+      color: makeHighContrastColor($euiColorMediumShade, $aceBackground);
+    }
+
+    .ace_constant.ace_numeric {
+      color: $aceVarColor;
+    }
+
+    .ace_variable {
+      color: $aceVarColor;
+    }
+
+    .ace_xml-pe {
+      color: makeHighContrastColor($euiColorDarkShade, $aceBackground);
+    }
+
+    .ace_entity.ace_name.ace_function {
+      color: makeHighContrastColor(#0000a2, $aceBackground);
+    }
+
+    .ace_heading {
+      color: makeHighContrastColor(rgb(12, 7, 255), $aceBackground);
+    }
+
+    .ace_list {
+      color: makeHighContrastColor(rgb(185, 6, 144), $aceBackground);
+    }
+
+    .ace_meta.ace_tag {
+      color: makeHighContrastColor(rgb(0, 22, 142), $aceBackground);
+    }
+
+    .ace_string.ace_regex {
+      color: makeHighContrastColor(rgb(255, 0, 0), $aceBackground);
+    }
+
+    .ace_marker-layer .ace_selection {
+      background: tintOrShade($euiColorPrimary, 70%, 70%);
+    }
+
+    &.ace_multiselect .ace_selection.ace_start {
+      box-shadow: 0 0 3px 0 $euiColorEmptyShade;
+    }
+
+    .ace_marker-layer .ace_step {
+      background: tintOrShade($euiColorWarning, 80%, 80%);
+    }
+
+    .ace_marker-layer .ace_stack {
+      background: tintOrShade($euiColorSuccess, 80%, 80%);
+    }
+
+    .ace_marker-layer .ace_bracket {
+      margin: -1px 0 0 -1px;
+      border: $euiBorderThin;
+    }
+
+    .ace_marker-layer .ace_selected-word {
+      background: $euiColorLightestShade;
+      border: $euiBorderThin;
+    }
+
+    &.ace_editor.ace_autocomplete {
+      background-color: $euiColorLightestShade;
+      color:
+        makeHighContrastColor(
+          $euiTextColor,
+          $aceBackground
+        );
+
+      .ace_completion-highlight {
+        color: $aceUrlColor;
+      }
+
+      .ace_marker-layer .ace_active-line {
+        background-color: $aceActiveLineBackground;
+      }
+    }
+
+    .ace_rightAlignedText {
+      color: $aceVarColor;
+    }
+
+    .ace_tooltip {
+      background-color: $aceBackground;
+      color: $euiTextColor;
+    }
+  }
+}

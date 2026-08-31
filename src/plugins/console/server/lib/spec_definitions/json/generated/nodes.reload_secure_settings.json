@@ -1,0 +1,15 @@
+{
+  "nodes.reload_secure_settings": {
+    "url_params": {
+      "timeout": ""
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "_nodes/reload_secure_settings",
+      "_nodes/{nodes}/reload_secure_settings"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/nodes-apis/nodes-reload-secure/"
+  }
+}

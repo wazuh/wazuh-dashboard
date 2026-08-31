@@ -1,0 +1,23 @@
+{
+  "indices.exists_type": {
+    "url_params": {
+      "ignore_unavailable": "__flag__",
+      "allow_no_indices": "__flag__",
+      "expand_wildcards": [
+        "open",
+        "closed",
+        "hidden",
+        "none",
+        "all"
+      ],
+      "local": "__flag__"
+    },
+    "methods": [
+      "HEAD"
+    ],
+    "patterns": [
+      "{indices}/_mapping/{type}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/index-apis/exists/"
+  }
+}

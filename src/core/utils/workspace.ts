@@ -1,0 +1,55 @@
+/*
+ * Copyright OpenSearch Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { WORKSPACE_PATH_PREFIX, WORKSPACE_USE_CASE_PREFIX } from './constants';
+import { IBasePath } from '../public';
+
+export const getWorkspaceIdFromUrl = (url: string, basePath: string): string => {
+  const regexp = new RegExp(`^${basePath || ''}\/w\/([^\/]*)`);
+  const urlObject = new URL(url);
+  const matchedResult = urlObject.pathname.match(regexp);
+  if (matchedResult) {
+    return matchedResult[1];
+  }
+
+  return '';
+};
+
+export const cleanWorkspaceId = (path: string) => {
+  return path.replace(/^\/w\/([^\/]*)/, '');
+};
+
+export const formatUrlWithWorkspaceId = (
+  url: string,
+  workspaceId: string,
+  basePath: IBasePath,
+  urlWithoutClientBasePath = false
+) => {
+  const newUrl = new URL(url, window.location.href);
+  /**
+   * Patch workspace id into path
+   */
+  newUrl.pathname = basePath.remove(newUrl.pathname, {
+    withoutClientBasePath: urlWithoutClientBasePath,
+  });
+
+  if (workspaceId) {
+    newUrl.pathname = `${WORKSPACE_PATH_PREFIX}/${workspaceId}${newUrl.pathname}`;
+  } else {
+    newUrl.pathname = cleanWorkspaceId(newUrl.pathname);
+  }
+
+  newUrl.pathname = basePath.prepend(newUrl.pathname, {
+    withoutClientBasePath: true,
+  });
+
+  return newUrl.toString();
+};
+
+export const getUseCaseFeatureConfig = (useCaseId: string) =>
+  `${WORKSPACE_USE_CASE_PREFIX}${useCaseId}`;
+
+export const isNavGroupInFeatureConfigs = (navGroupId: string, featureConfigs: string[]) =>
+  featureConfigs.includes(getUseCaseFeatureConfig(navGroupId));

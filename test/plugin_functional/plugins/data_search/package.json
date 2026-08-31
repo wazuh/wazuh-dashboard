@@ -1,0 +1,12 @@
+{
+  "name": "data_search_plugin",
+  "version": "1.0.0",
+  "opensearchDashboards": {
+    "version": "opensearchDashboards"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "osd": "../../../../scripts/use_node ../../../../scripts/osd.js",
+    "build": "../../../../scripts/use_node ../../../../scripts/remove.js './target' && tsc"
+  }
+}

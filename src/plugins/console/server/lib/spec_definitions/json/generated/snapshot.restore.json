@@ -1,0 +1,15 @@
+{
+  "snapshot.restore": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "wait_for_completion": "__flag__"
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "_snapshot/{repository}/{snapshot}/_restore"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/snapshots/restore-snapshot/"
+  }
+}

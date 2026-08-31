@@ -1,0 +1,12 @@
+{
+  "id": "expressions",
+  "version": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "extraPublicDirs": ["common", "common/fonts"],
+  "requiredBundles": [
+    "opensearchDashboardsUtils",
+    "inspector",
+    "data"
+  ]
+}

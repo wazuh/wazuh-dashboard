@@ -1,0 +1,10 @@
+{
+  "id": "urlGeneratorsExamples",
+  "version": "0.0.1",
+  "opensearchDashboardsVersion": "opensearchDashboards",
+  "server": false,
+  "ui": true,
+  "requiredPlugins": ["share"],
+  "optionalPlugins": [],
+  "extraPublicDirs": ["public/url_generator"]
+}

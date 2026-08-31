@@ -1,0 +1,95 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+// Charts themes available app-wide
+@import "@elastic/charts/dist/theme";
+@import "@elastic/eui/src/themes/charts/theme";
+
+// Application Layout
+$euiCollapsibleNavWidth: $euiSize * 20;
+
+.application,
+.app-container {
+  > * {
+    position: relative;
+  }
+}
+
+.application {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+
+  > * {
+    flex-shrink: 0;
+  }
+}
+
+// We apply brute force focus states to anything not coming from Eui
+// which has focus states designed at the component level.
+// You can also use "osd-resetFocusState" to not apply the default focus
+// state. This is useful when you've already hand crafted your own
+// focus states in OpenSearch Dashboards.
+:focus {
+  &:not([class^="eui"]):not(.osd-resetFocusState) {
+    @include euiFocusRing;
+  }
+}
+
+// A necessary hack so that the above focus policy doesn't pollute some EUI
+// entrenched inputs.
+.euiComboBox {
+  // :not() specificity needed to override the above
+  input:not([class^="eui"]):focus {
+    animation: none !important;
+  }
+}
+
+.euiBody--collapsibleNavIsDocked .euiBottomBar {
+  margin-left: $euiCollapsibleNavWidth;
+}
+
+.euiButtonIcon.euiButtonIcon--auto {
+  height: auto;
+  width: auto;
+}
+
+// Temporary fix for a bug with Chrome 129 when handling mask-image
+// OUI provides the mask-image used in these which Chrome 129 fails to render correctly.
+// It is not known if or when Chrome will fix this. Since almost all of these classes
+// are applied to elements with scrollbars where their content contained, containing the
+// paint is a safe solution.
+// This can be achieved with various tricks like transform: translate?(0) or
+// transform-style: preserve-3d but they add to the browsers workload; contain doesn't.
+// ToDo: Remove these when most used versions of Chrome no longer suffer from the bug.
+// From OUI: any ruleset containing mask-image
+.eui-yScrollWithShadows,
+.eui-xScrollWithShadows,
+.euiYScrollWithShadows,
+.euiDataGrid__controlScroll,
+.euiDataGridColumnSelector__columnList,
+.euiDataGridColumnSorting__fieldList,
+.euiFlyoutBody .euiFlyoutBody__overflow,
+.euiFlyoutBody .euiFlyoutBody__overflow.euiFlyoutBody__overflow--hasBanner,
+.euiModalBody .euiModalBody__overflow,
+.euiSelectableList__list,
+// From @elastic/charts: any ruleset containing mask-image
+.echLegend .echLegendListContainer,
+// For OSD: consumers of eui?ScrollWithShadows
+.osdQueryBar__textarea:not(:focus):not(:invalid),
+.osdSavedQueryManagement__list,
+.dscCanvas,
+.vbConfig,
+.vbSidenav__style {
+  contain: paint;
+}

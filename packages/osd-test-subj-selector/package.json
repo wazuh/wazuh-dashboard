@@ -1,0 +1,16 @@
+{
+  "name": "@osd/test-subj-selector",
+  "version": "0.2.1",
+  "description": "",
+  "main": "./target/index.js",
+  "keywords": [],
+  "author": "Spencer Alger <email@spalger.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc",
+    "osd:bootstrap": "yarn build"
+  },
+  "opensearchDashboards": {
+    "devOnly": true
+  }
+}

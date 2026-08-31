@@ -1,0 +1,15 @@
+{
+  "indices.update_aliases": {
+    "url_params": {
+      "timeout": "",
+      "cluster_manager_timeout": ""
+    },
+    "methods": [
+      "POST"
+    ],
+    "patterns": [
+      "_aliases"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/im-plugin/index-alias/"
+  }
+}

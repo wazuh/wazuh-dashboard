@@ -1,0 +1,77 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import React, { useMemo } from 'react';
+import { Observable, of } from 'rxjs';
+import useObservable from 'react-use/lib/useObservable';
+import classNames from 'classnames';
+import { ISidecarConfig, getOsdSidecarPaddingStyle } from '../overlays';
+import { ChromeGlobalBanner } from '../chrome/chrome_service';
+
+export const AppWrapper: React.FunctionComponent<{
+  chromeVisible$: Observable<boolean>;
+  sidecarConfig$: Observable<ISidecarConfig | undefined>;
+  useUpdatedHeader?: boolean;
+  globalBanner$?: Observable<ChromeGlobalBanner | undefined>;
+  children?: React.ReactNode;
+}> = ({ chromeVisible$, sidecarConfig$, useUpdatedHeader, globalBanner$, children }) => {
+  const visible = useObservable(chromeVisible$);
+  const sidecarConfig = useObservable(sidecarConfig$, undefined);
+
+  const sidecarPaddingStyle = useMemo(() => {
+    return getOsdSidecarPaddingStyle(sidecarConfig);
+  }, [sidecarConfig]);
+
+  // Check if banner is enabled based on globalBanner$ observable
+  const globalBanner = useObservable(globalBanner$ || of(undefined), undefined);
+  const isBannerEnabled = !!globalBanner;
+
+  return (
+    <div
+      id="app-wrapper"
+      className={classNames('app-wrapper', {
+        'hidden-chrome': !visible,
+        'app-wrapper-with-banner': isBannerEnabled,
+        'app-wrapper-with-new': useUpdatedHeader,
+      })}
+      style={sidecarPaddingStyle}
+    >
+      {children}
+    </div>
+  );
+};
+
+export const AppContainer: React.FunctionComponent<{
+  classes$: Observable<string[]>;
+  children?: React.ReactNode;
+}> = ({ classes$, children }) => {
+  const classes = useObservable(classes$);
+  return <div className={classNames('application', classes)}>{children}</div>;
+};

@@ -1,0 +1,16 @@
+{
+  "snapshot.get": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "ignore_unavailable": "__flag__",
+      "verbose": "__flag__"
+    },
+    "methods": [
+      "GET"
+    ],
+    "patterns": [
+      "_snapshot/{repository}/{snapshot}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/snapshots/get-snapshot/"
+  }
+}

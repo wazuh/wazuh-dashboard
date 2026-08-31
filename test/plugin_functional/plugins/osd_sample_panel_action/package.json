@@ -1,0 +1,18 @@
+{
+  "name": "osd_sample_panel_action",
+  "version": "1.0.0",
+  "main": "target/test/plugin_functional/plugins/osd_sample_panel_action",
+  "opensearchDashboards": {
+    "version": "opensearchDashboards",
+    "templateVersion": "1.0.0"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "osd": "../../../../scripts/use_node ../../../../scripts/osd.js",
+    "build": "../../../../scripts/use_node ../../../../scripts/remove.js './target' && tsc"
+  },
+  "devDependencies": {
+    "@elastic/eui": "npm:@opensearch-project/oui@1.22.1",
+    "react": "^18.2.0"
+  }
+}

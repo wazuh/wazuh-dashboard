@@ -1,0 +1,32 @@
+@import "../../../variables";
+@import "../../../templates";
+
+.inpEmptyIndexPatternPrompt {
+  // override EUI specificity
+  max-width: $inpEmptyStateMaxWidth !important;
+}
+
+.inpEmptyIndexPatternPrompt__footer {
+  @extend %inp-empty-state-footer;
+
+  // override EUI specificity
+  align-items: baseline !important;
+}
+
+.inpEmptyIndexPatternPrompt__title {
+  // override EUI specificity
+  width: auto !important;
+}
+
+@include euiBreakpoint("xs", "s") {
+  .inpEmptyIndexPatternPrompt__illustration > svg {
+    width: $euiSize * 12;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  .inpEmptyIndexPatternPrompt__text {
+    text-align: center;
+    align-items: center;
+  }
+}

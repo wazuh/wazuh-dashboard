@@ -1,0 +1,15 @@
+{
+  "delete_script": {
+    "url_params": {
+      "timeout": "",
+      "cluster_manager_timeout": ""
+    },
+    "methods": [
+      "DELETE"
+    ],
+    "patterns": [
+      "_scripts/{id}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/script-apis/delete-script/"
+  }
+}

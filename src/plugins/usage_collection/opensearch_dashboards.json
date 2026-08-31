@@ -1,0 +1,10 @@
+{
+  "id": "usageCollection",
+  "configPath": ["usageCollection"],
+  "version": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "requiredBundles": [
+    "opensearchDashboardsUtils"
+  ]
+}

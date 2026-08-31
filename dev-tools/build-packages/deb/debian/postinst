@@ -1,0 +1,78 @@
+#!/bin/sh
+# postinst script for wazuh-dashboard
+# Copyright (C) 2021, Wazuh Inc.
+#
+# This program is a free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public
+# License (version 2) as published by the FSF - Free Software
+# Foundation.
+
+set -e
+
+export NAME=wazuh-dashboard
+export CONFIG_DIR=/etc/"${NAME}"
+export INSTALLATION_DIR=/usr/share/"${NAME}"
+export PID_DIR=/run/"${NAME}"
+
+# Setting Owner and group of own folders
+mkdir -p "${PID_DIR}"
+chown -R "${NAME}":"${NAME}" "${PID_DIR}"
+
+case "$1" in
+configure)
+    chmod 750 "${TARGET_DIR}""${CONFIG_DIR}"
+    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${CONFIG_DIR}"
+    chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"
+    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"
+    if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
+        chmod 644 "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service
+    fi
+    setcap 'cap_net_bind_service=+ep' "${INSTALLATION_DIR}"/node/bin/node
+    rm -f /usr/share/wazuh-dashboard/VERSION
+    if [ -f "${INSTALLATION_DIR}"/"${NAME}".restart ]; then
+        rm -f "${INSTALLATION_DIR}"/"${NAME}".restart
+        if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
+            systemctl daemon-reload >/dev/null 2>&1
+            systemctl restart wazuh-dashboard.service >/dev/null 2>&1
+        elif command -v service >/dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "running" >/dev/null 2>&1; then
+            service wazuh-dashboard restart >/dev/null 2>&1
+        fi
+    fi
+    if [ ! -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
+        runuser "${NAME}" --shell="/bin/bash" --command="${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore create" >/dev/null 2>&1
+        runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" >/dev/null 2>&1
+        runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" >/dev/null 2>&1
+        WD_ENC_KEY=""
+        if command -v openssl >/dev/null 2>&1; then
+            WD_ENC_KEY=$(openssl rand -base64 32 2>/dev/null | tr -d '\n') || WD_ENC_KEY=""
+        fi
+        if [ -z "${WD_ENC_KEY}" ] && [ -r /dev/urandom ] && command -v base64 >/dev/null 2>&1; then
+            WD_ENC_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '\n') || WD_ENC_KEY=""
+        fi
+        if [ -z "${WD_ENC_KEY}" ] && [ -x "${INSTALLATION_DIR}"/node/bin/node ]; then
+            WD_ENC_KEY=$("${INSTALLATION_DIR}"/node/bin/node -e \
+                "process.stdout.write(require('crypto').randomBytes(32).toString('base64'))" 2>/dev/null) || WD_ENC_KEY=""
+        fi
+        # base64 of exactly 32 raw bytes is always 44 characters (with one '=' pad)
+        if [ ${#WD_ENC_KEY} -eq 44 ]; then
+            echo "${WD_ENC_KEY}" | runuser "${NAME}" --shell="/bin/bash" \
+                --command="${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add wazuh_ai_assistant.encryptionKey --stdin" \
+                >/dev/null 2>&1 \
+                || echo "wazuh-dashboard: warning: failed to store wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
+        else
+            echo "wazuh-dashboard: warning: unable to generate wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
+        fi
+        unset WD_ENC_KEY
+    fi
+    ;;
+
+abort-upgrade | abort-remove | abort-deconfigure) ;;
+
+*)
+  echo "postinst called with unknown argument \`$1'" >&2
+  exit 1
+  ;;
+
+esac
+
+exit 0

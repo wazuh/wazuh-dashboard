@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Header logo uses branded application title when provided 1`] = `
+<a
+  aria-label="Go to home page"
+  className="logoContainer"
+  data-test-subj="logo"
+  href="/"
+  onClick={[Function]}
+>
+  <img
+    alt="Page Title logo"
+    className="logoImage"
+    data-test-image-url="/custom/branded/logo.svg"
+    data-test-subj="customLogo"
+    loading="lazy"
+    src="/custom/branded/logo.svg"
+  />
+</a>
+`;
+
+exports[`Header logo uses default application title when not branded 1`] = `
+<a
+  aria-label="Go to home page"
+  className="logoContainer"
+  data-test-subj="logo"
+  href="/"
+  onClick={[Function]}
+>
+  <img
+    alt="opensearch dashboards logo"
+    className="logoImage"
+    data-test-image-url="/ui/logos/wazuh_dashboards_on_light.svg"
+    data-test-subj="defaultLogo"
+    loading="lazy"
+    src="/ui/logos/wazuh_dashboards_on_light.svg"
+  />
+</a>
+`;

@@ -1,0 +1,30 @@
+{
+  "cat.snapshots": {
+    "url_params": {
+      "format": "",
+      "ignore_unavailable": "__flag__",
+      "cluster_manager_timeout": "",
+      "h": [],
+      "help": "__flag__",
+      "s": [],
+      "time": [
+        "d",
+        "h",
+        "m",
+        "s",
+        "ms",
+        "micros",
+        "nanos"
+      ],
+      "v": "__flag__"
+    },
+    "methods": [
+      "GET"
+    ],
+    "patterns": [
+      "_cat/snapshots",
+      "_cat/snapshots/{repository}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/cat/cat-snapshots/"
+  }
+}

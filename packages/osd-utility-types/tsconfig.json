@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "./target",
+    "outDir": "./target",
+    "stripInternal": true,
+    "declarationMap": true,
+    "types": [
+      "node"
+    ]
+  },
+  "include": ["index.ts", "test-d/**/*"],
+  "exclude": [
+    "target"
+  ]
+}

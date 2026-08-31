@@ -1,0 +1,105 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SavedObjectSaveModal should render matching snapshot 1`] = `
+<EuiModal
+  className="osdSavedObjectSaveModal"
+  data-test-subj="savedObjectSaveModal"
+  onClose={[Function]}
+>
+  <EuiModalHeader>
+    <EuiModalHeaderTitle>
+      <EuiText
+        size="s"
+      >
+        <h2>
+          <FormattedMessage
+            defaultMessage="Save {objectType}"
+            id="savedObjects.saveModal.saveTitle"
+            values={
+              Object {
+                "objectType": "visualization",
+              }
+            }
+          />
+        </h2>
+      </EuiText>
+    </EuiModalHeaderTitle>
+  </EuiModalHeader>
+  <EuiModalBody>
+    <EuiForm
+      component="form"
+      id="savedObjectSaveModalForm"
+      onSubmit={[Function]}
+    >
+      <EuiSpacer />
+      <EuiCompressedFormRow
+        describedByIds={Array []}
+        display="rowCompressed"
+        fullWidth={true}
+        hasChildLabel={true}
+        hasEmptyLabelSpace={false}
+        label={
+          <FormattedMessage
+            defaultMessage="Title"
+            id="savedObjects.saveModal.titleLabel"
+            values={Object {}}
+          />
+        }
+        labelType="label"
+      >
+        <EuiCompressedFieldText
+          autoFocus={true}
+          data-test-subj="savedObjectTitle"
+          fullWidth={true}
+          isInvalid={false}
+          onChange={[Function]}
+          value="Saved Object title"
+        />
+      </EuiCompressedFormRow>
+      <EuiCompressedFormRow
+        describedByIds={Array []}
+        display="rowCompressed"
+        fullWidth={true}
+        hasChildLabel={true}
+        hasEmptyLabelSpace={false}
+        label={
+          <FormattedMessage
+            defaultMessage="Description"
+            id="savedObjects.saveModal.descriptionLabel"
+            values={Object {}}
+          />
+        }
+        labelType="label"
+      >
+        <EuiCompressedTextArea
+          data-test-subj="viewDescription"
+          onChange={[Function]}
+          value=""
+        />
+      </EuiCompressedFormRow>
+    </EuiForm>
+  </EuiModalBody>
+  <EuiModalFooter>
+    <EuiSmallButtonEmpty
+      data-test-subj="saveCancelButton"
+      onClick={[Function]}
+    >
+      <FormattedMessage
+        defaultMessage="Cancel"
+        id="savedObjects.saveModal.cancelButtonLabel"
+        values={Object {}}
+      />
+    </EuiSmallButtonEmpty>
+    <EuiSmallButton
+      data-test-subj="confirmSaveSavedObjectButton"
+      fill={true}
+      form="savedObjectSaveModalForm"
+      isDisabled={false}
+      isLoading={false}
+      type="submit"
+    >
+      Save
+    </EuiSmallButton>
+  </EuiModalFooter>
+</EuiModal>
+`;

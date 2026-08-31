@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Home icon, custom branded, uses the custom logo when header is expanded 1`] = `
+<EuiIcon
+  className="logoImage"
+  data-test-image-url="/custom/branded/mark.svg"
+  data-test-subj="customMark"
+  size="l"
+  title="Page Title home"
+  type="/custom/branded/mark.svg"
+/>
+`;
+
+exports[`Home icon, custom branded, uses the custom logo when header is not expanded 1`] = `
+<EuiIcon
+  className="logoImage"
+  data-test-image-url="/custom/branded/mark.svg"
+  data-test-subj="customMark"
+  size="l"
+  title="Page Title home"
+  type="/custom/branded/mark.svg"
+/>
+`;
+
+exports[`Home icon, unbranded, uses the home icon when header is expanded 1`] = `
+<EuiIcon
+  className="logoImage"
+  data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
+  data-test-subj="homeIcon"
+  size="m"
+  title="Wazuh dashboard home"
+  type="/ui/logos/wazuh_mark_on_light.svg"
+/>
+`;
+
+exports[`Home icon, unbranded, uses the mark logo when header is not expanded 1`] = `
+<EuiIcon
+  className="logoImage"
+  data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
+  data-test-subj="defaultMark"
+  size="l"
+  title="Wazuh dashboard home"
+  type="/ui/logos/wazuh_mark_on_light.svg"
+/>
+`;

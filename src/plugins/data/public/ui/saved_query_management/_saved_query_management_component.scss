@@ -1,0 +1,27 @@
+.osdSavedQueryManagement__popover {
+  max-width: $euiFormMaxWidth;
+}
+
+.osdSavedQueryManagement__listWrapper {
+  // Addition height will ensure one item is "cutoff" to indicate more below the scroll
+  max-height: $euiFormMaxWidth + $euiSize;
+  overflow-y: hidden;
+}
+
+.osdSavedQueryManagement__pagination {
+  justify-content: center;
+  padding: calc($euiSizeM / 2) $euiSizeM $euiSizeM;
+}
+
+.osdSavedQueryManagement__text {
+  padding: $euiSizeM $euiSizeM calc($euiSizeM / 2) $euiSizeM;
+}
+
+.osdSavedQueryManagement__list {
+  @include euiYScrollWithShadows;
+
+  max-height: inherit; // Fixes overflow for applied max-height
+  // Left/Right padding is calculated to match the left alignment of the
+  // popover text and buttons
+  padding: calc($euiSizeM / 2) $euiSizeXS !important; // Override flush
+}

@@ -1,0 +1,100 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import { run, combineErrors } from '@osd/dev-utils';
+import * as Eslint from './eslint';
+import * as Stylelint from './stylelint';
+import * as Prettier from './prettier';
+import {
+  getFilesForCommit,
+  getUnstagedFiles,
+  checkFileCasing,
+  checkDevDocs,
+  checkI18n,
+} from './precommit_hook';
+
+run(
+  async ({ log, flags }) => {
+    const files = await getFilesForCommit();
+    const unstagedFiles = await getUnstagedFiles();
+    const errors = [];
+
+    try {
+      // Check if the dev docs sidebar has been updated but not staged
+      await checkDevDocs(log, unstagedFiles);
+    } catch (error) {
+      errors.push(error);
+    }
+
+    try {
+      await checkFileCasing(log, files);
+    } catch (error) {
+      errors.push(error);
+    }
+
+    try {
+      const result = await checkI18n(log, files);
+      if (Array.isArray(result)) errors.push(...result);
+    } catch (error) {
+      errors.push(error);
+    }
+
+    for (const Linter of [Eslint, Stylelint, Prettier]) {
+      const filesToLint = Linter.pickFilesToLint(log, files);
+      if (filesToLint.length > 0) {
+        try {
+          await Linter.lintFiles(log, filesToLint, {
+            fix: flags.fix,
+          });
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+    }
+
+    if (errors.length) {
+      throw combineErrors(errors);
+    }
+  },
+  {
+    description: `
+    Run checks on files that are staged for commit
+  `,
+    flags: {
+      boolean: ['fix'],
+      default: {
+        fix: false,
+      },
+      help: `
+      --fix              Execute eslint in --fix mode
+    `,
+    },
+  }
+);

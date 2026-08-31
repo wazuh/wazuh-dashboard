@@ -1,0 +1,13 @@
+{
+  "render_search_template": {
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "patterns": [
+      "_render/template",
+      "_render/template/{id}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/search-plugins/search-template/"
+  }
+}

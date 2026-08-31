@@ -1,0 +1,9 @@
+{
+  "id": "devTools",
+  "version": "opensearchDashboards",
+  "server": false,
+  "ui": true,
+  "optionalPlugins": ["dataSource", "managementOverview", "dataSourceManagement"],
+  "requiredPlugins": ["urlForwarding", "uiActions"],
+  "requiredBundles": ["opensearchDashboardsReact"]
+}

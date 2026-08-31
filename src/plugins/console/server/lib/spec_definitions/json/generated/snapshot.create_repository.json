@@ -1,0 +1,17 @@
+{
+  "snapshot.create_repository": {
+    "url_params": {
+      "cluster_manager_timeout": "",
+      "timeout": "",
+      "verify": "__flag__"
+    },
+    "methods": [
+      "PUT",
+      "POST"
+    ],
+    "patterns": [
+      "_snapshot/{repository}"
+    ],
+    "documentation": "https://opensearch.org/docs/latest/api-reference/snapshots/create-repository/"
+  }
+}

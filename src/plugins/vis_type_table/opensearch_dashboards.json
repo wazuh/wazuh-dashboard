@@ -1,0 +1,18 @@
+{
+  "id": "visTypeTable",
+  "version": "opensearchDashboards",
+  "server": true,
+  "ui": true,
+  "requiredPlugins": [
+    "expressions",
+    "visualizations",
+    "data"
+  ],
+  "requiredBundles": [
+    "opensearchDashboardsUtils",
+    "opensearchDashboardsReact",
+    "share",
+    "charts",
+    "visDefaultEditor"
+  ]
+}

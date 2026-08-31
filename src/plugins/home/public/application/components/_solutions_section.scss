@@ -1,0 +1,141 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ *
+ * Any modifications Copyright OpenSearch Contributors. See
+ * GitHub history for details.
+ */
+
+/*
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+.homSolutions {
+  margin-top: -($euiSizeXL + $euiSizeL + $euiSizeM);
+}
+
+.homSolutions__content {
+  min-height: $euiSize * 16;
+
+  @include euiBreakpoint("xs", "s") {
+    flex-direction: column;
+  }
+}
+
+.homSolutions__group {
+  @include euiBreakpoint("l") {
+    max-width: calc(75% - #{$euiSizeM * 2});
+  }
+
+  @include euiBreakpoint("xl", "xxl", "xxxl") {
+    max-width: calc(50% - #{$euiSizeM * 2});
+  }
+}
+
+.homSolutionPanel {
+  border-radius: $euiBorderRadius;
+  color: inherit;
+  flex: 1;
+  transition: all $euiAnimSpeedFast $euiAnimSlightResistance;
+
+  &:hover,
+  &:focus {
+    @include euiSlightShadowHover;
+
+    transform: translateY(-2px);
+
+    .homSolutionPanel__title {
+      text-decoration: underline;
+    }
+  }
+}
+
+.homSolutionPanel,
+.homSolutionPanel__inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.homSolutionPanel__inner {
+  overflow: hidden;
+}
+
+.homSolutionPanel__header {
+  color: $euiColorEmptyShade;
+  padding: $euiSize;
+}
+
+.homSolutionPanel__icon {
+  background-color: white !important;
+  box-shadow: none !important;
+  margin: 0 auto $euiSizeS;
+  padding: $euiSizeS;
+}
+
+.homSolutionPanel__subtitle {
+  margin-top: $euiSizeXS;
+}
+
+.homSolutionPanel__content {
+  flex-direction: column;
+  justify-content: center;
+  padding: $euiSize;
+
+  @include euiBreakpoint("xs", "s") {
+    text-align: center;
+  }
+}
+
+/* stylelint-disable-next-line no-duplicate-selectors */
+.homSolutionPanel__header {
+  background-color: $euiColorPrimary;
+  background-repeat: no-repeat;
+  background-position: top 0 left 0, bottom 0 right 0;
+  background-size: $euiSizeXL * 4, $euiSizeXL * 6;
+
+  .homSolutionPanel--enterpriseSearch & {
+    background-color: $euiColorSecondary;
+    background-position: top $euiSizeS left 0, bottom $euiSizeS right $euiSizeS;
+    background-size: $euiSize * 1.25, $euiSizeXL;
+  }
+
+  .homSolutionPanel--observability & {
+    background-color: $euiColorAccent;
+    background-position: top $euiSizeS right $euiSizeS;
+    background-size: $euiSizeL * 1.5;
+  }
+
+  .homSolutionPanel--securitySolution & {
+    background-color: $euiColorDarkestShade;
+    background-position: top $euiSizeS left $euiSizeS;
+    background-size: $euiSizeL * 2;
+  }
+}
+
+.homSolutionPanel__customIconContainer {
+  height: 50px;
+  padding: 5px;
+}
+
+.homSolutionPanel__customIcon {
+  height: 100%;
+  max-width: 100%;
+}
