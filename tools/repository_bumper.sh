@@ -34,6 +34,40 @@ log() {
   echo "[${timestamp}] ${message}" | tee -a "$LOG_FILE"
 }
 
+# Function to perform portable sed in-place editing
+sed_inplace() {
+  local options=""
+  local pattern=""
+  local file=""
+
+  # Parse arguments to handle options like -E
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -E|-r)
+        options="$options $1"
+        shift
+        ;;
+      *)
+        if [ -z "$pattern" ]; then
+          pattern="$1"
+        elif [ -z "$file" ]; then
+          file="$1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  # Detect OS and use appropriate sed syntax
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS (BSD sed) requires empty string after -i
+    sed -i '' $options "$pattern" "$file"
+  else
+    # Linux (GNU sed) doesn't require anything after -i
+    sed -i $options "$pattern" "$file"
+  fi
+}
+
 # Function to show usage
 usage() {
   echo "Usage: $0 [--version VERSION --stage STAGE | --tag] [--date DATE] [--help]"
@@ -134,7 +168,7 @@ pre_update_checks() {
 
   # Attempt to extract version from VERSION.json using sed
   log "Attempting to extract current version from $VERSION_FILE using sed..."
-  CURRENT_VERSION=$(sed -n 's/^\s*"version"\s*:\s*"\([^"]*\)".*$/\1/p' "$VERSION_FILE" | head -n 1) # head -n 1 ensures only the first match is taken
+  CURRENT_VERSION=$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*$/\1/p' "$VERSION_FILE" | head -n 1) # head -n 1 ensures only the first match is taken
 
   # Check if sed successfully extracted a version
   if [ -z "$CURRENT_VERSION" ]; then
@@ -151,7 +185,7 @@ pre_update_checks() {
 
   # Attempt to extract stage from VERSION.json using sed
   log "Attempting to extract current stage from $VERSION_FILE using sed..."
-  CURRENT_STAGE=$(sed -n 's/^\s*"stage"\s*:\s*"\([^"]*\)".*$/\1/p' "$VERSION_FILE" | head -n 1) # head -n 1 ensures only the first match is taken
+  CURRENT_STAGE=$(sed -n 's/^[[:space:]]*"stage"[[:space:]]*:[[:space:]]*"\([^"]*\)".*$/\1/p' "$VERSION_FILE" | head -n 1) # head -n 1 ensures only the first match is taken
 
   # Check if sed successfully extracted a stage
   if [ -z "$CURRENT_STAGE" ]; then
@@ -168,7 +202,7 @@ pre_update_checks() {
 
   # Attempt to extract current revision from package.json using sed
   log "Attempting to extract current revision from $PACKAGE_JSON using sed..."
-  CURRENT_REVISION=$(sed -n '/"wazuh": {/,/}/ s/^\s*"revision"\s*:\s*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
+  CURRENT_REVISION=$(sed -n '/"wazuh": {/,/}/ s/^[[:space:]]*"revision"[[:space:]]*:[[:space:]]*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
 
   if [ -z "$CURRENT_REVISION" ]; then
     log "ERROR: Failed to extract 'revision' from $PACKAGE_JSON using sed. Check file format or key presence."
@@ -226,7 +260,7 @@ compare_versions_and_set_revision() {
         # Versions are identical (Major, Minor, Patch are equal)
         log "New version ($VERSION) is identical to current version ($CURRENT_VERSION)."
         log "Attempting to extract current revision from $PACKAGE_JSON using sed (Note: This is fragile)"
-        local current_revision_val=$(sed -n 's/^\s*"revision"\s*:\s*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
+        local current_revision_val=$(sed -n 's/^[[:space:]]*"revision"[[:space:]]*:[[:space:]]*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
         # Check if sed successfully extracted a revision
         if [ -z "$current_revision_val" ]; then
           log "ERROR: Failed to extract 'revision' from $PACKAGE_JSON using sed. Check file format or key presence."
@@ -263,13 +297,13 @@ update_root_version_json() {
 
     # Update version in VERSION.json
     if [ -n "$VERSION" ] && [ "$CURRENT_VERSION" != "$VERSION" ]; then
-      sed -i "s/^\s*\"version\"\s*:\s*\"[^\"]*\"/  \"version\": \"$VERSION\"/" "$VERSION_FILE"
+      sed_inplace "s/^[[:space:]]*\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/  \"version\": \"$VERSION\"/" "$VERSION_FILE"
       modified=true
     fi
 
     # Update stage in VERSION.json
     if [ -n "$STAGE" ] && [ "$CURRENT_STAGE" != "$STAGE" ]; then
-      sed -i "s/^\s*\"stage\"\s*:\s*\"[^\"]*\"/  \"stage\": \"$STAGE\"/" "$VERSION_FILE"
+      sed_inplace "s/^[[:space:]]*\"stage\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/  \"stage\": \"$STAGE\"/" "$VERSION_FILE"
       modified=true
     fi
 
@@ -298,7 +332,7 @@ update_package_json() {
       # Note: This sed command assumes a specific formatting and might be fragile.
       # It looks for the block starting with a line containing "wazuh": { and ending with the next line containing only }
       # Within that block, it replaces the value on the line starting with "version":
-      sed -i "/\"wazuh\": {/,/}/ s/^\(\s*\"version\"\s*:\s*\)\"[^\"]*\"/\1\"$VERSION\"/" "$PACKAGE_JSON"
+      sed_inplace "/\"wazuh\": {/,/}/ s/^\([[:space:]]*\"version\"[[:space:]]*:[[:space:]]*\)\"[^\"]*\"/\1\"$VERSION\"/" "$PACKAGE_JSON"
       modified=true
     fi
 
@@ -306,7 +340,7 @@ update_package_json() {
     if [[ "$CURRENT_REVISION" != "$REVISION" ]]; then
       log "Attempting to update revision to $REVISION within 'wazuh' object in $PACKAGE_JSON"
       # Similar sed command for the revision line within the same block
-      sed -i "/\"wazuh\": {/,/}/ s/^\(\s*\"revision\"\s*:\s*\)\"[^\"]*\"/\1\"$REVISION\"/" "$PACKAGE_JSON"
+      sed_inplace "/\"wazuh\": {/,/}/ s/^\([[:space:]]*\"revision\"[[:space:]]*:[[:space:]]*\)\"[^\"]*\"/\1\"$REVISION\"/" "$PACKAGE_JSON"
       modified=true
     fi
 
@@ -331,7 +365,7 @@ update_changelog() {
   # This is significantly less reliable than using jq.
   log "Attempting to extract .version from $VERSION_FILE using sed (Note: This is fragile)"
   # Extract OpenSearch Dashboards version from package.json (first occurrence of "version")
-  OPENSEARCH_VERSION=$(sed -n 's/^\s*"version"\s*:\s*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
+  OPENSEARCH_VERSION=$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*$/\1/p' "$PACKAGE_JSON" | head -n 1)
   if [ -z "$OPENSEARCH_VERSION" ] || [ "$OPENSEARCH_VERSION" == "null" ]; then
     log "ERROR: Could not extract pluginPlatform.version from $PACKAGE_JSON for changelog"
     exit 1
@@ -350,7 +384,7 @@ update_changelog() {
     if [ -n "$STAGE" ]; then
       log "Changelog entry for this version and OpenSearch Dashboards version exists. Updating revision only."
       # Use sed to update only the revision number in the header
-      sed -i -E "s|(${changelog_header_regex})|${changelog_header}${REVISION}|" "$changelog_file" &&
+      sed_inplace -E "s|(${changelog_header_regex})|${changelog_header}${REVISION}|" "$changelog_file" &&
         log "CHANGELOG.md revision updated successfully." || {
         log "ERROR: Failed to update revision in $changelog_file"
         exit 1
@@ -395,7 +429,7 @@ update_build_workflow() {
     if grep -qE '\.yml@[^"[:space:]]+' "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"; then
       log "Pattern found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Attempting update..."
       # If the pattern exists, perform the substitution
-      sed -i -E "s/(\.yml@)[^\"[:space:]]+/\1${replacement}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
+      sed_inplace -E "s/(\.yml@)[^\"[:space:]]+/\1${replacement}/g" "$WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE"
       modified=true
     else
       log "Pattern not found in $(basename $WAZUH_DASHBOARD_PLUGINS_WORKFLOW_FILE). Skipping update."
@@ -418,14 +452,14 @@ update_base_package_dockerfile() {
     if grep -qE "$branch_pattern_regex" "$DOCKERFILE_FOR_BASE_PACKAGES"; then
       log "Pattern '$branch_pattern_regex' found in $(basename $DOCKERFILE_FOR_BASE_PACKAGES). Attempting update..."
       # Perform the substitution
-      sed -i -E "s/${branch_pattern_regex}/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES"
+      sed_inplace -E "s/${branch_pattern_regex}/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES"
       modified=true
     else
       log "Pattern '$branch_pattern_regex' not found in $(basename $DOCKERFILE_FOR_BASE_PACKAGES). Skipping update for this pattern."
     fi
 
     # Update all occurrences of wazuh-packages-to-base:x.y.z with wazuh-packages-to-base:$VERSION
-    sed -i -E "s/(wazuh-packages-to-base:)$VERSION_PATTERN/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
+    sed_inplace -E "s/(wazuh-packages-to-base:)$VERSION_PATTERN/\1${VERSION}/g" "$DOCKERFILE_FOR_BASE_PACKAGES" && modified=true
 
     if [[ $modified == true ]]; then
       log "Successfully updated $(basename $DOCKERFILE_FOR_BASE_PACKAGES)"
@@ -447,7 +481,7 @@ update_readme_for_base_packages() {
     if grep -qE "$app_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
       log "Pattern '$app_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
       # If the pattern exists, perform the substitution and set modified to true
-      sed -i -E "s/${app_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      sed_inplace -E "s/${app_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
       modified=true
     else
       log "Pattern '$app_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
@@ -461,7 +495,7 @@ update_readme_for_base_packages() {
     if grep -qE "$base_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
       log "Pattern '$base_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
       # If the pattern exists, perform the substitution and set modified to true
-      sed -i -E "s/${base_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      sed_inplace -E "s/${base_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
       modified=true
     else
       log "Pattern '$base_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
@@ -475,7 +509,7 @@ update_readme_for_base_packages() {
     if grep -qE "$security_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
       log "Pattern '$security_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
       # If the pattern exists, perform the substitution and set modified to true
-      sed -i -E "s/${security_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      sed_inplace -E "s/${security_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
       modified=true
     else
       log "Pattern '$security_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
@@ -489,7 +523,7 @@ update_readme_for_base_packages() {
     if grep -qE "$readme_example_pattern_regex" "$README_FOR_BASE_PACKAGES"; then
       log "Pattern '$readme_example_pattern_regex' found in $(basename $README_FOR_BASE_PACKAGES). Attempting update..."
       # If the pattern exists, perform the substitution and set modified to true
-      sed -i -E "s/${readme_example_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
+      sed_inplace -E "s/${readme_example_pattern_regex}/\1${VERSION}/g" "$README_FOR_BASE_PACKAGES"
       modified=true
     else
       log "Pattern '$readme_example_pattern_regex' not found in $(basename $README_FOR_BASE_PACKAGES). Skipping update for this pattern."
@@ -514,7 +548,7 @@ update_rendering_service_test_snap() {
     if grep -qE "$pattern_regex" "$rendering_service_test_snap"; then
       log "Pattern '$pattern_regex' found in $(basename $rendering_service_test_snap). Attempting update..."
       # If the pattern exists, perform the substitution
-      sed -i -E "s/${pattern_regex}/\1${VERSION}/g" "$rendering_service_test_snap"
+      sed_inplace -E "s/${pattern_regex}/\1${VERSION}/g" "$rendering_service_test_snap"
       log "Successfully updated rendering service test snapshot."
     else
       log "Pattern '$pattern_regex' not found in $(basename $rendering_service_test_snap). Skipping update for this pattern."
@@ -528,21 +562,37 @@ update_rendering_service_test_snap() {
 # Function to convert date from yyyy-mm-dd to RPM format (e.g., "Thu Sep 04 2025")
 convert_date_to_rpm_format() {
   local input_date="$1"
-  # Use date command to convert and format with English locale
-  LC_ALL=C date -d "$input_date" "+%a %b %d %Y" 2>/dev/null || {
-    log "ERROR: Invalid date format: $input_date"
-    exit 1
-  }
+  # Use date command to convert and format with English locale (GNU date on Linux, BSD date on macOS)
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    LC_ALL=C date -j -f "%Y-%m-%d" "$input_date" "+%a %b %d %Y" 2>/dev/null && return 0
+  else
+    LC_ALL=C date -d "$input_date" "+%a %b %d %Y" 2>/dev/null && return 0
+  fi
+  log "ERROR: Invalid date format: $input_date"
+  return 1
+}
+
+# Function to convert an RPM changelog date (e.g. "Thu Sep 10 2026") to epoch seconds, for ordering comparisons
+rpm_date_to_epoch() {
+  local rpm_date="$1"
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    LC_ALL=C date -j -f "%a %b %d %Y" "$rpm_date" "+%s" 2>/dev/null
+  else
+    LC_ALL=C date -d "$rpm_date" "+%s" 2>/dev/null
+  fi
 }
 
 # Function to convert date from yyyy-mm-dd to Debian RFC 2822 format (e.g., "Thu, 04 Sep 2025 12:00:00 +0000")
 convert_date_to_deb_format() {
   local input_date="$1"
-  # Use date command to convert and format with English locale
-  LC_ALL=C date -d "$input_date" "+%a, %d %b %Y 12:00:00 +0000" 2>/dev/null || {
-    log "ERROR: Invalid date format: $input_date"
-    exit 1
-  }
+  # Use date command to convert and format with English locale (GNU date on Linux, BSD date on macOS)
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    LC_ALL=C date -j -f "%Y-%m-%d" "$input_date" "+%a, %d %b %Y 12:00:00 +0000" 2>/dev/null && return 0
+  else
+    LC_ALL=C date -d "$input_date" "+%a, %d %b %Y 12:00:00 +0000" 2>/dev/null && return 0
+  fi
+  log "ERROR: Invalid date format: $input_date"
+  return 1
 }
 
 # Function to update RPM changelog
@@ -560,24 +610,50 @@ update_rpm_changelog() {
 
   log "Updating RPM changelog..."
 
-  local rpm_date=$(convert_date_to_rpm_format "$DATE")
+  local rpm_date
+  rpm_date=$(convert_date_to_rpm_format "$DATE") || exit 1
   local changelog_entry="* $rpm_date support <info@wazuh.com> - $VERSION"
   local more_info_entry="- More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
 
+  local new_epoch
+  new_epoch=$(rpm_date_to_epoch "$rpm_date") || exit 1
+
   # Check if entry already exists
-  if grep -q "* .* support <info@wazuh.com> - $VERSION" "$RPM_CHANGELOG"; then
-    log "RPM changelog entry for version $VERSION already exists. Updating date..."
-    # Update existing entry date
-    sed -i "s/^\* .* support <info@wazuh.com> - $VERSION$/$changelog_entry/" "$RPM_CHANGELOG"
-    log "Successfully updated RPM changelog date for version $VERSION"
+  if grep -q "^\* .* support <info@wazuh.com> - $VERSION\$" "$RPM_CHANGELOG"; then
+    log "RPM changelog entry for version $VERSION already exists. Repositioning it with the updated date..."
+    # Remove the existing entry (its changelog line and following "More info" line);
+    # it gets reinserted below at the position matching its (possibly new) date, so
+    # entries stay in descending order regardless of where the old entry used to sit.
+    sed_inplace "/^\* .* support <info@wazuh.com> - $VERSION\$/,+1d" "$RPM_CHANGELOG"
   else
     log "Adding new RPM changelog entry for version $VERSION..."
-    # Find the %changelog line and add new entry after it
-    sed -i "/^%changelog$/a\\
+  fi
+
+  # Entries must stay in descending date order (rpmbuild enforces it), so insert the
+  # entry right before the first existing entry whose date is not newer than it.
+  local insert_before_line=""
+  local line_num=0
+  while IFS= read -r line; do
+    line_num=$((line_num + 1))
+    if [[ "$line" =~ ^\*\ (.*)\ support ]]; then
+      local existing_epoch
+      existing_epoch=$(rpm_date_to_epoch "${BASH_REMATCH[1]}") || continue
+      if [ "$existing_epoch" -le "$new_epoch" ]; then
+        insert_before_line=$line_num
+        break
+      fi
+    fi
+  done < "$RPM_CHANGELOG"
+
+  if [ -n "$insert_before_line" ]; then
+    sed_inplace "${insert_before_line}i\\
 $changelog_entry\\
 $more_info_entry" "$RPM_CHANGELOG"
-    log "Successfully added new RPM changelog entry for version $VERSION"
+  else
+    # New entry is older than every existing one (or there are no entries yet): goes last
+    printf '%s\n%s\n' "$changelog_entry" "$more_info_entry" >> "$RPM_CHANGELOG"
   fi
+  log "Successfully updated RPM changelog entry for version $VERSION"
 }
 
 # Function to update Debian changelog
@@ -595,7 +671,8 @@ update_deb_changelog() {
 
   log "Updating Debian changelog..."
 
-  local deb_date=$(convert_date_to_deb_format "$DATE")
+  local deb_date
+  deb_date=$(convert_date_to_deb_format "$DATE") || exit 1
   local package_version="$VERSION-RELEASE"
   local changelog_header="wazuh-dashboard ($package_version) stable; urgency=low"
   local more_info_entry="  * More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
@@ -609,7 +686,7 @@ update_deb_changelog() {
     log "Debian changelog entry for version $VERSION already exists. Updating date..."
     # Update existing entry date
     # Find the line with the version and then find the next maintainer line to update
-    sed -i "/wazuh-dashboard ($escaped_package_version)/,/^ *-- Wazuh, Inc/ s|^ *-- Wazuh, Inc <info@wazuh.com> .*|$maintainer_line|" "$DEB_CHANGELOG"
+    sed_inplace "/wazuh-dashboard ($escaped_package_version)/,/^ *-- Wazuh, Inc/ s|^ *-- Wazuh, Inc <info@wazuh.com> .*|$maintainer_line|" "$DEB_CHANGELOG"
     log "Successfully updated Debian changelog date for version $VERSION"
   else
     log "Adding new Debian changelog entry for version $VERSION..."
