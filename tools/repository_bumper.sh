@@ -34,6 +34,40 @@ log() {
   echo "[${timestamp}] ${message}" | tee -a "$LOG_FILE"
 }
 
+# Function to perform portable sed in-place editing
+sed_inplace() {
+  local options=""
+  local pattern=""
+  local file=""
+
+  # Parse arguments to handle options like -E
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -E|-r)
+        options="$options $1"
+        shift
+        ;;
+      *)
+        if [ -z "$pattern" ]; then
+          pattern="$1"
+        elif [ -z "$file" ]; then
+          file="$1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  # Detect OS and use appropriate sed syntax
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS (BSD sed) requires empty string after -i
+    sed -i '' $options "$pattern" "$file"
+  else
+    # Linux (GNU sed) doesn't require anything after -i
+    sed -i $options "$pattern" "$file"
+  fi
+}
+
 # Function to show usage
 usage() {
   echo "Usage: $0 [--version VERSION --stage STAGE | --tag] [--date DATE] [--help]"
@@ -528,21 +562,37 @@ update_rendering_service_test_snap() {
 # Function to convert date from yyyy-mm-dd to RPM format (e.g., "Thu Sep 04 2025")
 convert_date_to_rpm_format() {
   local input_date="$1"
-  # Use date command to convert and format with English locale
-  LC_ALL=C date -d "$input_date" "+%a %b %d %Y" 2>/dev/null || {
-    log "ERROR: Invalid date format: $input_date"
-    exit 1
-  }
+  # Use date command to convert and format with English locale (GNU date on Linux, BSD date on macOS)
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    LC_ALL=C date -j -f "%Y-%m-%d" "$input_date" "+%a %b %d %Y" 2>/dev/null && return 0
+  else
+    LC_ALL=C date -d "$input_date" "+%a %b %d %Y" 2>/dev/null && return 0
+  fi
+  log "ERROR: Invalid date format: $input_date"
+  return 1
+}
+
+# Function to convert an RPM changelog date (e.g. "Thu Sep 10 2026") to epoch seconds, for ordering comparisons
+rpm_date_to_epoch() {
+  local rpm_date="$1"
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    LC_ALL=C date -j -f "%a %b %d %Y" "$rpm_date" "+%s" 2>/dev/null
+  else
+    LC_ALL=C date -d "$rpm_date" "+%s" 2>/dev/null
+  fi
 }
 
 # Function to convert date from yyyy-mm-dd to Debian RFC 2822 format (e.g., "Thu, 04 Sep 2025 12:00:00 +0000")
 convert_date_to_deb_format() {
   local input_date="$1"
-  # Use date command to convert and format with English locale
-  LC_ALL=C date -d "$input_date" "+%a, %d %b %Y 12:00:00 +0000" 2>/dev/null || {
-    log "ERROR: Invalid date format: $input_date"
-    exit 1
-  }
+  # Use date command to convert and format with English locale (GNU date on Linux, BSD date on macOS)
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    LC_ALL=C date -j -f "%Y-%m-%d" "$input_date" "+%a, %d %b %Y 12:00:00 +0000" 2>/dev/null && return 0
+  else
+    LC_ALL=C date -d "$input_date" "+%a, %d %b %Y 12:00:00 +0000" 2>/dev/null && return 0
+  fi
+  log "ERROR: Invalid date format: $input_date"
+  return 1
 }
 
 # Function to update RPM changelog
@@ -560,24 +610,50 @@ update_rpm_changelog() {
 
   log "Updating RPM changelog..."
 
-  local rpm_date=$(convert_date_to_rpm_format "$DATE")
+  local rpm_date
+  rpm_date=$(convert_date_to_rpm_format "$DATE") || exit 1
   local changelog_entry="* $rpm_date support <info@wazuh.com> - $VERSION"
   local more_info_entry="- More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
 
+  local new_epoch
+  new_epoch=$(rpm_date_to_epoch "$rpm_date") || exit 1
+
   # Check if entry already exists
-  if grep -q "* .* support <info@wazuh.com> - $VERSION" "$RPM_CHANGELOG"; then
-    log "RPM changelog entry for version $VERSION already exists. Updating date..."
-    # Update existing entry date
-    sed -i "s/^\* .* support <info@wazuh.com> - $VERSION$/$changelog_entry/" "$RPM_CHANGELOG"
-    log "Successfully updated RPM changelog date for version $VERSION"
+  if grep -q "^\* .* support <info@wazuh.com> - $VERSION\$" "$RPM_CHANGELOG"; then
+    log "RPM changelog entry for version $VERSION already exists. Repositioning it with the updated date..."
+    # Remove the existing entry (its changelog line and following "More info" line);
+    # it gets reinserted below at the position matching its (possibly new) date, so
+    # entries stay in descending order regardless of where the old entry used to sit.
+    sed_inplace "/^\* .* support <info@wazuh.com> - $VERSION\$/,+1d" "$RPM_CHANGELOG"
   else
     log "Adding new RPM changelog entry for version $VERSION..."
-    # Find the %changelog line and add new entry after it
-    sed -i "/^%changelog$/a\\
+  fi
+
+  # Entries must stay in descending date order (rpmbuild enforces it), so insert the
+  # entry right before the first existing entry whose date is not newer than it.
+  local insert_before_line=""
+  local line_num=0
+  while IFS= read -r line; do
+    line_num=$((line_num + 1))
+    if [[ "$line" =~ ^\*\ (.*)\ support ]]; then
+      local existing_epoch
+      existing_epoch=$(rpm_date_to_epoch "${BASH_REMATCH[1]}") || continue
+      if [ "$existing_epoch" -le "$new_epoch" ]; then
+        insert_before_line=$line_num
+        break
+      fi
+    fi
+  done < "$RPM_CHANGELOG"
+
+  if [ -n "$insert_before_line" ]; then
+    sed_inplace "${insert_before_line}i\\
 $changelog_entry\\
 $more_info_entry" "$RPM_CHANGELOG"
-    log "Successfully added new RPM changelog entry for version $VERSION"
+  else
+    # New entry is older than every existing one (or there are no entries yet): goes last
+    printf '%s\n%s\n' "$changelog_entry" "$more_info_entry" >> "$RPM_CHANGELOG"
   fi
+  log "Successfully updated RPM changelog entry for version $VERSION"
 }
 
 # Function to update Debian changelog
@@ -595,7 +671,8 @@ update_deb_changelog() {
 
   log "Updating Debian changelog..."
 
-  local deb_date=$(convert_date_to_deb_format "$DATE")
+  local deb_date
+  deb_date=$(convert_date_to_deb_format "$DATE") || exit 1
   local package_version="$VERSION-RELEASE"
   local changelog_header="wazuh-dashboard ($package_version) stable; urgency=low"
   local more_info_entry="  * More info: https://documentation.wazuh.com/current/release-notes/release-$(echo $VERSION | tr '.' '-').html"
@@ -609,7 +686,7 @@ update_deb_changelog() {
     log "Debian changelog entry for version $VERSION already exists. Updating date..."
     # Update existing entry date
     # Find the line with the version and then find the next maintainer line to update
-    sed -i "/wazuh-dashboard ($escaped_package_version)/,/^ *-- Wazuh, Inc/ s|^ *-- Wazuh, Inc <info@wazuh.com> .*|$maintainer_line|" "$DEB_CHANGELOG"
+    sed_inplace "/wazuh-dashboard ($escaped_package_version)/,/^ *-- Wazuh, Inc/ s|^ *-- Wazuh, Inc <info@wazuh.com> .*|$maintainer_line|" "$DEB_CHANGELOG"
     log "Successfully updated Debian changelog date for version $VERSION"
   else
     log "Adding new Debian changelog entry for version $VERSION..."
