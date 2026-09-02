@@ -12,13 +12,16 @@
 | [#1434](https://github.com/wazuh/wazuh-dashboard/issues/1434)                                                                                                                                                                                                                                                                                                     | Made the Discover CSV download row limit configurable via the `reports.csv.maxRows` setting |
 | [#1480](https://github.com/wazuh/wazuh-dashboard/issues/1480)                                                                                                                                                                                                                                                                                                     | Added automatic generation and storage of the AI assistant encryption key on first install  |
 
-### Fixed
+### Changed
 
-| Issue                                                       | Comment                                                                                      |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [#1276](https://github.com/wazuh/wazuh-dashboard/pull/1276) | Fixed health check padding styles                                                            |
-| [#1285](https://github.com/wazuh/wazuh-dashboard/pull/1285) | Sanitized redirect path to prevent open redirect                                             |
-| [#1400](https://github.com/wazuh/wazuh-dashboard/pull/1400) | Prevent infinite remount loop when navigating from an app before its bundle finishes loading |
+| Issue                                                                                                                   | Comment                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [#805](https://github.com/wazuh/wazuh-dashboard/issues/805)                                                             | Changed the location of the wazuh-dashboard service to match with the other Wazuh components     |
+| [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)                                                               | Changed the default value of `metaFields` and `timepicker:timeDefaults` settings                 |
+| [#1278](https://github.com/wazuh/wazuh-dashboard/pull/1278) [#1279](https://github.com/wazuh/wazuh-dashboard/pull/1279) | Excluded Wazuh dashboards and visualizations listing                                             |
+| [#1330](https://github.com/wazuh/wazuh-dashboard/pull/1330)                                                             | Changed log level of the cross compatibility service on start                                    |
+| [wazuh-dashboard-plugins#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979)                            | Changed the sidecar flyout to displace open flyouts instead of covering them                     |
+| [wazuh-dashboard-plugins#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989)                            | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus` |
 
 ### Removed
 
@@ -27,17 +30,12 @@
 | [#699](https://github.com/wazuh/wazuh-dashboard/issues/699) | Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system |
 | [#1382](https://github.com/wazuh/wazuh-dashboard/pull/1382) | Removed the Anomaly Detection plugin from the default Wazuh dashboard package                                                                           |
 
-### Changed
+### Fixed
 
-| Issue                                                                                                                   | Comment                                                                                                            |
-| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| [#805](https://github.com/wazuh/wazuh-dashboard/issues/805)                                                             | Changed the location of the wazuh-dashboard service to match with the other Wazuh components                       |
-| [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)                                                               | Changed the default value of `metaFields` and `timepicker:timeDefaults` settings                                   |
-| [#1278](https://github.com/wazuh/wazuh-dashboard/pull/1278) [#1279](https://github.com/wazuh/wazuh-dashboard/pull/1279) | Excluded Wazuh dashboards and visualizations listing                                                               |
-| [#1330](https://github.com/wazuh/wazuh-dashboard/pull/1330)                                                             | Changed log level of the cross compatibility service on start                                                      |
-| [#1328](https://github.com/wazuh/wazuh-dashboard/pull/1328) [#1365](https://github.com/wazuh/wazuh-dashboard/pull/1365) | Changed pre install scripts to block Wazuh dashboard installation if there's an existing installation prior to 5.x |
-| [#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979)                                                   | Changed the sidecar flyout to displace open flyouts instead of covering them                                       |
-| [#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989)                                                   | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus`                   |
+| Issue                                                       | Comment                                                                                      |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [#1276](https://github.com/wazuh/wazuh-dashboard/pull/1276) | Fixed health check padding styles                                                            |
+| [#1400](https://github.com/wazuh/wazuh-dashboard/pull/1400) | Prevent infinite remount loop when navigating from an app before its bundle finishes loading |
 
 ## Prior versions
 
