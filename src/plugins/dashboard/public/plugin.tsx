@@ -370,7 +370,9 @@ export class DashboardPlugin
 
     const app: App = {
       id: DashboardConstants.DASHBOARDS_ID,
-      title: 'Dashboards',
+      title: i18n.translate('dashboard.applicationTitle', {
+        defaultMessage: 'Dashboards',
+      }),
       order: 101,
       workspaceAvailability: WorkspaceAvailability.insideWorkspace,
       euiIconType: 'inputOutput',

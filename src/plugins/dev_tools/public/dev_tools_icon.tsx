@@ -58,7 +58,10 @@ export function DevToolsIcon({
 
   const createOpenDevToolAction = createAction<typeof DEVTOOL_OPEN_ACTION>({
     type: DEVTOOL_OPEN_ACTION,
-    getDisplayName: () => 'Open DevTools',
+    getDisplayName: () =>
+      i18n.translate('devTools.openDevToolsAction.displayName', {
+        defaultMessage: 'Open DevTools',
+      }),
     execute: async ({ defaultRoute }) => {
       setModalVisible(true);
       setDevToolTab(defaultRoute);

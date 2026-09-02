@@ -32,12 +32,16 @@ const sectionRender = (contents: Content[]) => {
 export const setupUserSettingsPage = (contentManagement?: ContentManagementPluginSetup) => {
   contentManagement?.registerPage({
     id: 'user_settings',
-    title: 'User Settings',
+    title: i18n.translate('advancedSettings.userSettingsLabel', {
+      defaultMessage: 'User settings',
+    }),
     sections: [
       {
         id: 'user_profile',
         order: 1000,
-        title: `User's profile`,
+        title: i18n.translate('advancedSettings.userSettings.profileSectionTitle', {
+          defaultMessage: "User's profile",
+        }),
         kind: 'custom',
         render: sectionRender,
       },

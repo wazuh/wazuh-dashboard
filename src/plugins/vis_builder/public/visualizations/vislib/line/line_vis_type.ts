@@ -18,9 +18,11 @@ export interface LineOptionsDefaults extends BasicOptionsDefaults {
 
 export const createLineConfig = (): VisualizationTypeOptions<LineOptionsDefaults> => ({
   name: 'line',
-  title: 'Line',
+  title: i18n.translate('visBuilder.line.visTitle', { defaultMessage: 'Line' }),
   icon: 'visLine',
-  description: 'Display line chart',
+  description: i18n.translate('visBuilder.line.visDescription', {
+    defaultMessage: 'Display line chart',
+  }),
   toExpression,
   ui: {
     containerConfig: {

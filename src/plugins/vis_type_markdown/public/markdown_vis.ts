@@ -37,7 +37,9 @@ import { toExpressionAst } from './to_ast';
 
 export const markdownVisDefinition = {
   name: 'markdown',
-  title: 'Markdown',
+  title: i18n.translate('visTypeMarkdown.visTitle', {
+    defaultMessage: 'Markdown',
+  }),
   isAccessible: true,
   icon: 'visText',
   description: i18n.translate('visTypeMarkdown.markdownDescription', {

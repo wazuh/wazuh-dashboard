@@ -5,10 +5,13 @@
 
 import React, { Fragment } from 'react';
 import { FormattedMessage } from '@osd/i18n/react';
+import { i18n } from '@osd/i18n';
 import { EuiSmallButton, EuiEmptyPrompt, EuiLink, EuiText } from '@elastic/eui';
 import { ApplicationStart } from 'opensearch-dashboards/public';
 
-const appName = 'Wazuh dashboard';
+const appName = i18n.translate('dashboard.listing.appName', {
+  defaultMessage: 'Wazuh dashboard',
+});
 export const getNoItemsMessage = (
   hideWriteControls: boolean,
   createItem: () => void,
