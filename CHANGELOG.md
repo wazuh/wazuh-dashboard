@@ -2,40 +2,40 @@
 
 ### Added
 
-| Issue                                                                                                                                                                                                                                                                                                                                                             | Comment                                                                                     |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [#811](https://github.com/wazuh/wazuh-dashboard/pull/811) [#866](https://github.com/wazuh/wazuh-dashboard/pull/866) [#961](https://github.com/wazuh/wazuh-dashboard/pull/961) [#1031](https://github.com/wazuh/wazuh-dashboard/pull/1031) [#1179](https://github.com/wazuh/wazuh-dashboard/pull/1179) [#1366](https://github.com/wazuh/wazuh-dashboard/pull/1366) | Health check service                                                                        |
-| [#870](https://github.com/wazuh/wazuh-dashboard/pull/870) [#946](https://github.com/wazuh/wazuh-dashboard/pull/946) [#1366](https://github.com/wazuh/wazuh-dashboard/pull/1366) [#1379](https://github.com/wazuh/wazuh-dashboard/pull/1379) [#1504](https://github.com/wazuh/wazuh-dashboard/issues/1504)                                                         | Added Health Check app                                                                      |
-| [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)                                                                                                                                                                                                                                                                                                         | Added manager host configuration for the default configuration file                         |
-| [#1092](https://github.com/wazuh/wazuh-dashboard/pull/1092)                                                                                                                                                                                                                                                                                                       | Set v9 theme as default                                                                     |
-| [#1327](https://github.com/wazuh/wazuh-dashboard/pull/1327) [#1421](https://github.com/wazuh/wazuh-dashboard/pull/1421)                                                                                                                                                                                                                                           | Added version, revision, and stage to the Wazuh build metadata                              |
-| [#1434](https://github.com/wazuh/wazuh-dashboard/issues/1434)                                                                                                                                                                                                                                                                                                     | Made the Discover CSV download row limit configurable via the `reports.csv.maxRows` setting |
-| [#1480](https://github.com/wazuh/wazuh-dashboard/issues/1480)                                                                                                                                                                                                                                                                                                     | Added automatic generation and storage of the AI assistant encryption key on first install  |
+| Issue                                                                                        | Comment                                                                                     |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [wazuh-dashboard-plugins#7610](https://github.com/wazuh/wazuh-dashboard-plugins/issues/7610) | Health check service                                                                        |
+| [wazuh-dashboard-plugins#7697](https://github.com/wazuh/wazuh-dashboard-plugins/issues/7697) | Added Health Check app                                                                      |
+| [#985](https://github.com/wazuh/wazuh-dashboard/issues/985)                                  | Added manager host configuration for the default configuration file                         |
+| [#1052](https://github.com/wazuh/wazuh-dashboard/issues/1052)                                | Set v9 theme as default                                                                     |
+| [wazuh-dashboard-plugins#8550](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8550) | Added version, revision, and stage to the Wazuh build metadata                              |
+| [#1434](https://github.com/wazuh/wazuh-dashboard/issues/1434)                                | Made the Discover CSV download row limit configurable via the `reports.csv.maxRows` setting |
+| [#1480](https://github.com/wazuh/wazuh-dashboard/issues/1480)                                | Added automatic generation and storage of the AI assistant encryption key on first install  |
 
 ### Changed
 
-| Issue                                                                                                                   | Comment                                                                                          |
-| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [#805](https://github.com/wazuh/wazuh-dashboard/issues/805)                                                             | Changed the location of the wazuh-dashboard service to match with the other Wazuh components     |
-| [#998](https://github.com/wazuh/wazuh-dashboard/pull/998)                                                               | Changed the default value of `metaFields` and `timepicker:timeDefaults` settings                 |
-| [#1278](https://github.com/wazuh/wazuh-dashboard/pull/1278) [#1279](https://github.com/wazuh/wazuh-dashboard/pull/1279) | Excluded Wazuh dashboards and visualizations listing                                             |
-| [#1330](https://github.com/wazuh/wazuh-dashboard/pull/1330)                                                             | Changed log level of the cross compatibility service on start                                    |
-| [wazuh-dashboard-plugins#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979)                            | Changed the sidecar flyout to displace open flyouts instead of covering them                     |
-| [wazuh-dashboard-plugins#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989)                            | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus` |
+| Issue                                                                                        | Comment                                                                                          |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [#798](https://github.com/wazuh/wazuh-dashboard/issues/798)                                  | Changed the location of the wazuh-dashboard service to match with the other Wazuh components     |
+| [#985](https://github.com/wazuh/wazuh-dashboard/issues/985)                                  | Changed the default value of `metaFields` and `timepicker:timeDefaults` settings                 |
+| [wazuh-dashboard-plugins#8473](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8473) | Excluded Wazuh dashboards and visualizations listing                                             |
+| [#1329](https://github.com/wazuh/wazuh-dashboard/issues/1329)                                | Changed log level of the cross compatibility service on start                                    |
+| [wazuh-dashboard-plugins#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979) | Changed the sidecar flyout to displace open flyouts instead of covering them                     |
+| [wazuh-dashboard-plugins#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989) | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus` |
 
 ### Removed
 
-| Issue                                                       | Comment                                                                                                                                                 |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [#699](https://github.com/wazuh/wazuh-dashboard/issues/699) | Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system |
-| [#1382](https://github.com/wazuh/wazuh-dashboard/pull/1382) | Removed the Anomaly Detection plugin from the default Wazuh dashboard package                                                                           |
+| Issue                                                         | Comment                                                                                                                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#699](https://github.com/wazuh/wazuh-dashboard/issues/699)   | Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system |
+| [#1381](https://github.com/wazuh/wazuh-dashboard/issues/1381) | Removed the Anomaly Detection plugin from the default Wazuh dashboard package                                                                           |
 
 ### Fixed
 
-| Issue                                                       | Comment                                                                                      |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [#1276](https://github.com/wazuh/wazuh-dashboard/pull/1276) | Fixed health check padding styles                                                            |
-| [#1400](https://github.com/wazuh/wazuh-dashboard/pull/1400) | Prevent infinite remount loop when navigating from an app before its bundle finishes loading |
+| Issue                                                         | Comment                                                                                      |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [#1277](https://github.com/wazuh/wazuh-dashboard/issues/1277) | Fixed health check padding styles                                                            |
+| [#1399](https://github.com/wazuh/wazuh-dashboard/issues/1399) | Prevent infinite remount loop when navigating from an app before its bundle finishes loading |
 
 ## Prior versions
 
