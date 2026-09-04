@@ -1,0 +1,7 @@
+server.host: 0.0.0.0
+server.port: 5601
+server.ssl.enabled: false
+opensearch.hosts: http://localhost:9200
+opensearch.ignoreVersionMismatch: true
+logging.silent: false
+uiSettings.overrides.defaultRoute: /app/wz-home
