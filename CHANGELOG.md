@@ -31,10 +31,11 @@
 
 ### Fixed
 
-| Issue                                                         | Comment                                                                                      |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [#1277](https://github.com/wazuh/wazuh-dashboard/issues/1277) | Fixed health check padding styles                                                            |
-| [#1399](https://github.com/wazuh/wazuh-dashboard/issues/1399) | Prevent infinite remount loop when navigating from an app before its bundle finishes loading |
+| Issue                                                         | Comment                                                                                                                |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [#1277](https://github.com/wazuh/wazuh-dashboard/issues/1277) | Fixed health check padding styles                                                                                      |
+| [#1399](https://github.com/wazuh/wazuh-dashboard/issues/1399) | Prevent infinite remount loop when navigating from an app before its bundle finishes loading                           |
+| [#1569](https://github.com/wazuh/wazuh-dashboard/issues/1569) | Fixed the error toast full error modal to show the root cause of the failure instead of an unrelated backend exception |
 
 ## Prior versions
 
