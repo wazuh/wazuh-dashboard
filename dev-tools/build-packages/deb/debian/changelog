@@ -1,3 +1,9 @@
+wazuh-dashboard (4.10.6-RELEASE) stable; urgency=low
+
+  * More info: https://documentation.wazuh.com/current/release-notes/release-4-10-6.html
+
+ -- Wazuh, Inc <info@wazuh.com>  Thu, 15 Dec 2026 12:00:00 +0000
+
 wazuh-dashboard (4.10.5-RELEASE) stable; urgency=low
 
   * More info: https://documentation.wazuh.com/current/release-notes/release-4-10-5.html
