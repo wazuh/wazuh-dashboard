@@ -35,6 +35,7 @@
 | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | [#1277](https://github.com/wazuh/wazuh-dashboard/issues/1277) | Fixed health check padding styles                                                            |
 | [#1399](https://github.com/wazuh/wazuh-dashboard/issues/1399) | Prevent infinite remount loop when navigating from an app before its bundle finishes loading |
+| [#1568](https://github.com/wazuh/wazuh-dashboard/issues/1568) | Fixed the empty error message in the dashboard save failure toast                            |
 
 ## Prior versions
 
