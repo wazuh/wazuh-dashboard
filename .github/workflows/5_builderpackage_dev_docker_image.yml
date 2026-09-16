@@ -11,7 +11,8 @@
 #   image tag.
 # - Accepts an optional branch for the Wazuh plugin repositories. It is resolved
 #   per repository: when the branch does not exist in a repository, that
-#   repository falls back to the branch the workflow runs on.
+#   repository falls back to the branch the workflow runs on, and to main when
+#   that one does not exist there either.
 
 name: (5.x) Build and Push Image
 
@@ -26,7 +27,7 @@ on:
         default: ''
         type: string
       plugins_branch:
-        description: 'Branch of the Wazuh plugin repositories. Falls back per repository to the branch above when it does not exist there'
+        description: 'Branch of the Wazuh plugin repositories. Falls back per repository to the branch above, and then to main, when it does not exist there'
         required: false
         default: ''
         type: string
@@ -110,20 +111,34 @@ jobs:
           BRANCH: ${{ steps.versions.outputs.branch }}
           PLUGINS_BRANCH: ${{ inputs.plugins_branch }}
         run: |
-          # Resolve the branch of every plugin repository. The requested plugins
-          # branch is used only in the repositories where it exists; the rest
-          # fall back to the branch the workflow runs on.
+          # Resolve the branch of every plugin repository. Each candidate is used
+          # only in the repositories where it exists: the requested plugins
+          # branch first, then the branch the workflow runs on, then main.
           resolve_branch() {
             repo="$1"
             output="$2"
-            resolved="$BRANCH"
+            url="https://github.com/wazuh/${repo}.git"
 
-            if [ -n "$PLUGINS_BRANCH" ]; then
-              if git ls-remote --heads --tags "https://github.com/wazuh/${repo}.git" "$PLUGINS_BRANCH" | grep -q .; then
-                resolved="$PLUGINS_BRANCH"
-              else
-                echo "⚠️  ${repo}: branch '${PLUGINS_BRANCH}' not found, falling back to '${BRANCH}'"
+            # Candidates, in order of preference and without repetitions
+            candidates=""
+            for candidate in "$PLUGINS_BRANCH" "$BRANCH" main; do
+              [ -n "$candidate" ] || continue
+              case " ${candidates} " in *" ${candidate} "*) continue ;; esac
+              candidates="${candidates} ${candidate}"
+            done
+
+            resolved=""
+            for candidate in $candidates; do
+              if git ls-remote --heads --tags "$url" "$candidate" | grep -q .; then
+                resolved="$candidate"
+                break
               fi
+              echo "⚠️  ${repo}: branch '${candidate}' not found"
+            done
+
+            if [ -z "$resolved" ]; then
+              echo "❌ ${repo}: none of the candidate branches exist (${candidates})"
+              exit 1
             fi
 
             echo "🌿 ${repo}: ${resolved}"
