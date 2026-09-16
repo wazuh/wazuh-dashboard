@@ -155,8 +155,8 @@ jobs:
   build:
     runs-on: ${{ matrix.runner }}
     needs: [extract-versions]
-    # Cut the job before the runner is reclaimed, so the logs are archived
-    timeout-minutes: 55
+    # The image takes ~55 minutes of layers plus the push to Quay.io
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
