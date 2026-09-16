@@ -140,7 +140,10 @@ jobs:
   build:
     runs-on: ${{ matrix.runner }}
     needs: [extract-versions]
+    # Cut the job before the runner is reclaimed, so the logs are archived
+    timeout-minutes: 55
     strategy:
+      fail-fast: false
       matrix:
         include:
           - platform: linux/amd64
@@ -182,6 +185,8 @@ jobs:
           password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Build ${{ matrix.arch }} image
+        env:
+          BUILDKIT_PROGRESS: plain
         run: |
           chmod +x ./dev-tools/build-dev-image/build-multiarch.sh
           cd ./dev-tools/build-dev-image
@@ -199,6 +204,16 @@ jobs:
             --tag "${{ needs.extract-versions.outputs.tag }}-${{ matrix.arch }}" \
             --platform "${{ matrix.platform }}" \
             --push
+
+      - name: Report runner resources
+        if: always()
+        run: |
+          echo "=== Memory ==="
+          free -h || true
+          echo "=== Disk ==="
+          df -h || true
+          echo "=== Kernel OOM kills ==="
+          sudo dmesg 2>/dev/null | grep -iE 'killed process|out of memory' | tail -20 || echo "dmesg not available"
 
   create-manifest:
     runs-on: ${{ format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
