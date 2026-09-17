@@ -13,7 +13,7 @@
 #         -f wzd.dockerfile .
 
 ARG NODE_VERSION=22.22.0
-FROM node:${NODE_VERSION} AS base
+FROM node:${NODE_VERSION}
 ARG OPENSEARCH_DASHBOARD_VERSION
 ARG WAZUH_DASHBOARD_BRANCH
 ARG WAZUH_DASHBOARD_SECURITY_BRANCH
@@ -45,9 +45,8 @@ RUN git clone --depth 1 --branch ${WAZUH_DASHBOARD_BRANCH} https://github.com/wa
 
 WORKDIR /home/node/kbn
 
-FROM node:${NODE_VERSION}
-USER node
-COPY --chown=node:node --from=base /home/node/kbn /home/node/kbn
-WORKDIR /home/node/kbn
+# A second stage used to exist to drop the intermediate layers, but the build
+# above is a single layer now, so it had nothing left to drop and only cost a
+# full copy of /home/node/kbn plus a chown over every file in node_modules.
 COPY --chmod=755 ./entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
