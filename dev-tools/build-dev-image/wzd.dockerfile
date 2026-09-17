@@ -23,21 +23,27 @@ ARG WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH
 ARG WAZUH_DASHBOARD_ALERTING_BRANCH
 ARG WAZUH_DASHBOARD_NOTIFICATIONS_BRANCH
 USER node
-RUN git clone --depth 1 --branch ${WAZUH_DASHBOARD_BRANCH} https://github.com/wazuh/wazuh-dashboard.git /home/node/kbn
 
-WORKDIR /home/node/kbn
-RUN yarn osd bootstrap --production
-
-WORKDIR /home/node/kbn/plugins
-
+# Everything the build needs is copied before the checkout, and the checkout,
+# the bootstrap, the plugins and the optimizer warmup share a single layer.
+# Runners whose root filesystem is an overlay mount fall back to the vfs
+# storage driver, which copies the whole tree on every layer: once
+# /home/node/kbn holds node_modules, each extra layer - even a WORKDIR - costs
+# about 19 minutes there, while it is free on overlay2.
 COPY ./install-plugins.sh /home/node/install-plugins.sh
 COPY ./plugins /home/node/plugins
-RUN bash /home/node/install-plugins.sh
-
-WORKDIR /home/node/kbn
 COPY ./warmup-optimizer.sh /home/node/warmup-optimizer.sh
 COPY ./warmup-opensearch_dashboards.yml /home/node/warmup-opensearch_dashboards.yml
-RUN bash /home/node/warmup-optimizer.sh
+
+RUN git clone --depth 1 --branch ${WAZUH_DASHBOARD_BRANCH} https://github.com/wazuh/wazuh-dashboard.git /home/node/kbn \
+    && cd /home/node/kbn \
+    && yarn osd bootstrap --production \
+    && cd /home/node/kbn/plugins \
+    && bash /home/node/install-plugins.sh \
+    && cd /home/node/kbn \
+    && bash /home/node/warmup-optimizer.sh
+
+WORKDIR /home/node/kbn
 
 FROM node:${NODE_VERSION}
 USER node
