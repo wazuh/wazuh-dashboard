@@ -238,6 +238,11 @@ jobs:
         env:
           BUILDKIT_PROGRESS: plain
         run: |
+          # The runner log is not archived when the job is cancelled, so keep a
+          # copy of the build output as an artifact
+          set -o pipefail
+          exec > >(tee /tmp/build-${{ matrix.arch }}.log) 2>&1
+
           chmod +x ./dev-tools/build-dev-image/build-multiarch.sh
           cd ./dev-tools/build-dev-image
 
@@ -254,6 +259,14 @@ jobs:
             --tag "${{ needs.extract-versions.outputs.tag }}-${{ matrix.arch }}" \
             --platform "${{ matrix.platform }}" \
             --push
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ matrix.arch }}
+          path: /tmp/build-${{ matrix.arch }}.log
+          if-no-files-found: warn
 
       - name: Report runner resources
         if: always()
