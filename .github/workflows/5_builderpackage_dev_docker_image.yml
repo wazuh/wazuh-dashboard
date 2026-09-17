@@ -173,25 +173,46 @@ jobs:
         with:
           ref: ${{ needs.extract-versions.outputs.branch }}
 
-      # Workaround: AWS CodeBuild runners do not start the Docker daemon automatically
+      # Workaround: AWS CodeBuild runners do not start the Docker daemon
+      # automatically, and on the arm ones / is an overlay mount, where the
+      # overlay driver cannot stack. vfs works everywhere but copies the whole
+      # tree on every layer, which turns a 1 KB COPY into ~19 minutes here, so
+      # it is the last resort.
       - name: Start Docker daemon
         run: |
+          start_dockerd() {
+            sudo rm -f /var/run/docker.pid
+            sudo nohup dockerd $1 > /var/log/dockerd.log 2>&1 &
+            timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
+          }
+
+          overlay_stacks() {
+            work=$(sudo mktemp -d)
+            sudo mkdir -p "$work/lower" "$work/upper" "$work/work" "$work/merged"
+            opts="lowerdir=$work/lower,upperdir=$work/upper,workdir=$work/work"
+            if sudo mount -t overlay overlay -o "$opts" "$work/merged" 2>/dev/null; then
+              sudo umount "$work/merged"
+              sudo rm -rf "$work"
+              return 0
+            fi
+            sudo rm -rf "$work"
+            return 1
+          }
+
           if docker info >/dev/null 2>&1; then
             echo "Docker daemon already running"
+          elif overlay_stacks; then
+            echo "overlay mounts stack here, letting dockerd pick its driver"
+            start_dockerd ""
+          elif sudo apt-get install -y -qq fuse-overlayfs >/dev/null 2>&1; then
+            echo "overlay mounts do not stack here, using fuse-overlayfs"
+            start_dockerd "--storage-driver fuse-overlayfs" || start_dockerd "--storage-driver vfs"
           else
-            # Let dockerd pick its storage driver: vfs copies the whole tree on
-            # every layer, which turns a 1 KB COPY into minutes on this image
-            sudo nohup dockerd > /var/log/dockerd.log 2>&1 &
-            timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done' || {
-              echo "dockerd could not start with its default storage driver:"
-              sudo tail -30 /var/log/dockerd.log
-              echo "Retrying with vfs"
-              sudo nohup dockerd --storage-driver vfs > /var/log/dockerd-vfs.log 2>&1 &
-              timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
-            }
+            echo "overlay mounts do not stack here and fuse-overlayfs is unavailable, using vfs"
+            start_dockerd "--storage-driver vfs"
           fi
+
           docker info --format 'Storage driver in use: {{.Driver}}'
-          command -v fuse-overlayfs >/dev/null && echo "fuse-overlayfs is available" || echo "fuse-overlayfs is not available"
 
       # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
       - name: Login to Docker Hub
@@ -249,25 +270,46 @@ jobs:
     needs: [extract-versions, build]
 
     steps:
-      # Workaround: AWS CodeBuild runners do not start the Docker daemon automatically
+      # Workaround: AWS CodeBuild runners do not start the Docker daemon
+      # automatically, and on the arm ones / is an overlay mount, where the
+      # overlay driver cannot stack. vfs works everywhere but copies the whole
+      # tree on every layer, which turns a 1 KB COPY into ~19 minutes here, so
+      # it is the last resort.
       - name: Start Docker daemon
         run: |
+          start_dockerd() {
+            sudo rm -f /var/run/docker.pid
+            sudo nohup dockerd $1 > /var/log/dockerd.log 2>&1 &
+            timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
+          }
+
+          overlay_stacks() {
+            work=$(sudo mktemp -d)
+            sudo mkdir -p "$work/lower" "$work/upper" "$work/work" "$work/merged"
+            opts="lowerdir=$work/lower,upperdir=$work/upper,workdir=$work/work"
+            if sudo mount -t overlay overlay -o "$opts" "$work/merged" 2>/dev/null; then
+              sudo umount "$work/merged"
+              sudo rm -rf "$work"
+              return 0
+            fi
+            sudo rm -rf "$work"
+            return 1
+          }
+
           if docker info >/dev/null 2>&1; then
             echo "Docker daemon already running"
+          elif overlay_stacks; then
+            echo "overlay mounts stack here, letting dockerd pick its driver"
+            start_dockerd ""
+          elif sudo apt-get install -y -qq fuse-overlayfs >/dev/null 2>&1; then
+            echo "overlay mounts do not stack here, using fuse-overlayfs"
+            start_dockerd "--storage-driver fuse-overlayfs" || start_dockerd "--storage-driver vfs"
           else
-            # Let dockerd pick its storage driver: vfs copies the whole tree on
-            # every layer, which turns a 1 KB COPY into minutes on this image
-            sudo nohup dockerd > /var/log/dockerd.log 2>&1 &
-            timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done' || {
-              echo "dockerd could not start with its default storage driver:"
-              sudo tail -30 /var/log/dockerd.log
-              echo "Retrying with vfs"
-              sudo nohup dockerd --storage-driver vfs > /var/log/dockerd-vfs.log 2>&1 &
-              timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
-            }
+            echo "overlay mounts do not stack here and fuse-overlayfs is unavailable, using vfs"
+            start_dockerd "--storage-driver vfs"
           fi
+
           docker info --format 'Storage driver in use: {{.Driver}}'
-          command -v fuse-overlayfs >/dev/null && echo "fuse-overlayfs is available" || echo "fuse-overlayfs is not available"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
