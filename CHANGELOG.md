@@ -10,6 +10,7 @@
 | [wazuh-dashboard-plugins#8550](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8550) | Added version, revision, and stage to the Wazuh build metadata                              |
 | [#1434](https://github.com/wazuh/wazuh-dashboard/issues/1434)                                | Made the Discover CSV download row limit configurable via the `reports.csv.maxRows` setting |
 | [#1480](https://github.com/wazuh/wazuh-dashboard/issues/1480)                                | Added automatic generation and storage of the AI assistant encryption key on first install  |
+| [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Added support for health check tasks to report their own result status                      |
 
 ### Changed
 

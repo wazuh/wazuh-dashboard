@@ -4,6 +4,7 @@
  */
 
 import { Task } from './task';
+import { taskResult } from '../../../common/healthcheck';
 
 describe('Task', () => {
   it('create task and ensure this has the expected fields in the info', async () => {
@@ -118,5 +119,107 @@ describe('Task', () => {
     expect(info.status).toBe('finished');
     expect(info.result).toBe('red');
     expect(info.startedAt).toBeDefined();
+  });
+
+  it('run task returning an ok result', async () => {
+    const task = new Task({
+      name: 'test',
+      run: jest.fn(() => taskResult.ok({ certificates: 3 })),
+      critical: false,
+    });
+
+    const infoRun = await task.run();
+
+    expect(infoRun.result).toBe('green');
+    expect(infoRun.data).toEqual({ certificates: 3 });
+    expect(infoRun.error).toBe(null);
+  });
+
+  it('run task returning a warning result', async () => {
+    const task = new Task({
+      name: 'test',
+      run: jest.fn(() => taskResult.warning('expires in 20 days')),
+      critical: false,
+    });
+
+    const infoRun = await task.run();
+
+    expect(infoRun.result).toBe('yellow');
+    expect(infoRun.error).toBe('expires in 20 days');
+  });
+
+  it('run task returning an error result does not throw', async () => {
+    const task = new Task({
+      name: 'test',
+      run: jest.fn(() => taskResult.error('certificate expired')),
+      critical: false,
+    });
+
+    const infoRun = await task.run();
+
+    expect(infoRun.result).toBe('red');
+    expect(infoRun.error).toBe('certificate expired');
+  });
+
+  // A non critical red is not selected by `failedCriticalChecks`, so the dashboard starts.
+  it('run task returning an error result on a non critical task keeps it out of the failed critical checks', async () => {
+    const task = new Task({
+      name: 'test',
+      run: jest.fn(() => taskResult.error('certificate expired')),
+      critical: false,
+    });
+
+    const infoRun = await task.run();
+
+    expect(infoRun.result).toBe('red');
+    expect(infoRun.critical).toBe(false);
+    expect(infoRun.status).toBe('finished');
+  });
+
+  it('run task returning an error result on a critical task keeps blocking', async () => {
+    const task = new Task({
+      name: 'test',
+      run: jest.fn(() => taskResult.error('node unreachable')),
+      critical: true,
+    });
+
+    const infoRun = await task.run();
+
+    expect(infoRun.result).toBe('red');
+    expect(infoRun.critical).toBe(true);
+  });
+
+  it.each([
+    { status: 'ok' },
+    { status: 'warning', message: 'm' },
+    { status: 'error', message: 'm' },
+  ])('run task resolving %p as plain data keeps it as data', async (resolved) => {
+    const task = new Task({
+      name: 'test',
+      run: jest.fn(() => resolved),
+      critical: false,
+    });
+
+    const infoRun = await task.run();
+
+    expect(infoRun.result).toBe('green');
+    expect(infoRun.data).toBe(resolved);
+    expect(infoRun.error).toBe(null);
+  });
+
+  it('run task clears the error of a previous failed run', async () => {
+    const run = jest
+      .fn()
+      .mockReturnValueOnce(taskResult.error('certificate expired'))
+      .mockReturnValueOnce(taskResult.ok());
+    const task = new Task({ name: 'test', run, critical: false });
+
+    const firstRun = await task.run();
+    expect(firstRun.result).toBe('red');
+
+    const secondRun = await task.run();
+
+    expect(secondRun.result).toBe('green');
+    expect(secondRun.error).toBe(null);
   });
 });
