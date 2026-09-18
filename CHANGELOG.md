@@ -14,7 +14,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.14.9
 
-## Wazuh dashboard v4.14.8 - OpenSearch Dashboards 2.19.6 - Revision 01
+## Wazuh dashboard v4.14.8 - OpenSearch Dashboards 2.19.6 - Revision 02
 
 ### Added
 
@@ -134,7 +134,7 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Fix redirection on IDP initiated SAML configurations [#171](https://github.com/wazuh/wazuh-security-dashboards-plugin/pull/171)
 
-## Wazuh dashboard v4.10.5 - OpenSearch Dashboards 2.19.5 - Revision 00
+## Wazuh dashboard v4.10.5 - OpenSearch Dashboards 2.19.6 - Revision 01
 
 ### Added
 
