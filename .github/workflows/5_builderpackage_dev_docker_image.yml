@@ -155,9 +155,8 @@ jobs:
   build:
     runs-on: ${{ matrix.runner }}
     needs: [extract-versions]
-    # Just under the 120 minute limit of the CodeBuild runners, so that a build
-    # that does not finish is cut by GitHub and still uploads its log
-    timeout-minutes: 115
+    # Matches the 120 minute limit of the CodeBuild runners
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
