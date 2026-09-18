@@ -1,4 +1,4 @@
-* [Home](/)
+- [Home](/)
 
   - Capabilities
     - [Read_only_mode](capabilities/read_only_mode.md)
@@ -219,6 +219,7 @@
   - scripts
     - [README](../scripts/README.md)
   - [DOCS_README](DOCS_README.md)
+  - [Prettier configuration](prettier-configuration.md)
   - [Theme](theme.md)
   - [CHANGELOG](../CHANGELOG.md)
   - [CLAUDE](../CLAUDE.md)
