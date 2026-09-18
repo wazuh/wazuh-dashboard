@@ -21,6 +21,7 @@
 | [#1329](https://github.com/wazuh/wazuh-dashboard/issues/1329)                                | Changed log level of the cross compatibility service on start                                    |
 | [wazuh-dashboard-plugins#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979) | Changed the sidecar flyout to displace open flyouts instead of covering them                     |
 | [wazuh-dashboard-plugins#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989) | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus` |
+| [#1605](https://github.com/wazuh/wazuh-dashboard/issues/1605)                                | Changed the Prettier check to skip the files that were already unformatted on the base branch    |
 
 ### Removed
 

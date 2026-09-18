@@ -39,4 +39,4 @@ jobs:
           echo "Installing dependencies"
           yarn install --ignore-scripts
           echo "Running prettier on the changed files"
-          npx prettier ${CHANGED_FILES} --check --ignore-unknown
+          scripts/prettier-check-changed.sh ${REMOTE_NAME}/${GITHUB_BASE_REF} ${CHANGED_FILES}
