@@ -5,6 +5,31 @@
 
 import { Duration } from 'moment';
 
+// Registry symbol so the brand survives duplicated copies of this module.
+export const TASK_RESULT: unique symbol = Symbol.for('healthcheck.taskResult');
+
+export type TaskResult<T = any> = { readonly [TASK_RESULT]: true } & (
+  | { status: 'ok'; data?: T }
+  | { status: 'warning'; message: string; data?: T }
+  | { status: 'error'; message: string; data?: T }
+);
+
+export const taskResult = {
+  ok: <T = any>(data?: T): TaskResult<T> => ({ [TASK_RESULT]: true, status: 'ok', data }),
+  warning: <T = any>(message: string, data?: T): TaskResult<T> => ({
+    [TASK_RESULT]: true,
+    status: 'warning',
+    message,
+    data,
+  }),
+  error: <T = any>(message: string, data?: T): TaskResult<T> => ({
+    [TASK_RESULT]: true,
+    status: 'error',
+    message,
+    data,
+  }),
+};
+
 export interface TaskInfo {
   name: string;
   status: 'not_started' | 'running' | 'finished';

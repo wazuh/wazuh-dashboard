@@ -5,7 +5,11 @@
 // import { TASK } from '../healthcheck/constants';
 import { TASK } from './constants';
 import { ITask, TaskDefinition } from './types';
-import { TaskInfo } from '../../../common/healthcheck';
+import { TASK_RESULT, TaskInfo, TaskResult } from '../../../common/healthcheck';
+
+function isTaskResult(value: any): value is TaskResult {
+  return Boolean(value?.[TASK_RESULT]);
+}
 
 export class Task implements ITask {
   public name: string;
@@ -48,8 +52,32 @@ export class Task implements ITask {
 
     try {
       this.init();
-      this.data = await this.runInternal(...params);
-      this.result = TASK.RUN_RESULT.GREEN;
+
+      const value = await this.runInternal(...params);
+
+      if (isTaskResult(value)) {
+        this.data = value.data ?? null;
+
+        switch (value.status) {
+          case 'ok': {
+            this.result = TASK.RUN_RESULT.GREEN;
+            break;
+          }
+          case 'warning': {
+            this.result = TASK.RUN_RESULT.YELLOW;
+            this.error = value.message;
+            break;
+          }
+          case 'error': {
+            this.result = TASK.RUN_RESULT.RED;
+            this.error = value.message;
+            break;
+          }
+        }
+      } else {
+        this.data = value;
+        this.result = TASK.RUN_RESULT.GREEN;
+      }
     } catch (error_) {
       error = error_;
       if (this.critical) {
