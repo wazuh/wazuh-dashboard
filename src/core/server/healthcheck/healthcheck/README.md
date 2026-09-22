@@ -1,20 +1,21 @@
 # HealthCheck
 
 The `HealthCheck` provides a mechanism to see and manage the health of checks.
+
 > :warning: In this stage, this only runs in the internal context that only can apply to the `Global` tenant if multitenancy is enabled.
 
 This allows to register the check tasks that can be used by the plugin in the `setup` lifecycle.
 
 # Configuration
 
-| setting |description | default value | allowed values |
-| --- | --- | --- | --- |
-| `healthcheck.enabled` | define if the health check is enabled or not | true | true, false |
-| `healthcheck.checks_enabled` | define the checks that are enabled. This is a regular expression or a list of regular expressions (NodeJS compatibles) | `.*` | string or list of strings |
-| `healthcheck.interval` | define the interval to run the health check after the initial check | 15m | 5m to 24h |
-| `healthcheck.retries_delay` | define the wait time after a failed overall health check | 2.5s | 0 to 1m |
-| `healthcheck.max_retries` | define the maximum count of retries of the overall health check that can be executed | 5 | integer, minimum 1 |
-| `healthcheck.server_not_ready_troubleshooting_link` | define the troubleshooting link in the not-ready server | URL to Wazuh docs | a valid URL |
+| setting                                             | description                                                                                                            | default value     | allowed values            |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------- |
+| `healthcheck.enabled`                               | define if the health check is enabled or not                                                                           | true              | true, false               |
+| `healthcheck.checks_enabled`                        | define the checks that are enabled. This is a regular expression or a list of regular expressions (NodeJS compatibles) | `.*`              | string or list of strings |
+| `healthcheck.interval`                              | define the interval to run the health check after the initial check                                                    | 15m               | 5m to 24h                 |
+| `healthcheck.retries_delay`                         | define the wait time after a failed overall health check                                                               | 2.5s              | 0 to 1m                   |
+| `healthcheck.max_retries`                           | define the maximum count of retries of the overall health check that can be executed                                   | 5                 | integer, minimum 1        |
+| `healthcheck.server_not_ready_troubleshooting_link` | define the troubleshooting link in the not-ready server                                                                | URL to Wazuh docs | a valid URL               |
 
 ## Enabling checks
 
@@ -23,6 +24,7 @@ By default all the checks are enabled.
 The user can configure the enabled checks using the `healthcheck.checks_enabled` setting.
 
 For example, assumming the following checks are registered:
+
 - task1
 - task2
 - another-task
@@ -70,7 +72,7 @@ If this is enabled:
 
 1. Setup the health check
 2. Start the health check
-  If this is enabled, then this register a button to be mounted in the menu
+   If this is enabled, then this register a button to be mounted in the menu
 
 Other plugins can register tasks in the plugin `setup` lifecycle that will be run on the server starts lifecycle.
 
@@ -79,6 +81,7 @@ Optionally the registered tasks could be retrieved to run in API endpoints or ge
 # Scopes
 
 The scopes can be used to get a specific context (clients, parameters) that is set in the `scope` property of the task context.
+
 > :warning: In this stage, this only runs in the internal context that only can apply to the `Global` tenant if multitenancy is enabled.
 
 The `internal` scoped tasks keep the same execution data (see [Task execution data](#task-execution-data)).
@@ -95,14 +98,16 @@ A task can be defined with:
 export interface TaskDefinition {
   // Task identifier. This should be unique. See the name convention.
   name: string;
-  run: (ctx: any) => any;
+  // Returns the result of the check. See "Reporting a result".
+  run: (ctx: any) => TaskResult | Promise<TaskResult>;
   /* Define the order to execute the task. Multiple task can take the same order and they will be executed in parallel.
   If it is not defined, the task will be executed as last order group. */
   order?: number;
   // Other metafields
   [key: string]: any;
-  // Define if the task is critical. If it fails, the initial check can block the initialization or this could mark the overall status as failed in the scheduled checks.
-  critical: boolean
+  /* Define if the task is critical. A critical task reporting `red` blocks the
+  initialization. It does not decide the result color, the task does. */
+  critical: boolean;
 }
 ```
 
@@ -115,14 +120,51 @@ setup(core){
   // Register a task
   core.healthCheck.register({
     name: 'custom-task',
-    run: (ctx) => {
-      console.log('Run from wazuhCore starts' )
+    run: async (ctx) => {
+      const certificates = await ctx.services.readCertificates();
+
+      if (certificates.expired.length > 0) {
+        return taskResult.error('Some certificates expired', certificates);
+      }
+
+      return taskResult.ok(certificates);
     },
-    order: 1
+    order: 1,
     critical: false
   });
 }
 ```
+
+## Reporting a result
+
+A task returns one of three results:
+
+```ts
+taskResult.ok(data?)             // green
+taskResult.warning(message, data?) // yellow
+taskResult.error(message, data?)   // red
+```
+
+`message` becomes the task `error` field and is what the UI shows. `data` is
+stored as the task `data` field for diagnostics.
+
+A task that throws is still handled: the thrown message becomes `error`, and the
+result is `red` when the task is `critical` and `yellow` when it is not. Throwing
+is the path for the unexpected; returning a result is the path for what the check
+set out to measure.
+
+Returning anything else is rejected, with the task name in the message:
+
+```
+Task custom-task must return a TaskResult.
+Use taskResult.ok, taskResult.warning or taskResult.error.
+```
+
+> :warning: `taskResult` is not re-exported from `src/core/server`. Code inside
+> `src/core` imports it from `src/core/common/healthcheck`. External plugins
+> currently keep their own mirror built on `Symbol.for('healthcheck.taskResult')`,
+> which resolves to the same symbol, so the brand round-trips. See
+> `plugins/main/server/health-check/types.ts` in `wazuh-dashboard-plugins`.
 
 The `ctx` property provide the context execution.
 
@@ -187,51 +229,61 @@ The backend service registers routes to manage the related data:
 
 ## Definitions and rules
 
-* **Task / individual check**
+- **Task / individual check**
 
-  * status (only `not_started`, `in_progress`, or `finished`)
-  * result (one of `green`, `yellow`, `red`, or `gray`)
+  - status (only `not_started`, `in_progress`, or `finished`)
+  - result (one of `green`, `yellow`, `red`, or `gray`)
 
-    * `green`: OK
-    * `red`: failed — critical
-    * `yellow`: failed — non‑critical
-    * `gray`: unknown / not executed (typically because `status != "finished"`)
-  * **Failed** ⟶ when `status == "finished"` and `result` is `red` or `yellow`.
-  * `critical` remains a task metadata that classifies the check. In the "server is not ready yet" UI, the distinction critical/non‑critical is derived from the `result` color: `red` = critical failure, `yellow` = non‑critical failure.
-    * `true` = **critical**; `false` or absent = **non-critical**.
-  * When a task is considered “failed”
+    - `green`: OK
+    - `yellow`: needs attention
+    - `red`: failed
+    - `gray`: unknown / not executed (typically because `status != "finished"`)
 
-    * `failed` ⇢ `isEnabled == true` and `status == "finished"` and `result == "red"`.
-    * Criticality does **not** affect whether it is failed; it only affects the **summary**.
+  - The task chooses its own result by returning `taskResult.ok`, `taskResult.warning` or `taskResult.error`.
+  - A task that throws gets `red` when it is `critical`, and `yellow` when it is not.
+  - **Failed** ⟶ when `status == "finished"` and `result` is `red` or `yellow`.
+  - `critical` is task metadata set at registration. It decides whether a `red` result blocks the server from starting. It does not decide the result color.
+    - `true` = **critical**; `false` or absent = **non-critical**.
+  - A non-critical task can report `red`: the failure is visible everywhere the status is shown, and the server still starts.
 
-* **Check summary (aggregate of the set of tasks)**
+Two separate aggregations read these results. They answer different questions and do not use the same rule.
 
-  * `result` can be: `red`, `yellow`, `green` or `gray`.
-  * **Red** in the summary when there is **at least one critical task with `result == "red"`**.
-  * **Yellow** in the summary when there are **no critical failures** and there is **at least one non‑critical failed task** (`result == "yellow"`).
-  * **Green** in the summary when all tasks are **finished** and the critical ones are `green`.
-  * **Gray** in any other case (e.g., all `gray` or no tasks enabled).
-  * The summary does **not** have `critical` (because it is already inferred from the tasks).
+- **Startup blocking** (the "server is not ready yet" screen)
+
+  - A check blocks the server from starting when `critical == true` and `result == "red"`.
+  - A non-critical `red` never blocks. It is reported among the non-critical failures.
+
+- **Overall status** (the header indicator and the health check app)
+
+  - Computed over the checks whose `status == "finished"`. Unfinished checks are ignored.
+  - **Red** when any check is `red`, or when a `critical` check is not `green`.
+  - **Yellow** when no rule above applies and any check is not `green`.
+  - **Green** when every finished check is `green`.
+  - **Gray** is the initial value, before any check has reported.
+  - The overall status does **not** carry `critical` (it is already inferred from the tasks).
 
 ### Answers to the doubts
 
-1. **“For a task to be considered *failed*, must it be different from `green` and `gray`; that is `red` or `yellow`?”**
-   **Yes.** In an **individual task**, a task is considered *failed* when `status == "finished"` and `result` is `red` (**critical failure**) or `yellow` (**non‑critical failure**).
+1. **“For a task to be considered _failed_, must it be different from `green` and `gray`; that is `red` or `yellow`?”**
+   **Yes.** A task is _failed_ when `status == "finished"` and `result` is `red` or `yellow`. Whether that failure stops the server is a separate question, answered by `critical`.
 
 2. **“If `result` is `red`, doesn’t that already imply it’s critical and `critical` is redundant?”**
-   In the "server is not ready yet" UI, the `result` color encodes the *criticality of a failure*: `red` = critical, `yellow` = non‑critical. The `critical` field, however, still exists in the task metadata and can be used by services or other UIs; when a task succeeds (`green`), it may still be classified as critical or not by metadata even though the color is not conveying that distinction.
+   **Not anymore.** It used to be true: the only way to reach `red` was to throw from a `critical` task, so `red` implied `critical`. A task now picks its own result, so the two are independent. `result` says how bad the finding is; `critical` says whether that finding stops the server from starting.
+
+   The combination this enables is a non-critical `red`: a serious problem the operator has to see, on a dashboard that still comes up so they can act on it. A certificate that expired is the motivating case — registering that check as critical would lock the operator out of the UI they need to renew it.
 
 ### Quick table
 
-| Level         | Possible `result` values         | `yellow`? | When is it *failed*?                   |
-| ------------- | -------------------------------- | --------- | -------------------------------------- |
-| Task / Check  | `red`, `yellow`, `green`, `gray` | Yes       | If `result` is `red` or `yellow`       |
-| Check Summary | `red`, `yellow`, `green`, `gray` | Yes       | N/A (aggregate state only)             |
+| Level          | Possible `result` values         | When is it _failed_?             | Blocks startup?              |
+| -------------- | -------------------------------- | -------------------------------- | ---------------------------- |
+| Task / Check   | `red`, `yellow`, `green`, `gray` | If `result` is `red` or `yellow` | Only if `critical` and `red` |
+| Overall status | `red`, `yellow`, `green`, `gray` | N/A (aggregate state only)       | N/A                          |
 
 ### Conclusion:
-- The `yellow` result is supported at the task level to represent **non‑critical failures**, and it also appears in the summary when there are no critical failures.
-- The `critical` property remains part of the task metadata. In the not‑ready UI, criticality of failures is conveyed via `result` color (`red` vs `yellow`).
 
+- A task chooses its own `result`. `yellow` represents a finding that needs attention, `red` a failure.
+- `critical` is registration metadata deciding one thing: whether a `red` result blocks the server from starting.
+- The two are independent, so a non-critical `red` is reachable and is the reason this distinction exists.
 
 # Notes
 
@@ -240,6 +292,7 @@ The backend service registers routes to manage the related data:
 ```
 server    log   [10:04:59.621] [info][healthcheck] Enabled checks [2]: [server-api:connection-compatibility,index-pattern:alerts,index-pattern:monitoring,index-pattern:statistitcs,index-pattern:vulnerabilities-states,index-pattern:states-inventory,index-pattern:states-inventory-groups,index-pattern:states-inventory-hardware,index-pattern:states-inventory-hotfixes,index-pattern:states-inventory-interfaces,index-pattern:states-inventory-networks,index-pattern:states-inventory-packages,index-pattern:states-inventory-ports,index-pattern:states-inventory-processes,index-pattern:states-inventory-protocols,index-pattern:states-inventory-system,index-pattern:states-inventory-users,index-pattern:states-fim-files,index-pattern:states-fim-registry-keys,index-pattern:states-fim-registry-values]
 ```
+
 - If the health check is disabled, a `info` log is displayed in the app logs.
 
 # Debug
@@ -259,6 +312,7 @@ The user can increase the verbosity with the `logging.verbose: true` setting.
 The UI allows exporting the checks to a JSON file to be shared easily.
 
 - Not ready yet server: export the health check results to a JSON file using the `Export checks` button
+
 ```
 {
   checks: [
@@ -281,7 +335,9 @@ The UI allows exporting the checks to a JSON file to be shared easily.
   }
 }
 ```
+
 - ready server: export the health check results to a JSON file using the health check UI
+
 ```
 {
   status: "yellow",
