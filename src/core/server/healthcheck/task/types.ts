@@ -3,18 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { Logger } from '@osd/logging';
-import { TaskInfo } from '../../../common/healthcheck';
+import { TaskInfo, TaskResult } from '../../../common/healthcheck';
 
 export interface TaskDefinition {
   name: string;
-  run: (ctx: any) => any;
+  run: (ctx: any) => TaskResult | Promise<TaskResult>;
   // Define the order to execute the task. Multiple tasks can take the same order and they will be executed in parallel
   order?: number;
   critical?: boolean;
 }
 
 export interface ITask extends TaskInfo {
-  runInternal: (ctx: any) => any;
+  runInternal: TaskDefinition['run'];
   order?: number;
   run: (...params: any[]) => Promise<TaskInfo>;
   getInfo: () => TaskInfo;

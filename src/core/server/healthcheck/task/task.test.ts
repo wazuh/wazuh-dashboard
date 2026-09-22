@@ -5,12 +5,15 @@
 
 import { Task } from './task';
 import { taskResult } from '../../../common/healthcheck';
+import { TaskDefinition } from './types';
+
+const unbranded = (value: any): TaskDefinition['run'] => () => value;
 
 describe('Task', () => {
   it('create task and ensure this has the expected fields in the info', async () => {
     const task = new Task({
       name: 'test',
-      run: () => {},
+      run: () => taskResult.ok(),
       critical: false,
     });
 
@@ -31,7 +34,7 @@ describe('Task', () => {
   it('run task', async () => {
     const taskDefinition = {
       name: 'test',
-      run: jest.fn(() => 'result:ok'),
+      run: jest.fn(() => taskResult.ok('result:ok')),
       critical: false,
     };
     const task = new Task(taskDefinition);
@@ -193,18 +196,39 @@ describe('Task', () => {
     { status: 'ok' },
     { status: 'warning', message: 'm' },
     { status: 'error', message: 'm' },
-  ])('run task resolving %p as plain data keeps it as data', async (resolved) => {
-    const task = new Task({
-      name: 'test',
-      run: jest.fn(() => resolved),
-      critical: false,
-    });
+  ])(
+    'run task resolving %p unbranded rejects instead of reading it as a status',
+    async (resolved) => {
+      const task = new Task({
+        name: 'test',
+        run: unbranded(resolved),
+        critical: false,
+      });
 
-    const infoRun = await task.run();
+      await expect(task.run()).rejects.toThrowError(/must return a TaskResult/);
+    }
+  );
 
-    expect(infoRun.result).toBe('green');
-    expect(infoRun.data).toBe(resolved);
-    expect(infoRun.error).toBe(null);
+  it.each([undefined, null, 'result:ok', 42, { certificates: 3 }])(
+    'run task resolving %p unbranded rejects',
+    async (resolved) => {
+      const task = new Task({ name: 'test', run: unbranded(resolved), critical: false });
+
+      await expect(task.run()).rejects.toThrowError(/must return a TaskResult/);
+    }
+  );
+
+  it('run task resolving an unbranded value reports the failure in the info', async () => {
+    const task = new Task({ name: 'test', run: unbranded('plain'), critical: false });
+
+    await expect(task.run()).rejects.toThrowError();
+
+    const info = task.getInfo();
+
+    expect(info.status).toBe('finished');
+    expect(info.result).toBe('yellow');
+    expect(info.error).toMatch(/must return a TaskResult/);
+    expect(info.data).toBe(null);
   });
 
   it('run task clears the error of a previous failed run', async () => {

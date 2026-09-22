@@ -55,28 +55,29 @@ export class Task implements ITask {
 
       const value = await this.runInternal(...params);
 
-      if (isTaskResult(value)) {
-        this.data = value.data ?? null;
+      if (!isTaskResult(value)) {
+        throw new Error(
+          `Task ${this.name} must return a TaskResult. Use taskResult.ok, taskResult.warning or taskResult.error.`
+        );
+      }
 
-        switch (value.status) {
-          case 'ok': {
-            this.result = TASK.RUN_RESULT.GREEN;
-            break;
-          }
-          case 'warning': {
-            this.result = TASK.RUN_RESULT.YELLOW;
-            this.error = value.message;
-            break;
-          }
-          case 'error': {
-            this.result = TASK.RUN_RESULT.RED;
-            this.error = value.message;
-            break;
-          }
+      this.data = value.data ?? null;
+
+      switch (value.status) {
+        case 'ok': {
+          this.result = TASK.RUN_RESULT.GREEN;
+          break;
         }
-      } else {
-        this.data = value;
-        this.result = TASK.RUN_RESULT.GREEN;
+        case 'warning': {
+          this.result = TASK.RUN_RESULT.YELLOW;
+          this.error = value.message;
+          break;
+        }
+        case 'error': {
+          this.result = TASK.RUN_RESULT.RED;
+          this.error = value.message;
+          break;
+        }
       }
     } catch (error_) {
       error = error_;
