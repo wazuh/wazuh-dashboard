@@ -22,7 +22,7 @@ export class Task implements ITask {
   public startedAt: ITask['startedAt'] = null;
   public finishedAt: ITask['finishedAt'] = null;
   public duration: ITask['duration'] = null;
-  public error = null;
+  public error: ITask['error'] = null;
   public enabled: ITask['enabled'] = false;
   public critical: ITask['critical'] = false;
 
