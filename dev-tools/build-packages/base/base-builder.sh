@@ -141,6 +141,29 @@ cp -f $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.y
 cp -f $config_path/node.options.prod config/node.options
 
 log
+log "Adding credentials resolver"
+log
+
+# The shared resolve-credentials script is downloaded at build time only, so
+# maintainer scripts and the unit never reach the network. There is no
+# bundled fallback: a missing location or a checksum mismatch fails the build.
+if [ -z "${RESOLVE_CREDENTIALS_URL}" ] || [ -z "${RESOLVE_CREDENTIALS_SHA256}" ]; then
+  echo "RESOLVE_CREDENTIALS_URL and RESOLVE_CREDENTIALS_SHA256 must be set to build the package"
+  exit 1
+fi
+if ! run_with_retry curl --output bin/resolve-credentials --silent --show-error --fail \
+  "${RESOLVE_CREDENTIALS_URL}"; then
+  echo "Failed to download the resolve-credentials script: ${RESOLVE_CREDENTIALS_URL}"
+  exit 1
+fi
+if ! echo "${RESOLVE_CREDENTIALS_SHA256}  bin/resolve-credentials" | sha256sum --check --status -; then
+  echo "Checksum mismatch for the resolve-credentials script: ${RESOLVE_CREDENTIALS_URL}"
+  rm -f bin/resolve-credentials
+  exit 1
+fi
+chmod 750 bin/resolve-credentials
+
+log
 log "Fixing shebangs"
 log
 # TODO: investigate to remove this if possible

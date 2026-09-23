@@ -176,8 +176,6 @@ rm -f /usr/share/wazuh-dashboard/VERSION
 
 if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
   runuser %{USER} --shell="/bin/bash" --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore create" > /dev/null 2>&1
-  runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" > /dev/null 2>&1
-  runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" > /dev/null 2>&1
   WD_ENC_KEY=""
   if command -v openssl > /dev/null 2>&1; then
     WD_ENC_KEY=$(openssl rand -base64 32 2>/dev/null | tr -d '\n') || WD_ENC_KEY=""
@@ -201,6 +199,11 @@ if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
   unset WD_ENC_KEY
   true
 fi
+
+# Resolve the consumed kibanaserver and wazuh-wui passwords into the keystore.
+# An unresolved credential is not an error at install time: the unit's
+# pre-start step runs the resolver again and refuses to start if needed.
+%{INSTALL_DIR}/bin/resolve-credentials dashboard || true
 
 # -----------------------------------------------------------------------------
 
@@ -235,6 +238,13 @@ if [ $1 = 0 ];then
   rm -rf %{INSTALL_DIR}
   if [ -d %{PID_DIR} ]; then
     rm -rf %{PID_DIR}
+  fi
+
+  # The dashboard owns no key in /etc/wazuh/credentials.env. The shared
+  # /etc/wazuh directory (credentials file and default CA directory) is only
+  # removed by the last Wazuh central component to leave the host.
+  if ! rpm -q --quiet wazuh-indexer && ! rpm -q --quiet wazuh-manager; then
+    rm -rf /etc/wazuh
   fi
 fi
 
@@ -474,6 +484,7 @@ rm -fr %{buildroot}
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards"
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards-plugin"
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards-keystore"
+%attr(750, root, root) "%{INSTALL_DIR}/bin/resolve-credentials"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config"
 %attr(640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/node.options"
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"

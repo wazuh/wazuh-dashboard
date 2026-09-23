@@ -24,6 +24,9 @@ configure)
     chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${CONFIG_DIR}"
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"
     chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"
+    # The resolver runs as root from ExecStartPre=+, so the service user must not own it
+    chown root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
+    chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
     if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
         chmod 644 "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service
     fi
@@ -40,8 +43,6 @@ configure)
     fi
     if [ ! -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
         runuser "${NAME}" --shell="/bin/bash" --command="${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore create" >/dev/null 2>&1
-        runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" >/dev/null 2>&1
-        runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" >/dev/null 2>&1
         WD_ENC_KEY=""
         if command -v openssl >/dev/null 2>&1; then
             WD_ENC_KEY=$(openssl rand -base64 32 2>/dev/null | tr -d '\n') || WD_ENC_KEY=""
@@ -64,6 +65,10 @@ configure)
         fi
         unset WD_ENC_KEY
     fi
+    # Resolve the consumed kibanaserver and wazuh-wui passwords into the keystore.
+    # An unresolved credential is not an error at install time: the unit's
+    # pre-start step runs the resolver again and refuses to start if needed.
+    "${INSTALLATION_DIR}"/bin/resolve-credentials dashboard || true
     ;;
 
 abort-upgrade | abort-remove | abort-deconfigure) ;;

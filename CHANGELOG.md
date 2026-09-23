@@ -13,14 +13,15 @@
 
 ### Changed
 
-| Issue                                                                                        | Comment                                                                                          |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [#798](https://github.com/wazuh/wazuh-dashboard/issues/798)                                  | Changed the location of the wazuh-dashboard service to match with the other Wazuh components     |
-| [#985](https://github.com/wazuh/wazuh-dashboard/issues/985)                                  | Changed the default value of `metaFields` and `timepicker:timeDefaults` settings                 |
-| [wazuh-dashboard-plugins#8473](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8473) | Excluded Wazuh dashboards and visualizations listing                                             |
-| [#1329](https://github.com/wazuh/wazuh-dashboard/issues/1329)                                | Changed log level of the cross compatibility service on start                                    |
-| [wazuh-dashboard-plugins#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979) | Changed the sidecar flyout to displace open flyouts instead of covering them                     |
-| [wazuh-dashboard-plugins#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989) | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus` |
+| Issue                                                                                        | Comment                                                                                                                                                             |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#798](https://github.com/wazuh/wazuh-dashboard/issues/798)                                  | Changed the location of the wazuh-dashboard service to match with the other Wazuh components                                                                        |
+| [#985](https://github.com/wazuh/wazuh-dashboard/issues/985)                                  | Changed the default value of `metaFields` and `timepicker:timeDefaults` settings                                                                                    |
+| [wazuh-dashboard-plugins#8473](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8473) | Excluded Wazuh dashboards and visualizations listing                                                                                                                |
+| [#1329](https://github.com/wazuh/wazuh-dashboard/issues/1329)                                | Changed log level of the cross compatibility service on start                                                                                                       |
+| [wazuh-dashboard-plugins#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979) | Changed the sidecar flyout to displace open flyouts instead of covering them                                                                                        |
+| [wazuh-dashboard-plugins#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989) | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus`                                                                    |
+| [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Changed the packages to resolve the `kibanaserver` and `wazuh-wui` passwords into the keystore from `/etc/wazuh/credentials.env` instead of shipping default values |
 
 ### Removed
 
