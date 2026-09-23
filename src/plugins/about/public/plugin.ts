@@ -9,6 +9,7 @@ import {
   CoreSetup,
   CoreStart,
   DEFAULT_APP_CATEGORIES,
+  DEFAULT_NAV_GROUPS,
   Plugin,
   PluginInitializerContext,
 } from 'opensearch-dashboards/public';
@@ -40,6 +41,17 @@ export class AboutPlugin implements Plugin<AboutPluginSetup, AboutPluginStart> {
         return renderApp(coreStart, config, element);
       },
     });
+
+    /* Wazuh BEGIN */
+    // Register in the 'all' nav group under Dashboard management category
+    core.chrome.navGroup.addNavLinksToGroup(DEFAULT_NAV_GROUPS.all, [
+      {
+        id: ABOUT_PLUGIN_ID,
+        category: DEFAULT_APP_CATEGORIES.dashboardManagement,
+        order: 10006,
+      },
+    ]);
+    /* Wazuh END */
 
     return {};
   }
