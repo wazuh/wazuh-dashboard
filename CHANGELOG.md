@@ -2,15 +2,17 @@
 
 ### Added
 
-| Issue                                                                                        | Comment                                                                                     |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [wazuh-dashboard-plugins#7532](https://github.com/wazuh/wazuh-dashboard-plugins/issues/7532) | Added the health check service and app                                                      |
-| [#985](https://github.com/wazuh/wazuh-dashboard/issues/985)                                  | Added manager host configuration for the default configuration file                         |
-| [#1052](https://github.com/wazuh/wazuh-dashboard/issues/1052)                                | Set v9 theme as default                                                                     |
-| [wazuh-dashboard-plugins#8550](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8550) | Added version, revision, and stage to the Wazuh build metadata                              |
-| [#1434](https://github.com/wazuh/wazuh-dashboard/issues/1434)                                | Made the Discover CSV download row limit configurable via the `reports.csv.maxRows` setting |
-| [#1480](https://github.com/wazuh/wazuh-dashboard/issues/1480)                                | Added automatic generation and storage of the AI assistant encryption key on first install  |
-| [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Added support for health check tasks to report their own result status                      |
+| Issue                                                                                        | Comment                                                                                                                                                                                                                           |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [wazuh-dashboard-plugins#7532](https://github.com/wazuh/wazuh-dashboard-plugins/issues/7532) | Added the health check service and app                                                                                                                                                                                            |
+| [#985](https://github.com/wazuh/wazuh-dashboard/issues/985)                                  | Added manager host configuration for the default configuration file                                                                                                                                                               |
+| [#1052](https://github.com/wazuh/wazuh-dashboard/issues/1052)                                | Set v9 theme as default                                                                                                                                                                                                           |
+| [wazuh-dashboard-plugins#8550](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8550) | Added version, revision, and stage to the Wazuh build metadata                                                                                                                                                                    |
+| [#1434](https://github.com/wazuh/wazuh-dashboard/issues/1434)                                | Made the Discover CSV download row limit configurable via the `reports.csv.maxRows` setting                                                                                                                                       |
+| [#1480](https://github.com/wazuh/wazuh-dashboard/issues/1480)                                | Added automatic generation and storage of the AI assistant encryption key on first install                                                                                                                                        |
+| [wazuh-dashboard-plugins#9199](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9199) | Added the About page as a platform plugin, moved from the Wazuh dashboard plugins                                                                                                                                                 |
+| [wazuh-dashboard-plugins#9199](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9199) | Added the `opensearchDashboards.branding.applicationVersion`, `opensearchDashboards.branding.helpMenuLinks` and `about.communityLinks` settings to override the displayed version, help menu links and About page community links |
+| [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Added support for health check tasks to report their own result status                                                                                                                                                            |
 
 ### Changed
 
