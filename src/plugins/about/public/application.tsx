@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { i18n } from '@osd/i18n';
 import { I18nProvider } from '@osd/i18n/react';
 import { EuiPage, EuiPageBody, EuiSpacer, EuiProgress } from '@elastic/eui';
 import { CoreStart } from 'opensearch-dashboards/public';
@@ -62,6 +63,10 @@ const AboutApp = ({ core, config }: AboutAppProps) => {
 };
 
 export function renderApp(core: CoreStart, config: AboutConfigType, element: HTMLElement) {
+  const title = i18n.translate('about.breadcrumbs.title', { defaultMessage: 'About' });
+  core.chrome.setBreadcrumbs([{ text: title }]);
+  core.chrome.docTitle.change(title);
+
   const root = createRoot(element);
   root.render(
     <I18nProvider>
