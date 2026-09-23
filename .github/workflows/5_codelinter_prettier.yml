@@ -14,6 +14,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # The check compares against the point the branch left its base, which
+          # needs the history both share. A shallow checkout does not have it.
+          fetch-depth: 0
 
       - name: Install NodeJS
         uses: actions/setup-node@v4
