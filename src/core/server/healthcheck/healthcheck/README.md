@@ -99,15 +99,13 @@ export interface TaskDefinition {
   // Task identifier. This should be unique. See the name convention.
   name: string;
   // Returns the result of the check. See "Reporting a result".
-  run: (ctx: any) => TaskResult | Promise<TaskResult>;
+  run: (ctx: TaskRunContext) => TaskResult | Promise<TaskResult>;
   /* Define the order to execute the task. Multiple task can take the same order and they will be executed in parallel.
   If it is not defined, the task will be executed as last order group. */
   order?: number;
-  // Other metafields
-  [key: string]: any;
   /* Define if the task is critical. A critical task reporting `red` blocks the
   initialization. It does not decide the result color, the task does. */
-  critical: boolean;
+  critical?: boolean;
 }
 ```
 
@@ -121,7 +119,7 @@ setup(core){
   core.healthCheck.register({
     name: 'custom-task',
     run: async (ctx) => {
-      const certificates = await ctx.services.readCertificates();
+      const certificates = await readCertificates(ctx.context.services.core);
 
       if (certificates.expired.length > 0) {
         return ctx.taskResult.error('Some certificates expired', certificates);
@@ -161,26 +159,37 @@ Task custom-task must return a TaskResult.
 Use taskResult.ok, taskResult.warning or taskResult.error.
 ```
 
-The registering plugin can type its task against the contract:
-
-```ts
-import type { TaskDefinition, TaskRunContext } from 'opensearch-dashboards/server';
-```
-
 The result is branded with `Symbol.for('healthcheck.taskResult')`, so a result
 built elsewhere is still recognised as long as it carries that brand.
 
-The `ctx` property provide the context execution.
+## Task context
 
-- `internal`:
+A task receives a `TaskRunContext`:
 
 ```ts
-interface {
-    services: {},
-    context: { services: CoreStartServices, scope: 'internal' },
-    logger: LoggerAdapter { logger: [BaseLogger] }
-  }
+{
+  services: {},                       // empty for health check tasks
+  context: {
+    services: { core },               // HealthCheckServiceStartDeps
+    scope,                            // 'internal' | 'internal-initial' | 'internal-scheduled' | 'user'
+  },
+  logger,                             // scoped to the task name
+  taskResult,                         // ok, warning and error constructors
+}
+```
 
+`core` lives in `ctx.context.services.core`. The top level `ctx.services` is
+empty.
+
+Type a task against the contract instead of redeclaring it:
+
+```ts
+import type { TaskDefinition } from 'opensearch-dashboards/server';
+
+export const initializationTaskCreatorCustom = (): TaskDefinition => ({
+  name: 'custom-task',
+  run: async (ctx) => ctx.taskResult.ok(),
+});
 ```
 
 ## Task name convention

@@ -5,6 +5,7 @@
 
 import { TaskManager } from './task_manager';
 import { TASK_RESULT } from '../../../common/healthcheck';
+import { TaskRunContext } from './types';
 
 const mockLogger = (): any => {
   const logger: any = {
@@ -75,5 +76,14 @@ describe('TaskManager run context', () => {
     const [info] = (await manager.run({ scope: 'internal' })) as any[];
 
     expect(info.result).toBe('green');
+  });
+});
+
+describe('TaskRunContext', () => {
+  it('requires the result constructors', () => {
+    // @ts-expect-error a run context without taskResult does not compile
+    const incomplete: TaskRunContext = { services: {}, context: {}, logger: mockLogger() };
+
+    expect(incomplete.taskResult).toBeUndefined();
   });
 });
