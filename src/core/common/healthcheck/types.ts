@@ -50,11 +50,6 @@ export interface TaskInfo {
   critical: boolean;
 }
 
-export interface ITask extends TaskInfo {
-  run: <Context = any, Result = any>(ctx: Context) => Promise<Result>;
-  getInfo: () => TaskInfo;
-}
-
 export interface HealthCheckConfigDefinition {
   enabled: boolean;
   checks_enabled: string | string[];
