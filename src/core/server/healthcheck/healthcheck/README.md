@@ -124,10 +124,10 @@ setup(core){
       const certificates = await ctx.services.readCertificates();
 
       if (certificates.expired.length > 0) {
-        return taskResult.error('Some certificates expired', certificates);
+        return ctx.taskResult.error('Some certificates expired', certificates);
       }
 
-      return taskResult.ok(certificates);
+      return ctx.taskResult.ok(certificates);
     },
     order: 1,
     critical: false
@@ -137,12 +137,13 @@ setup(core){
 
 ## Reporting a result
 
-A task returns one of three results:
+The `ctx` a task receives carries the result constructors, so a task reports its
+own result without importing anything:
 
 ```ts
-taskResult.ok(data?)             // green
-taskResult.warning(message, data?) // yellow
-taskResult.error(message, data?)   // red
+ctx.taskResult.ok(data?)               // green
+ctx.taskResult.warning(message, data?) // yellow
+ctx.taskResult.error(message, data?)   // red
 ```
 
 `message` becomes the task `error` field and is what the UI shows. `data` is
@@ -160,11 +161,14 @@ Task custom-task must return a TaskResult.
 Use taskResult.ok, taskResult.warning or taskResult.error.
 ```
 
-> :warning: `taskResult` is not re-exported from `src/core/server`. Code inside
-> `src/core` imports it from `src/core/common/healthcheck`. External plugins
-> currently keep their own mirror built on `Symbol.for('healthcheck.taskResult')`,
-> which resolves to the same symbol, so the brand round-trips. See
-> `plugins/main/server/health-check/types.ts` in `wazuh-dashboard-plugins`.
+The registering plugin can type its task against the contract:
+
+```ts
+import type { TaskDefinition, TaskRunContext } from 'opensearch-dashboards/server';
+```
+
+The result is branded with `Symbol.for('healthcheck.taskResult')`, so a result
+built elsewhere is still recognised as long as it carries that brand.
 
 The `ctx` property provide the context execution.
 

@@ -3,11 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { Logger } from '@osd/logging';
-import { TaskInfo, TaskResult } from '../../../common/healthcheck';
+import { TaskInfo, TaskResult, TaskResultFactory } from '../../../common/healthcheck';
 
-export interface TaskDefinition {
+export interface TaskRunContext<S = any, C = any> {
+  services: S;
+  context: C;
+  logger: Logger;
+  // Builds the result the task returns, so a task needs no import to report one.
+  taskResult: TaskResultFactory;
+}
+
+export interface TaskDefinition<S = any, C = any> {
   name: string;
-  run: (ctx: any) => TaskResult | Promise<TaskResult>;
+  run: (ctx: TaskRunContext<S, C>) => TaskResult | Promise<TaskResult>;
   // Define the order to execute the task. Multiple tasks can take the same order and they will be executed in parallel
   order?: number;
   critical?: boolean;
@@ -27,8 +35,4 @@ export interface TaskManager {
   getAll: () => ITask[];
 }
 
-export interface TaskManagerRunTaskContext<S, C> {
-  services: S;
-  context: C;
-  logger: Logger;
-}
+export type TaskManagerRunTaskContext<S, C> = TaskRunContext<S, C>;

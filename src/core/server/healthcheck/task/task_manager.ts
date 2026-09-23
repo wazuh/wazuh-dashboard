@@ -5,7 +5,7 @@
 
 import { Logger } from 'opensearch-dashboards/server';
 import { ITask, TaskManager as ITaskManager, TaskDefinition } from './types';
-import { TaskInfo } from '../../../common/healthcheck';
+import { TaskInfo, taskResult } from '../../../common/healthcheck';
 import { Task } from './task';
 
 /**
@@ -109,6 +109,7 @@ export class TaskManager implements ITaskManager {
               services: this.services,
               context: ctx,
               logger,
+              taskResult,
             });
           } catch (error) {
             logger.error(`Error running task [${item.name}]: ${error.message}`);
