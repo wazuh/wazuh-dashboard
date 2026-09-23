@@ -12,6 +12,7 @@
 | [#1480](https://github.com/wazuh/wazuh-dashboard/issues/1480)                                | Added automatic generation and storage of the AI assistant encryption key on first install                                                                                                                                        |
 | [wazuh-dashboard-plugins#9199](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9199) | Added the About page as a platform plugin, moved from the Wazuh dashboard plugins                                                                                                                                                 |
 | [wazuh-dashboard-plugins#9199](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9199) | Added the `opensearchDashboards.branding.applicationVersion`, `opensearchDashboards.branding.helpMenuLinks` and `about.communityLinks` settings to override the displayed version, help menu links and About page community links |
+| [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Added support for health check tasks to report their own result status                                                                                                                                                            |
 
 ### Changed
 
@@ -23,6 +24,7 @@
 | [#1329](https://github.com/wazuh/wazuh-dashboard/issues/1329)                                | Changed log level of the cross compatibility service on start                                    |
 | [wazuh-dashboard-plugins#8979](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8979) | Changed the sidecar flyout to displace open flyouts instead of covering them                     |
 | [wazuh-dashboard-plugins#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989) | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus` |
+| [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Changed health check tasks to require returning a task result instead of an arbitrary value      |
 
 ### Removed
 

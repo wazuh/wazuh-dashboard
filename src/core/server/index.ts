@@ -96,6 +96,13 @@ import {
 import { WorkspaceSetup, WorkspaceStart } from './workspace';
 // Wazuh
 import { HealthCheckServiceSetup, HealthCheckServiceStart } from './healthcheck';
+export type {
+  HealthCheckServiceSetup,
+  HealthCheckServiceStart,
+  TaskDefinition,
+  TaskRunContext,
+} from './healthcheck';
+export type { TaskResult, TaskResultFactory } from '../common/healthcheck';
 
 export { CoreUsageData, CoreConfigUsageData, CoreEnvironmentUsageData, CoreServicesUsageData };
 
