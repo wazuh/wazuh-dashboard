@@ -130,7 +130,8 @@ interface Props {
   darkmode: boolean;
   // Wazuh: configurable, always-rendered link list, sourced from
   // opensearchDashboards.branding.helpMenuLinks. Falls back to the built-in
-  // Documentation/Slack/GitHub/Google Group list when unset.
+  // Documentation/Slack/GitHub/Google Group list when unset; an empty list
+  // renders no links.
   links?: HelpMenuLinkItem[];
   // Wazuh: opensearchDashboards.branding.applicationVersion. When set,
   // rendered as-is (no "v" prefix) instead of `v {opensearchDashboardsVersion}`.
@@ -219,9 +220,8 @@ class HeaderHelpMenuUI extends Component<Props, State> {
     const { helpExtension } = this.state;
 
     // Wazuh: opensearchDashboards.branding.helpMenuLinks, when configured,
-    // fully replaces the built-in list below.
-    const defaultContent = !useDefaultContent ? null : configuredLinks &&
-      configuredLinks.length > 0 ? (
+    // fully replaces the built-in list below (an empty list hides every link).
+    const defaultContent = !useDefaultContent ? null : configuredLinks !== undefined ? (
       <Fragment>
         {configuredLinks.map((link, index) => (
           <Fragment key={`helpMenuConfiguredLink${index}`}>
