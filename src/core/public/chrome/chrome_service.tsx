@@ -317,7 +317,9 @@ export class ChromeService {
 
     const getIsNavDrawerLocked$ = isNavDrawerLocked$.pipe(takeUntil(this.stop$));
 
-    const logos = getLogos(injectedMetadata.getBranding(), http.basePath.serverBasePath);
+    // Wazuh
+    const branding = injectedMetadata.getBranding();
+    const logos = getLogos(branding, http.basePath.serverBasePath);
 
     // Services handed to a nav item's popover callbacks (actions + render) so
     // plugins can drive actions / render contextual content without re-resolving
@@ -376,6 +378,8 @@ export class ChromeService {
                 helpSupportUrl$={helpSupportUrl$.pipe(takeUntil(this.stop$))}
                 opensearchDashboardsDocLink={docLinks.links.opensearchDashboards.introduction}
                 opensearchDashboardsVersion={injectedMetadata.getOpenSearchDashboardsVersion()}
+                versionOverride={branding.applicationVersion}
+                links={branding.helpMenuLinks}
                 surveyLink={injectedMetadata.getSurvey()}
                 keyboardShortcut={keyboardShortcut}
                 useUpdatedAppearance
@@ -455,6 +459,8 @@ export class ChromeService {
           isVisible$={this.isVisible$}
           headerVariant$={this.headerVariant$}
           opensearchDashboardsVersion={injectedMetadata.getWazuhBuildInfo().version}
+          helpMenuVersionOverride={branding.applicationVersion}
+          helpMenuLinks={branding.helpMenuLinks}
           navLinks$={navLinks.getNavLinks$()}
           recentlyAccessed$={recentlyAccessed.get$()}
           navControlsLeft$={navControls.getLeft$()}
@@ -467,7 +473,7 @@ export class ChromeService {
           navControlsIconSideNavFooter$={navControls.getIconSideNavFooter$()}
           onIsLockedUpdate={setIsNavDrawerLocked}
           isLocked$={getIsNavDrawerLocked$}
-          branding={injectedMetadata.getBranding()}
+          branding={branding}
           logos={logos}
           survey={injectedMetadata.getSurvey()}
           collapsibleNavHeaderRender={this.collapsibleNavHeaderRender}

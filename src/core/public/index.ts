@@ -104,7 +104,7 @@ import {
   HandlerContextType,
   HandlerParameters,
 } from './context';
-import { Branding } from '../types';
+import { Branding, HelpMenuLinkItem } from '../types';
 import { WorkspacesStart, WorkspacesSetup } from './workspace';
 import { KeyboardShortcutSetup, KeyboardShortcutStart } from './keyboard_shortcut';
 import { ChatServiceSetup, ChatServiceStart } from './chat';
@@ -425,6 +425,7 @@ export {
   UiSettingsState,
   NavType,
   Branding,
+  HelpMenuLinkItem,
   RightNavigationOrder,
   RightNavigationButton,
   RightNavigationButtonProps,

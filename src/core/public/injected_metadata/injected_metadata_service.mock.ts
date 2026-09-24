@@ -81,6 +81,8 @@ const createSetupContractMock = () => {
   setupContract.getWazuhBuildInfo.mockReturnValue(mockWazuhBuildInfo);
   setupContract.getWazuhDocVersion.mockReturnValue('4.x');
   setupContract.getHealthCheck.mockReturnValue(healthCheckConfig);
+  // Wazuh
+  setupContract.getBranding.mockReturnValue({});
   return setupContract;
 };
 
