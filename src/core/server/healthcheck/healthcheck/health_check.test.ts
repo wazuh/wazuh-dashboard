@@ -6,6 +6,7 @@
 import moment from 'moment';
 import { HealthCheck, filterListByRegex } from './health_check';
 import { mockRouter } from './router.mock';
+import { taskResult } from '../../../common/healthcheck';
 
 const delayPromise = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -50,15 +51,15 @@ describe('HealthCheck', () => {
 
     healthcheck.register({
       name: 'test:1',
-      run: () => {},
+      run: () => taskResult.ok(),
     });
     healthcheck.register({
       name: 'test:2',
-      run: () => {},
+      run: () => taskResult.ok(),
     });
     healthcheck.register({
       name: 'another-test:1',
-      run: () => {},
+      run: () => taskResult.ok(),
     });
 
     expect(healthcheck.getAll()).toHaveLength(3);
