@@ -4,8 +4,8 @@
  */
 
 import { Logger } from 'opensearch-dashboards/server';
-import { ITask, TaskManager as ITaskManager, TaskDefinition } from './types';
-import { TaskInfo } from '../../../common/healthcheck';
+import { ITask, TaskManager as ITaskManager, TaskDefinition, TaskRunContext } from './types';
+import { TaskInfo, taskResult } from '../../../common/healthcheck';
 import { Task } from './task';
 
 /**
@@ -105,11 +105,14 @@ export class TaskManager implements ITaskManager {
           const logger = this.logger.get(item.name);
 
           try {
-            return await item.run({
+            const runContext: TaskRunContext = {
               services: this.services,
               context: ctx,
               logger,
-            });
+              taskResult,
+            };
+
+            return await item.run(runContext);
           } catch (error) {
             logger.error(`Error running task [${item.name}]: ${error.message}`);
 
