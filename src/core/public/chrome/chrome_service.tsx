@@ -309,7 +309,9 @@ export class ChromeService {
 
     const getIsNavDrawerLocked$ = isNavDrawerLocked$.pipe(takeUntil(this.stop$));
 
-    const logos = getLogos(injectedMetadata.getBranding(), http.basePath.serverBasePath);
+    // Wazuh
+    const branding = injectedMetadata.getBranding();
+    const logos = getLogos(branding, http.basePath.serverBasePath);
 
     // Add Help menu
     if (this.useUpdatedHeader) {
@@ -324,6 +326,8 @@ export class ChromeService {
                 helpSupportUrl$={helpSupportUrl$.pipe(takeUntil(this.stop$))}
                 opensearchDashboardsDocLink={docLinks.links.opensearchDashboards.introduction}
                 opensearchDashboardsVersion={injectedMetadata.getOpenSearchDashboardsVersion()}
+                versionOverride={branding.applicationVersion}
+                links={branding.helpMenuLinks}
                 surveyLink={injectedMetadata.getSurvey()}
                 useUpdatedAppearance
                 darkmode={uiSettings.get('theme:darkMode')}
@@ -402,6 +406,8 @@ export class ChromeService {
           isVisible$={this.isVisible$}
           headerVariant$={this.headerVariant$}
           opensearchDashboardsVersion={injectedMetadata.getWazuhBuildInfo().version}
+          helpMenuVersionOverride={branding.applicationVersion}
+          helpMenuLinks={branding.helpMenuLinks}
           navLinks$={navLinks.getNavLinks$()}
           recentlyAccessed$={recentlyAccessed.get$()}
           navControlsLeft$={navControls.getLeft$()}
@@ -413,7 +419,7 @@ export class ChromeService {
           navControlsPrimaryHeaderRight$={navControls.getPrimaryHeaderRight$()}
           onIsLockedUpdate={setIsNavDrawerLocked}
           isLocked$={getIsNavDrawerLocked$}
-          branding={injectedMetadata.getBranding()}
+          branding={branding}
           logos={logos}
           survey={injectedMetadata.getSurvey()}
           collapsibleNavHeaderRender={this.collapsibleNavHeaderRender}

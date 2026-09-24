@@ -53,6 +53,7 @@ import { combineLatest } from 'rxjs';
 import { HeaderExtension } from './header_extension';
 import { ChromeHelpExtension } from '../../chrome_service';
 import { WAZUH_DOCUMENTATION_URL } from '../../constants';
+import type { HelpMenuLinkItem } from '../../../../types';
 
 /** @public */
 export type ChromeHelpExtensionMenuGitHubLink = EuiButtonEmptyProps & {
@@ -127,6 +128,14 @@ interface Props {
   surveyLink?: string;
   useUpdatedAppearance?: boolean;
   darkmode: boolean;
+  // Wazuh: configurable, always-rendered link list, sourced from
+  // opensearchDashboards.branding.helpMenuLinks. Falls back to the built-in
+  // Documentation/Slack/GitHub/Google Group list when unset; an empty list
+  // renders no links.
+  links?: HelpMenuLinkItem[];
+  // Wazuh: opensearchDashboards.branding.applicationVersion. When set,
+  // rendered as-is (no "v" prefix) instead of `v {opensearchDashboardsVersion}`.
+  versionOverride?: string;
 }
 
 interface State {
@@ -205,10 +214,31 @@ class HeaderHelpMenuUI extends Component<Props, State> {
       surveyLink,
       useUpdatedAppearance,
       darkmode,
+      links: configuredLinks,
+      versionOverride,
     } = this.props;
     const { helpExtension } = this.state;
 
-    const defaultContent = useDefaultContent ? (
+    // Wazuh: opensearchDashboards.branding.helpMenuLinks, when configured,
+    // fully replaces the built-in list below (an empty list hides every link).
+    const defaultContent = !useDefaultContent ? null : configuredLinks !== undefined ? (
+      <Fragment>
+        {configuredLinks.map((link, index) => (
+          <Fragment key={`helpMenuConfiguredLink${index}`}>
+            <EuiButtonEmpty
+              href={link.link}
+              target="_blank"
+              size="xs"
+              flush="left"
+              iconType={darkmode && link.darkModeIcon ? link.darkModeIcon : link.icon}
+            >
+              {link.label}
+            </EuiButtonEmpty>
+            {index < configuredLinks.length - 1 && <EuiSpacer size="xs" />}
+          </Fragment>
+        ))}
+      </Fragment>
+    ) : (
       <Fragment>
         <EuiButtonEmpty
           href={WAZUH_DOCUMENTATION_URL}
@@ -273,7 +303,7 @@ class HeaderHelpMenuUI extends Component<Props, State> {
           />
         </EuiButtonEmpty>
       </Fragment>
-    ) : null;
+    );
 
     let customContent;
     if (helpExtension) {
@@ -409,11 +439,15 @@ class HeaderHelpMenuUI extends Component<Props, State> {
               </h2>
             </EuiFlexItem>
             <EuiFlexItem grow={false} className="chrHeaderHelpMenu__version">
-              <FormattedMessage
-                id="core.ui.chrome.headerGlobalNav.helpMenuVersion"
-                defaultMessage="v {version}"
-                values={{ version: opensearchDashboardsVersion }}
-              />
+              {versionOverride ? (
+                versionOverride
+              ) : (
+                <FormattedMessage
+                  id="core.ui.chrome.headerGlobalNav.helpMenuVersion"
+                  defaultMessage="v {version}"
+                  values={{ version: opensearchDashboardsVersion }}
+                />
+              )}
             </EuiFlexItem>
           </EuiFlexGroup>
         </EuiPopoverTitle>
