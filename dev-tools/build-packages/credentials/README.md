@@ -50,10 +50,7 @@ For each consumed key, the ladder is:
 `dashboard-key.pem`, and trusts the indexer through `certs/root-ca.pem`. A fresh install
 (`--install` only) issues whatever of that is missing from the **shared CA**, the one the manager
 and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared library's
-`_wazuh_ca_ensure_locked`, under its lock. It mirrors the manager's issuance
-(`wazuh-manager-certificates.sh`,
-[wazuh#39554](https://github.com/wazuh/wazuh/issues/39554),
-[wazuh#39571](https://github.com/wazuh/wazuh/pull/39571)), trimmed to the dashboard's one pair:
+`_wazuh_ca_ensure_locked`, under its lock:
 
 | Shared CA                       | Result                                                                                                                     |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
