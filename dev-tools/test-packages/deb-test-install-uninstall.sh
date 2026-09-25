@@ -18,11 +18,40 @@ fi
 
 systemctl daemon-reload
 systemctl enable wazuh-dashboard
-systemctl start wazuh-dashboard
+
+# Without the peer credentials, --prestart must refuse to start the service.
+if systemctl start wazuh-dashboard; then
+  echo "Service started without credentials"
+  exit 1
+fi
+prestart_output=$(/usr/share/wazuh-dashboard/bin/resolve-credentials --prestart 2>&1 || true)
+if grep -q "MISSING WAZUH_INDEXER_KIBANASERVER_PASSWORD" <<<"${prestart_output}" &&
+  grep -q "MISSING WAZUH_MANAGER_WUI_PASSWORD" <<<"${prestart_output}"; then
+  echo "Service refused to start without credentials"
+else
+  echo "Service failed to start for an unexpected reason"
+  journalctl -u wazuh-dashboard --no-pager | tail -50
+  exit 1
+fi
+# Restart=always keeps retrying the failed start: stop it and clear the start rate limit.
+systemctl stop wazuh-dashboard || true
+systemctl reset-failed wazuh-dashboard || true
+
+# Supply test credentials, as the indexer and the manager would.
+install -d -m 0700 /etc/wazuh
+printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\nWAZUH_MANAGER_WUI_PASSWORD=%s\n' \
+  'TestKibana1Password' 'TestWui1Password' > /etc/wazuh/credentials.env
+chmod 0600 /etc/wazuh/credentials.env
+
+if ! systemctl start wazuh-dashboard; then
+  journalctl -u wazuh-dashboard --no-pager | tail -50
+  exit 1
+fi
 if systemctl status wazuh-dashboard | grep -q "active (running)"; then
   echo "Service running"
 else
   echo "Service not running"
+  journalctl -u wazuh-dashboard --no-pager | tail -50
   exit 1
 fi
 
