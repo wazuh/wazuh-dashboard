@@ -144,24 +144,29 @@ log
 log "Adding credentials resolver"
 log
 
-# The shared resolve-credentials script is downloaded at build time only, so
-# maintainer scripts and the unit never reach the network. There is no
-# bundled fallback: a missing location or a checksum mismatch fails the build.
-if [ -z "${RESOLVE_CREDENTIALS_URL}" ] || [ -z "${RESOLVE_CREDENTIALS_SHA256}" ]; then
-  echo "RESOLVE_CREDENTIALS_URL and RESOLVE_CREDENTIALS_SHA256 must be set to build the package"
+# resolve-credentials is the dashboard's own half of the credential ladder and
+# lives in this repository. Its shared half, wazuh-credentials.sh, is owned by
+# wazuh-installation-assistant and downloaded here, at build time only, so
+# maintainer scripts and the unit never reach the network. There is no bundled
+# fallback: a failed download or a checksum mismatch fails the build.
+credentials_lib_ref="${WAZUH_CREDENTIALS_LIB_REF:-${version}}"
+credentials_lib_url="https://raw.githubusercontent.com/wazuh/wazuh-installation-assistant/${credentials_lib_ref}/credentials_lib/wazuh-credentials.sh"
+
+install -m 750 "${tmp_dir}/credentials/resolve-credentials.sh" bin/resolve-credentials
+mkdir -p lib
+if ! run_with_retry curl --output lib/wazuh-credentials.sh --silent --show-error --fail \
+  "${credentials_lib_url}"; then
+  echo "Failed to download the shared credentials library: ${credentials_lib_url}"
   exit 1
 fi
-if ! run_with_retry curl --output bin/resolve-credentials --silent --show-error --fail \
-  "${RESOLVE_CREDENTIALS_URL}"; then
-  echo "Failed to download the resolve-credentials script: ${RESOLVE_CREDENTIALS_URL}"
+if [ -n "${WAZUH_CREDENTIALS_LIB_SHA256}" ] &&
+  ! echo "${WAZUH_CREDENTIALS_LIB_SHA256}  lib/wazuh-credentials.sh" | sha256sum --check --status -; then
+  echo "Checksum mismatch for the shared credentials library: ${credentials_lib_url}"
+  rm -f lib/wazuh-credentials.sh
   exit 1
 fi
-if ! echo "${RESOLVE_CREDENTIALS_SHA256}  bin/resolve-credentials" | sha256sum --check --status -; then
-  echo "Checksum mismatch for the resolve-credentials script: ${RESOLVE_CREDENTIALS_URL}"
-  rm -f bin/resolve-credentials
-  exit 1
-fi
-chmod 750 bin/resolve-credentials
+chmod 640 lib/wazuh-credentials.sh
+log "Shared credentials library from ${credentials_lib_ref}: $(sha256sum lib/wazuh-credentials.sh | cut -d' ' -f1)"
 
 log
 log "Fixing shebangs"

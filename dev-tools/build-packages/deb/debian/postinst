@@ -24,9 +24,13 @@ configure)
     chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${CONFIG_DIR}"
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"
     chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"
-    # The resolver runs as root from ExecStartPre=+, so the service user must not own it
+    # The resolver and its shared library run as root from ExecStartPre=+, so the
+    # service user must not own them
     chown root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
+    chown -R root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/lib
+    chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/lib
+    chmod 640 "${TARGET_DIR}""${INSTALLATION_DIR}"/lib/wazuh-credentials.sh
     if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
         chmod 644 "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service
     fi
@@ -68,7 +72,12 @@ configure)
     # Resolve the consumed kibanaserver and wazuh-wui passwords into the keystore.
     # An unresolved credential is not an error at install time: the unit's
     # pre-start step runs the resolver again and refuses to start if needed.
-    "${INSTALLATION_DIR}"/bin/resolve-credentials dashboard || true
+    # $2 is the previously configured version, empty on a fresh install.
+    if [ -n "$2" ]; then
+        "${INSTALLATION_DIR}"/bin/resolve-credentials --upgrade || true
+    else
+        "${INSTALLATION_DIR}"/bin/resolve-credentials --install || true
+    fi
     ;;
 
 abort-upgrade | abort-remove | abort-deconfigure) ;;

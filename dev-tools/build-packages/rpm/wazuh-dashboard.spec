@@ -203,7 +203,12 @@ fi
 # Resolve the consumed kibanaserver and wazuh-wui passwords into the keystore.
 # An unresolved credential is not an error at install time: the unit's
 # pre-start step runs the resolver again and refuses to start if needed.
-%{INSTALL_DIR}/bin/resolve-credentials dashboard || true
+# $1 is 1 on a fresh install and 2 or more on an upgrade.
+if [ $1 = 1 ]; then
+  %{INSTALL_DIR}/bin/resolve-credentials --install || true
+else
+  %{INSTALL_DIR}/bin/resolve-credentials --upgrade || true
+fi
 
 # -----------------------------------------------------------------------------
 
@@ -485,6 +490,8 @@ rm -fr %{buildroot}
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards-plugin"
 %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards-keystore"
 %attr(750, root, root) "%{INSTALL_DIR}/bin/resolve-credentials"
+%dir %attr(750, root, root) "%{INSTALL_DIR}/lib"
+%attr(640, root, root) "%{INSTALL_DIR}/lib/wazuh-credentials.sh"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config"
 %attr(640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/node.options"
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"

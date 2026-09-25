@@ -24,8 +24,6 @@ tmp_dir="${current_path}/tmp"
 config_dir="${root_dir}/config"
 package_config_dir="${current_path}/config"
 verbose="info"
-resolve_credentials_url="${RESOLVE_CREDENTIALS_URL:-}"
-resolve_credentials_sha256="${RESOLVE_CREDENTIALS_SHA256:-}"
 
 RETRY_MAX_ATTEMPTS="${RETRY_MAX_ATTEMPTS:-3}"
 RETRY_DELAY_SECONDS="${RETRY_DELAY_SECONDS:-15}"
@@ -102,6 +100,7 @@ build_tar() {
   log
   mkdir -p ${output_dir}
   cp -r ${config_dir} ${tmp_dir}
+  cp -r ${current_path}/credentials ${tmp_dir}
   cd ./base
   dockerfile_path="${current_path}/base/Docker"
   container_name="dashboard-base-builder"
@@ -113,8 +112,8 @@ build_tar() {
   run_with_retry docker run -t --rm \
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
-    -e "RESOLVE_CREDENTIALS_URL=${resolve_credentials_url}" \
-    -e "RESOLVE_CREDENTIALS_SHA256=${resolve_credentials_sha256}" \
+    -e "WAZUH_CREDENTIALS_LIB_REF=${WAZUH_CREDENTIALS_LIB_REF:-}" \
+    -e "WAZUH_CREDENTIALS_LIB_SHA256=${WAZUH_CREDENTIALS_LIB_SHA256:-}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
   cd ..
@@ -162,10 +161,6 @@ build_deb() {
 
 build(){
   log "Building package..."
-  if [ -z "${resolve_credentials_url}" ] || [ -z "${resolve_credentials_sha256}" ]; then
-    echo "The resolve-credentials script location and SHA-256 are required (--resolve-credentials-url, --resolve-credentials-sha256)"
-    clean 1
-  fi
   if [ "$all_platforms" == "yes" ]; then
     deb="yes"
     rpm="yes"
@@ -201,8 +196,6 @@ help() {
     echo "    -rp, --reportPlugin <url/path>  Set the location of the .zip file containing the wazuh-reporting-plugin."
     echo "    -al, --alertingPlugin <url/path>  Set the location of the .zip file containing the wazuh-alerting-plugin."
     echo "    -no, --notificationsPlugin <url/path>  Set the location of the .zip file containing the wazuh-notifications-plugin."
-    echo "         --resolve-credentials-url <url>      Set the location of the shared resolve-credentials script. Defaults to RESOLVE_CREDENTIALS_URL."
-    echo "         --resolve-credentials-sha256 <hex>   Set the expected SHA-256 of the resolve-credentials script. Defaults to RESOLVE_CREDENTIALS_SHA256."
     echo "         --all-platforms            Build for all platforms."
     echo "         --deb                      Build for deb."
     echo "         --rpm                      Build for rpm."
@@ -297,22 +290,6 @@ main() {
             if [ -n "${2}" ]; then
                 revision="${2}"
                 shift 2
-            fi
-            ;;
-        "--resolve-credentials-url")
-            if [ -n "${2}" ]; then
-                resolve_credentials_url="${2}"
-                shift 2
-            else
-                help 1
-            fi
-            ;;
-        "--resolve-credentials-sha256")
-            if [ -n "${2}" ]; then
-                resolve_credentials_sha256="${2}"
-                shift 2
-            else
-                help 1
             fi
             ;;
         "--production")

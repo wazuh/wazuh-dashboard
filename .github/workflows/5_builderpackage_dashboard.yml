@@ -439,9 +439,6 @@ jobs:
           timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
 
       - name: Build package
-        env:
-          RESOLVE_CREDENTIALS_URL: ${{ vars.RESOLVE_CREDENTIALS_URL }}
-          RESOLVE_CREDENTIALS_SHA256: ${{ vars.RESOLVE_CREDENTIALS_SHA256 }}
         run: |
           cd ${{ github.workspace }}/dev-tools/build-packages
           bash ./build-packages.sh \
