@@ -19,10 +19,10 @@ repository is a copy that can drift.
 The dashboard owns no credential and publishes nothing. It consumes two passwords into its
 keystore:
 
-| Key                                   | Env-only alias     | Account        | Owner   | Keystore entries                                          |
-| ------------------------------------- | ------------------ | -------------- | ------- | --------------------------------------------------------- |
+| Key                                   | Env-only alias     | Account        | Owner   | Keystore entries                                              |
+| ------------------------------------- | ------------------ | -------------- | ------- | ------------------------------------------------------------- |
 | `WAZUH_INDEXER_KIBANASERVER_PASSWORD` | `INDEXER_PASSWORD` | `kibanaserver` | Indexer | `opensearch.username` (`kibanaserver`), `opensearch.password` |
-| `WAZUH_MANAGER_WUI_PASSWORD`          | `API_PASSWORD`     | `wazuh-wui`    | Manager | `wazuh_core.hosts.default.password`                       |
+| `WAZUH_MANAGER_WUI_PASSWORD`          | `API_PASSWORD`     | `wazuh-wui`    | Manager | `wazuh_core.hosts.default.password`                           |
 
 The dashboard also owns one secret of its own, `wazuh_ai_assistant.encryptionKey`, which the AI
 assistant encrypts the provider API keys it stores with. It is generated (32 random bytes, base64)
@@ -46,11 +46,11 @@ For each consumed key, the ladder is:
 
 ## Modes
 
-| Mode         | Called from                              | Exit status                                    |
-| ------------ | ---------------------------------------- | ---------------------------------------------- |
-| `--install`  | fresh `postinst` / `%post`               | always `0`, no warning                         |
-| `--upgrade`  | `postinst` / `%post` on upgrade          | always `0`, no warning                         |
-| `--prestart` | `ExecStartPre=+` and the SysV init start | `1` naming every unresolved or invalid key     |
+| Mode         | Called from                                  | Exit status                                                       |
+| ------------ | -------------------------------------------- | ----------------------------------------------------------------- |
+| `--install`  | fresh `postinst` / `%post`                   | always `0`, no warning                                            |
+| `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                            |
+| `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                        |
 | `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above and the AI assistant key |
 
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
@@ -64,10 +64,21 @@ For each consumed key, the ladder is:
 
 `build-packages.sh` copies this directory into the base builder. `base-builder.sh` then installs
 the script and downloads the library from
-`https://raw.githubusercontent.com/wazuh/wazuh-installation-assistant/<ref>/credentials_lib/wazuh-credentials.sh`:
+`https://raw.githubusercontent.com/wazuh/wazuh-installation-assistant/<ref>/credentials_lib/wazuh-credentials.sh`.
 
-- `WAZUH_CREDENTIALS_LIB_REF`: the ref to download from. Defaults to the package version (the
-  `5.0.0` branch for a `5.0.0` build).
+The ref is chosen the way the manager's `make deps` chooses it. The Wazuh repositories cut the
+same tag names, so a tag build downloads the library from the matching tag. `build-packages.sh`
+computes an ordered list, and the first ref that exists wins:
+
+1. `WAZUH_CREDENTIALS_LIB_REF`, when set: an explicit override.
+2. The tag being built (`GITHUB_REF_NAME` when `GITHUB_REF_TYPE=tag`, else
+   `git describe --tags --exact-match`). A tag build tries **only** this, after the override: a
+   release never falls back to a branch that keeps moving, so a tag missing upstream fails the
+   build.
+3. The branch being built. This only exists upstream when the branch was created there too; a
+   feature branch 404s and falls through.
+4. The version branch (`5.0.0`), then the version tag (`v5.0.0`).
+
 - `WAZUH_CREDENTIALS_LIB_SHA256`: when set, the download must match it.
 
 A failed download or a checksum mismatch fails the build. There is no bundled fallback.
