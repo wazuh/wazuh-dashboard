@@ -54,6 +54,13 @@ start() {
       touch "$pidfile" && chown "$user":"$group" "$pidfile"
   fi
 
+  # Resolve the kibanaserver and wazuh-wui passwords into the keystore, as the
+  # systemd unit's ExecStartPre does. It names every missing key on failure.
+  if ! /usr/share/wazuh-dashboard/bin/resolve-credentials --prestart; then
+    emit "$name not started: its credentials could not be resolved"
+    return 1
+  fi
+
 
   # Run the program!
 

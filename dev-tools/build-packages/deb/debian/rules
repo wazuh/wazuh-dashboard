@@ -105,6 +105,11 @@ override_dh_fixperms:
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 644 -exec chmod 640 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 755 -exec chmod 750 {} \;
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 744 -exec chmod 740 {} \;
+	chown root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials
+	chmod 750 "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials
+	chown -R root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib
+	chmod 750 "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib
+	chmod 640 "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib/wazuh-credentials.sh
 
 # -----------------------------------------------------------------------------
 

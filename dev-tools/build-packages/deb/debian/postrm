@@ -26,6 +26,13 @@ if [ -f "/etc/default/${NAME}" ]; then
     . "/etc/default/${NAME}"
 fi
 
+# A package counts until it is purged: installed, or removed with its
+# configuration files still on the host.
+is_package_present() {
+    status=$(dpkg-query -W -f='${db:Status-Status}' "$1" 2>/dev/null) || return 1
+    [ -n "${status}" ] && [ "${status}" != "not-installed" ]
+}
+
 REMOVE_DIRS=false
 REMOVE_CONFIG_DIRECTORY=false
 REMOVE_USER_AND_GROUP=false
@@ -67,6 +74,13 @@ if [ "$REMOVE_DIRS" = "true" ]; then
     if [ "$REMOVE_CONFIG_DIRECTORY" = "true" ]; then
         rm -rf "${CONFIG_DIR}"
         echo " OK"
+
+        # The dashboard owns no key in /etc/wazuh/credentials.env. The shared
+        # /etc/wazuh directory (credentials file and default CA directory) is
+        # only removed by the last Wazuh central component to leave the host.
+        if ! is_package_present wazuh-indexer && ! is_package_present wazuh-manager; then
+            rm -rf /etc/wazuh
+        fi
     fi
 
 fi
