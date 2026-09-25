@@ -26,7 +26,12 @@ keystore:
 
 For each key, the ladder is:
 
-0. The keystore entry already exists: resolved. Nothing else is read.
+0. The keystore entry already exists, or the setting is configured in
+   `opensearch_dashboards.yml`: resolved. Nothing is written, so the yml keeps authority (the
+   keystore is merged over it at start). A yml `opensearch.username` is never overwritten with
+   `kibanaserver`, and without a `wazuh_core.hosts.default` host the `wazuh-wui` entry is not
+   needed. The yml is read with the dashboard's own Node and `@osd/config`; if it cannot be read,
+   the check is skipped.
 1. The process environment (scoped name, then alias), then `credentials.env`: validated against
    the password policy and stored in the keystore through stdin. A value that fails the policy is
    reported as `INVALID`, naming the key and the rule, never the value.

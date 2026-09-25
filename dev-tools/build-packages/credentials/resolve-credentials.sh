@@ -50,6 +50,13 @@
 #                from such an image would otherwise share them. Run it at the end of the
 #                Dockerfile, or once from an entrypoint before the first start.
 #
+# A credential the operator configured in opensearch_dashboards.yml is theirs, and is resolved as
+# far as this script is concerned. The keystore is merged over the yml when the dashboard starts
+# (src/cli/serve/serve.js), so writing an entry would silently override it -- and writing
+# opensearch.username=kibanaserver over a custom user would pair one account's name with another's
+# password. The precedence is therefore: keystore entry > yml setting > environment >
+# credentials.env. The yml check is its own section below and stays out of the ladder's functions.
+#
 # Validating at start rather than at install is deliberate: the answer changes between the two
 # moments and only the answer at start matters. A dashboard installed first resolves nothing; by
 # the time it is started the indexer and the manager have published their keys, and it resolves.
@@ -123,6 +130,8 @@ KEYSTORE_BIN="${DIR}/bin/opensearch-dashboards-keystore"
 # it reads and writes whatever our environment says.
 CONFIG_DIR="${OSD_PATH_CONF:-/etc/wazuh-dashboard}"
 KEYSTORE_FILE="${CONFIG_DIR}/opensearch_dashboards.keystore"
+CONFIG_FILE="${CONFIG_DIR}/opensearch_dashboards.yml"
+NODE_BIN="${DIR}/node/bin/node"
 PID_FILE="/run/wazuh-dashboard/wazuh-dashboard.pid"
 
 # Every keystore entry this script may write, and so every one --clear removes.
@@ -372,6 +381,93 @@ resolve_consumed() {
 }
 
 # -----------------------------------------------------------------------------------------
+# The configuration file
+#
+# Deliberately separate from the ladder above: resolve_consumed() knows nothing about the yml, and
+# these functions know nothing about the keystore. The run section combines them.
+#
+# The yml is read by the dashboard's own Node, through @osd/config's getConfigFromFiles() -- the
+# same reader the dashboard uses, so flat (opensearch.password: x), nested and mixed keys and
+# ${ENV} references mean here exactly what they mean at start. Where that module cannot be
+# resolved, js-yaml (which it wraps) is used directly with a lookup that accepts both forms.
+#
+# It runs as the service user, which owns the file, and prints nothing: the answer is the exit
+# status, never a value -- 0 set, 3 not set, 2 the file could not be read. Anything that goes
+# wrong (no Node, an unreadable or unparseable file, an unknown ${ENV} reference) is 2, which every
+# caller treats as "not set", so the ladder carries on as without the check; a broken yml is the
+# dashboard's to report when it starts. Only a file that was read and lacks a setting is 3.
+# -----------------------------------------------------------------------------------------
+
+CONFIG_HAS_JS='
+try {
+  const [home, file, key] = process.argv.slice(1);
+  let config;
+  try {
+    const { getConfigFromFiles } = require(require.resolve("@osd/config", { paths: [home] }));
+    config = getConfigFromFiles([file]);
+  } catch (e) {
+    if (!e || e.code !== "MODULE_NOT_FOUND") throw e;
+    const yaml = require(require.resolve("js-yaml", { paths: [home] }));
+    config = yaml.load(require("fs").readFileSync(file, "utf8")) || {};
+  }
+  const lookup = (node, parts) => {
+    if (parts.length === 0) return node;
+    if (node === null || typeof node !== "object") return undefined;
+    for (let i = parts.length; i > 0; i--) {
+      const head = parts.slice(0, i).join(".");
+      if (Object.prototype.hasOwnProperty.call(node, head)) {
+        const found = lookup(node[head], parts.slice(i));
+        if (found !== undefined) return found;
+      }
+    }
+    return undefined;
+  };
+  const value = lookup(config, key.split("."));
+  const set = (typeof value === "string" && value !== "") ||
+    (value !== null && typeof value === "object" && Object.keys(value).length > 0);
+  process.exit(set ? 0 : 3);
+} catch (e) {
+  process.exit(2);
+}
+'
+
+config_has() {
+    [ -x "${NODE_BIN}" ] && [ -f "${CONFIG_FILE}" ] || return 2
+    _ch_status=0
+    if [ "$(id -u)" = 0 ]; then
+        (cd / && runuser -u "${SERVICE_USER}" -- \
+            "${NODE_BIN}" -e "${CONFIG_HAS_JS}" "${DIR}" "${CONFIG_FILE}" "$1") \
+            </dev/null >/dev/null 2>&1 || _ch_status=$?
+    else
+        (cd / && "${NODE_BIN}" -e "${CONFIG_HAS_JS}" "${DIR}" "${CONFIG_FILE}" "$1") \
+            </dev/null >/dev/null 2>&1 || _ch_status=$?
+    fi
+    # runuser's own failures must not pass for "not set".
+    case "${_ch_status}" in
+        0|3) return "${_ch_status}" ;;
+        *)   return 2 ;;
+    esac
+}
+
+config_resolves_kibanaserver() {
+    config_has opensearch.password || return 1
+    log "opensearch.password is set in ${CONFIG_FILE}; WAZUH_INDEXER_KIBANASERVER_PASSWORD is not resolved"
+}
+
+# Without a `default` host there is nothing to authenticate, and an entry for it would create a
+# host out of a lone password when the keystore is merged in.
+config_resolves_wui() {
+    _crw_status=0
+    config_has wazuh_core.hosts.default || _crw_status=$?
+    if [ "${_crw_status}" -eq 3 ]; then
+        log "${CONFIG_FILE} defines no wazuh_core.hosts.default; WAZUH_MANAGER_WUI_PASSWORD is not needed"
+        return 0
+    fi
+    config_has wazuh_core.hosts.default.password || return 1
+    log "wazuh_core.hosts.default.password is set in ${CONFIG_FILE}; WAZUH_MANAGER_WUI_PASSWORD is not resolved"
+}
+
+# -----------------------------------------------------------------------------------------
 # The credentials file
 #
 # The dashboard publishes nothing, but it may still be the first Wazuh package on the host. It
@@ -499,10 +595,20 @@ else
     mark_unresolved "keystore"
 fi
 
-resolve_consumed WAZUH_INDEXER_KIBANASERVER_PASSWORD INDEXER_PASSWORD \
-    opensearch.password opensearch.username kibanaserver
-resolve_consumed WAZUH_MANAGER_WUI_PASSWORD API_PASSWORD \
-    wazuh_core.hosts.default.password
+if ! config_resolves_kibanaserver; then
+    # A username set in the yml is the operator's: never write kibanaserver over it.
+    if config_has opensearch.username; then
+        resolve_consumed WAZUH_INDEXER_KIBANASERVER_PASSWORD INDEXER_PASSWORD \
+            opensearch.password
+    else
+        resolve_consumed WAZUH_INDEXER_KIBANASERVER_PASSWORD INDEXER_PASSWORD \
+            opensearch.password opensearch.username kibanaserver
+    fi
+fi
+if ! config_resolves_wui; then
+    resolve_consumed WAZUH_MANAGER_WUI_PASSWORD API_PASSWORD \
+        wazuh_core.hosts.default.password
+fi
 
 # The installer has no opinion about whether the component can run: no warning, no failure, no
 # special state. Nothing checks credentials until something needs them.
