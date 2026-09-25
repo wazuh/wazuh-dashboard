@@ -16,6 +16,23 @@ else
   exit 1
 fi
 
+# A fresh install issues the TLS certificates from the shared CA, minting it on an empty host.
+certs_dir=/etc/wazuh-dashboard/certs
+for cert_file in dashboard.pem dashboard-key.pem root-ca.pem; do
+  if [ "$(stat -c '%U:%G:%a' "${certs_dir}/${cert_file}" 2>/dev/null)" != "wazuh-dashboard:wazuh-dashboard:400" ]; then
+    echo "Certificate ${cert_file} missing or with wrong ownership/mode"
+    ls -la "${certs_dir}" || true
+    exit 1
+  fi
+done
+if openssl verify -purpose sslserver -CAfile /etc/wazuh/ca/root-ca.pem "${certs_dir}/dashboard.pem" >/dev/null &&
+  cmp -s /etc/wazuh/ca/root-ca.pem "${certs_dir}/root-ca.pem"; then
+  echo "Certificates issued from the shared CA"
+else
+  echo "Certificates do not chain to the shared CA"
+  exit 1
+fi
+
 systemctl daemon-reload
 systemctl enable wazuh-dashboard
 

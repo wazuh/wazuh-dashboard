@@ -30,25 +30,33 @@
 # assistant encrypts the provider API keys it stores with. Nobody else reads it, so it is
 # generated here, straight into the keystore, and never published. See its own section below.
 #
+# It also owns its TLS certificates, certs/dashboard.pem and dashboard-key.pem, which a fresh
+# install issues from the shared CA -- minting that CA first when no component has yet -- together
+# with the certs/root-ca.pem anchor. That is the one thing the dashboard writes outside its own
+# files, and only through the shared library, under its lock. See its own section below.
+#
 # The same script runs at three moments, and the difference between them is the whole design:
 #
 #   --install    From a FRESH postinst / %post -- never from an upgrade. Stores what it can, and has
 #                no opinion about whether the dashboard can run. Never fails: a maintainer script
 #                that aborts leaves the package half-configured, breaks `apt install -f` and fails
-#                image builds. Exits 0 whatever it could not resolve, and says nothing about it.
+#                image builds. Exits 0 whatever it could not resolve, and says nothing about it --
+#                except the TLS certificates, which are issued at this moment and no other.
 #
 #   --upgrade    From postinst / %post when a previous version was already installed. Identical to
 #                --install for the consumed passwords: once both keystore entries exist step 0 is
 #                true for both, so the only values it can fill in are the ones this host never had,
 #                and nothing that is already configured changes. It does NOT generate the AI
-#                assistant key: an upgrade adds no secret the operator did not have.
+#                assistant key: an upgrade adds no secret the operator did not have. Nor does it
+#                touch the certificates: a pair the operator replaced must not be re-examined.
 #
 #   --prestart   From the unit's ExecStartPre=+ and from the SysV init script's start. Runs the same
 #                ladder again, not merely a check, so a dashboard installed before the indexer or
 #                the manager picks up what became available since and configures itself. Exits
 #                non-zero naming every key it could not resolve.
 #
-#   --clear      Removes every credential this dashboard stores, the AI assistant key included, so
+#   --clear      Removes every credential this dashboard stores, the AI assistant key and the
+#                certificates included -- and the shared CA when it was minted on this host -- so
 #                the next --install or --prestart resolves from nothing. Nothing in the product calls it: it exists for
 #                an image that was built by installing the package, whose postinst therefore
 #                resolved this host's credentials into the image layer. Every container started
@@ -575,6 +583,454 @@ credentials_file_ensure() {
 }
 
 # -----------------------------------------------------------------------------------------
+# Owned: the dashboard's own certificates
+#
+# opensearch_dashboards.yml serves HTTPS from certs/dashboard.pem and dashboard-key.pem, and trusts
+# the indexer through certs/root-ca.pem. On a fresh install, and only then, this issues whatever of
+# that is missing from the shared CA, so every Wazuh component on the host chains to one anchor:
+#
+#   * No CA in the CA directory (/etc/wazuh/ca, or WAZUH_CA_DIR): the library mints one, and the
+#     manager and the indexer installed after us issue from it too.
+#   * A CA with its private key: reused, whoever minted it.
+#   * An anchor without a key: a CA managed elsewhere. It can be trusted but not issued from, so a
+#     missing pair is an error the operator fixes by staging one.
+#
+# An existing complete pair is how an operator supplies their own, so it is checked and never
+# replaced. A partial pair is refused rather than completed: half of someone else's material is not
+# ours to guess the other half of. And when the CA is gone but dashboard material is present, no
+# new CA is minted -- it could only produce a pair that trusts a different anchor than the rest.
+#
+# Certificates are issued at install and never looked at again, for the same reasons as the
+# manager's: resolving one is a signature, not a lookup, and it is the credential an operator
+# legitimately rotates out of band. --upgrade and --prestart leave them alone; whether the dashboard
+# accepts them is decided when it loads them.
+#
+# Placement: /etc/wazuh-dashboard belongs to the service user, who could swap certs/ or plant names
+# in it while root issues. Everything therefore happens from inside the directory once it has been
+# checked, in a root-only 0700 staging directory, and each file is published with `ln -T`, which
+# neither follows nor replaces an existing name. The key goes before the certificate, so an
+# interrupted run leaves a partial pair that the next run refuses, never a certificate without its
+# key that looks complete. The result follows wazuh-certs-tool's layout: certs/ 0500 and files
+# 0400, owned by the service user.
+#
+#   WAZUH_DASHBOARD_CERT_SANS   Exact comma-separated SAN list (DNS:name, IP:address, or untyped),
+#                               environment then credentials.env. Default: the node name, the FQDN,
+#                               every global-scope address, and loopback.
+#   WAZUH_DASHBOARD_NODE_NAME   Certificate common name. Default: hostname -s.
+# -----------------------------------------------------------------------------------------
+
+CERTS_DIR="${CONFIG_DIR}/certs"
+CERT_FILE="dashboard.pem"
+CERT_KEY_FILE="dashboard-key.pem"
+CERT_CA_FILE="root-ca.pem"
+
+_dc_require() {
+    for _dcr_function in wazuh_ca_get_dir _wazuh_ca_ensure_locked _wazuh_validate_ca_files \
+        _wazuh_with_lock _wazuh_restorecon wazuh_env_get; do
+        if ! command -v "${_dcr_function}" >/dev/null 2>&1; then
+            err "the shared credentials library has no ${_dcr_function}; it is too old to issue certificates"
+            return 1
+        fi
+    done
+    for _dcr_command in awk chmod chown cmp flock ln mktemp openssl stat tr; do
+        if ! command -v "${_dcr_command}" >/dev/null 2>&1; then
+            err "cannot issue certificates without ${_dcr_command}"
+            return 1
+        fi
+    done
+}
+
+_dc_exists() {
+    [ -e "$1" ] || [ -L "$1" ]
+}
+
+_dc_valid_dns() {
+    [ -n "$1" ] && [ "${#1}" -le 253 ] || return 1
+    case "$1" in
+        *[!A-Za-z0-9.*-]*|.*|*.|*..*|-*|*-) return 1 ;;
+    esac
+}
+
+# Loose on purpose: the alphabet keeps the value from breaking out of the OpenSSL config line, and
+# OpenSSL itself rejects a malformed address when it signs.
+_dc_valid_ip() {
+    case "$1" in
+        ''|*[!0-9A-Fa-f.:]*) return 1 ;;
+        *:*) return 0 ;;
+    esac
+    printf '%s\n' "$1" | LC_ALL=C grep -Eqx '([0-9]{1,3}\.){3}[0-9]{1,3}'
+}
+
+# One typed SAN per line from a comma-separated list; untyped entries are classified. The loop is
+# the last command of its pipeline, so an invalid entry fails the capture rather than vanishing.
+_dc_normalize_sans() {
+    _dcn_typed=$(printf '%s' "$1" | tr ',' '\n' | while IFS= read -r _dcn_item || [ -n "${_dcn_item}" ]; do
+        _dcn_item=$(printf '%s' "${_dcn_item}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        case "${_dcn_item}" in
+            '') continue ;;
+            DNS:*|dns:*) _dcn_type=DNS; _dcn_value=${_dcn_item#*:} ;;
+            IP:*|ip:*)   _dcn_type=IP;  _dcn_value=${_dcn_item#*:} ;;
+            *:*)         _dcn_type=IP;  _dcn_value=${_dcn_item} ;;
+            *)
+                _dcn_value=${_dcn_item}
+                if _dc_valid_ip "${_dcn_value}"; then _dcn_type=IP; else _dcn_type=DNS; fi
+                ;;
+        esac
+        if [ "${_dcn_type}" = IP ]; then
+            _dc_valid_ip "${_dcn_value}" || { err "invalid SAN entry: ${_dcn_item}"; exit 1; }
+        else
+            _dc_valid_dns "${_dcn_value}" || { err "invalid SAN entry: ${_dcn_item}"; exit 1; }
+        fi
+        printf '%s:%s\n' "${_dcn_type}" "${_dcn_value}"
+    done) || return 1
+    printf '%s\n' "${_dcn_typed}" | awk '
+        NF == 0 { next }
+        /^DNS:/ { key = "DNS:" tolower(substr($0, 5)) }
+        /^IP:/  { key = tolower($0) }
+        !seen[key]++ { print }
+    '
+}
+
+_dc_node_name() {
+    if [ -n "${WAZUH_DASHBOARD_NODE_NAME-}" ]; then
+        _dcnn_node=${WAZUH_DASHBOARD_NODE_NAME}
+    else
+        _dcnn_node=$(hostname -s 2>/dev/null || uname -n 2>/dev/null) || _dcnn_node=""
+        _dcnn_node=${_dcnn_node%%.*}
+    fi
+    if ! _dc_valid_dns "${_dcnn_node}"; then
+        err "invalid dashboard node name: ${_dcnn_node}; set WAZUH_DASHBOARD_NODE_NAME"
+        return 1
+    fi
+    printf '%s\n' "${_dcnn_node}"
+}
+
+# An explicit list replaces discovery; loopback is always added, since the dashboard is reached
+# locally as well. Discovery never fails the issue: an address it misses is one the operator adds.
+#
+# The list goes to stdout, so where it came from is written to the file $2 for the caller to log:
+# a log line here would end up in the list.
+_dc_sans() {
+    _dcs_status=0
+    setting_get WAZUH_DASHBOARD_CERT_SANS || _dcs_status=$?
+    case "${_dcs_status}" in
+        0)
+            _dcs_list="${SETTING_VALUE}"
+            printf 'SANs set by WAZUH_DASHBOARD_CERT_SANS from %s\n' "${SETTING_SOURCE}" >"$2"
+            ;;
+        1)
+            _dcs_list="DNS:$1"
+            _dcs_fqdn=$(hostname -f 2>/dev/null || :)
+            if [ -n "${_dcs_fqdn}" ] && _dc_valid_dns "${_dcs_fqdn}"; then
+                _dcs_list="${_dcs_list},DNS:${_dcs_fqdn}"
+            fi
+            if command -v ip >/dev/null 2>&1; then
+                _dcs_addrs=$(ip -o addr show 2>/dev/null | awk '
+                    ($3 == "inet" || $3 == "inet6") && / scope global/ &&
+                    !/ (tentative|dadfailed)( |$)/ { sub(/\/.*/, "", $4); printf ",IP:%s", $4 }
+                ')
+                _dcs_list="${_dcs_list}${_dcs_addrs}"
+                _dcs_count=$(printf '%s' "${_dcs_addrs}" | tr ',' '\n' | grep -c '^IP:')
+                printf 'SANs discovered: host name, FQDN and %s global address(es); set WAZUH_DASHBOARD_CERT_SANS to replace them\n' \
+                    "${_dcs_count}" >"$2"
+            else
+                printf '%s\n' "SANs discovered without addresses (ip is not available): the certificate names only this host and loopback" >"$2"
+            fi
+            ;;
+        *) err "cannot read WAZUH_DASHBOARD_CERT_SANS"; return 1 ;;
+    esac
+    SETTING_VALUE=""
+    _dc_normalize_sans "${_dcs_list},DNS:localhost,IP:127.0.0.1,IP:::1"
+}
+
+# $1 config, $2 CN, $3 file with one typed SAN per line.
+_dc_write_leaf_config() {
+    {
+        printf '%s\n' '[ req ]' 'prompt = no' 'default_md = sha256' 'distinguished_name = req_dn' ''
+        printf '%s\n' '[ req_dn ]' 'C = US' 'L = California' 'O = Wazuh' 'OU = Wazuh'
+        printf 'CN = %s\n\n' "$2"
+        printf '%s\n' '[ v3_leaf ]' \
+            'authorityKeyIdentifier = keyid,issuer' \
+            'subjectKeyIdentifier = hash' \
+            'basicConstraints = critical,CA:FALSE' \
+            'keyUsage = critical,digitalSignature,keyEncipherment' \
+            'extendedKeyUsage = serverAuth,clientAuth' \
+            'subjectAltName = @alt_names' '' '[ alt_names ]'
+        awk '
+            /^IP:/  { ip++;  print "IP." ip " = " substr($0, 4) }
+            /^DNS:/ { dns++; print "DNS." dns " = " substr($0, 5) }
+        ' "$3"
+    } >"$1"
+}
+
+# $1 certificate, $2 key, $3 CA to chain to (empty: no chain check). Prints nothing on success.
+_dc_validate_pair() {
+    if [ -L "$1" ] || [ ! -f "$1" ] || [ -L "$2" ] || [ ! -f "$2" ]; then
+        err "the certificate pair must be two regular files: $1, $2"
+        return 1
+    fi
+    if ! openssl x509 -in "$1" -noout -checkend 0 >/dev/null 2>&1; then
+        err "invalid or expired certificate: $1"
+        return 1
+    fi
+    _dcv_cert_pub=$(openssl x509 -in "$1" -noout -pubkey 2>/dev/null) || return 1
+    _dcv_key_pub=$(openssl pkey -in "$2" -passin pass: -pubout </dev/null 2>/dev/null) || {
+        err "invalid private key: $2"
+        return 1
+    }
+    if [ "${_dcv_cert_pub}" != "${_dcv_key_pub}" ]; then
+        err "the private key does not match the certificate: $1"
+        return 1
+    fi
+    if [ -n "${3-}" ] &&
+       ! openssl verify -purpose sslserver -CAfile "$3" "$1" >/dev/null 2>&1; then
+        err "the certificate does not chain to $3 for server use: $1"
+        return 1
+    fi
+}
+
+_dc_fingerprint() {
+    openssl x509 -in "$1" -noout -fingerprint -sha256 2>/dev/null
+}
+
+# One line describing a certificate for the logs: subject, expiry and SHA-256 fingerprint. Public
+# data only. Each field is picked by its label, since the order OpenSSL prints them in varies.
+_dc_describe_cert() {
+    _dcd_text=$(LC_ALL=C openssl x509 -in "$1" -noout -subject -enddate -fingerprint -sha256 2>/dev/null) || {
+        printf '%s\n' "unreadable certificate"
+        return 0
+    }
+    printf 'subject %s; valid until %s; SHA-256 %s\n' \
+        "$(printf '%s\n' "${_dcd_text}" | sed -n 's/^subject= *//p' | head -n 1)" \
+        "$(printf '%s\n' "${_dcd_text}" | sed -n 's/^notAfter=//p' | head -n 1)" \
+        "$(printf '%s\n' "${_dcd_text}" | sed -n 's/^[Ss][Hh][Aa]256 Fingerprint=//p' | head -n 1)"
+}
+
+# Enters the child directory $1 of the working directory and proves it is one: its `..` must be the
+# directory we came from. A name swapped for a symlink between the check and the cd lands
+# somewhere else, whose `..` is not ours.
+_dc_enter_child() {
+    _dce_here=$(stat -c '%d:%i' . 2>/dev/null) || return 1
+    if [ -L "$1" ] || [ ! -d "$1" ]; then
+        err "refusing $1: it is not a real directory"
+        return 1
+    fi
+    cd -P -- "$1" || return 1
+    if [ "$(stat -c '%d:%i' .. 2>/dev/null)" != "${_dce_here}" ]; then
+        err "$1 changed while certificates were being issued"
+        return 1
+    fi
+}
+
+# Enters the staging directory $1 of the certificates directory. Only root can have made a
+# root-owned 0700 directory there, so passing this means the staging area is ours and no one else
+# can reach into it.
+_dc_enter_stage() {
+    _dc_enter_child "$1" || return 1
+    if [ "$(stat -c '%u:%a' . 2>/dev/null)" != "0:700" ]; then
+        err "the staging directory in ${CERTS_DIR} is not root's own"
+        return 1
+    fi
+}
+
+# Runs from inside the certificates directory. $1 staging directory, $2 CA directory, $3 CN,
+# $4 SAN file (absolute).
+_dc_issue_pair() (
+    _dc_enter_stage "$1" || return 1
+
+    _dc_write_leaf_config leaf.cnf "$3" "$4" || return 1
+    if ! (umask 077; openssl req -new -nodes -newkey rsa:2048 -sha256 \
+        -keyout "${CERT_KEY_FILE}" -out dashboard.csr -config leaf.cnf >/dev/null 2>&1); then
+        err "OpenSSL could not create the dashboard certificate request"
+        return 1
+    fi
+    _dci_serial=$(openssl rand -hex 16) || return 1
+    if ! openssl x509 -req -sha256 -days 3650 -set_serial "0x${_dci_serial}" \
+        -in dashboard.csr -CA "$2/root-ca.pem" -CAkey "$2/root-ca.key" -passin pass: \
+        -extfile leaf.cnf -extensions v3_leaf -out "${CERT_FILE}" >/dev/null 2>&1; then
+        err "OpenSSL could not sign the dashboard certificate with $2/root-ca.pem"
+        return 1
+    fi
+    _dc_validate_pair "${CERT_FILE}" "${CERT_KEY_FILE}" "$2/root-ca.pem" || return 1
+
+    chown "${SERVICE_USER}:${SERVICE_USER}" "${CERT_FILE}" "${CERT_KEY_FILE}" || return 1
+    chmod 0400 "${CERT_FILE}" "${CERT_KEY_FILE}" || return 1
+    ln -T -- "${CERT_KEY_FILE}" "../${CERT_KEY_FILE}" || return 1
+    ln -T -- "${CERT_FILE}" "../${CERT_FILE}" || return 1
+    _wazuh_restorecon "../${CERT_KEY_FILE}" || return 1
+    _wazuh_restorecon "../${CERT_FILE}" || return 1
+    log "published ${CERTS_DIR}/${CERT_KEY_FILE} and ${CERT_FILE} (${SERVICE_USER}, 0400); serial ${_dci_serial}"
+)
+
+# Runs from inside the certificates directory. $1 staging directory, $2 the shared anchor.
+_dc_install_anchor() (
+    _dc_enter_stage "$1" || return 1
+    cat -- "$2" >"${CERT_CA_FILE}" || return 1
+    chown "${SERVICE_USER}:${SERVICE_USER}" "${CERT_CA_FILE}" || return 1
+    chmod 0400 "${CERT_CA_FILE}" || return 1
+    ln -T -- "${CERT_CA_FILE}" "../${CERT_CA_FILE}" || return 1
+    _wazuh_restorecon "../${CERT_CA_FILE}"
+)
+
+# Under the shared lock, so two packages installing at once cannot both mint a CA.
+_dc_ensure_locked() (
+    _dce_ca_dir=$(wazuh_ca_get_dir) || return 1
+
+    # The configuration directory is the service user's. certs/ is only ever entered through
+    # _dc_enter_child, and everything after that works relative to it.
+    if [ -L "${CONFIG_DIR}" ] || [ ! -d "${CONFIG_DIR}" ]; then
+        err "${CONFIG_DIR} is not a directory"
+        return 1
+    fi
+    cd -P -- "${CONFIG_DIR}" || return 1
+    _dce_created=0
+    if ! _dc_exists certs; then
+        (umask 077; mkdir -m 0700 certs) || { err "cannot create ${CERTS_DIR}"; return 1; }
+        _dce_created=1
+        log "created ${CERTS_DIR}"
+    fi
+    _dc_enter_child certs || return 1
+    if [ "${_dce_created}" -eq 1 ] && [ "$(stat -c '%u:%a' . 2>/dev/null)" != "0:700" ]; then
+        err "${CERTS_DIR} changed while certificates were being issued"
+        return 1
+    fi
+
+    _dce_state=absent
+    if _dc_exists "${CERT_FILE}" && _dc_exists "${CERT_KEY_FILE}"; then
+        _dce_state=complete
+    elif _dc_exists "${CERT_FILE}" || _dc_exists "${CERT_KEY_FILE}"; then
+        err "only one of ${CERT_FILE} and ${CERT_KEY_FILE} exists in ${CERTS_DIR}; refusing to complete it"
+        return 1
+    fi
+
+    # Mint the CA only onto a clean slate: dashboard material without a CA was provisioned by
+    # someone else, and a new anchor would not be the one it trusts.
+    if ! _dc_exists "${_dce_ca_dir}/root-ca.pem" && ! _dc_exists "${_dce_ca_dir}/root-ca.key"; then
+        if [ "${_dce_state}" = complete ]; then
+            _dc_validate_pair "${CERT_FILE}" "${CERT_KEY_FILE}" "" || return 1
+            log "${CERTS_DIR} already holds a certificate pair and ${_dce_ca_dir} has no CA; no CA is created"
+            log "kept ${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
+            return 0
+        fi
+        if _dc_exists "${CERT_CA_FILE}"; then
+            err "${CERTS_DIR}/${CERT_CA_FILE} exists but there is no CA in ${_dce_ca_dir}; refusing to create another CA"
+            return 1
+        fi
+        _dce_ca_was=absent
+    elif _dc_exists "${_dce_ca_dir}/root-ca.key"; then
+        _dce_ca_was=complete
+    else
+        _dce_ca_was=anchor
+    fi
+    if ! _wazuh_ca_ensure_locked; then
+        err "the shared root CA in ${_dce_ca_dir} could not be created or is not valid"
+        return 1
+    fi
+    case "${_dce_ca_was}" in
+        absent)
+            log "created the shared root CA in ${_dce_ca_dir}: $(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
+            ;;
+        complete)
+            log "reusing the shared root CA in ${_dce_ca_dir}: $(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
+            ;;
+        anchor)
+            log "the shared root CA in ${_dce_ca_dir} has no private key: it is trusted but cannot issue;" \
+                "$(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
+            ;;
+    esac
+
+    _dce_stage=$(mktemp -d .stage.XXXXXX) || return 1
+    trap 'rm -rf -- "${_dce_stage}"' 0
+    trap 'exit 130' 1 2 3 15
+    chmod 0700 "${_dce_stage}" || return 1
+
+    if _dc_exists "${CERT_CA_FILE}"; then
+        if [ "$(_dc_fingerprint "${CERT_CA_FILE}")" != "$(_dc_fingerprint "${_dce_ca_dir}/root-ca.pem")" ]; then
+            log "${CERTS_DIR}/${CERT_CA_FILE} is not the CA in ${_dce_ca_dir}; it is kept as it is:" \
+                "$(_dc_describe_cert "${CERT_CA_FILE}")"
+        else
+            log "${CERTS_DIR}/${CERT_CA_FILE} is already the shared root CA"
+        fi
+    else
+        _dc_install_anchor "${_dce_stage}" "${_dce_ca_dir}/root-ca.pem" || return 1
+        log "installed ${CERTS_DIR}/${CERT_CA_FILE} from ${_dce_ca_dir}"
+    fi
+
+    if [ "${_dce_state}" = complete ]; then
+        _dc_validate_pair "${CERT_FILE}" "${CERT_KEY_FILE}" "" || return 1
+        log "${CERTS_DIR} already holds a certificate pair; it is kept as it is"
+        log "kept ${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
+        if ! openssl verify -CAfile "${_dce_ca_dir}/root-ca.pem" "${CERT_FILE}" >/dev/null 2>&1; then
+            log "${CERT_FILE} does not chain to the shared root CA; it is kept as the operator's"
+        fi
+    else
+        if ! _dc_exists "${_dce_ca_dir}/root-ca.key"; then
+            err "the CA in ${_dce_ca_dir} has no private key, so no certificate can be issued from it"
+            return 1
+        fi
+        _dce_node=$(_dc_node_name) || return 1
+        # The SAN list goes into the staging directory, which only root can reach.
+        _dce_sans_file="$(pwd -P)/${_dce_stage}/sans"
+        _dc_sans "${_dce_node}" "${_dce_sans_file}.source" >"${_dce_sans_file}" || return 1
+        [ -s "${_dce_sans_file}.source" ] && log "$(cat -- "${_dce_sans_file}.source")"
+        log "issuing ${CERT_FILE} for CN ${_dce_node} from ${_dce_ca_dir}" \
+            "(RSA 2048, SHA-256, 3650 days, serverAuth and clientAuth);" \
+            "SANs $(tr '\n' ' ' <"${_dce_sans_file}" | sed 's/ $//')"
+        _dc_issue_pair "${_dce_stage}" "${_dce_ca_dir}" "${_dce_node}" "${_dce_sans_file}" || return 1
+        log "issued ${CERTS_DIR}/${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
+        _dce_text=$(openssl x509 -in "${CERT_FILE}" -noout -text 2>/dev/null) || _dce_text=""
+        log "${CERT_FILE} SANs: $(printf '%s\n' "${_dce_text}" | sed -n '/X509v3 Subject Alternative Name:/{n;s/^ *//p;}')"
+    fi
+
+    # A directory created here gets wazuh-certs-tool's layout; an existing one is the operator's.
+    # Applied to `.`, the directory we are in, never to a name the service user could swap.
+    if [ "${_dce_created}" -eq 1 ]; then
+        rm -rf -- "${_dce_stage}"
+        chown "${SERVICE_USER}:${SERVICE_USER}" . || return 1
+        chmod 0500 . || return 1
+        _wazuh_restorecon "${CERTS_DIR}" || return 1
+        log "set ${CERTS_DIR} to ${SERVICE_USER}:${SERVICE_USER} 0500"
+    fi
+    log "the TLS certificates in ${CERTS_DIR} are in place"
+)
+
+resolve_certificates() {
+    if [ "$(id -u)" != 0 ]; then
+        log "not running as root; certificates are not issued"
+        return 0
+    fi
+    _dc_require || return 1
+    _rcs_ca=$(wazuh_ca_get_dir 2>/dev/null) || _rcs_ca="(unresolved)"
+    log "resolving the TLS certificates in ${CERTS_DIR} (shared CA directory: ${_rcs_ca})"
+    _wazuh_with_lock _dc_ensure_locked
+}
+
+# The --clear half: the dashboard's three files, and the CA only when it has a private key -- one
+# minted on this host, and so baked into the image. An anchor-only CA was handed to the host and
+# stays. Runs under the shared lock like every other write to the CA directory.
+_dc_clear_locked() (
+    for _dcc_file in "${CERT_FILE}" "${CERT_KEY_FILE}" "${CERT_CA_FILE}"; do
+        if _dc_exists "${CERTS_DIR}/${_dcc_file}"; then
+            rm -f -- "${CERTS_DIR}/${_dcc_file}" || return 1
+            log "removed ${CERTS_DIR}/${_dcc_file}"
+        fi
+    done
+    _dcc_ca=$(wazuh_ca_get_dir 2>/dev/null) || _dcc_ca=""
+    if [ -n "${_dcc_ca}" ] && _dc_exists "${_dcc_ca}/root-ca.key"; then
+        rm -f -- "${_dcc_ca}/root-ca.key" "${_dcc_ca}/root-ca.pem" "${_dcc_ca}/root-ca.srl" || return 1
+        log "removed the CA in ${_dcc_ca}"
+    elif [ -n "${_dcc_ca}" ] && _dc_exists "${_dcc_ca}/root-ca.pem"; then
+        log "kept the CA in ${_dcc_ca}: it has no private key, so it was not created on this host"
+    fi
+)
+
+clear_certificates() {
+    [ "$(id -u)" = 0 ] || return 0
+    command -v _wazuh_with_lock >/dev/null 2>&1 || return 1
+    _wazuh_with_lock _dc_clear_locked
+}
+
+# -----------------------------------------------------------------------------------------
 # --clear
 #
 # The one destructive path in a tool whose every other rule is "never overwrite, never repair,
@@ -607,6 +1063,11 @@ clear_credentials() {
     if dashboard_is_running; then
         err "refusing to clear credentials while the dashboard is running"
         err "        stop it first: systemctl stop wazuh-dashboard"
+        return 1
+    fi
+
+    if ! clear_certificates; then
+        err "could not remove the dashboard certificates or the CA"
         return 1
     fi
 
@@ -681,6 +1142,19 @@ fi
 # towards the verdict: the AI assistant is optional.
 if [ "${MODE}" = "install" ] || [ "${MODE}" = "prestart" ]; then
     resolve_encryption_key || true
+fi
+
+# Certificates are issued once, on a fresh install -- see their section. Their result never counts
+# towards the verdict, so this is the one moment a failure can be reported, and it is said plainly
+# rather than left for the operator to meet as a missing file when the dashboard starts.
+if [ "${MODE}" = "install" ]; then
+    if ! resolve_certificates; then
+        err "the dashboard has no TLS certificates and this install could not issue them"
+        err "        provision ${CERT_FILE}, ${CERT_KEY_FILE} and ${CERT_CA_FILE} into ${CERTS_DIR}"
+        err "        (e.g. with wazuh-certs-tool); the dashboard will not start without them"
+    fi
+else
+    log "TLS certificates are only issued on a fresh install; ${CERTS_DIR} is left as it is"
 fi
 
 # The installer has no opinion about whether the component can run: no warning, no failure, no

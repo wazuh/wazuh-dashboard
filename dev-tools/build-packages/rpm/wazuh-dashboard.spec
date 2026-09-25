@@ -18,7 +18,7 @@ Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
 AutoReqProv: no
-Requires: libcap
+Requires: libcap, openssl, diffutils, util-linux
 ExclusiveOS: linux
 
 # -----------------------------------------------------------------------------

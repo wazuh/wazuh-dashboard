@@ -13,6 +13,7 @@
 | [wazuh-dashboard-plugins#9199](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9199) | Added the About page as a platform plugin, moved from the Wazuh dashboard plugins                                                                                                                                                 |
 | [wazuh-dashboard-plugins#9199](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9199) | Added the `opensearchDashboards.branding.applicationVersion`, `opensearchDashboards.branding.helpMenuLinks` and `about.communityLinks` settings to override the displayed version, help menu links and About page community links |
 | [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Added support for health check tasks to report their own result status                                                                                                                                                            |
+| [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Added the issuance of the dashboard TLS certificates from the shared Wazuh root CA on a fresh install, creating the CA when none exists                                                                                           |
 
 ### Changed
 

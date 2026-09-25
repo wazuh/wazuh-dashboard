@@ -16,8 +16,8 @@ repository is a copy that can drift.
 
 ## What the dashboard resolves
 
-The dashboard owns no credential and publishes nothing. It consumes two passwords into its
-keystore:
+The dashboard owns no shared credential and publishes nothing into `credentials.env`. It consumes
+two passwords into its keystore:
 
 | Key                                   | Env-only alias     | Account        | Owner   | Keystore entries                                              |
 | ------------------------------------- | ------------------ | -------------- | ------- | ------------------------------------------------------------- |
@@ -44,14 +44,42 @@ For each consumed key, the ladder is:
 2. Never generated: inventing a value does not make the peer accept it.
 3. Absent everywhere: unresolved.
 
+## Certificates
+
+`opensearch_dashboards.yml` serves HTTPS from `/etc/wazuh-dashboard/certs/dashboard.pem` and
+`dashboard-key.pem`, and trusts the indexer through `certs/root-ca.pem`. A fresh install
+(`--install` only) issues whatever of that is missing from the **shared CA**, the one the manager
+and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared library's
+`_wazuh_ca_ensure_locked`, under its lock:
+
+| Shared CA                       | Result                                                                                                                     |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Absent                          | A CA is minted there (`root-ca.pem` + `root-ca.key`), and the pair is issued from it. Components installed later reuse it. |
+| Anchor and key present          | Reused: the pair is issued from it.                                                                                        |
+| Anchor only (managed elsewhere) | `root-ca.pem` is installed, but no pair can be issued: stage one.                                                          |
+
+- An existing complete pair is kept as it is (checked, never replaced). This is how an operator
+  supplies their own, e.g. from `wazuh-certs-tool`.
+- A partial pair (only the certificate or only the key) is refused, not completed.
+- With no shared CA but dashboard material already present, no CA is minted.
+- An existing `certs/root-ca.pem` is kept, even when it is not the shared CA.
+- The leaf is RSA 2048 / SHA-256, valid 3650 days, `serverAuth,clientAuth`. Its CN is
+  `WAZUH_DASHBOARD_NODE_NAME` or `hostname -s`. Its SANs are `WAZUH_DASHBOARD_CERT_SANS` (an exact
+  comma-separated list, `DNS:`/`IP:` or untyped; environment, then `credentials.env`) or, by
+  default, the node name, the FQDN and every global-scope address. Loopback is always added.
+- Files are staged in a root-only directory and published with `ln -T`, key first. A new `certs/`
+  directory gets `wazuh-certs-tool`'s layout: `0500`, files `0400`, `wazuh-dashboard:wazuh-dashboard`.
+- `--upgrade` and `--prestart` never touch the certificates. A failed issue is reported by
+  `--install` itself, and exits `0`.
+
 ## Modes
 
-| Mode         | Called from                                  | Exit status                                                       |
-| ------------ | -------------------------------------------- | ----------------------------------------------------------------- |
-| `--install`  | fresh `postinst` / `%post`                   | always `0`, no warning                                            |
-| `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                            |
-| `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                        |
-| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above and the AI assistant key |
+| Mode         | Called from                                  | Exit status                                                                                                    |
+| ------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `--install`  | fresh `postinst` / `%post`                   | always `0`; warns only when the certificates cannot be issued                                                  |
+| `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                                                                         |
+| `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                                                                     |
+| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above, the AI assistant key, the certificates, and a shared CA with its key |
 
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
 (`0600 root:root`) when the dashboard is the first Wazuh package on the host.
