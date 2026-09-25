@@ -173,6 +173,10 @@ export class RenderingService {
               },
               faviconUrl: brandingAssignment.favicon,
               applicationTitle: brandingAssignment.applicationTitle,
+              // Wazuh
+              applicationVersion: opensearchDashboardsConfig.branding.applicationVersion,
+              // Wazuh
+              helpMenuLinks: opensearchDashboardsConfig.branding.helpMenuLinks,
               useExpandedHeader: brandingAssignment.useExpandedHeader,
             },
             survey: opensearchDashboardsConfig.survey.url,
