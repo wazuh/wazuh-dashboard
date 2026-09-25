@@ -14,8 +14,8 @@
 # It is therefore NOT in this repository: it is owned by wazuh-installation-assistant and
 # downloaded by base-builder.sh at package build time into lib/wazuh-credentials.sh.
 #
-# This file adds only what is specific to the dashboard, and that is little: the dashboard OWNS
-# NOTHING and CONSUMES TWO PASSWORDS, both into its keystore.
+# This file adds only what is specific to the dashboard, and that is little: the dashboard OWNS NO
+# SHARED CREDENTIAL and CONSUMES TWO PASSWORDS, both into its keystore.
 #
 #   WAZUH_INDEXER_KIBANASERVER_PASSWORD  kibanaserver, owned by the indexer
 #                                        -> opensearch.username (kibanaserver), opensearch.password
@@ -26,6 +26,10 @@
 # a value does not make the peer accept it, and a key has exactly one writer -- its owner. It is
 # the only component that can end with every one of its credentials unresolved.
 #
+# The one secret it does own is local to it: wazuh_ai_assistant.encryptionKey, which the AI
+# assistant encrypts the provider API keys it stores with. Nobody else reads it, so it is
+# generated here, straight into the keystore, and never published. See its own section below.
+#
 # The same script runs at three moments, and the difference between them is the whole design:
 #
 #   --install    From a FRESH postinst / %post -- never from an upgrade. Stores what it can, and has
@@ -34,17 +38,18 @@
 #                image builds. Exits 0 whatever it could not resolve, and says nothing about it.
 #
 #   --upgrade    From postinst / %post when a previous version was already installed. Identical to
-#                --install: once both keystore entries exist step 0 is true for both, so the only
-#                values it can fill in are the ones this host never had, and nothing that is
-#                already configured changes.
+#                --install for the consumed passwords: once both keystore entries exist step 0 is
+#                true for both, so the only values it can fill in are the ones this host never had,
+#                and nothing that is already configured changes. It does NOT generate the AI
+#                assistant key: an upgrade adds no secret the operator did not have.
 #
 #   --prestart   From the unit's ExecStartPre=+ and from the SysV init script's start. Runs the same
 #                ladder again, not merely a check, so a dashboard installed before the indexer or
 #                the manager picks up what became available since and configures itself. Exits
 #                non-zero naming every key it could not resolve.
 #
-#   --clear      Removes every credential this dashboard stores, so the next --install or
-#                --prestart resolves from nothing. Nothing in the product calls it: it exists for
+#   --clear      Removes every credential this dashboard stores, the AI assistant key included, so
+#                the next --install or --prestart resolves from nothing. Nothing in the product calls it: it exists for
 #                an image that was built by installing the package, whose postinst therefore
 #                resolved this host's credentials into the image layer. Every container started
 #                from such an image would otherwise share them. Run it at the end of the
@@ -134,8 +139,10 @@ CONFIG_FILE="${CONFIG_DIR}/opensearch_dashboards.yml"
 NODE_BIN="${DIR}/node/bin/node"
 PID_FILE="/run/wazuh-dashboard/wazuh-dashboard.pid"
 
-# Every keystore entry this script may write, and so every one --clear removes.
+# Every keystore entry this script may write, and so every one --clear removes: the consumed
+# credentials, and the one secret the dashboard owns.
 LADDER_ENTRIES="opensearch.username opensearch.password wazuh_core.hosts.default.password"
+OWNED_ENTRIES="wazuh_ai_assistant.encryptionKey"
 
 LOG_TAG="resolve-credentials"
 
@@ -468,6 +475,65 @@ config_resolves_wui() {
 }
 
 # -----------------------------------------------------------------------------------------
+# Owned: the AI assistant encryption key
+#
+# Deliberately separate from the ladder: it is not a credential anybody else holds, so it is never
+# read from the environment or the credentials file, never validated against the password policy,
+# and never published. The AI assistant is optional, so failing to generate it is a warning and
+# never blocks the start -- the plugin itself says what is missing when it is used.
+#
+# Step 0 is the keystore entry or a value the operator configured in opensearch_dashboards.yml.
+# Once either exists the key is never touched again: the provider API keys the assistant stored
+# are encrypted with it, and a new key could no longer decrypt them.
+#
+# base64 of exactly 32 bytes is always 44 characters with one '=' pad, which also means it can
+# never parse as a JSON number, so the keystore stores it as the string the plugin expects.
+# -----------------------------------------------------------------------------------------
+
+ENCRYPTION_KEY_ENTRY="wazuh_ai_assistant.encryptionKey"
+
+encryption_key_generate() {
+    _ekg_key=""
+    if command -v openssl >/dev/null 2>&1; then
+        _ekg_key=$(openssl rand -base64 32 2>/dev/null | tr -d '\n') || _ekg_key=""
+    fi
+    if [ -z "${_ekg_key}" ] && [ -r /dev/urandom ] && command -v base64 >/dev/null 2>&1; then
+        _ekg_key=$(head -c 32 /dev/urandom | base64 | tr -d '\n') || _ekg_key=""
+    fi
+    if [ -z "${_ekg_key}" ] && [ -x "${NODE_BIN}" ]; then
+        _ekg_key=$("${NODE_BIN}" -e \
+            "process.stdout.write(require('crypto').randomBytes(32).toString('base64'))" 2>/dev/null) || _ekg_key=""
+    fi
+    [ "${#_ekg_key}" -eq 44 ] || return 1
+    printf '%s' "${_ekg_key}"
+}
+
+resolve_encryption_key() {
+    [ "${KEYSTORE_READY}" -eq 1 ] || return 1
+
+    if keystore_has "${ENCRYPTION_KEY_ENTRY}"; then
+        log "${ENCRYPTION_KEY_ENTRY} is already in the keystore"
+        return 0
+    fi
+    if config_has "${ENCRYPTION_KEY_ENTRY}"; then
+        log "${ENCRYPTION_KEY_ENTRY} is set in ${CONFIG_FILE}; not generated"
+        return 0
+    fi
+
+    # Captured, then piped: the value is never on a command line, and never printed.
+    if _rek_key=$(encryption_key_generate) &&
+       printf '%s' "${_rek_key}" | keystore_add "${ENCRYPTION_KEY_ENTRY}"; then
+        _rek_key=""
+        keystore_mark "${ENCRYPTION_KEY_ENTRY}"
+        log "generated ${ENCRYPTION_KEY_ENTRY}"
+        return 0
+    fi
+    _rek_key=""
+    err "warning: could not generate ${ENCRYPTION_KEY_ENTRY}; configure it manually to enable the AI assistant"
+    return 1
+}
+
+# -----------------------------------------------------------------------------------------
 # The credentials file
 #
 # The dashboard publishes nothing, but it may still be the first Wazuh package on the host. It
@@ -516,12 +582,13 @@ credentials_file_ensure() {
 # installing the package, which ran the resolver in its postinst and therefore baked this host's
 # credentials into a layer that every container will share.
 #
-# What it deliberately does NOT remove:
+# It removes the AI assistant key as well: an image that baked one would hand every container the
+# same key. Provider API keys already encrypted with it can no longer be decrypted, which is
+# nothing on an image that was never used, and exactly why this is not something a running host
+# should ever do.
 #
-#   * Anything in the credentials file. The dashboard owns no key there; every one belongs to a
-#     sibling, and removing it is the sibling's --clear.
-#   * wazuh_ai_assistant.encryptionKey. It is a secret the dashboard owns, generated by the
-#     maintainer scripts, not a credential this ladder resolves.
+# What it deliberately does NOT remove: anything in the credentials file. The dashboard owns no
+# key there; every one belongs to a sibling, and removing it is the sibling's --clear.
 # -----------------------------------------------------------------------------------------
 
 dashboard_is_running() {
@@ -553,7 +620,7 @@ clear_credentials() {
     fi
 
     keystore_load
-    for _cc_entry in ${LADDER_ENTRIES}; do
+    for _cc_entry in ${LADDER_ENTRIES} ${OWNED_ENTRIES}; do
         keystore_has "${_cc_entry}" || continue
         keystore remove "${_cc_entry}" </dev/null >/dev/null 2>&1
     done
@@ -563,7 +630,7 @@ clear_credentials() {
     # read back rather than inferred from exit codes.
     keystore_load
     _cc_left=""
-    for _cc_entry in ${LADDER_ENTRIES}; do
+    for _cc_entry in ${LADDER_ENTRIES} ${OWNED_ENTRIES}; do
         keystore_has "${_cc_entry}" && _cc_left="${_cc_left} ${_cc_entry}"
     done
     if [ -n "${_cc_left}" ]; then
@@ -571,7 +638,7 @@ clear_credentials() {
         return 1
     fi
 
-    log "removed ${LADDER_ENTRIES} from the keystore"
+    log "removed ${LADDER_ENTRIES} ${OWNED_ENTRIES} from the keystore"
     log "cleared; the next start resolves from nothing"
     return 0
 }
@@ -608,6 +675,12 @@ fi
 if ! config_resolves_wui; then
     resolve_consumed WAZUH_MANAGER_WUI_PASSWORD API_PASSWORD \
         wazuh_core.hosts.default.password
+fi
+
+# Owned, and only at install and start -- an upgrade adds no secret. Its result never counts
+# towards the verdict: the AI assistant is optional.
+if [ "${MODE}" = "install" ] || [ "${MODE}" = "prestart" ]; then
+    resolve_encryption_key || true
 fi
 
 # The installer has no opinion about whether the component can run: no warning, no failure, no

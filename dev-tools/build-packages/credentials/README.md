@@ -24,7 +24,13 @@ keystore:
 | `WAZUH_INDEXER_KIBANASERVER_PASSWORD` | `INDEXER_PASSWORD` | `kibanaserver` | Indexer | `opensearch.username` (`kibanaserver`), `opensearch.password` |
 | `WAZUH_MANAGER_WUI_PASSWORD`          | `API_PASSWORD`     | `wazuh-wui`    | Manager | `wazuh_core.hosts.default.password`                       |
 
-For each key, the ladder is:
+The dashboard also owns one secret of its own, `wazuh_ai_assistant.encryptionKey`, which the AI
+assistant encrypts the provider API keys it stores with. It is generated (32 random bytes, base64)
+straight into the keystore by `--install` and `--prestart` when neither the keystore nor
+`opensearch_dashboards.yml` has it, never by `--upgrade`, and never published. An existing key is
+never replaced. Failing to generate it is a warning only: the AI assistant is optional.
+
+For each consumed key, the ladder is:
 
 0. The keystore entry already exists, or the setting is configured in
    `opensearch_dashboards.yml`: resolved. Nothing is written, so the yml keeps authority (the
@@ -45,7 +51,7 @@ For each key, the ladder is:
 | `--install`  | fresh `postinst` / `%post`               | always `0`, no warning                         |
 | `--upgrade`  | `postinst` / `%post` on upgrade          | always `0`, no warning                         |
 | `--prestart` | `ExecStartPre=+` and the SysV init start | `1` naming every unresolved or invalid key     |
-| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above |
+| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above and the AI assistant key |
 
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
 (`0600 root:root`) when the dashboard is the first Wazuh package on the host.

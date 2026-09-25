@@ -174,35 +174,11 @@ fi
 setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
 rm -f /usr/share/wazuh-dashboard/VERSION
 
-if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
-  runuser %{USER} --shell="/bin/bash" --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore create" > /dev/null 2>&1
-  WD_ENC_KEY=""
-  if command -v openssl > /dev/null 2>&1; then
-    WD_ENC_KEY=$(openssl rand -base64 32 2>/dev/null | tr -d '\n') || WD_ENC_KEY=""
-  fi
-  if [ -z "${WD_ENC_KEY}" ] && [ -r /dev/urandom ] && command -v base64 > /dev/null 2>&1; then
-    WD_ENC_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '\n') || WD_ENC_KEY=""
-  fi
-  if [ -z "${WD_ENC_KEY}" ] && [ -x %{INSTALL_DIR}/node/bin/node ]; then
-    WD_ENC_KEY=$(%{INSTALL_DIR}/node/bin/node -e \
-      "process.stdout.write(require('crypto').randomBytes(32).toString('base64'))" 2>/dev/null) || WD_ENC_KEY=""
-  fi
-  # base64 of exactly 32 raw bytes is always 44 characters (with one '=' pad)
-  if [ ${#WD_ENC_KEY} -eq 44 ]; then
-    echo "${WD_ENC_KEY}" | runuser %{USER} --shell="/bin/bash" \
-      --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore add wazuh_ai_assistant.encryptionKey --stdin" \
-      > /dev/null 2>&1 \
-      || echo "wazuh-dashboard: warning: failed to store wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
-  else
-    echo "wazuh-dashboard: warning: unable to generate wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
-  fi
-  unset WD_ENC_KEY
-  true
-fi
-
-# Resolve the consumed kibanaserver and wazuh-wui passwords into the keystore.
-# An unresolved credential is not an error at install time: the unit's
-# pre-start step runs the resolver again and refuses to start if needed.
+# Create the keystore if needed, resolve the consumed kibanaserver and
+# wazuh-wui passwords into it and, on a fresh install, generate the AI
+# assistant encryption key. An unresolved credential is not an error at
+# install time: the unit's pre-start step runs the resolver again and
+# refuses to start if needed.
 # $1 is 1 on a fresh install and 2 or more on an upgrade.
 if [ $1 = 1 ]; then
   %{INSTALL_DIR}/bin/resolve-credentials --install || true
