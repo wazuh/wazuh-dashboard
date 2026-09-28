@@ -11,8 +11,10 @@ manager: all three resolve against the same `/etc/wazuh/credentials.env`, so all
 on it exactly. It is owned by
 [wazuh-installation-assistant](https://github.com/wazuh/wazuh-installation-assistant) under
 `credentials_lib/`, and `base/base-builder.sh` downloads it at package build time into
-`lib/wazuh-credentials.sh` (`root:root 0640`). It is not committed here, because a copy in this
-repository is a copy that can drift.
+`lib/wazuh-credentials.sh` (`root:wazuh-dashboard 0640`, in a `root:wazuh-dashboard 0750` `lib/`).
+It is not committed here, because a copy in this repository is a copy that can drift. The service
+user cannot write it, but must be able to read `lib/`: at startup OSD's i18n loader lists every
+top-level directory of the installation root and exits on `EACCES`.
 
 ## What the dashboard resolves
 

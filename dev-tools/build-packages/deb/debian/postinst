@@ -25,10 +25,12 @@ configure)
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"
     chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"
     # The resolver and its shared library run as root from ExecStartPre=+, so the
-    # service user must not own them
+    # service user must not own them. lib/ stays readable by the service group:
+    # OSD's i18n loader lists every top-level directory of the install root at
+    # startup and exits on EACCES
     chown root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
-    chown -R root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/lib
+    chown -R root:"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/lib
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/lib
     chmod 640 "${TARGET_DIR}""${INSTALLATION_DIR}"/lib/wazuh-credentials.sh
     if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
