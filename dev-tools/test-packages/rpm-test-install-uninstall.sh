@@ -1,15 +1,15 @@
 #!/bin/bash
-# Runs inside the systemd container started by run_in_systemd_container.sh.
+# Runs as root on the allocated RPM test machine, next to the package copied there.
 # Tests that the package installs, the service starts, and the package uninstalls cleanly.
 #
-# Usage: deb-test-install-uninstall.sh <package-name>
+# Usage: rpm-test-install-uninstall.sh <package-path>
 
 set -euo pipefail
 
 PACKAGE_NAME="$1"
 
-dpkg -i "/test-packages/deb/${PACKAGE_NAME}"
-if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
+rpm -i "${PACKAGE_NAME}"
+if rpm -q wazuh-dashboard &>/dev/null; then
   echo "Package installed"
 else
   echo "Package not installed"
@@ -99,8 +99,9 @@ else
   exit 1
 fi
 
-apt-get remove --purge wazuh-dashboard -y
-if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
+yum remove -y wazuh-dashboard
+rm -rf /var/lib/wazuh-dashboard/ /usr/share/wazuh-dashboard/ /etc/wazuh-dashboard/ /etc/wazuh/
+if rpm -q wazuh-dashboard &>/dev/null; then
   echo "Package not uninstalled"
   exit 1
 else
