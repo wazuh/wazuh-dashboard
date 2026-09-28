@@ -10,28 +10,40 @@
 # wazuh-dashboard package on a disposable VM, and prints a summary. Works on Debian-based (.deb)
 # and RPM-based (.rpm) hosts: the family is taken from the package extension.
 #
-# THE HOST IS WIPED AFTER EVERY CASE: the package is purged and /etc/wazuh-dashboard,
+# Case IDs say what they need:
+#   Dnn  dashboard only (--dashboard; D19/D20 also need --dashboard-previous).
+#   Fnn  FULL setup: the dashboard with wazuh-indexer and wazuh-manager (--manager and --indexer),
+#        installed in different orders. Only the dashboard's behaviour is asserted; what the
+#        indexer and the manager do is recorded as [INFO]. With only --dashboard, no F case runs.
+#
+# THE HOST IS WIPED AFTER EVERY CASE: the packages are purged and /etc/wazuh-dashboard,
 # /usr/share/wazuh-dashboard, /etc/wazuh (shared credentials file and CA) and the wazuh-dashboard
-# user are removed. Run it only on a throwaway VM.
+# user are removed -- and, when their packages were given, everything of wazuh-manager and
+# wazuh-indexer. Run it only on a throwaway VM.
 #
 # Usage:
-#   sudo ./vm-test-matrix.sh --package <wazuh-dashboard.deb|.rpm> [options]
-#   sudo ./vm-test-matrix.sh --clean-only [--package <file>] [--force]
+#   sudo ./vm-test-matrix.sh --dashboard <wazuh-dashboard.deb|.rpm> [options]
+#   sudo ./vm-test-matrix.sh --dashboard <file> --manager <file> --indexer <file> [options]
+#   sudo ./vm-test-matrix.sh --clean-only [--dashboard <file>] [--manager <file> --indexer <file>] [--force]
 #
 # Options:
-#   --package <file>      Package under test (required unless --list or --clean-only).
-#   --previous <file>     Older 5.x package of the same family; enables the upgrade cases.
-#   --cases <ids>         Comma-separated case IDs to run (default: all), e.g. C01,C03.
+#   --dashboard <file>    Dashboard package under test (required unless --list or --clean-only).
+#   --dashboard-previous <file>
+#                         Older 5.x dashboard package of the same family; enables the upgrade cases.
+#   --manager <file>      wazuh-manager package; with --indexer, enables the FULL (F) cases.
+#   --indexer <file>      wazuh-indexer package; with --manager, enables the FULL (F) cases.
+#   --cases <ids>         Comma-separated case IDs to run (default: all), e.g. D01,F03.
 #   --list                List the cases and exit.
 #   --clean-only          Only wipe the host (the same cleanup every case ends with) and exit; no
-#                         case runs. The family is taken from --package when given, else from the
-#                         host's package manager.
+#                         case runs. The family is taken from the packages when given, else from
+#                         the host's package manager. wazuh-manager and wazuh-indexer are purged
+#                         too only with --manager / --indexer (the files are not read) or --force.
 #   --log-dir <dir>       Where per-case logs and the summary go (default: ./vm-test-results-<ts>).
 #   --start-timeout <s>   Seconds to wait for the service to become active / serve TLS (default 180).
 #   --skip-tls            Do not check that the dashboard serves its certificate over HTTPS.
 #   --verbose             Also print each case's log to the console.
-#   --force               Run even when wazuh-indexer or wazuh-manager is installed (they will
-#                         lose /etc/wazuh).
+#   --force               Run even when wazuh-indexer or wazuh-manager is installed although
+#                         their packages were not given; they are purged with everything else.
 #
 # Exit status: 0 when no case failed, 1 otherwise, 2 on a usage or pre-flight error.
 
@@ -53,8 +65,13 @@ readonly ENV_FILE="/etc/default/${NAME}"
 readonly KIBANA_PASS="TestKibana1Password"
 readonly WUI_PASS="TestWui1Password"
 
-PACKAGE=""
-PREVIOUS=""
+DASHBOARD_PKG=""
+DASHBOARD_PREV_PKG=""
+MANAGER_PKG=""
+INDEXER_PKG=""
+# 1 when cleanup may purge wazuh-manager / wazuh-indexer too: their packages were given, or --force.
+SIBLINGS_MANAGED=0
+CASE_STARTED=0
 SELECTED=""
 LIST_ONLY=0
 CLEAN_ONLY=0
@@ -66,31 +83,39 @@ FORCE=0
 FAMILY=""
 
 # -----------------------------------------------------------------------------------------
-# Case registry: ID | title | function | needs --previous
+# Case registry: ID | title | function | needs (dashboard, dashboard-previous or full)
 # -----------------------------------------------------------------------------------------
 
 CASES=(
-  "C01|Fresh install on an empty host|case_fresh_install|0"
-  "C02|Start without credentials is refused|case_start_without_credentials|0"
-  "C03|Credentials in credentials.env before install|case_credentials_before_install|0"
-  "C04|Credentials added after install|case_credentials_after_install|0"
-  "C05|Credentials from the unit environment (aliases)|case_credentials_env_aliases|0"
-  "C06|Environment wins over credentials.env|case_env_beats_file|0"
-  "C07|Values the keystore would not store verbatim|case_invalid_values|0"
-  "C08|Refused credentials file (bad mode)|case_refused_credentials_file|0"
-  "C09|Keystore wins over credentials.env on restart|case_keystore_wins|0"
-  "C10|Password configured in opensearch_dashboards.yml|case_yml_password|0"
-  "C11|Existing shared CA with key is reused|case_existing_ca|0"
-  "C12|Anchor-only shared CA|case_anchor_only_ca|0"
-  "C13|Operator-supplied certificate pair is kept|case_operator_pair|0"
-  "C14|Partial certificate pair is refused|case_partial_pair|0"
-  "C15|Custom SANs and node name|case_custom_sans|0"
-  "C16|resolve-credentials --clear|case_clear|0"
-  "C17|Package removal / purge cleans the host|case_remove|0"
-  "C18|Reinstall after removal mints a new CA|case_reinstall|0"
-  "C19|Upgrade while running|case_upgrade_running|1"
-  "C20|Upgrade while stopped|case_upgrade_stopped|1"
-  "C21|No wazuh_core default host: wazuh-wui not needed|case_no_wazuh_host|0"
+  "D01|Fresh install on an empty host|case_fresh_install|dashboard"
+  "D02|Start without credentials is refused|case_start_without_credentials|dashboard"
+  "D03|Credentials in credentials.env before install|case_credentials_before_install|dashboard"
+  "D04|Credentials added after install|case_credentials_after_install|dashboard"
+  "D05|Credentials from the unit environment (aliases)|case_credentials_env_aliases|dashboard"
+  "D06|Environment wins over credentials.env|case_env_beats_file|dashboard"
+  "D07|Values the keystore would not store verbatim|case_invalid_values|dashboard"
+  "D08|Refused credentials file (bad mode)|case_refused_credentials_file|dashboard"
+  "D09|Keystore wins over credentials.env on restart|case_keystore_wins|dashboard"
+  "D10|Password configured in opensearch_dashboards.yml|case_yml_password|dashboard"
+  "D11|Existing shared CA with key is reused|case_existing_ca|dashboard"
+  "D12|Anchor-only shared CA|case_anchor_only_ca|dashboard"
+  "D13|Operator-supplied certificate pair is kept|case_operator_pair|dashboard"
+  "D14|Partial certificate pair is refused|case_partial_pair|dashboard"
+  "D15|Custom SANs and node name|case_custom_sans|dashboard"
+  "D16|resolve-credentials --clear|case_clear|dashboard"
+  "D17|Package removal / purge cleans the host|case_remove|dashboard"
+  "D18|Reinstall after removal mints a new CA|case_reinstall|dashboard"
+  "D19|Upgrade while running|case_upgrade_running|dashboard-previous"
+  "D20|Upgrade while stopped|case_upgrade_stopped|dashboard-previous"
+  "D21|No wazuh_core default host: wazuh-wui not needed|case_no_wazuh_host|dashboard"
+  "F01|Install order: indexer, manager, dashboard|case_order_imd|full"
+  "F02|Install order: indexer, dashboard, manager|case_order_idm|full"
+  "F03|Install order: manager, indexer, dashboard|case_order_mid|full"
+  "F04|Install order: manager, dashboard, indexer|case_order_mdi|full"
+  "F05|Install order: dashboard, indexer, manager|case_order_dim|full"
+  "F06|Install order: dashboard, manager, indexer|case_order_dmi|full"
+  "F07|Dashboard purge with the manager and indexer left|case_full_remove|full"
+  "F08|Dashboard reinstall with the manager and indexer|case_full_reinstall|full"
 )
 
 # -----------------------------------------------------------------------------------------
@@ -204,6 +229,29 @@ pkg_file_version() {
   case "${FAMILY}" in
     deb) dpkg-deb -f "$1" Version 2>/dev/null ;;
     rpm) rpm -qp --qf '%{VERSION}-%{RELEASE}' "$1" 2>/dev/null ;;
+  esac
+}
+
+# The same operations for any package name (the siblings), $1 the package name.
+pkgname_present() {
+  case "${FAMILY}" in
+    deb)
+      local status
+      status=$(dpkg-query -W -f='${db:Status-Status}' "$1" 2>/dev/null) || return 1
+      [ -n "${status}" ] && [ "${status}" != "not-installed" ]
+      ;;
+    rpm) rpm -q --quiet "$1" ;;
+  esac
+}
+
+pkgname_remove() {
+  case "${FAMILY}" in
+    deb) DEBIAN_FRONTEND=noninteractive apt-get purge -y "$1" ;;
+    rpm)
+      local pm
+      pm=$(pkg_manager_rpm)
+      if [ "${pm}" = rpm ]; then rpm -e "$1"; else "${pm}" remove -y "$1"; fi
+      ;;
   esac
 }
 
@@ -407,7 +455,38 @@ restore_ca() {
 # Host cleanup
 # -----------------------------------------------------------------------------------------
 
+readonly MANAGER="wazuh-manager"
+readonly INDEXER="wazuh-indexer"
+readonly MANAGER_DIR="/var/wazuh-manager"
+readonly MANAGER_CA="${MANAGER_DIR}/etc/certs/root-ca.pem"
+readonly INDEXER_CA="/etc/wazuh-indexer/certs/root-ca.pem"
+readonly INDEXER_SECURITY_INIT="/usr/share/wazuh-indexer/bin/indexer-security-init.sh"
+
+# Purges the manager and the indexer and whatever their packages leave behind.
+clean_siblings() {
+  local sib
+  for sib in "${MANAGER}" "${INDEXER}"; do
+    systemctl stop "${sib}" >/dev/null 2>&1 || true
+    systemctl disable "${sib}" >/dev/null 2>&1 || true
+    systemctl reset-failed "${sib}" >/dev/null 2>&1 || true
+    if pkgname_present "${sib}"; then
+      pkgname_remove "${sib}" >/dev/null 2>&1 || true
+      if [ "${FAMILY}" = deb ] && pkgname_present "${sib}"; then
+        dpkg --purge --force-all "${sib}" >/dev/null 2>&1 || true
+      fi
+      if [ "${FAMILY}" = rpm ] && pkgname_present "${sib}"; then
+        rpm -e --noscripts "${sib}" >/dev/null 2>&1 || true
+      fi
+    fi
+    if id "${sib}" >/dev/null 2>&1; then userdel -f "${sib}" >/dev/null 2>&1 || true; fi
+    if getent group "${sib}" >/dev/null 2>&1; then groupdel "${sib}" >/dev/null 2>&1 || true; fi
+  done
+  rm -rf "${MANAGER_DIR}" /etc/wazuh-indexer /usr/share/wazuh-indexer /var/lib/wazuh-indexer \
+    /var/log/wazuh-indexer /run/wazuh-indexer
+}
+
 clean_host() {
+  if [ "${SIBLINGS_MANAGED}" -eq 1 ]; then clean_siblings; fi
   systemctl stop "${NAME}" >/dev/null 2>&1 || true
   systemctl disable "${NAME}" >/dev/null 2>&1 || true
   systemctl reset-failed "${NAME}" >/dev/null 2>&1 || true
@@ -440,6 +519,16 @@ clean_host() {
   done
   id "${NAME}" >/dev/null 2>&1 && dirty="${dirty} user"
   getent group "${NAME}" >/dev/null 2>&1 && dirty="${dirty} group"
+  if [ "${SIBLINGS_MANAGED}" -eq 1 ]; then
+    local sib
+    for sib in "${MANAGER}" "${INDEXER}"; do
+      pkgname_present "${sib}" && dirty="${dirty} ${sib}"
+      id "${sib}" >/dev/null 2>&1 && dirty="${dirty} ${sib}-user"
+    done
+    for p in "${MANAGER_DIR}" /etc/wazuh-indexer /usr/share/wazuh-indexer; do
+      absent "${p}" || dirty="${dirty} ${p}"
+    done
+  fi
   if [ -n "${dirty}" ]; then
     echo "  [FAIL] host not clean after cleanup:${dirty}"
     return 1
@@ -453,7 +542,7 @@ clean_host() {
 
 case_fresh_install() {
   step "Install on an empty host"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   check "user ${NAME} exists" id "${NAME}"
   check "resolver is root:root 750" perm_is "${RESOLVER}" root:root:750
   check "shared library is root:root 640" perm_is "${INSTALL_DIR}/lib/wazuh-credentials.sh" root:root:640
@@ -481,7 +570,7 @@ case_fresh_install() {
 }
 
 case_start_without_credentials() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   systemctl enable "${NAME}" >/dev/null 2>&1
   step "Start without peer credentials"
   check "systemctl start is refused" svc_start_refused
@@ -496,7 +585,7 @@ case_start_without_credentials() {
 case_credentials_before_install() {
   step "Credentials published before the dashboard is installed"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   check "install stored opensearch.password" ks_has opensearch.password
   check "install stored opensearch.username" ks_has opensearch.username
   check "install stored wazuh_core.hosts.default.password" ks_has wazuh_core.hosts.default.password
@@ -509,7 +598,7 @@ case_credentials_before_install() {
 }
 
 case_credentials_after_install() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   step "First start without credentials"
   check "systemctl start is refused" svc_start_refused
   step "The indexer and the manager publish their credentials later"
@@ -520,7 +609,7 @@ case_credentials_after_install() {
 }
 
 case_credentials_env_aliases() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   step "Credentials through the unit's EnvironmentFile, wazuh-docker aliases"
   printf 'INDEXER_PASSWORD=%s\nAPI_PASSWORD=%s\n' "${KIBANA_PASS}" "${WUI_PASS}" >>"${ENV_FILE}"
   local ts
@@ -541,7 +630,7 @@ case_credentials_env_aliases() {
 }
 
 case_env_beats_file() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   step "Valid values in the environment, an invalid one in credentials.env"
   write_creds "123456789e10" "${WUI_PASS}"
   printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\n' "${KIBANA_PASS}" >>"${ENV_FILE}"
@@ -551,7 +640,7 @@ case_env_beats_file() {
 }
 
 case_invalid_values() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   local value
   for value in '123456789e10' 'true' '"Quoted1Password"' '[1]' ' Leading1Password' \
     'Trailing1Password '; do
@@ -576,7 +665,7 @@ case_invalid_values() {
 }
 
 case_refused_credentials_file() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   step "credentials.env readable by everyone (0644)"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}" 0644
   check "systemctl start is refused" svc_start_refused
@@ -592,7 +681,7 @@ case_refused_credentials_file() {
 
 case_keystore_wins() {
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   check "systemctl start succeeds" svc_start
   check_running
   step "credentials.env changes to a value that would be invalid; restart"
@@ -606,7 +695,7 @@ case_keystore_wins() {
 }
 
 case_yml_password() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   step "opensearch.password set by the operator in opensearch_dashboards.yml"
   printf '\nopensearch.password: YmlKibana1Password\n' >>"${CONFIG_FILE}"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
@@ -622,7 +711,7 @@ case_yml_password() {
 
 case_existing_ca() {
   step "Mint a CA with a first install, then wipe everything but the CA"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   save_minted_ca
   local ca_fp
   ca_fp=$(fingerprint "${CA_DIR}/root-ca.pem")
@@ -630,7 +719,7 @@ case_existing_ca() {
   restore_ca root-ca.pem root-ca.key
 
   step "Install with the shared CA already present"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   check "install reuses the shared CA" contains "$(cat "${WORK}/install.out")" "reusing the shared root CA"
   check "shared CA is unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
   check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
@@ -643,13 +732,13 @@ case_existing_ca() {
 
 case_anchor_only_ca() {
   step "Mint a CA, then keep only its certificate (a CA managed elsewhere)"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   save_minted_ca
   clean_host
   restore_ca root-ca.pem
 
   step "Install with an anchor-only shared CA"
-  check "package installs despite the missing CA key" pkg_install "${PACKAGE}"
+  check "package installs despite the missing CA key" pkg_install "${DASHBOARD_PKG}"
   local out
   out=$(cat "${WORK}/install.out")
   check "install reports the CA cannot issue" contains "${out}" "has no private key"
@@ -668,7 +757,7 @@ case_operator_pair() {
   cert_sha=$(sha "${CERTS_DIR}/dashboard.pem")
   key_sha=$(sha "${CERTS_DIR}/dashboard-key.pem")
   ca_sha=$(sha "${CERTS_DIR}/root-ca.pem")
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   check "install keeps the existing pair" \
     contains "$(cat "${WORK}/install.out")" "already holds a certificate pair"
   check "dashboard.pem unchanged" test "$(sha "${CERTS_DIR}/dashboard.pem")" = "${cert_sha}"
@@ -680,7 +769,7 @@ case_operator_pair() {
 case_partial_pair() {
   step "Only dashboard.pem is staged before installing"
   stage_operator_certs cert-only
-  check "package installs" pkg_install "${PACKAGE}"
+  check "package installs" pkg_install "${DASHBOARD_PKG}"
   check "install refuses to complete the pair" \
     contains "$(cat "${WORK}/install.out")" "refusing to complete it"
   check "no dashboard-key.pem created" absent "${CERTS_DIR}/dashboard-key.pem"
@@ -691,7 +780,7 @@ case_custom_sans() {
   step "Install with WAZUH_DASHBOARD_CERT_SANS and WAZUH_DASHBOARD_NODE_NAME"
   export WAZUH_DASHBOARD_CERT_SANS="DNS:dash.test,IP:10.9.8.7"
   export WAZUH_DASHBOARD_NODE_NAME="dash-node"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   unset WAZUH_DASHBOARD_CERT_SANS WAZUH_DASHBOARD_NODE_NAME
   local sans subject count
   sans=$(openssl x509 -in "${CERTS_DIR}/dashboard.pem" -noout -text |
@@ -710,7 +799,7 @@ case_custom_sans() {
 
 case_clear() {
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   check "systemctl start succeeds" svc_start
   check_running
   step "--clear while the dashboard runs"
@@ -741,7 +830,7 @@ case_clear() {
 
 case_remove() {
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   check "systemctl start succeeds" svc_start
   check_running
   step "Remove the package (${FAMILY}: $([ "${FAMILY}" = deb ] && echo purge || echo erase))"
@@ -763,7 +852,7 @@ case_remove() {
 }
 
 case_reinstall() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   local ca_fp
   ca_fp=$(fingerprint "${CA_DIR}/root-ca.pem")
   step "Remove with the package's own scripts, then reinstall"
@@ -772,7 +861,7 @@ case_reinstall() {
   # rpm may leave config files behind (.rpmsave); a reinstall must start from its own defaults.
   [ "${FAMILY}" = rpm ] && rm -rf "${CONFIG_DIR}"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   check "a new shared CA was minted" test "$(fingerprint "${CA_DIR}/root-ca.pem")" != "${ca_fp}"
   check "dashboard.pem chains to the new CA" \
     openssl verify -purpose sslserver -CAfile "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/dashboard.pem"
@@ -780,12 +869,12 @@ case_reinstall() {
   check_running
 }
 
-# Installs --previous with credentials and makes sure it has certificates (an older 5.x build may
+# Installs --dashboard-previous with credentials and makes sure it has certificates (an older 5.x build may
 # not issue them), leaving it stopped.
 install_previous() {
-  step "Install the previous package ($(pkg_file_version "${PREVIOUS}"))"
+  step "Install the previous package ($(pkg_file_version "${DASHBOARD_PREV_PKG}"))"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
-  install_ok "${PREVIOUS}"
+  install_ok "${DASHBOARD_PREV_PKG}"
   if [ ! -f "${CERTS_DIR}/dashboard.pem" ]; then
     info "the previous package issued no certificates; staging an operator pair"
     rm -rf "${CERTS_DIR}"
@@ -801,9 +890,9 @@ case_upgrade_running() {
   local cert_sha key_sha expected
   cert_sha=$(sha "${CERTS_DIR}/dashboard.pem")
   key_sha=$(sha "${CERTS_DIR}/dashboard-key.pem")
-  expected=$(pkg_file_version "${PACKAGE}")
+  expected=$(pkg_file_version "${DASHBOARD_PKG}")
   step "Upgrade to ${expected} while running"
-  check "upgrade succeeds" pkg_upgrade "${PACKAGE}"
+  check "upgrade succeeds" pkg_upgrade "${DASHBOARD_PKG}"
   check "installed version is ${expected}" test "$(pkg_installed_version)" = "${expected}"
   check_running
   check "dashboard.pem unchanged by the upgrade" test "$(sha "${CERTS_DIR}/dashboard.pem")" = "${cert_sha}"
@@ -814,9 +903,9 @@ case_upgrade_running() {
 case_upgrade_stopped() {
   install_previous
   local expected
-  expected=$(pkg_file_version "${PACKAGE}")
+  expected=$(pkg_file_version "${DASHBOARD_PKG}")
   step "Upgrade to ${expected} while stopped"
-  check "upgrade succeeds" pkg_upgrade "${PACKAGE}"
+  check "upgrade succeeds" pkg_upgrade "${DASHBOARD_PKG}"
   check "installed version is ${expected}" test "$(pkg_installed_version)" = "${expected}"
   sleep 5
   check_not "service was not started by the upgrade" systemctl is-active --quiet "${NAME}"
@@ -825,7 +914,7 @@ case_upgrade_stopped() {
 }
 
 case_no_wazuh_host() {
-  install_ok "${PACKAGE}"
+  install_ok "${DASHBOARD_PKG}"
   # wazuh_core.hosts itself is required by the plugin's config schema (the dashboard exits with a
   # fatal ValidationError without it), so the host is renamed rather than removed, and carries its
   # own password in the yml.
@@ -841,6 +930,271 @@ case_no_wazuh_host() {
   check_not "no wazuh_core password written" ks_has wazuh_core.hosts.default.password
   check "systemctl start succeeds" svc_start
   check_running
+}
+
+# -----------------------------------------------------------------------------------------
+# FULL setup: the dashboard with the manager and the indexer
+#
+# Only the dashboard is asserted. The siblings are installed with a check (a case means nothing
+# without them), but whether they start is recorded as [INFO]: the manager does not start without
+# WAZUH_INDEXER_MANAGER_PASSWORD, and the indexer publishes no key and uses its own CA -- theirs to
+# fix. The dashboard is expected to follow credentials.env exactly: what is published there is
+# resolved, what is not is named, and it starts only when both of its keys are resolved.
+# -----------------------------------------------------------------------------------------
+
+has_key() { [ -f "${CREDENTIALS_FILE}" ] && grep -Eq "^(export )?$1=" "${CREDENTIALS_FILE}"; }
+
+# sib_install <file> <name> [VAR=value...]: installs a sibling package. Its output goes to the log
+# and to ${WORK}/install-<name>.out; the dashboard's install.out is left alone.
+sib_install() {
+  local file="$1" name="$2" rc=0
+  shift 2
+  case "${FAMILY}" in
+    deb) env "$@" dpkg -i "${file}" >"${WORK}/install-${name}.out" 2>&1 || rc=$? ;;
+    rpm) env "$@" rpm -ivh "${file}" >"${WORK}/install-${name}.out" 2>&1 || rc=$? ;;
+  esac
+  cat "${WORK}/install-${name}.out"
+  return "${rc}"
+}
+
+# Installs the indexer with its demo certificates, starts it, waits for 9200 and initialises its
+# security index. Everything after the install is [INFO].
+indexer_up() {
+  step "Install and start ${INDEXER}"
+  check "${INDEXER} installs" sib_install "${INDEXER_PKG}" "${INDEXER}" GENERATE_CERTS=true
+  if has_key WAZUH_INDEXER_KIBANASERVER_PASSWORD; then
+    info "${INDEXER} published WAZUH_INDEXER_KIBANASERVER_PASSWORD"
+  else
+    info "${INDEXER} did not publish WAZUH_INDEXER_KIBANASERVER_PASSWORD"
+  fi
+  systemctl daemon-reload
+  if timeout 200 systemctl enable --now "${INDEXER}" >/dev/null 2>&1; then
+    info "${INDEXER} started"
+  else
+    info "${INDEXER} did not start: $(systemctl is-active "${INDEXER}" 2>/dev/null)"
+    return 0
+  fi
+  local deadline=$((SECONDS + START_TIMEOUT)) code="000"
+  while [ "${SECONDS}" -lt "${deadline}" ]; do
+    code=$(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1:9200 2>/dev/null || true)
+    [ "${code}" != "000" ] && break
+    sleep 3
+  done
+  info "${INDEXER} on 9200 answers HTTP ${code}"
+  if [ -x "${INDEXER_SECURITY_INIT}" ] &&
+     timeout 300 "${INDEXER_SECURITY_INIT}" >"${WORK}/indexer-security-init.out" 2>&1; then
+    info "indexer-security-init.sh succeeded"
+  else
+    info "indexer-security-init.sh failed or is missing: $(tail -n 1 "${WORK}/indexer-security-init.out" 2>/dev/null)"
+  fi
+}
+
+# Installs the manager and tries to start it; the start is [INFO].
+manager_up() {
+  step "Install and start ${MANAGER}"
+  check "${MANAGER} installs" sib_install "${MANAGER_PKG}" "${MANAGER}"
+  if has_key WAZUH_MANAGER_WUI_PASSWORD; then
+    info "${MANAGER} published WAZUH_MANAGER_WUI_PASSWORD"
+  else
+    info "${MANAGER} did not publish WAZUH_MANAGER_WUI_PASSWORD"
+  fi
+  systemctl daemon-reload
+  local ts
+  ts=$(date +%s)
+  if timeout 120 systemctl start "${MANAGER}" >/dev/null 2>&1; then
+    info "${MANAGER} started"
+  else
+    info "${MANAGER} did not start:"
+    journalctl -u "${MANAGER}" --since "@${ts}" --no-pager 2>/dev/null |
+      grep -E 'MISSING|INVALID|Unresolved|ERROR' | tail -n 5 | sed 's/^/  [INFO]   /' || true
+  fi
+}
+
+# Installs the dashboard. It must reuse a shared CA that has its key, and mint one otherwise.
+DASHBOARD_CA_EXPECTED=""
+dashboard_install() {
+  step "Install ${NAME}"
+  if [ -f "${CA_DIR}/root-ca.pem" ] && [ -f "${CA_DIR}/root-ca.key" ]; then
+    DASHBOARD_CA_EXPECTED="reusing the shared root CA"
+  else
+    DASHBOARD_CA_EXPECTED="created the shared root CA"
+  fi
+  install_ok "${DASHBOARD_PKG}"
+  check "the install log says: ${DASHBOARD_CA_EXPECTED}" \
+    contains "$(cat "${WORK}/install.out")" "${DASHBOARD_CA_EXPECTED}"
+  check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
+  systemctl enable "${NAME}" >/dev/null 2>&1 || true
+}
+
+# expect_dashboard <label>: the pre-start verdict and the start outcome must match what
+# credentials.env holds at this moment.
+expect_dashboard() {
+  local label="$1" key missing=""
+  step "Dashboard ${label}"
+  for key in WAZUH_INDEXER_KIBANASERVER_PASSWORD WAZUH_MANAGER_WUI_PASSWORD; do
+    if has_key "${key}"; then
+      info "${key} is in credentials.env: expected resolved"
+    else
+      info "${key} is not in credentials.env: expected MISSING"
+      missing="${missing} ${key}"
+    fi
+  done
+  prestart
+  check_not "no INVALID key" contains "${PRE_OUT}" "INVALID "
+  check_not "credentials file not REFUSED" contains "${PRE_OUT}" "REFUSED "
+  for key in WAZUH_INDEXER_KIBANASERVER_PASSWORD WAZUH_MANAGER_WUI_PASSWORD; do
+    case " ${missing} " in
+      *" ${key} "*) check "reports MISSING ${key}" contains "${PRE_OUT}" "MISSING ${key}" ;;
+      *) check_not "does not report MISSING ${key}" contains "${PRE_OUT}" "MISSING ${key}" ;;
+    esac
+  done
+  case " ${missing} " in
+    *" WAZUH_MANAGER_WUI_PASSWORD "*) ;;
+    *) check "wazuh_core.hosts.default.password is in the keystore" ks_has wazuh_core.hosts.default.password ;;
+  esac
+  case " ${missing} " in
+    *" WAZUH_INDEXER_KIBANASERVER_PASSWORD "*) ;;
+    *) check "opensearch.password is in the keystore" ks_has opensearch.password ;;
+  esac
+  if [ -z "${missing}" ]; then
+    check "prestart exits 0" prestart_rc_is 0
+    check "systemctl start succeeds" svc_start
+    check_running
+  else
+    check "prestart exits 1" prestart_rc_is 1
+    check "systemctl start is refused" svc_start_refused
+  fi
+}
+
+# [INFO] only: which CA each component trusts, whether the dashboard can reach the indexer, and
+# the state of the three services.
+full_info() {
+  step "Setup state"
+  local f conn
+  for f in "${MANAGER_CA}" "${INDEXER_CA}"; do
+    if [ ! -f "${f}" ]; then
+      info "${f}: absent"
+    elif same_file "${CA_DIR}/root-ca.pem" "${f}"; then
+      info "${f}: the shared CA"
+    else
+      info "${f}: NOT the shared CA"
+    fi
+  done
+  if curl -s -o /dev/null --cacert "${CERTS_DIR}/root-ca.pem" https://127.0.0.1:9200 2>/dev/null; then
+    info "the indexer's TLS verifies against the dashboard's root-ca.pem"
+  else
+    info "the indexer's TLS does NOT verify against the dashboard's root-ca.pem (or it is down)"
+  fi
+  conn=$(journal_since "${CASE_STARTED}" | grep -cE 'ConnectionError|self.signed|unable to verify|certificate' || true)
+  info "dashboard journal lines about the indexer connection or certificates: ${conn:-0}"
+  for f in "${INDEXER}" "${MANAGER}" "${NAME}"; do
+    info "${f}: $(systemctl is-active "${f}" 2>/dev/null)"
+  done
+}
+
+# The kibanaserver password the indexer ships with, set the way an operator would when the indexer
+# did not publish it.
+readonly INDEXER_DEFAULT_KIBANA_PASS="kibanaserver"
+
+# run_order "<I|M|D> <I|M|D> <I|M|D>": installs the three in that order and checks the dashboard
+# after every step once it is installed; then supplies what is still missing as an operator would
+# and checks that the dashboard runs.
+run_order() {
+  local pkg installed_d=0 after=""
+  for pkg in $1; do
+    case "${pkg}" in
+      I) indexer_up; after="${after:+${after}, }indexer" ;;
+      M) manager_up; after="${after:+${after}, }manager" ;;
+      D) dashboard_install; installed_d=1; after="${after:+${after}, }dashboard" ;;
+    esac
+    if [ "${installed_d}" -eq 1 ]; then expect_dashboard "after installing: ${after}"; fi
+  done
+
+  step "Certificates"
+  check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
+  check "dashboard.pem chains to the shared CA" \
+    openssl verify -purpose sslserver -CAfile "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/dashboard.pem"
+  if [ -f "${MANAGER_CA}" ]; then
+    check "the manager's root-ca.pem is the same shared CA" same_file "${CA_DIR}/root-ca.pem" "${MANAGER_CA}"
+  else
+    info "the manager has no ${MANAGER_CA}"
+  fi
+
+  if ! has_key WAZUH_INDEXER_KIBANASERVER_PASSWORD; then
+    step "Operator supplies WAZUH_INDEXER_KIBANASERVER_PASSWORD (the indexer's default)"
+    printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\n' "${INDEXER_DEFAULT_KIBANA_PASS}" >>"${CREDENTIALS_FILE}"
+  fi
+  if ! has_key WAZUH_MANAGER_WUI_PASSWORD; then
+    step "Operator supplies WAZUH_MANAGER_WUI_PASSWORD"
+    printf 'WAZUH_MANAGER_WUI_PASSWORD=%s\n' "${WUI_PASS}" >>"${CREDENTIALS_FILE}"
+  fi
+  expect_dashboard "with every credential available"
+  full_info
+}
+
+case_order_imd() { run_order "I M D"; }
+case_order_idm() { run_order "I D M"; }
+case_order_mid() { run_order "M I D"; }
+case_order_mdi() { run_order "M D I"; }
+case_order_dim() { run_order "D I M"; }
+case_order_dmi() { run_order "D M I"; }
+
+# Installs the three without starting the siblings: removal and reinstall only need their files.
+install_all_quiet() {
+  step "Install ${INDEXER}, ${MANAGER} and ${NAME} (not started)"
+  check "${INDEXER} installs" sib_install "${INDEXER_PKG}" "${INDEXER}"
+  check "${MANAGER} installs" sib_install "${MANAGER_PKG}" "${MANAGER}"
+  dashboard_install
+}
+
+case_full_remove() {
+  install_all_quiet
+  local ca_fp wui_before=0
+  ca_fp=$(fingerprint "${CA_DIR}/root-ca.pem")
+  if has_key WAZUH_MANAGER_WUI_PASSWORD; then wui_before=1; fi
+  info "WAZUH_MANAGER_WUI_PASSWORD in credentials.env before the purge: ${wui_before}"
+  step "Purge ${NAME}, the manager and the indexer still installed"
+  check "${NAME} purge succeeds" pkg_remove
+  check_not "${NAME} no longer registered" pkg_present
+  check "${WAZUH_DIR} kept" test -d "${WAZUH_DIR}"
+  check "credentials.env kept" test -f "${CREDENTIALS_FILE}"
+  check "shared CA kept" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
+  check "shared CA key kept" test -f "${CA_DIR}/root-ca.key"
+  if [ "${wui_before}" -eq 1 ]; then
+    check "the manager's WAZUH_MANAGER_WUI_PASSWORD kept" has_key WAZUH_MANAGER_WUI_PASSWORD
+  fi
+
+  step "Purge the manager, then the indexer ([INFO]: last-package-out across the three)"
+  pkgname_remove "${MANAGER}" >/dev/null 2>&1 || info "${MANAGER} purge failed"
+  if absent "${WAZUH_DIR}"; then
+    info "after the manager purge: ${WAZUH_DIR} absent"
+  else
+    info "after the manager purge, left in ${WAZUH_DIR}: $(ls -A "${WAZUH_DIR}" | tr '\n' ' ')"
+  fi
+  pkgname_remove "${INDEXER}" >/dev/null 2>&1 || info "${INDEXER} purge failed"
+  if absent "${WAZUH_DIR}"; then
+    info "after the indexer purge: ${WAZUH_DIR} absent"
+  else
+    info "after the indexer purge, left in ${WAZUH_DIR}: $(ls -A "${WAZUH_DIR}" | tr '\n' ' ')"
+  fi
+}
+
+case_full_reinstall() {
+  install_all_quiet
+  local ca_fp
+  ca_fp=$(fingerprint "${CA_DIR}/root-ca.pem")
+  step "Purge and reinstall ${NAME}"
+  check "${NAME} purge succeeds" pkg_remove
+  dashboard_install
+  check "the reinstall reused the shared root CA" \
+    contains "$(cat "${WORK}/install.out")" "reusing the shared root CA"
+  check "shared CA unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
+  if has_key WAZUH_MANAGER_WUI_PASSWORD; then
+    check "wazuh-wui resolved again from credentials.env" \
+      contains "$(cat "${WORK}/install.out")" "stored wazuh_core.hosts.default.password in the keystore from ${CREDENTIALS_FILE}"
+  else
+    info "the manager did not publish WAZUH_MANAGER_WUI_PASSWORD; nothing to resolve again"
+  fi
 }
 
 # -----------------------------------------------------------------------------------------
@@ -869,11 +1223,11 @@ record() {
 }
 
 run_case() {
-  local id="$1" title="$2" fn="$3" needs_previous="$4"
+  local id="$1" title="$2" fn="$3" needs="$4"
   local log="${LOG_DIR}/${id}.log" rc started elapsed result
 
-  if [ "${needs_previous}" = 1 ] && [ -z "${PREVIOUS}" ]; then
-    echo "SKIP: needs --previous" >"${log}"
+  if [ "${needs}" = dashboard-previous ] && [ -z "${DASHBOARD_PREV_PKG}" ]; then
+    echo "SKIP: needs --dashboard-previous" >"${log}"
     record "${id}" "${title}" SKIP "-"
     return
   fi
@@ -886,9 +1240,11 @@ run_case() {
   started=${SECONDS}
   local started_epoch
   started_epoch=$(date +%s)
+  CASE_STARTED=${started_epoch}
   {
     echo "### ${id} ${title}"
-    echo "### $(date -u '+%Y-%m-%dT%H:%M:%SZ') package=${PACKAGE}${PREVIOUS:+ previous=${PREVIOUS}}"
+    echo "### $(date -u '+%Y-%m-%dT%H:%M:%SZ') dashboard=${DASHBOARD_PKG}${DASHBOARD_PREV_PKG:+ previous=${DASHBOARD_PREV_PKG}}"
+    if [ "${needs}" = full ]; then echo "### manager=${MANAGER_PKG} indexer=${INDEXER_PKG}"; fi
   } >"${log}"
 
   if [ "${VERBOSE}" -eq 1 ]; then
@@ -904,6 +1260,9 @@ run_case() {
       echo
       echo "### case aborted with status ${rc}; diagnostics"
       systemctl status "${NAME}" --no-pager 2>&1 | head -20
+      if [ "${needs}" = full ]; then
+        systemctl status "${MANAGER}" "${INDEXER}" --no-pager 2>&1 | grep -E '^[^ ] |Active:'
+      fi
       journalctl -u "${NAME}" --since "@${started_epoch}" --no-pager 2>/dev/null |
         grep -v 'agentkeepalive:deprecated' | tail -120
       ls -la "${CERTS_DIR}" "${WAZUH_DIR}" "${CA_DIR}" 2>&1
@@ -933,11 +1292,16 @@ run_case() {
 }
 
 list_cases() {
-  local entry id title fn prev
-  printf '%-4s %-52s %s\n' ID CASE NOTES
+  local entry id title fn needs note
+  printf '%-4s %-52s %s\n' ID CASE NEEDS
   for entry in "${CASES[@]}"; do
-    IFS='|' read -r id title fn prev <<<"${entry}"
-    printf '%-4s %-52s %s\n' "${id}" "${title}" "$([ "${prev}" = 1 ] && echo 'needs --previous')"
+    IFS='|' read -r id title fn needs <<<"${entry}"
+    case "${needs}" in
+      dashboard) note="--dashboard" ;;
+      dashboard-previous) note="--dashboard, --dashboard-previous" ;;
+      *) note="--dashboard, --manager, --indexer" ;;
+    esac
+    printf '%-4s %-52s %s\n' "${id}" "${title}" "${note}"
   done
 }
 
@@ -953,8 +1317,10 @@ die() {
 parse_args() {
   while [ $# -gt 0 ]; do
     case "$1" in
-      --package) PACKAGE="${2-}"; shift 2 ;;
-      --previous) PREVIOUS="${2-}"; shift 2 ;;
+      --dashboard) DASHBOARD_PKG="${2-}"; shift 2 ;;
+      --dashboard-previous) DASHBOARD_PREV_PKG="${2-}"; shift 2 ;;
+      --manager) MANAGER_PKG="${2-}"; shift 2 ;;
+      --indexer) INDEXER_PKG="${2-}"; shift 2 ;;
       --cases) SELECTED="${2-}"; shift 2 ;;
       --list) LIST_ONLY=1; shift ;;
       --clean-only) CLEAN_ONLY=1; shift ;;
@@ -999,23 +1365,45 @@ preflight_host() {
   done
   [ "$(cat /proc/1/comm 2>/dev/null)" = systemd ] || die "PID 1 is not systemd"
 
-  if sibling_installed && [ "${FORCE}" -ne 1 ]; then
-    die "wazuh-indexer or wazuh-manager is installed; cleaning wipes ${WAZUH_DIR}. Use --force on a throwaway host"
+  if sibling_installed && [ "${SIBLINGS_MANAGED}" -ne 1 ]; then
+    die "wazuh-indexer or wazuh-manager is installed but --manager/--indexer were not given; cleaning wipes ${WAZUH_DIR}. Use --force on a throwaway host"
   fi
 }
 
 preflight() {
-  [ -n "${PACKAGE}" ] || die "--package is required"
-  [ -f "${PACKAGE}" ] || die "package not found: ${PACKAGE}"
-  PACKAGE=$(readlink -f "${PACKAGE}")
-  FAMILY=$(family_of "${PACKAGE}")
-  [ -n "${FAMILY}" ] || die "cannot tell the package family from ${PACKAGE} (.deb or .rpm)"
-  if [ -n "${PREVIOUS}" ]; then
-    [ -f "${PREVIOUS}" ] || die "previous package not found: ${PREVIOUS}"
-    PREVIOUS=$(readlink -f "${PREVIOUS}")
-    [ "$(family_of "${PREVIOUS}")" = "${FAMILY}" ] || die "--previous must be a .${FAMILY} package"
+  [ -n "${DASHBOARD_PKG}" ] || die "--dashboard is required"
+  [ -f "${DASHBOARD_PKG}" ] || die "dashboard package not found: ${DASHBOARD_PKG}"
+  DASHBOARD_PKG=$(readlink -f "${DASHBOARD_PKG}")
+  FAMILY=$(family_of "${DASHBOARD_PKG}")
+  [ -n "${FAMILY}" ] || die "cannot tell the package family from ${DASHBOARD_PKG} (.deb or .rpm)"
+  if [ -n "${DASHBOARD_PREV_PKG}" ]; then
+    [ -f "${DASHBOARD_PREV_PKG}" ] || die "previous dashboard package not found: ${DASHBOARD_PREV_PKG}"
+    DASHBOARD_PREV_PKG=$(readlink -f "${DASHBOARD_PREV_PKG}")
+    [ "$(family_of "${DASHBOARD_PREV_PKG}")" = "${FAMILY}" ] || die "--dashboard-previous must be a .${FAMILY} package"
+  fi
+  if [ -n "${MANAGER_PKG}${INDEXER_PKG}" ]; then
+    [ -n "${MANAGER_PKG}" ] && [ -n "${INDEXER_PKG}" ] ||
+      die "--manager and --indexer go together: the FULL cases need both"
+    [ -f "${MANAGER_PKG}" ] || die "manager package not found: ${MANAGER_PKG}"
+    [ -f "${INDEXER_PKG}" ] || die "indexer package not found: ${INDEXER_PKG}"
+    MANAGER_PKG=$(readlink -f "${MANAGER_PKG}")
+    INDEXER_PKG=$(readlink -f "${INDEXER_PKG}")
+    [ "$(family_of "${MANAGER_PKG}")" = "${FAMILY}" ] || die "--manager must be a .${FAMILY} package"
+    [ "$(family_of "${INDEXER_PKG}")" = "${FAMILY}" ] || die "--indexer must be a .${FAMILY} package"
+    command -v curl >/dev/null 2>&1 || die "curl not found (needed by the FULL cases)"
   fi
   [[ "${START_TIMEOUT}" =~ ^[0-9]+$ ]] || die "--start-timeout must be a number of seconds"
+  if [ -n "${SELECTED}" ]; then
+    local id known entry
+    for id in ${SELECTED//,/ }; do
+      known=0
+      for entry in "${CASES[@]}"; do [ "${entry%%|*}" = "${id}" ] && known=1; done
+      [ "${known}" = 1 ] || die "unknown case: ${id} (see --list)"
+      case "${id}" in
+        F*) [ -n "${MANAGER_PKG}" ] || die "${id} is a FULL case: it needs --manager and --indexer" ;;
+      esac
+    done
+  fi
 
   preflight_host
   command -v setcap >/dev/null 2>&1 ||
@@ -1028,14 +1416,6 @@ preflight() {
       echo "vm-test-matrix: note: logs go to a ${fstype} mount; scratch data is kept in /var/tmp" >&2 ;;
   esac
 
-  if [ -n "${SELECTED}" ]; then
-    local id known entry
-    for id in ${SELECTED//,/ }; do
-      known=0
-      for entry in "${CASES[@]}"; do [ "${entry%%|*}" = "${id}" ] && known=1; done
-      [ "${known}" = 1 ] || die "unknown case: ${id} (see --list)"
-    done
-  fi
 }
 
 print_summary() {
@@ -1045,8 +1425,11 @@ print_summary() {
     echo "wazuh-dashboard package test matrix"
     echo "Date:     $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
     echo "Host:     $(hostname) - ${os:-unknown} ($(uname -m)), family ${FAMILY}"
-    echo "Package:  $(basename "${PACKAGE}") ($(pkg_file_version "${PACKAGE}"))"
-    [ -n "${PREVIOUS}" ] && echo "Previous: $(basename "${PREVIOUS}") ($(pkg_file_version "${PREVIOUS}"))"
+    echo "Dashboard: $(basename "${DASHBOARD_PKG}") ($(pkg_file_version "${DASHBOARD_PKG}"))"
+    [ -n "${DASHBOARD_PREV_PKG}" ] && echo "Previous:  $(basename "${DASHBOARD_PREV_PKG}") ($(pkg_file_version "${DASHBOARD_PREV_PKG}"))"
+    [ -n "${MANAGER_PKG}" ] && echo "Manager:   $(basename "${MANAGER_PKG}") ($(pkg_file_version "${MANAGER_PKG}"))"
+    [ -n "${INDEXER_PKG}" ] && echo "Indexer:   $(basename "${INDEXER_PKG}") ($(pkg_file_version "${INDEXER_PKG}"))"
+    [ -z "${MANAGER_PKG}" ] && echo "FULL cases not run: --manager and --indexer not given"
     echo
     printf '%-4s %-52s %-11s %s\n' ID CASE RESULT TIME
     printf '%s\n' "--------------------------------------------------------------------------------"
@@ -1075,17 +1458,22 @@ main() {
     list_cases
     exit 0
   fi
+  if [ -n "${MANAGER_PKG}${INDEXER_PKG}" ] || [ "${FORCE}" -eq 1 ]; then
+    SIBLINGS_MANAGED=1
+  fi
   if [ "${CLEAN_ONLY}" -eq 1 ]; then
-    if [ -n "${PACKAGE}" ]; then
-      FAMILY=$(family_of "${PACKAGE}")
-      [ -n "${FAMILY}" ] || die "cannot tell the package family from ${PACKAGE} (.deb or .rpm)"
+    local given
+    given=$(printf '%s\n' "${DASHBOARD_PKG}" "${MANAGER_PKG}" "${INDEXER_PKG}" | grep -m1 . || true)
+    if [ -n "${given}" ]; then
+      FAMILY=$(family_of "${given}")
+      [ -n "${FAMILY}" ] || die "cannot tell the package family from ${given} (.deb or .rpm)"
     else
       FAMILY=$(detect_family)
       [ -n "${FAMILY}" ] || die "neither dpkg nor rpm found: cannot tell the package family of this host"
     fi
     preflight_host
     take_lock
-    echo "Cleaning the host (family ${FAMILY})"
+    echo "Cleaning the host (family ${FAMILY}$([ "${SIBLINGS_MANAGED}" -eq 1 ] && echo ', with wazuh-manager and wazuh-indexer'))"
     if clean_host; then
       echo "Host clean"
       exit 0
@@ -1107,12 +1495,17 @@ main() {
 
   echo
   printf '%-4s %-52s %-11s %s\n' ID CASE RESULT TIME
-  local entry id title fn prev
+  local entry id title fn needs full_left=0
   for entry in "${CASES[@]}"; do
-    IFS='|' read -r id title fn prev <<<"${entry}"
+    IFS='|' read -r id title fn needs <<<"${entry}"
     is_selected "${id}" || continue
-    run_case "${id}" "${title}" "${fn}" "${prev}"
+    if [ "${needs}" = full ] && [ -z "${MANAGER_PKG}" ]; then
+      full_left=$((full_left + 1))
+      continue
+    fi
+    run_case "${id}" "${title}" "${fn}" "${needs}"
   done
+  if [ "${full_left}" -gt 0 ]; then echo "FULL cases not run: --manager and --indexer not given"; fi
 
   print_summary
   [ "${FAILED}" -eq 0 ]
