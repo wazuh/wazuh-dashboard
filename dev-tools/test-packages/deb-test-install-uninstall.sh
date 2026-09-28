@@ -86,12 +86,16 @@ else
   exit 1
 fi
 
-if runuser wazuh-dashboard --shell="/bin/bash" \
-  --command="/usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore list" \
-  | grep -q "^wazuh_ai_assistant.encryptionKey$"; then
+echo "==> Checking the keystore for wazuh_ai_assistant.encryptionKey"
+# Capture before grepping: `grep -q` closes the pipe on the first match, and under pipefail the
+# keystore CLI's resulting EPIPE would fail the check.
+if keystore_keys="$(runuser wazuh-dashboard --shell="/bin/bash" \
+  --command="/usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore list")" &&
+  grep -qx "wazuh_ai_assistant.encryptionKey" <<<"${keystore_keys}"; then
   echo "AI assistant encryption key present in keystore"
 else
   echo "AI assistant encryption key missing from keystore"
+  echo "Keystore entries: ${keystore_keys:-<none>}"
   exit 1
 fi
 
