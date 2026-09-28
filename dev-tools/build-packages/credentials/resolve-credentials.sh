@@ -297,31 +297,47 @@ setting_get() {
     esac
 }
 
-# A supplied password may only use the generator's alphabet -- the owners generate from it, and
-# anything else never logs in on the manager's side (connexion decodes Basic auth as latin1).
+# The password policy is the owners' to enforce: the indexer and the manager generate these
+# passwords, or accept an operator's, and reject what they would not use. Checking it again here
+# only drifts from the shared policy, so the dashboard checks the one thing that is its own.
 #
-# The set is matched by `LC_ALL=C tr` rather than by a glob in the shell: ranges are
-# locale-dependent, and the maintainer scripts inherit whatever locale the operator's session or
-# the package manager happens to carry. `printf` is a builtin, so the value reaches `tr` over a
-# pipe and never through a command line.
-#
-# The keystore adds one rule of its own: `add` runs JSON.parse on the value and stores whatever
-# parses, so a password that happens to be a JSON number -- 123456789e10, 1e999999999999 -- would
-# be stored as a number (or as Infinity) and sent as something else entirely. The alphabet leaves
-# numbers as the only JSON that can get through; quotes and brackets are not in it.
+# `keystore add` trims the value, runs JSON.parse on it and stores whatever parses, so a password
+# that happens to be JSON -- 123456789e10, true, "quoted", [1] -- or that has surrounding
+# whitespace would be stored as something other than the text supplied. This repeats that logic
+# (src/cli_keystore/add.js) with the dashboard's own Node and accepts only a value the keystore
+# stores verbatim. The value reaches Node over a pipe and never through a command line.
 #
 # Every rejection names the rule, never the value.
-password_is_valid() {
-    _piv_rest=$(printf '%s' "$1" | LC_ALL=C tr -d 'A-Za-z0-9.,_+:@%^=~-') || return 1
-    if [ -n "${_piv_rest}" ]; then
-        err "the value contains characters outside A-Z a-z 0-9 . , _ + : @ % ^ = ~ -"
+KEYSTORE_VERBATIM_JS='
+let value = "";
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", (chunk) => (value += chunk));
+process.stdin.on("end", () => {
+  const trimmed = value.trim();
+  let parsed;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (e) {
+    parsed = undefined;
+  }
+  process.exit((parsed ?? trimmed) === value ? 0 : 1);
+});
+'
+
+keystore_stores_verbatim() {
+    if [ ! -x "${NODE_BIN}" ]; then
+        err "cannot check the value: ${NODE_BIN} is not available"
         return 1
     fi
-    if printf '%s' "$1" | LC_ALL=C grep -Eqx -- '-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?'; then
-        err "the value is a JSON number, which the keystore would not store as text"
-        return 1
-    fi
-    wazuh_password_validate "$1"
+    _ksv_status=0
+    printf '%s' "$1" | (cd / && "${NODE_BIN}" -e "${KEYSTORE_VERBATIM_JS}") >/dev/null 2>&1 ||
+        _ksv_status=$?
+    case "${_ksv_status}" in
+        0) return 0 ;;
+        1) err "the value is JSON or has surrounding whitespace, which the keystore would not store as text" ;;
+        *) err "cannot check the value: ${NODE_BIN} exited with status ${_ksv_status}" ;;
+    esac
+    return 1
 }
 
 # -----------------------------------------------------------------------------------------
@@ -374,8 +390,8 @@ resolve_consumed() {
         return 1
     fi
 
-    if ! password_is_valid "${SETTING_VALUE}"; then
-        err "${_rc_key} from ${SETTING_SOURCE} was rejected by the password policy"
+    if ! keystore_stores_verbatim "${SETTING_VALUE}"; then
+        err "${_rc_key} from ${SETTING_SOURCE} cannot be stored in the keystore as text"
         mark_invalid "${_rc_key}"
         SETTING_VALUE=""
         return 1
@@ -486,7 +502,7 @@ config_resolves_wui() {
 # Owned: the AI assistant encryption key
 #
 # Deliberately separate from the ladder: it is not a credential anybody else holds, so it is never
-# read from the environment or the credentials file, never validated against the password policy,
+# read from the environment or the credentials file, never checked as a supplied value would be,
 # and never published. The AI assistant is optional, so failing to generate it is a warning and
 # never blocks the start -- the plugin itself says what is missing when it is used.
 #
@@ -1172,8 +1188,8 @@ CREDENTIALS_FILE=$(wazuh_env_get_file 2>/dev/null) || CREDENTIALS_FILE="/etc/waz
 # The message goes to the journal, which is where someone looks when a service will not start.
 # It names every missing key and where to set it, and never prints a value.
 for _key in ${INVALID}; do
-    err "INVALID ${_key}: the supplied value does not meet the password policy"
-    err "        (12-64 characters from A-Z a-z 0-9 . , _ + : @ % ^ = ~ -, with at least one letter and one digit)"
+    err "INVALID ${_key}: the keystore would not store the supplied value as text"
+    err "        (it must not be JSON -- a number, true, false, a quoted string, an array or an object -- nor have surrounding whitespace)"
     err "        correct it in ${CREDENTIALS_FILE} and start the service again"
 done
 

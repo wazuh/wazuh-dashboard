@@ -38,9 +38,12 @@ For each consumed key, the ladder is:
    `kibanaserver`, and without a `wazuh_core.hosts.default` host the `wazuh-wui` entry is not
    needed. The yml is read with the dashboard's own Node and `@osd/config`; if it cannot be read,
    the check is skipped.
-1. The process environment (scoped name, then alias), then `credentials.env`: validated against
-   the password policy and stored in the keystore through stdin. A value that fails the policy is
-   reported as `INVALID`, naming the key and the rule, never the value.
+1. The process environment (scoped name, then alias), then `credentials.env`: stored in the
+   keystore through stdin. The password policy is enforced by the owners (the indexer and the
+   manager), not here. The dashboard only checks that the keystore stores the value verbatim:
+   `keystore add` trims it and stores it `JSON.parse`d, so a value that is JSON (a number, `true`,
+   a quoted string, an array or an object) or has surrounding whitespace is reported as
+   `INVALID`, naming the key and the rule, never the value.
 2. Never generated: inventing a value does not make the peer accept it.
 3. Absent everywhere: unresolved.
 

@@ -54,8 +54,22 @@ fi
 systemctl stop wazuh-dashboard || true
 systemctl reset-failed wazuh-dashboard || true
 
-# Supply test credentials, as the indexer and the manager would.
 install -d -m 0700 /etc/wazuh
+
+# A value the keystore would not store as text (a JSON number) must be reported as INVALID.
+printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\nWAZUH_MANAGER_WUI_PASSWORD=%s\n' \
+  '123456789e10' 'TestWui1Password' > /etc/wazuh/credentials.env
+chmod 0600 /etc/wazuh/credentials.env
+prestart_output=$(/usr/share/wazuh-dashboard/bin/resolve-credentials --prestart 2>&1 || true)
+if grep -q "INVALID WAZUH_INDEXER_KIBANASERVER_PASSWORD" <<<"${prestart_output}"; then
+  echo "JSON number rejected as a password"
+else
+  echo "JSON number not rejected as a password"
+  echo "${prestart_output}"
+  exit 1
+fi
+
+# Supply test credentials, as the indexer and the manager would.
 printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\nWAZUH_MANAGER_WUI_PASSWORD=%s\n' \
   'TestKibana1Password' 'TestWui1Password' > /etc/wazuh/credentials.env
 chmod 0600 /etc/wazuh/credentials.env
