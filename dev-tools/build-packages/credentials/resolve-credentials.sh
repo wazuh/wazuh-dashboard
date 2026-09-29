@@ -56,12 +56,13 @@
 #                non-zero naming every key it could not resolve.
 #
 #   --clear      Removes every credential this dashboard stores, the AI assistant key and the
-#                certificates included -- and the shared CA when it was minted on this host -- so
-#                the next --install or --prestart resolves from nothing. Nothing in the product calls it: it exists for
-#                an image that was built by installing the package, whose postinst therefore
-#                resolved this host's credentials into the image layer. Every container started
-#                from such an image would otherwise share them. Run it at the end of the
-#                Dockerfile, or once from an entrypoint before the first start.
+#                certificates included -- and the shared CA when this dashboard minted it, which
+#                the install recorded at the time -- so the next --install or --prestart resolves
+#                from nothing. Nothing in the product calls it: it exists for an image that was
+#                built by installing the package, whose postinst therefore resolved this host's
+#                credentials into the image layer. Every container started from such an image
+#                would otherwise share them. Run it as root at the end of the Dockerfile, or once
+#                from an entrypoint before the first start.
 #
 # A credential the operator configured in opensearch_dashboards.yml is theirs, and is resolved as
 # far as this script is concerned. The keystore is merged over the yml when the dashboard starts
@@ -640,6 +641,13 @@ CERT_FILE="dashboard.pem"
 CERT_KEY_FILE="dashboard-key.pem"
 CERT_CA_FILE="root-ca.pem"
 
+# Dropped into the CA directory when THIS dashboard minted the shared CA, and the only thing that
+# may later authorise --clear to delete its private key. "root-ca.key is present" cannot answer
+# that: an operator who stages a signing CA -- their own anchor and key, so the dashboard issues
+# from their PKI -- leaves exactly the same shape on disk. It is the dashboard's own name, not the
+# manager's (.wazuh-manager-bootstrap-ca): each component removes only a CA it minted itself.
+CA_MINT_MARKER=".wazuh-dashboard-bootstrap-ca"
+
 _dc_require() {
     for _dcr_function in wazuh_ca_get_dir _wazuh_ca_ensure_locked _wazuh_validate_ca_files \
         _wazuh_with_lock _wazuh_restorecon wazuh_env_get; do
@@ -945,6 +953,16 @@ _dc_ensure_locked() (
     case "${_dce_ca_was}" in
         absent)
             log "created the shared root CA in ${_dce_ca_dir}: $(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
+            # Recorded here and not by the caller because only here is the observation atomic with
+            # the mint: we hold the credentials lock, so the absence checked above and the CA that
+            # exists now are the same moment.
+            if _dc_exists "${_dce_ca_dir}/root-ca.key"; then
+                (umask 077; : >"${_dce_ca_dir}/${CA_MINT_MARKER}") 2>/dev/null || {
+                    # Not fatal: the CA is in place and usable. Without the marker a later --clear
+                    # keeps the CA, which is the safe direction.
+                    err "could not record that the shared root CA was minted in ${_dce_ca_dir}"
+                }
+            fi
             ;;
         complete)
             log "reusing the shared root CA in ${_dce_ca_dir}: $(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
@@ -1021,9 +1039,11 @@ resolve_certificates() {
     _wazuh_with_lock _dc_ensure_locked
 }
 
-# The --clear half: the dashboard's three files, and the CA only when it has a private key -- one
-# minted on this host, and so baked into the image. An anchor-only CA was handed to the host and
-# stays. Runs under the shared lock like every other write to the CA directory.
+# The --clear half: the dashboard's three files, any staging directory an interrupted issue left
+# behind, and the CA only when this dashboard minted it -- which _dc_ensure_locked() recorded with
+# CA_MINT_MARKER at the time, and which is therefore baked into the image. A CA with a key but no
+# marker was staged by the operator, and an anchor-only CA was handed to the host; both stay. Runs
+# under the shared lock like every other write to the CA directory.
 _dc_clear_locked() (
     for _dcc_file in "${CERT_FILE}" "${CERT_KEY_FILE}" "${CERT_CA_FILE}"; do
         if _dc_exists "${CERTS_DIR}/${_dcc_file}"; then
@@ -1031,17 +1051,28 @@ _dc_clear_locked() (
             log "removed ${CERTS_DIR}/${_dcc_file}"
         fi
     done
+    # The trap removes the staging directory, but a SIGKILL does not run it, and what it leaves
+    # holds a private key. This path promises that nothing of this host's credentials survives into
+    # the image, so it goes too.
+    for _dcc_stage in "${CERTS_DIR}"/.stage.*; do
+        [ -d "${_dcc_stage}" ] && [ ! -L "${_dcc_stage}" ] || continue
+        rm -rf -- "${_dcc_stage}" || return 1
+        log "removed ${_dcc_stage}, left behind by an interrupted issue"
+    done
     _dcc_ca=$(wazuh_ca_get_dir 2>/dev/null) || _dcc_ca=""
-    if [ -n "${_dcc_ca}" ] && _dc_exists "${_dcc_ca}/root-ca.key"; then
-        rm -f -- "${_dcc_ca}/root-ca.key" "${_dcc_ca}/root-ca.pem" "${_dcc_ca}/root-ca.srl" || return 1
-        log "removed the CA in ${_dcc_ca}"
-    elif [ -n "${_dcc_ca}" ] && _dc_exists "${_dcc_ca}/root-ca.pem"; then
-        log "kept the CA in ${_dcc_ca}: it has no private key, so it was not created on this host"
+    [ -n "${_dcc_ca}" ] || return 0
+    if [ -f "${_dcc_ca}/${CA_MINT_MARKER}" ]; then
+        rm -f -- "${_dcc_ca}/root-ca.key" "${_dcc_ca}/root-ca.pem" "${_dcc_ca}/root-ca.srl" \
+            "${_dcc_ca}/${CA_MINT_MARKER}" || return 1
+        log "removed the shared root CA in ${_dcc_ca}, minted by this dashboard"
+    elif _dc_exists "${_dcc_ca}/root-ca.key"; then
+        log "kept the CA in ${_dcc_ca}: this dashboard did not mint it, so its private key is not ours to remove"
+    elif _dc_exists "${_dcc_ca}/root-ca.pem"; then
+        log "kept the CA in ${_dcc_ca}: it has no private key, so it was issued elsewhere"
     fi
 )
 
 clear_certificates() {
-    [ "$(id -u)" = 0 ] || return 0
     command -v _wazuh_with_lock >/dev/null 2>&1 || return 1
     _wazuh_with_lock _dc_clear_locked
 }
@@ -1059,8 +1090,16 @@ clear_certificates() {
 # nothing on an image that was never used, and exactly why this is not something a running host
 # should ever do.
 #
-# What it deliberately does NOT remove: anything in the credentials file. The dashboard owns no
-# key there; every one belongs to a sibling, and removing it is the sibling's --clear.
+# What it deliberately does NOT remove:
+#
+#   * A shared CA this dashboard did not mint. One with a private key but no CA_MINT_MARKER was
+#     staged by the operator so the dashboard issues from their PKI; one without a key was issued
+#     elsewhere and handed to this host. Neither is ours to destroy.
+#   * Anything in the credentials file. The dashboard owns no key there; every one belongs to a
+#     sibling, and removing it is the sibling's --clear.
+#
+# It must run as root: certs/ is the service user's 0500 and the CA directory root's 0700, so any
+# other user could neither remove nor even see them, and would report a clear that did not happen.
 # -----------------------------------------------------------------------------------------
 
 dashboard_is_running() {
@@ -1076,6 +1115,11 @@ dashboard_is_running() {
 }
 
 clear_credentials() {
+    if [ "$(id -u)" != 0 ]; then
+        err "--clear must run as root: the certificates and the shared CA cannot be removed otherwise"
+        return 1
+    fi
+
     if dashboard_is_running; then
         err "refusing to clear credentials while the dashboard is running"
         err "        stop it first: systemctl stop wazuh-dashboard"
