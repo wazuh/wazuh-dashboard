@@ -59,6 +59,7 @@ readonly KEYSTORE_BIN="${INSTALL_DIR}/bin/opensearch-dashboards-keystore"
 readonly WAZUH_DIR="/etc/wazuh"
 readonly CREDENTIALS_FILE="${WAZUH_DIR}/credentials.env"
 readonly CA_DIR="${WAZUH_DIR}/ca"
+readonly CA_MINT_MARKER=".wazuh-dashboard-bootstrap-ca"
 # Both packages ship the unit's environment file here; the unit also reads /etc/sysconfig.
 readonly ENV_FILE="/etc/default/${NAME}"
 
@@ -554,6 +555,7 @@ case_fresh_install() {
   step "Certificates issued from a freshly minted shared CA"
   check "shared CA certificate minted" test -f "${CA_DIR}/root-ca.pem"
   check "shared CA key minted" test -f "${CA_DIR}/root-ca.key"
+  check "mint recorded by the dashboard's marker" test -f "${CA_DIR}/${CA_MINT_MARKER}"
   check "certs/ is ${NAME} 500" perm_is "${CERTS_DIR}" "${NAME}:${NAME}:500"
   local f
   for f in dashboard.pem dashboard-key.pem root-ca.pem; do
@@ -726,9 +728,21 @@ case_existing_ca() {
   check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
   check "dashboard.pem chains to the existing CA" \
     openssl verify -purpose sslserver -CAfile "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/dashboard.pem"
+  check "no mint marker for a reused CA" absent "${CA_DIR}/${CA_MINT_MARKER}"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   check "systemctl start succeeds" svc_start
   check_running
+
+  step "--clear keeps a CA this dashboard did not mint"
+  svc_stop
+  local out rc=0
+  out=$("${RESOLVER}" --clear 2>&1) || rc=$?
+  echo "${out}"
+  check "--clear succeeds" test "${rc}" -eq 0
+  check "explains why the CA is kept" contains "${out}" "this dashboard did not mint it"
+  check "shared CA key kept" test -f "${CA_DIR}/root-ca.key"
+  check "shared CA is unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
+  check "certs/dashboard.pem removed" absent "${CERTS_DIR}/dashboard.pem"
 }
 
 case_anchor_only_ca() {
@@ -812,6 +826,9 @@ case_clear() {
   check "keystore still holds the entries" has_all_consumed_entries
   step "--clear after stopping"
   svc_stop
+  # What a SIGKILL during an issue leaves behind: a root-only staging directory holding a key.
+  install -d -m 0700 -o root -g root "${CERTS_DIR}/.stage.test"
+  : >"${CERTS_DIR}/.stage.test/dashboard-key.pem"
   rc=0
   out=$("${RESOLVER}" --clear 2>&1) || rc=$?
   echo "${out}"
@@ -825,7 +842,9 @@ case_clear() {
   for f in dashboard.pem dashboard-key.pem root-ca.pem; do
     check "certs/${f} removed" absent "${CERTS_DIR}/${f}"
   done
+  check "leftover staging directory removed" absent "${CERTS_DIR}/.stage.test"
   check "minted CA removed" absent "${CA_DIR}/root-ca.key"
+  check "mint marker removed" absent "${CA_DIR}/${CA_MINT_MARKER}"
   check "credentials.env kept (owned by the siblings)" test -f "${CREDENTIALS_FILE}"
 }
 

@@ -67,6 +67,8 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
   supplies their own, e.g. from `wazuh-certs-tool`.
 - A partial pair (only the certificate or only the key) is refused, not completed.
 - With no shared CA but dashboard material already present, no CA is minted.
+- When the install mints the shared CA it records that with `.wazuh-dashboard-bootstrap-ca` in the
+  CA directory. That marker is the only thing that lets `--clear` delete the CA later.
 - An existing `certs/root-ca.pem` is kept, even when it is not the shared CA.
 - The leaf is RSA 2048 / SHA-256, valid 3650 days, `serverAuth,clientAuth`. Its CN is
   `WAZUH_DASHBOARD_NODE_NAME` or `hostname -s`. Its SANs are `WAZUH_DASHBOARD_CERT_SANS` (an exact
@@ -79,12 +81,12 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
 
 ## Modes
 
-| Mode         | Called from                                  | Exit status                                                                                                    |
-| ------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `--install`  | fresh `postinst` / `%post`                   | always `0`; warns only when the certificates cannot be issued                                                  |
-| `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                                                                         |
-| `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                                                                     |
-| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above, the AI assistant key, the certificates, and a shared CA with its key |
+| Mode         | Called from                                  | Exit status                                                                                                                                                       |
+| ------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--install`  | fresh `postinst` / `%post`                   | always `0`; warns only when the certificates cannot be issued                                                                                                     |
+| `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                                                                                                                            |
+| `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                                                                                                                        |
+| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above, the AI assistant key, the certificates, and the shared CA only when this dashboard minted it (marker); must run as root |
 
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
 (`0600 root:root`) when the dashboard is the first Wazuh package on the host.
