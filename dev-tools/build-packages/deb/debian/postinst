@@ -64,6 +64,12 @@ configure)
     else
         "${INSTALLATION_DIR}"/bin/resolve-credentials --install || true
     fi
+    # The keystore holds secrets under an empty password, so its mode must keep it private
+    # on fresh installs and on upgrades of keystores created with a wider mode
+    if [ -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
+        chown "${NAME}":"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
+        chmod 600 "${CONFIG_DIR}"/opensearch_dashboards.keystore
+    fi
     ;;
 
 abort-upgrade | abort-remove | abort-deconfigure) ;;

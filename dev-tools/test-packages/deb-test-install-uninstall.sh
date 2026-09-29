@@ -99,6 +99,16 @@ else
   exit 1
 fi
 
+echo "==> Checking the keystore mode and ownership"
+keystore_file=/etc/wazuh-dashboard/opensearch_dashboards.keystore
+keystore_stat="$(stat -c '%a %U:%G' "${keystore_file}")" || keystore_stat=""
+if [ "${keystore_stat}" = "600 wazuh-dashboard:wazuh-dashboard" ]; then
+  echo "Keystore is private to the wazuh-dashboard user"
+else
+  echo "Keystore mode or ownership is wrong: ${keystore_stat:-<missing>}"
+  exit 1
+fi
+
 apt-get remove --purge wazuh-dashboard -y
 if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
   echo "Package not uninstalled"
