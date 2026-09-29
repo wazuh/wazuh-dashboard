@@ -185,6 +185,12 @@ if [ $1 = 1 ]; then
 else
   %{INSTALL_DIR}/bin/resolve-credentials --upgrade || true
 fi
+# The keystore holds secrets under an empty password, so its mode must keep it private
+# on fresh installs and on upgrades of keystores created with a wider mode
+if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
+  chown %{USER}:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
+  chmod 600 %{CONFIG_DIR}/opensearch_dashboards.keystore
+fi
 
 # -----------------------------------------------------------------------------
 
