@@ -11,9 +11,9 @@ manager: all three resolve against the same `/etc/wazuh/credentials.env`, so all
 on it exactly. It is owned by
 [wazuh-installation-assistant](https://github.com/wazuh/wazuh-installation-assistant) under
 `credentials_lib/`, and `base/base-builder.sh` downloads it at package build time into
-`lib/wazuh-credentials.sh` (`root:wazuh-dashboard 0640`, in a `root:wazuh-dashboard 0750` `lib/`).
+`lib/wazuh-credentials.sh` (`root:root 0644`, in a `root:root 0755` `lib/`).
 It is not committed here, because a copy in this repository is a copy that can drift. The service
-user cannot write it, but must be able to read `lib/`: at startup OSD's i18n loader lists every
+user cannot write it, but must be able to read `lib/`: at startup the dashboard's i18n loader lists every
 top-level directory of the installation root and exits on `EACCES`.
 
 ## What the dashboard resolves
@@ -93,9 +93,8 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
 (`0600 root:root`) when the dashboard is the first Wazuh package on the host.
 
-`-H <dir>` sets the installation directory (default: derived from the script's location), and
-`WAZUH_SHARED_HELPER_DIR` sets where to find `wazuh-credentials.sh`. `WAZUH_BASE_DIR` moves
-`/etc/wazuh`, as for every other consumer of the library.
+`-H <dir>` sets the installation directory (default: derived from the script's location).
+`WAZUH_BASE_DIR` moves `/etc/wazuh`, as for every other consumer of the library.
 
 ## Building
 
