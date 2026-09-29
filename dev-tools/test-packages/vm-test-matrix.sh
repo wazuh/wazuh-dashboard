@@ -545,8 +545,10 @@ case_fresh_install() {
   install_ok "${DASHBOARD_PKG}"
   check "user ${NAME} exists" id "${NAME}"
   check "resolver is root:root 750" perm_is "${RESOLVER}" root:root:750
-  check "lib/ is root:${NAME} 750" perm_is "${INSTALL_DIR}/lib" "root:${NAME}:750"
-  check "shared library is root:${NAME} 640" perm_is "${INSTALL_DIR}/lib/wazuh-credentials.sh" "root:${NAME}:640"
+  check "lib/ is root:root 755" perm_is "${INSTALL_DIR}/lib" root:root:755
+  check "shared library is root:root 644" perm_is "${INSTALL_DIR}/lib/wazuh-credentials.sh" root:root:644
+  check "${INSTALL_DIR} is root:root 755" perm_is "${INSTALL_DIR}" root:root:755
+  check "data/ is ${NAME} 750" perm_is "${INSTALL_DIR}/data" "${NAME}:${NAME}:750"
   check "${WAZUH_DIR} is root:root 700" perm_is "${WAZUH_DIR}" root:root:700
   check "empty credentials.env is root:root 600" perm_is "${CREDENTIALS_FILE}" root:root:600
   check "credentials.env is empty" test ! -s "${CREDENTIALS_FILE}"
