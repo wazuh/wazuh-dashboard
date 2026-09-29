@@ -64,7 +64,9 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
 | Anchor only (managed elsewhere) | `root-ca.pem` is installed, but no pair can be issued: stage one.                                                          |
 
 - An existing complete pair is kept as it is (checked, never replaced). This is how an operator
-  supplies their own, e.g. from `wazuh-certs-tool`.
+  supplies their own, e.g. from `wazuh-certs-tool`. A pair staged before install is root's (the
+  service user does not exist yet), so the packages give `certs/` to `wazuh-dashboard` before the
+  resolver runs: DEB with its `chown -R` of the configuration directory, RPM in `%post`.
 - A partial pair (only the certificate or only the key) is refused, not completed.
 - With no shared CA but dashboard material already present, no CA is minted.
 - When the install mints the shared CA it records that with `.wazuh-dashboard-bootstrap-ca` in the

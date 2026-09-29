@@ -779,6 +779,18 @@ case_operator_pair() {
   check "dashboard-key.pem unchanged" test "$(sha "${CERTS_DIR}/dashboard-key.pem")" = "${key_sha}"
   check "root-ca.pem unchanged" test "$(sha "${CERTS_DIR}/root-ca.pem")" = "${ca_sha}"
   check "no shared CA minted over operator material" absent "${CA_DIR}/root-ca.pem"
+
+  # Staged on a host without the service user, so root's until the package takes it over -- which
+  # is what the installation assistant does. The service reads the pair after dropping privileges.
+  step "The staged pair is the service user's and the dashboard starts with it"
+  local f
+  for f in dashboard.pem dashboard-key.pem root-ca.pem; do
+    check "certs/${f} is owned by ${NAME}" test "$(stat -c '%U:%G' "${CERTS_DIR}/${f}")" = "${NAME}:${NAME}"
+  done
+  check "certs/ is owned by ${NAME}" test "$(stat -c '%U:%G' "${CERTS_DIR}")" = "${NAME}:${NAME}"
+  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  check "systemctl start succeeds" svc_start
+  check_running
 }
 
 case_partial_pair() {
