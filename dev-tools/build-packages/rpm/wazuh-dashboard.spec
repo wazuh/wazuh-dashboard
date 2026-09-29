@@ -170,6 +170,11 @@ fi
 %post
 setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
 rm -f /usr/share/wazuh-dashboard/VERSION
+# Root reads the environment file at every start, so the service user must not own it
+if [ -f /etc/default/wazuh-dashboard ]; then
+  chown root:%{GROUP} /etc/default/wazuh-dashboard
+  chmod 640 /etc/default/wazuh-dashboard
+fi
 
 # Create the keystore if needed, resolve the consumed kibanaserver and
 # wazuh-wui passwords into it and, on a fresh install, generate the AI
@@ -258,7 +263,7 @@ rm -fr %{buildroot}
 %defattr(-,%{USER},%{GROUP})
 %dir %attr(750, %{USER}, %{GROUP}) %{CONFIG_DIR}
 
-%config(noreplace) %attr(0750, %{USER}, %{GROUP}) "/etc/default/wazuh-dashboard"
+%config(noreplace) %attr(0640, root, %{GROUP}) "/etc/default/wazuh-dashboard"
 %config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 
 %attr(444, root, root) %{INSTALL_DIR}/VERSION.json

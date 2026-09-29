@@ -79,6 +79,14 @@
 # service's start depend on reaching its peer would break boot ordering and cluster restarts.
 # A credential that is present but wrong still fails as a 401 at runtime, exactly as today.
 
+# Running as root (ExecStartPre=+, the SysV start, the maintainer scripts), nothing from the
+# environment may choose what runs: a fixed PATH, and no preload or Node options.
+if [ "$(command -p id -u)" = 0 ]; then
+    PATH=/usr/sbin:/usr/bin:/sbin:/bin
+    export PATH
+    unset LD_PRELOAD LD_LIBRARY_PATH NODE_OPTIONS
+fi
+
 MODE="prestart"
 DIR=""
 
@@ -119,18 +127,11 @@ fi
 
 # wazuh-credentials.sh is shared with the indexer and the manager, so it is owned by
 # wazuh-installation-assistant and downloaded at build time -- it is NOT in this repository.
-# WAZUH_SHARED_HELPER_DIR overrides where to look for it, which is what lets a test drive the
-# ladder from the source tree; on an installed dashboard the lib/ branch wins.
-_self_dir=$(dirname "$0")
-
-if [ -n "${WAZUH_SHARED_HELPER_DIR-}" ] && [ -f "${WAZUH_SHARED_HELPER_DIR}/wazuh-credentials.sh" ]; then
-    SHARED_HELPER_DIR="${WAZUH_SHARED_HELPER_DIR}"
-elif [ -f "${DIR}/lib/wazuh-credentials.sh" ]; then
+# It is read from lib/ of the installation directory only.
+if [ -f "${DIR}/lib/wazuh-credentials.sh" ]; then
     SHARED_HELPER_DIR="${DIR}/lib"
-elif [ -f "${_self_dir}/wazuh-credentials.sh" ]; then
-    SHARED_HELPER_DIR="${_self_dir}"
 else
-    echo "resolve-credentials: cannot find wazuh-credentials.sh" >&2
+    echo "resolve-credentials: cannot find ${DIR}/lib/wazuh-credentials.sh" >&2
     echo "        it is downloaded from wazuh-installation-assistant when the package is built" >&2
     exit 2
 fi
@@ -330,8 +331,13 @@ keystore_stores_verbatim() {
         return 1
     fi
     _ksv_status=0
-    printf '%s' "$1" | (cd / && "${NODE_BIN}" -e "${KEYSTORE_VERBATIM_JS}") >/dev/null 2>&1 ||
-        _ksv_status=$?
+    if [ "$(id -u)" = 0 ]; then
+        printf '%s' "$1" | (cd / && runuser -u "${SERVICE_USER}" -- "${NODE_BIN}" -e "${KEYSTORE_VERBATIM_JS}") \
+            >/dev/null 2>&1 || _ksv_status=$?
+    else
+        printf '%s' "$1" | (cd / && "${NODE_BIN}" -e "${KEYSTORE_VERBATIM_JS}") >/dev/null 2>&1 ||
+            _ksv_status=$?
+    fi
     case "${_ksv_status}" in
         0) return 0 ;;
         1) err "the value is JSON or has surrounding whitespace, which the keystore would not store as text" ;;

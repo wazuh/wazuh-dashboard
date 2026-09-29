@@ -27,7 +27,7 @@
 | [wazuh-dashboard-plugins#8989](https://github.com/wazuh/wazuh-dashboard-plugins/issues/8989) | Changed the sidecar resizable button emphasis styles to trigger on `:active` instead of `:focus`                                                                    |
 | [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Changed health check tasks to require returning a task result instead of an arbitrary value                                                                         |
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Changed the packages to resolve the `kibanaserver` and `wazuh-wui` passwords into the keystore from `/etc/wazuh/credentials.env` instead of shipping default values |
-| [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Changed the packages to install `/usr/share/wazuh-dashboard` as `root:root`                                                                                         |
+| [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Changed the packages to install `/usr/share/wazuh-dashboard` as `root:root` and `/etc/default/wazuh-dashboard` as `root:wazuh-dashboard`                            |
 
 ### Removed
 

@@ -549,6 +549,7 @@ case_fresh_install() {
   check "shared library is root:root 644" perm_is "${INSTALL_DIR}/lib/wazuh-credentials.sh" root:root:644
   check "${INSTALL_DIR} is root:root 755" perm_is "${INSTALL_DIR}" root:root:755
   check "data/ is ${NAME} 750" perm_is "${INSTALL_DIR}/data" "${NAME}:${NAME}:750"
+  check "${ENV_FILE} is root:${NAME} 640" perm_is "${ENV_FILE}" "root:${NAME}:640"
   check "${WAZUH_DIR} is root:root 700" perm_is "${WAZUH_DIR}" root:root:700
   check "empty credentials.env is root:root 600" perm_is "${CREDENTIALS_FILE}" root:root:600
   check "credentials.env is empty" test ! -s "${CREDENTIALS_FILE}"

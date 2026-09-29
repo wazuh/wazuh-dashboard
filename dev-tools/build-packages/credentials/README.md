@@ -89,9 +89,8 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
 (`0600 root:root`) when the dashboard is the first Wazuh package on the host.
 
-`-H <dir>` sets the installation directory (default: derived from the script's location), and
-`WAZUH_SHARED_HELPER_DIR` sets where to find `wazuh-credentials.sh`. `WAZUH_BASE_DIR` moves
-`/etc/wazuh`, as for every other consumer of the library.
+`-H <dir>` sets the installation directory (default: derived from the script's location).
+`WAZUH_BASE_DIR` moves `/etc/wazuh`, as for every other consumer of the library.
 
 ## Building
 

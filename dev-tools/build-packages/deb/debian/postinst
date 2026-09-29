@@ -37,6 +37,11 @@ configure)
     if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
         chmod 644 "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service
     fi
+    # Root reads the environment file at every start, so the service user must not own it
+    if [ -f /etc/default/"${NAME}" ]; then
+        chown root:"${NAME}" /etc/default/"${NAME}"
+        chmod 640 /etc/default/"${NAME}"
+    fi
     setcap 'cap_net_bind_service=+ep' "${INSTALLATION_DIR}"/node/bin/node
     rm -f /usr/share/wazuh-dashboard/VERSION
     if [ -f "${INSTALLATION_DIR}"/"${NAME}".restart ]; then
