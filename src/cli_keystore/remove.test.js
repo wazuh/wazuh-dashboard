@@ -37,6 +37,7 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn().mockImplementation(() => JSON.stringify(mockKeystoreData)),
   existsSync: jest.fn().mockImplementation(() => true),
   writeFileSync: jest.fn(),
+  chmodSync: jest.fn(),
 }));
 
 import sinon from 'sinon';

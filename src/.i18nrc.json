@@ -71,7 +71,8 @@
     "visualizations": "plugins/visualizations",
     "visualize": "plugins/visualize",
     "workspace": "plugins/workspace",
-    "healthcheck": "plugins/healthcheck"
+    "healthcheck": "plugins/healthcheck",
+    "about": "plugins/about"
   },
   "exclude": [
     "legacy/ui/ui_render/ui_render_mixin.js",

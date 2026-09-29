@@ -6,9 +6,7 @@ PACKAGE=""
 # Container name
 CONTAINER_NAME="wazuh-dashboard"
 # Files to check
-FILES="/etc/wazuh-dashboard/opensearch_dashboards.yml /usr/share/wazuh-dashboard"
-# Owner of the files
-FILE_OWNER="wazuh-dashboard"
+FILES="/etc/wazuh-dashboard/opensearch_dashboards.yml:wazuh-dashboard /usr/share/wazuh-dashboard:root"
 # Test mode flags
 NEGATIVE_TEST=false
 NEGATIVE_UNKNOWN_TEST=false
@@ -37,9 +35,11 @@ clean() {
   fi
 }
 
-# Check if files exist and are owned by wazuh-dashboard
+# Check if files exist and have the expected owner
 files_exist() {
-  for FILE in $FILES; do
+  for ENTRY in $FILES; do
+    FILE="${ENTRY%:*}"
+    FILE_OWNER="${ENTRY##*:}"
     if docker exec $CONTAINER_NAME ls $FILE >/dev/null 2>&1; then
       file_owner=$(docker exec $CONTAINER_NAME stat -c '%U' $FILE)
       if [ "$file_owner" != "$FILE_OWNER" ]; then
