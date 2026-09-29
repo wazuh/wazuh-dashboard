@@ -174,6 +174,18 @@ fi
 setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
 rm -f /usr/share/wazuh-dashboard/VERSION
 
+# A certificate pair staged before the package was installed -- by the
+# installation assistant, or by an operator -- is root's: the service user did
+# not exist yet. The resolver keeps an existing pair exactly as it finds it, and
+# the service reads it after dropping privileges, so it must be the service
+# user's. DEB does the same for the whole configuration directory in its
+# postinst; the indexer and the manager do it in their packaging too. On an
+# upgrade this also repairs a host that was left unable to start. -P never
+# follows a symlink, and a certs/ that is itself one is left alone.
+if [ -d %{CONFIG_DIR}/certs ] && [ ! -L %{CONFIG_DIR}/certs ]; then
+  chown -R -P %{USER}:%{GROUP} %{CONFIG_DIR}/certs || true
+fi
+
 # Create the keystore if needed, resolve the consumed kibanaserver and
 # wazuh-wui passwords into it and, on a fresh install, generate the AI
 # assistant encryption key. An unresolved credential is not an error at
