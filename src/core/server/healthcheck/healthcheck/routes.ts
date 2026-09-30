@@ -6,6 +6,7 @@
 import { Lifecycle, Request, ResponseToolkit, Server } from '@hapi/hapi';
 import { schema } from '@osd/config-schema';
 import { Logger } from 'src/core/server';
+import { TaskInfo } from '../../../common/healthcheck';
 import { HealthCheck } from './health_check';
 
 const getTaskList = (tasksAsString: string) => tasksAsString.split(',');
@@ -15,7 +16,21 @@ type ResponseType = (params: any) => Lifecycle.ReturnValue;
 interface InjectedProps {
   healthcheck: HealthCheck;
   logger: Logger;
+  // The not-ready server answers without authentication, so it must not expose task details
+  redactForNotReadyServer?: boolean;
 }
+
+const REDACTED_TASK_ERROR =
+  'Check reported a problem. Log in, or check the server logs, for details.';
+
+// Drop the task data and keep the error only for enabled critical tasks, which the
+// troubleshooting page needs to explain why the dashboard cannot start.
+const redactForNotReadyServer = (tasks: TaskInfo[]) =>
+  tasks.map(({ data, ...task }) => ({
+    ...task,
+    error: task.error && !(task.enabled && task.critical) ? REDACTED_TASK_ERROR : task.error,
+  }));
+
 interface ResponseHandler {
   ok: ResponseType;
   badRequest: ResponseType;
@@ -103,7 +118,7 @@ async function handlerGetTasks(
     return response.ok({
       body: {
         message: 'Task information was returned.',
-        tasks: tasksData,
+        tasks: this.redactForNotReadyServer ? redactForNotReadyServer(tasksData) : tasksData,
       },
     });
   } catch (error) {
@@ -123,7 +138,10 @@ async function handlerRunTasks(
 ) {
   try {
     this.logger.debug(`Running healthcheck tasks related to internal scope`);
-    const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
+    // Sort and dedupe so reordered or repeated names share the same in-flight run
+    const tasksNames = request.query.name
+      ? [...new Set(getTaskList(request.query.name))].sort()
+      : undefined;
 
     let tasks;
     try {
@@ -138,7 +156,7 @@ async function handlerRunTasks(
     return response.ok({
       body: {
         message: 'Task information was returned.',
-        tasks,
+        tasks: this.redactForNotReadyServer ? redactForNotReadyServer(tasks) : tasks,
       },
     });
   } catch (error) {
@@ -254,14 +272,39 @@ export function addRoutesNotReadyServer(
             name: validateTaskList,
           })
         ),
-      })(handlerGetTasks.bind({ healthcheck, logger }))
+      })(handlerGetTasks.bind({ healthcheck, logger, redactForNotReadyServer: true }))
     ),
   });
 
-  // // Run the internal health check tasks
+  // Run the internal health check tasks. Unauthenticated, so it only runs the enabled critical
+  // tasks named in the request, which is what the troubleshooting page retries.
   server.route({
     path: '/api/healthcheck/internal',
     method: 'post',
-    handler: createAdapterHandler(handlerRunTasks.bind({ healthcheck, logger })),
+    handler: createAdapterHandler(
+      validateRoute({
+        query: schema.object({
+          name: schema.string({
+            validate(value: string) {
+              // enabled and critical are set in HealthCheck.start(), so every request gets a
+              // 400 until then
+              const runnableTasks = healthcheck
+                .getAll()
+                .filter(({ enabled, critical }: TaskInfo) => enabled && critical)
+                .map(({ name }: TaskInfo) => name);
+              const invalidTasks = getTaskList(value).filter(
+                (requestTask) => !runnableTasks.includes(requestTask)
+              );
+
+              if (invalidTasks.length > 0) {
+                return `Tasks not allowed to run: ${invalidTasks.join(', ')}`;
+              }
+
+              return;
+            },
+          }),
+        }),
+      })(handlerRunTasks.bind({ healthcheck, logger, redactForNotReadyServer: true }))
+    ),
   });
 }
