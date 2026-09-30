@@ -6,6 +6,7 @@
 import { Lifecycle, Request, ResponseToolkit, Server } from '@hapi/hapi';
 import { schema } from '@osd/config-schema';
 import { Logger } from 'src/core/server';
+import { TaskInfo } from '../../../common/healthcheck';
 import { HealthCheck } from './health_check';
 
 const getTaskList = (tasksAsString: string) => tasksAsString.split(',');
@@ -15,7 +16,12 @@ type ResponseType = (params: any) => Lifecycle.ReturnValue;
 interface InjectedProps {
   healthcheck: HealthCheck;
   logger: Logger;
+  // The not-ready server answers without authentication, so it must not expose task data
+  omitTaskData?: boolean;
 }
+
+const withoutTaskData = (tasks: TaskInfo[]) => tasks.map(({ data, ...task }) => task);
+
 interface ResponseHandler {
   ok: ResponseType;
   badRequest: ResponseType;
@@ -103,7 +109,7 @@ async function handlerGetTasks(
     return response.ok({
       body: {
         message: 'Task information was returned.',
-        tasks: tasksData,
+        tasks: this.omitTaskData ? withoutTaskData(tasksData) : tasksData,
       },
     });
   } catch (error) {
@@ -138,7 +144,7 @@ async function handlerRunTasks(
     return response.ok({
       body: {
         message: 'Task information was returned.',
-        tasks,
+        tasks: this.omitTaskData ? withoutTaskData(tasks) : tasks,
       },
     });
   } catch (error) {
@@ -254,14 +260,37 @@ export function addRoutesNotReadyServer(
             name: validateTaskList,
           })
         ),
-      })(handlerGetTasks.bind({ healthcheck, logger }))
+      })(handlerGetTasks.bind({ healthcheck, logger, omitTaskData: true }))
     ),
   });
 
-  // // Run the internal health check tasks
+  // Run the internal health check tasks. Unauthenticated, so it only runs the enabled critical
+  // tasks named in the request, which is what the troubleshooting page retries.
   server.route({
     path: '/api/healthcheck/internal',
     method: 'post',
-    handler: createAdapterHandler(handlerRunTasks.bind({ healthcheck, logger })),
+    handler: createAdapterHandler(
+      validateRoute({
+        query: schema.object({
+          name: schema.string({
+            validate(value: string) {
+              const runnableTasks = healthcheck
+                .getAll()
+                .filter(({ enabled, critical }: TaskInfo) => enabled && critical)
+                .map(({ name }: TaskInfo) => name);
+              const invalidTasks = getTaskList(value).filter(
+                (requestTask) => !runnableTasks.includes(requestTask)
+              );
+
+              if (invalidTasks.length > 0) {
+                return `Tasks not allowed to run: ${invalidTasks.join(', ')}`;
+              }
+
+              return;
+            },
+          }),
+        }),
+      })(handlerRunTasks.bind({ healthcheck, logger, omitTaskData: true }))
+    ),
   });
 }
