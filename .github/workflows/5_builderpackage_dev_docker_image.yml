@@ -6,34 +6,45 @@
 # - Pushes individual architecture images to Quay.io registry.
 # - Creates and pushes a multi-arch manifest combining both architectures.
 # - Automatically extracts versions from package.json and .nvmrc
-# - Supports manual triggering with customizable inputs for Node.js version, OpenSearch Dashboards plugins version, branch, and image tag.
+# - Runs once a week, and supports manual triggering with customizable inputs
+#   for Node.js version, OpenSearch Dashboards plugins version, branch and
+#   image tag.
+# - Accepts an optional branch for the Wazuh plugin repositories. It is resolved
+#   per repository: when the branch does not exist in a repository, that
+#   repository falls back to the branch the workflow runs on, and to main when
+#   that one does not exist there either.
 
 name: (5.x) Build and Push Image
 
 on:
   schedule:
-    - cron: '0 0 * * 1-5' # Runs at 00:00 every weekday (Monday to Friday)
+    - cron: '0 0 * * 1' # Runs at 00:00 every Monday
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to use for all Wazuh dashboard components'
+        description: 'Branch to use for all Wazuh dashboard components (defaults to the branch this workflow runs on)'
         required: false
-        default: '5.0.0'
+        default: ''
+        type: string
+      plugins_branch:
+        description: 'Branch of the Wazuh plugin repositories. Falls back per repository to the branch above, and then to main, when it does not exist there'
+        required: false
+        default: ''
         type: string
       tag:
-        description: 'Tag for the Docker image'
+        description: 'Tag for the Docker image (defaults to the version in package.json)'
         required: false
-        default: '3.6.0'
+        default: ''
         type: string
       node_version:
-        description: 'Node.js version'
+        description: 'Node.js version (defaults to the version in .nvmrc)'
         required: false
-        default: '22.22.0'
+        default: ''
         type: string
       opensearch_version:
-        description: 'Version of OpenSearch Dashboards plugins to install'
+        description: 'Version of OpenSearch Dashboards plugins to install (defaults to the version in package.json)'
         required: false
-        default: '3.6.0.0'
+        default: ''
         type: string
 
 jobs:
@@ -44,9 +55,15 @@ jobs:
       tag: ${{ steps.versions.outputs.tag }}
       node_version: ${{ steps.versions.outputs.node_version }}
       branch: ${{ steps.versions.outputs.branch }}
+      security_branch: ${{ steps.plugin_branches.outputs.security_branch }}
+      reporting_branch: ${{ steps.plugin_branches.outputs.reporting_branch }}
+      plugins_branch: ${{ steps.plugin_branches.outputs.plugins_branch }}
+      security_analytics_branch: ${{ steps.plugin_branches.outputs.security_analytics_branch }}
+      alerting_branch: ${{ steps.plugin_branches.outputs.alerting_branch }}
+      notifications_branch: ${{ steps.plugin_branches.outputs.notifications_branch }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.branch || github.ref_name }}
 
@@ -88,10 +105,60 @@ jobs:
           echo "📟 Node Version: ${FINAL_NODE_VERSION}"
           echo "🌿 Branch: ${BRANCH}"
 
+      - name: Resolve plugin repository branches
+        id: plugin_branches
+        env:
+          BRANCH: ${{ steps.versions.outputs.branch }}
+          PLUGINS_BRANCH: ${{ inputs.plugins_branch }}
+        run: |
+          # Resolve the branch of every plugin repository. Each candidate is used
+          # only in the repositories where it exists: the requested plugins
+          # branch first, then the branch the workflow runs on, then main.
+          resolve_branch() {
+            repo="$1"
+            output="$2"
+            url="https://github.com/wazuh/${repo}.git"
+
+            # Candidates, in order of preference and without repetitions
+            candidates=""
+            for candidate in "$PLUGINS_BRANCH" "$BRANCH" main; do
+              [ -n "$candidate" ] || continue
+              case " ${candidates} " in *" ${candidate} "*) continue ;; esac
+              candidates="${candidates} ${candidate}"
+            done
+
+            resolved=""
+            for candidate in $candidates; do
+              if git ls-remote --heads --tags "$url" "$candidate" | grep -q .; then
+                resolved="$candidate"
+                break
+              fi
+              echo "⚠️  ${repo}: branch '${candidate}' not found"
+            done
+
+            if [ -z "$resolved" ]; then
+              echo "❌ ${repo}: none of the candidate branches exist (${candidates})"
+              exit 1
+            fi
+
+            echo "🌿 ${repo}: ${resolved}"
+            echo "${output}=${resolved}" >> "$GITHUB_OUTPUT"
+          }
+
+          resolve_branch wazuh-security-dashboards-plugin security_branch
+          resolve_branch wazuh-dashboard-reporting reporting_branch
+          resolve_branch wazuh-dashboard-plugins plugins_branch
+          resolve_branch wazuh-dashboard-security-analytics security_analytics_branch
+          resolve_branch wazuh-dashboard-alerting alerting_branch
+          resolve_branch wazuh-dashboard-notifications notifications_branch
+
   build:
     runs-on: ${{ matrix.runner }}
     needs: [extract-versions]
+    # Matches the 120 minute limit of the CodeBuild runners
+    timeout-minutes: 120
     strategy:
+      fail-fast: false
       matrix:
         include:
           - platform: linux/amd64
@@ -102,23 +169,57 @@ jobs:
             arch: arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.extract-versions.outputs.branch }}
 
-      - name: Free up disk space
+      # Workaround: AWS CodeBuild runners do not start the Docker daemon
+      # automatically, and on the arm ones / is an overlay mount, where the
+      # overlay driver cannot stack. vfs works everywhere but copies the whole
+      # tree on every layer, which turns a 1 KB COPY into ~19 minutes here, so
+      # it is the last resort.
+      - name: Start Docker daemon
         run: |
-          echo "Disk space before cleanup:"
-          df -h
-          sudo apt-get clean
-          sudo apt-get autoremove -y
-          sudo apt-get autoclean -y
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          docker system prune -af --volumes
-          echo "Disk space after cleanup:"
-          df -h
+          start_dockerd() {
+            sudo rm -f /var/run/docker.pid
+            sudo nohup dockerd $1 > /var/log/dockerd.log 2>&1 &
+            timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
+          }
+
+          overlay_stacks() {
+            work=$(sudo mktemp -d)
+            sudo mkdir -p "$work/lower" "$work/upper" "$work/work" "$work/merged"
+            opts="lowerdir=$work/lower,upperdir=$work/upper,workdir=$work/work"
+            if sudo mount -t overlay overlay -o "$opts" "$work/merged" 2>/dev/null; then
+              sudo umount "$work/merged"
+              sudo rm -rf "$work"
+              return 0
+            fi
+            sudo rm -rf "$work"
+            return 1
+          }
+
+          if docker info >/dev/null 2>&1; then
+            echo "Docker daemon already running"
+          elif overlay_stacks; then
+            echo "overlay mounts stack here, letting dockerd pick its driver"
+            start_dockerd ""
+          elif sudo apt-get install -y -qq fuse-overlayfs >/dev/null 2>&1; then
+            echo "overlay mounts do not stack here, using fuse-overlayfs"
+            start_dockerd "--storage-driver fuse-overlayfs" || start_dockerd "--storage-driver vfs"
+          else
+            echo "overlay mounts do not stack here and fuse-overlayfs is unavailable, using vfs"
+            start_dockerd "--storage-driver vfs"
+          fi
+
+          docker info --format 'Storage driver in use: {{.Driver}}'
+
+      # Workaround: AWS CodeBuild runners hit Docker Hub anonymous pull rate limits
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -134,7 +235,14 @@ jobs:
           password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Build ${{ matrix.arch }} image
+        env:
+          BUILDKIT_PROGRESS: plain
         run: |
+          # The runner log is not archived when the job is cancelled, so keep a
+          # copy of the build output as an artifact
+          set -o pipefail
+          exec > >(tee /tmp/build-${{ matrix.arch }}.log) 2>&1
+
           chmod +x ./dev-tools/build-dev-image/build-multiarch.sh
           cd ./dev-tools/build-dev-image
 
@@ -142,21 +250,80 @@ jobs:
             --node-version "${{  needs.extract-versions.outputs.node_version }}" \
             --opensearch-version "${{ needs.extract-versions.outputs.opensearch_version }}" \
             --wazuh-branch "${{ needs.extract-versions.outputs.branch }}" \
-            --security-branch "${{ needs.extract-versions.outputs.branch }}" \
-            --reporting-branch "${{ needs.extract-versions.outputs.branch }}" \
-            --plugins-branch "${{ needs.extract-versions.outputs.branch }}" \
-            --security-analytics-branch "${{ needs.extract-versions.outputs.branch }}" \
-            --alerting-branch "${{ needs.extract-versions.outputs.branch }}" \
-            --notifications-branch "${{ needs.extract-versions.outputs.branch }}" \
+            --security-branch "${{ needs.extract-versions.outputs.security_branch }}" \
+            --reporting-branch "${{ needs.extract-versions.outputs.reporting_branch }}" \
+            --plugins-branch "${{ needs.extract-versions.outputs.plugins_branch }}" \
+            --security-analytics-branch "${{ needs.extract-versions.outputs.security_analytics_branch }}" \
+            --alerting-branch "${{ needs.extract-versions.outputs.alerting_branch }}" \
+            --notifications-branch "${{ needs.extract-versions.outputs.notifications_branch }}" \
             --tag "${{ needs.extract-versions.outputs.tag }}-${{ matrix.arch }}" \
             --platform "${{ matrix.platform }}" \
             --push
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ matrix.arch }}
+          path: /tmp/build-${{ matrix.arch }}.log
+          if-no-files-found: warn
+
+      - name: Report runner resources
+        if: always()
+        run: |
+          echo "=== Memory ==="
+          free -h || true
+          echo "=== Disk ==="
+          df -h || true
+          echo "=== Kernel OOM kills ==="
+          sudo dmesg 2>/dev/null | grep -iE 'killed process|out of memory' | tail -20 || echo "dmesg not available"
 
   create-manifest:
     runs-on: ${{ format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
     needs: [extract-versions, build]
 
     steps:
+      # Workaround: AWS CodeBuild runners do not start the Docker daemon
+      # automatically, and on the arm ones / is an overlay mount, where the
+      # overlay driver cannot stack. vfs works everywhere but copies the whole
+      # tree on every layer, which turns a 1 KB COPY into ~19 minutes here, so
+      # it is the last resort.
+      - name: Start Docker daemon
+        run: |
+          start_dockerd() {
+            sudo rm -f /var/run/docker.pid
+            sudo nohup dockerd $1 > /var/log/dockerd.log 2>&1 &
+            timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
+          }
+
+          overlay_stacks() {
+            work=$(sudo mktemp -d)
+            sudo mkdir -p "$work/lower" "$work/upper" "$work/work" "$work/merged"
+            opts="lowerdir=$work/lower,upperdir=$work/upper,workdir=$work/work"
+            if sudo mount -t overlay overlay -o "$opts" "$work/merged" 2>/dev/null; then
+              sudo umount "$work/merged"
+              sudo rm -rf "$work"
+              return 0
+            fi
+            sudo rm -rf "$work"
+            return 1
+          }
+
+          if docker info >/dev/null 2>&1; then
+            echo "Docker daemon already running"
+          elif overlay_stacks; then
+            echo "overlay mounts stack here, letting dockerd pick its driver"
+            start_dockerd ""
+          elif sudo apt-get install -y -qq fuse-overlayfs >/dev/null 2>&1; then
+            echo "overlay mounts do not stack here, using fuse-overlayfs"
+            start_dockerd "--storage-driver fuse-overlayfs" || start_dockerd "--storage-driver vfs"
+          else
+            echo "overlay mounts do not stack here and fuse-overlayfs is unavailable, using vfs"
+            start_dockerd "--storage-driver vfs"
+          fi
+
+          docker info --format 'Storage driver in use: {{.Driver}}'
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
