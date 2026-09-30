@@ -411,6 +411,20 @@ function getNonCriticalTasks(tasks) {
 }
 
 /**
+ * Escape text before inserting it into HTML. Task names and errors can come from remote systems.
+ * @param {unknown} value
+ * @returns {string}
+ */
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * Format ISO date or numeric timestamps to a short, readable string
  * @param {string | number | undefined} value
  */
@@ -683,10 +697,10 @@ class Components {
           <span class="critical-item__icon" aria-hidden="true">${Icons.alertCircle}</span>
           <div class="critical-item__text">
             <div class="critical-item__title">
-              Check [<code class="critical-item__name">${task.name}</code>]
+              Check [<code class="critical-item__name">${escapeHtml(task.name)}</code>]
               <span class="badge badge--critical">Critical</span>
             </div>
-            <div class="critical-item__msg">${task.error || 'No details provided'}</div>
+            <div class="critical-item__msg">${escapeHtml(task.error || 'No details provided')}</div>
           </div>
         </div>
         <div class="critical-item__meta">
@@ -725,12 +739,12 @@ class Components {
                   <span class="noncritical-item__icon" aria-hidden="true">${Icons.warning}</span>
                   <div class="noncritical-item__text">
                     <div class="noncritical-item__title">
-                      Check [<code class="noncritical-item__name">${task.name}</code>]
+                      Check [<code class="noncritical-item__name">${escapeHtml(task.name)}</code>]
                       <span class="badge badge--minor">Minor</span>
                     </div>
-                    <div class="noncritical-item__msg" style="white-space: pre-wrap;">${
+                    <div class="noncritical-item__msg" style="white-space: pre-wrap;">${escapeHtml(
                       task.error || 'No details provided'
-                    }</div>
+                    )}</div>
                   </div>
                 </div>
                 <div class="noncritical-item__meta">

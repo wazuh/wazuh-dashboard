@@ -107,6 +107,39 @@ describe('client script: server not ready page', () => {
     expect(document.getElementById('btn-run-failed-critical-checks')).toBeTruthy();
   });
 
+  it('renders task names and errors as text, not HTML', async () => {
+    const payload = '<img src=x onerror="window.__xss = true">';
+    mockFetchReturning([
+      {
+        name: payload,
+        status: 'finished',
+        result: 'red',
+        error: payload,
+        enabled: true,
+        critical: true,
+      },
+      {
+        name: payload,
+        status: 'finished',
+        result: 'yellow',
+        error: payload,
+        enabled: true,
+        critical: false,
+      },
+    ]);
+
+    require('./script.js');
+    window.dispatchEvent(new Event('load'));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const root = document.getElementById('root')!;
+    expect(root.querySelector('img[onerror]')).toBeNull();
+    expect(root.querySelector('.critical-item__name')!.textContent).toBe(payload);
+    expect(root.querySelector('.critical-item__msg')!.textContent).toBe(payload);
+    expect(root.querySelector('.noncritical-item__name')!.textContent).toBe(payload);
+    expect(root.querySelector('.noncritical-item__msg')!.textContent).toBe(payload);
+  });
+
   it('clicking "Download checks" triggers a download named healthcheck.json', async () => {
     // Prepare a fake export button in the DOM
     const exportBtn = document.createElement('button');
