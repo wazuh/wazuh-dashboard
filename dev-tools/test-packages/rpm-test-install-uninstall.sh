@@ -109,11 +109,50 @@ else
   exit 1
 fi
 
+# A file the operator added outside certs/, which only the fresh-install takeover gives back.
+operator_file=/etc/wazuh-dashboard/operator-added.pem
+install -m 0600 -o wazuh-dashboard -g wazuh-dashboard /dev/null "${operator_file}"
+
 yum remove -y wazuh-dashboard
-rm -rf /var/lib/wazuh-dashboard/ /usr/share/wazuh-dashboard/ /etc/wazuh-dashboard/ /etc/wazuh/
 if rpm -q wazuh-dashboard &>/dev/null; then
   echo "Package not uninstalled"
   exit 1
 else
   echo "Package uninstalled"
 fi
+
+echo "==> Checking what the removal kept"
+# rpm keeps /etc/wazuh-dashboard. The service user and group are removed, so nothing kept may
+# still carry their freed IDs or stay readable by group or others.
+if getent passwd wazuh-dashboard >/dev/null || getent group wazuh-dashboard >/dev/null; then
+  echo "The wazuh-dashboard user or group was not removed"
+  exit 1
+fi
+orphaned="$(find -P /etc/wazuh-dashboard \( -nouser -o -nogroup \) -print)"
+if [ -n "${orphaned}" ]; then
+  echo "Files kept with the ID of the removed user or group:"
+  echo "${orphaned}"
+  exit 1
+fi
+for kept_file in "${certs_dir}/dashboard-key.pem" "${keystore_file}" "${operator_file}"; do
+  kept_stat="$(stat -c '%U:%G %A' "${kept_file}")" || kept_stat=""
+  if [[ "${kept_stat}" != root:root\ -???------ ]]; then
+    echo "${kept_file} not handed over to root: ${kept_stat:-<missing>}"
+    exit 1
+  fi
+done
+echo "Kept files handed over to root"
+
+echo "==> Checking that a reinstall takes the kept files back"
+rpm -i "${PACKAGE_NAME}"
+for kept_file in "${certs_dir}/dashboard-key.pem" "${keystore_file}" "${operator_file}"; do
+  kept_stat="$(stat -c '%U:%G' "${kept_file}")" || kept_stat=""
+  if [ "${kept_stat}" != "wazuh-dashboard:wazuh-dashboard" ]; then
+    echo "${kept_file} not taken back by the reinstall: ${kept_stat:-<missing>}"
+    exit 1
+  fi
+done
+echo "Reinstall took the kept files back"
+
+yum remove -y wazuh-dashboard
+rm -rf /etc/wazuh-dashboard/ /etc/wazuh/

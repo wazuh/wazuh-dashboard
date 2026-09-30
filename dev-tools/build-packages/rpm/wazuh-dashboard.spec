@@ -187,6 +187,11 @@ fi
 if [ -d %{CONFIG_DIR}/certs ] && [ ! -L %{CONFIG_DIR}/certs ]; then
   chown -R -P %{USER}:%{GROUP} %{CONFIG_DIR}/certs || true
 fi
+# Removing the package hands what it kept in the configuration directory over to
+# root before the service user goes, so a fresh install takes all of it back.
+if [ $1 = 1 ] && [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
+  chown -R -P %{USER}:%{GROUP} %{CONFIG_DIR} || true
+fi
 
 # Create the keystore if needed, resolve the consumed kibanaserver and
 # wazuh-wui passwords into it and, on a fresh install, generate the AI
@@ -224,6 +229,35 @@ fi
 %postun
 if [ $1 = 0 ];then
   # If the package is been uninstalled
+  # rpm keeps the configuration directory: the certificates and their private
+  # keys, the keystore and any *.rpmsave. Hand every file the service account
+  # owns there over to root, with group and other access stripped, before the
+  # account goes. userdel frees the UID, and the next system account created
+  # would inherit it -- and with it the secrets left behind. Nothing is deleted:
+  # %post takes the directory back on a reinstall. find -P and chown -h act on
+  # links themselves and chmod never sees one, so a link the account planted
+  # cannot aim any of this at another file. Same as the Wazuh indexer package.
+  if getent passwd %{USER} > /dev/null 2>&1 && [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
+    config_dir_ok=true
+    find -P %{CONFIG_DIR} -user %{USER} \
+      \( -type l -o -exec chmod go-rwx {} + \) \
+      -exec chown -h root:root {} + 2>/dev/null || config_dir_ok=false
+    find -P %{CONFIG_DIR} -group %{GROUP} \
+      \( -type l -o -exec chmod g-rwx {} + \) \
+      -exec chgrp -h root {} + 2>/dev/null || config_dir_ok=false
+    if [ "${config_dir_ok}" = true ]; then
+      echo "Kept %{CONFIG_DIR}, now owned by root. Reinstalling %{name} takes it back."
+    else
+      echo "Some files under %{CONFIG_DIR} could not be handed over to root; they keep the ID of the removed %{name} user." >&2
+    fi
+  fi
+  # A modified environment file is kept as .rpmsave with its root:%{GROUP}
+  # ownership. The group goes too, so it becomes root's as well.
+  if [ -f /etc/default/%{name}.rpmsave ] && [ ! -L /etc/default/%{name}.rpmsave ]; then
+    chgrp root /etc/default/%{name}.rpmsave > /dev/null 2>&1 || true
+    chmod g-rwx /etc/default/%{name}.rpmsave > /dev/null 2>&1 || true
+  fi
+
   # Remove the wazuh-dashboard user if it exists
   if getent passwd %{USER} > /dev/null 2>&1; then
     userdel %{USER} >/dev/null 2>&1
