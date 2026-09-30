@@ -4,6 +4,7 @@
  */
 
 import { Server } from '@hapi/hapi';
+import { taskResult } from '../../../common/healthcheck';
 import { HealthCheck } from './health_check';
 import { addRoutesNotReadyServer } from './routes';
 
@@ -20,13 +21,44 @@ function mockLogger(): any {
   };
 }
 
+const delayPromise = (time: number) => new Promise((res) => setTimeout(res, time));
+
 describe('Not-ready server healthcheck routes', () => {
   let server: Server;
   let healthcheck: HealthCheck;
   const tasks = {
-    critical: { name: 'critical', critical: true, run: jest.fn(() => ({ secret: 'critical' })) },
-    notCritical: { name: 'not-critical', run: jest.fn(() => ({ secret: 'not-critical' })) },
-    disabled: { name: 'disabled', critical: true, run: jest.fn(() => ({ secret: 'disabled' })) },
+    critical: {
+      name: 'critical',
+      critical: true,
+      run: jest.fn(async () => {
+        await delayPromise(10);
+        return taskResult.ok({ secret: 'critical-secret' });
+      }),
+    },
+    critical2: {
+      name: 'critical2',
+      critical: true,
+      run: jest.fn(async () => {
+        await delayPromise(10);
+        return taskResult.ok({ secret: 'critical2-secret' });
+      }),
+    },
+    failingCritical: {
+      name: 'failing-critical',
+      critical: true,
+      run: jest.fn(() => taskResult.error('critical failure')),
+    },
+    notCritical: {
+      name: 'not-critical',
+      run: jest.fn(() =>
+        taskResult.warning('certificate on node secret-node expired', { secret: 'warning-secret' })
+      ),
+    },
+    disabled: {
+      name: 'disabled',
+      critical: true,
+      run: jest.fn(() => taskResult.ok({ secret: 'disabled-secret' })),
+    },
   };
 
   beforeEach(async () => {
@@ -50,8 +82,10 @@ describe('Not-ready server healthcheck routes', () => {
     expect(response.statusCode).toBe(200);
     expect(tasks.critical.run).toHaveBeenCalledTimes(1);
     const body = JSON.parse(response.payload);
-    expect(body.tasks.map(({ name }: { name: string }) => name)).toEqual(['critical']);
+    expect(body.tasks).toHaveLength(1);
+    expect(body.tasks[0]).toMatchObject({ name: 'critical', result: 'green' });
     expect(body.tasks[0]).not.toHaveProperty('data');
+    expect(response.payload).not.toContain('secret');
   });
 
   it.each([
@@ -71,15 +105,37 @@ describe('Not-ready server healthcheck routes', () => {
     Object.values(tasks).forEach(({ run }) => expect(run).not.toHaveBeenCalled());
   });
 
-  it('returns the tasks status without their data', async () => {
-    await healthcheck.run({}, ['critical', 'not-critical']);
+  it('shares one run between reordered or repeated task names', async () => {
+    const runWithDecorators = jest.spyOn(healthcheck, 'runWithDecorators');
+
+    const responses = await Promise.all(
+      ['critical,critical2', 'critical2,critical', 'critical,critical2,critical'].map((names) =>
+        server.inject({ method: 'POST', url: `/api/healthcheck/internal?name=${names}` })
+      )
+    );
+
+    responses.forEach(({ statusCode }) => expect(statusCode).toBe(200));
+    expect(runWithDecorators).toHaveBeenCalledTimes(1);
+    expect(runWithDecorators).toHaveBeenCalledWith(expect.anything(), ['critical', 'critical2']);
+  });
+
+  it('returns the tasks status without their data or non-critical errors', async () => {
+    await healthcheck.run({}, ['critical', 'failing-critical', 'not-critical']);
 
     const response = await server.inject({ method: 'GET', url: '/api/healthcheck/internal' });
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.payload);
-    expect(body.tasks).toHaveLength(3);
+    expect(body.tasks).toHaveLength(Object.keys(tasks).length);
     body.tasks.forEach((task: object) => expect(task).not.toHaveProperty('data'));
     expect(response.payload).not.toContain('secret');
+
+    const byName = (name: string) =>
+      body.tasks.find((task: { name: string }) => task.name === name);
+    expect(byName('failing-critical').error).toBe('critical failure');
+    expect(byName('not-critical').error).toBe(
+      'Check reported a problem. Log in, or check the server logs, for details.'
+    );
+    expect(byName('critical').error).toBeNull();
   });
 });

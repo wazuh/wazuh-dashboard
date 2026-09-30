@@ -16,11 +16,20 @@ type ResponseType = (params: any) => Lifecycle.ReturnValue;
 interface InjectedProps {
   healthcheck: HealthCheck;
   logger: Logger;
-  // The not-ready server answers without authentication, so it must not expose task data
-  omitTaskData?: boolean;
+  // The not-ready server answers without authentication, so it must not expose task details
+  redactForNotReadyServer?: boolean;
 }
 
-const withoutTaskData = (tasks: TaskInfo[]) => tasks.map(({ data, ...task }) => task);
+const REDACTED_TASK_ERROR =
+  'Check reported a problem. Log in, or check the server logs, for details.';
+
+// Drop the task data and keep the error only for enabled critical tasks, which the
+// troubleshooting page needs to explain why the dashboard cannot start.
+const redactForNotReadyServer = (tasks: TaskInfo[]) =>
+  tasks.map(({ data, ...task }) => ({
+    ...task,
+    error: task.error && !(task.enabled && task.critical) ? REDACTED_TASK_ERROR : task.error,
+  }));
 
 interface ResponseHandler {
   ok: ResponseType;
@@ -109,7 +118,7 @@ async function handlerGetTasks(
     return response.ok({
       body: {
         message: 'Task information was returned.',
-        tasks: this.omitTaskData ? withoutTaskData(tasksData) : tasksData,
+        tasks: this.redactForNotReadyServer ? redactForNotReadyServer(tasksData) : tasksData,
       },
     });
   } catch (error) {
@@ -129,7 +138,10 @@ async function handlerRunTasks(
 ) {
   try {
     this.logger.debug(`Running healthcheck tasks related to internal scope`);
-    const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
+    // Sort and dedupe so reordered or repeated names share the same in-flight run
+    const tasksNames = request.query.name
+      ? [...new Set(getTaskList(request.query.name))].sort()
+      : undefined;
 
     let tasks;
     try {
@@ -144,7 +156,7 @@ async function handlerRunTasks(
     return response.ok({
       body: {
         message: 'Task information was returned.',
-        tasks: this.omitTaskData ? withoutTaskData(tasks) : tasks,
+        tasks: this.redactForNotReadyServer ? redactForNotReadyServer(tasks) : tasks,
       },
     });
   } catch (error) {
@@ -260,7 +272,7 @@ export function addRoutesNotReadyServer(
             name: validateTaskList,
           })
         ),
-      })(handlerGetTasks.bind({ healthcheck, logger, omitTaskData: true }))
+      })(handlerGetTasks.bind({ healthcheck, logger, redactForNotReadyServer: true }))
     ),
   });
 
@@ -274,6 +286,8 @@ export function addRoutesNotReadyServer(
         query: schema.object({
           name: schema.string({
             validate(value: string) {
+              // enabled and critical are set in HealthCheck.start(), so every request gets a
+              // 400 until then
               const runnableTasks = healthcheck
                 .getAll()
                 .filter(({ enabled, critical }: TaskInfo) => enabled && critical)
@@ -290,7 +304,7 @@ export function addRoutesNotReadyServer(
             },
           }),
         }),
-      })(handlerRunTasks.bind({ healthcheck, logger, omitTaskData: true }))
+      })(handlerRunTasks.bind({ healthcheck, logger, redactForNotReadyServer: true }))
     ),
   });
 }
