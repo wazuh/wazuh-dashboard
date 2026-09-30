@@ -76,8 +76,9 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
   `WAZUH_DASHBOARD_NODE_NAME` or `hostname -s`. Its SANs are `WAZUH_DASHBOARD_CERT_SANS` (an exact
   comma-separated list, `DNS:`/`IP:` or untyped; environment, then `credentials.env`) or, by
   default, the node name, the FQDN and every global-scope address. Loopback is always added.
-- Files are staged in a root-only directory and published with `ln -T`, key first. A new `certs/`
-  directory gets `wazuh-certs-tool`'s layout: `0500`, files `0400`, `wazuh-dashboard:wazuh-dashboard`.
+- Files, the SAN list included, are staged in a root-only directory and published with `ln -T`,
+  key first. A new `certs/` directory gets `wazuh-certs-tool`'s layout: `0500`, files `0400`,
+  `wazuh-dashboard:wazuh-dashboard`.
 - `--upgrade` and `--prestart` never touch the certificates. A failed issue is reported by
   `--install` itself, and exits `0`.
 
@@ -92,6 +93,13 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
 
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
 (`0600 root:root`) when the dashboard is the first Wazuh package on the host.
+
+`--clear` enters `certs/` the way the install does and removes the files relative to it. A
+`certs/` that is a symbolic link or not a directory is refused, and the clear fails.
+
+Run as root, every mode starts the keystore and Node as `wazuh-dashboard` in a session of their
+own (`setsid`), without a controlling terminal, and with an empty environment except `PATH` and
+`OSD_PATH_CONF` (`env -i`).
 
 `-H <dir>` sets the installation directory (default: derived from the script's location).
 `WAZUH_BASE_DIR` moves `/etc/wazuh`, as for every other consumer of the library.

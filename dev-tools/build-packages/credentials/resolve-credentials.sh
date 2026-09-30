@@ -187,17 +187,42 @@ mark_invalid() {
 # Keystore
 #
 # The keystore is created and read by the service user, and this script runs as root from
-# postinst and from ExecStartPre=+. Every call therefore goes through runuser: a keystore written
-# by root is a keystore the service can no longer read.
+# postinst and from ExecStartPre=+. Every call therefore goes through as_service_user: a keystore
+# written by root is a keystore the service can no longer read.
 #
 # Secrets reach it through stdin (`add <key> --stdin`), never argv, and never interpolated into a
 # `runuser --command="..."` string: either one is a secret in ps for as long as the process lives.
 # The working directory is / so the service user never has to traverse root's.
 # -----------------------------------------------------------------------------------------
 
+# runuser alone changes the user and nothing else: the child stays in root's session and keeps
+# root's environment. From an interactive dpkg or rpm that session has root's terminal as its
+# controlling terminal, and the service user -- who controls what its Node loads, through
+# node.options -- could open /dev/tty and push input into root's shell (TIOCSTI). The environment
+# carries whatever root exported, the credentials this script reads from it included.
+#
+# So every child starts in a session of its own, which has no controlling terminal: /dev/tty
+# cannot be opened and TIOCSTI is refused. It gets an environment of its own, too: the fixed PATH
+# and the configuration directory, nothing else. Its standard streams are the caller's to point
+# away from the terminal, and every caller does.
+#
+# util-linux before 2.24 (RHEL 7) has no setsid -w. Without it setsid returns the child's status
+# only when it does not have to fork, which is when it is not a process-group leader. It never is
+# here: it runs in a subshell of a script without job control, which stays in the script's group.
+SETSID_WAIT=""
+if setsid -w true </dev/null >/dev/null 2>&1; then
+    SETSID_WAIT="-w"
+fi
+
+as_service_user() {
+    # ${SETSID_WAIT} is unquoted on purpose: empty, it must vanish rather than be an argument.
+    (cd / && setsid ${SETSID_WAIT} runuser -u "${SERVICE_USER}" -- \
+        env -i PATH="${PATH}" OSD_PATH_CONF="${CONFIG_DIR}" "$@")
+}
+
 keystore() {
     if [ "$(id -u)" = 0 ]; then
-        (cd / && runuser -u "${SERVICE_USER}" -- "${KEYSTORE_BIN}" "$@")
+        as_service_user "${KEYSTORE_BIN}" "$@"
     else
         (cd / && "${KEYSTORE_BIN}" "$@")
     fi
@@ -333,7 +358,7 @@ keystore_stores_verbatim() {
     fi
     _ksv_status=0
     if [ "$(id -u)" = 0 ]; then
-        printf '%s' "$1" | (cd / && runuser -u "${SERVICE_USER}" -- "${NODE_BIN}" -e "${KEYSTORE_VERBATIM_JS}") \
+        printf '%s' "$1" | as_service_user "${NODE_BIN}" -e "${KEYSTORE_VERBATIM_JS}" \
             >/dev/null 2>&1 || _ksv_status=$?
     else
         printf '%s' "$1" | (cd / && "${NODE_BIN}" -e "${KEYSTORE_VERBATIM_JS}") >/dev/null 2>&1 ||
@@ -473,8 +498,7 @@ config_has() {
     [ -x "${NODE_BIN}" ] && [ -f "${CONFIG_FILE}" ] || return 2
     _ch_status=0
     if [ "$(id -u)" = 0 ]; then
-        (cd / && runuser -u "${SERVICE_USER}" -- \
-            "${NODE_BIN}" -e "${CONFIG_HAS_JS}" "${DIR}" "${CONFIG_FILE}" "$1") \
+        as_service_user "${NODE_BIN}" -e "${CONFIG_HAS_JS}" "${DIR}" "${CONFIG_FILE}" "$1" \
             </dev/null >/dev/null 2>&1 || _ch_status=$?
     else
         (cd / && "${NODE_BIN}" -e "${CONFIG_HAS_JS}" "${DIR}" "${CONFIG_FILE}" "$1") \
@@ -863,12 +887,21 @@ _dc_enter_stage() {
     fi
 }
 
-# Runs from inside the certificates directory. $1 staging directory, $2 CA directory, $3 CN,
-# $4 SAN file (absolute).
+# Runs from inside the certificates directory. $1 staging directory, $2 CA directory, $3 CN.
 _dc_issue_pair() (
     _dc_enter_stage "$1" || return 1
 
-    _dc_write_leaf_config leaf.cnf "$3" "$4" || return 1
+    # The SAN list is built here, relative to the staging directory just verified, like every
+    # other file of the issue. A path spelled from ${CERTS_DIR} would be resolved again on each
+    # use, through certs/ -- an entry of the service user's directory, which it can swap between
+    # the write and the read, and so choose where root writes and which names the CA signs.
+    _dc_sans "$3" sans.source >sans || return 1
+    [ -s sans.source ] && log "$(cat -- sans.source)"
+    log "issuing ${CERT_FILE} for CN $3 from $2" \
+        "(RSA 2048, SHA-256, 3650 days, serverAuth and clientAuth);" \
+        "SANs $(tr '\n' ' ' <sans | sed 's/ $//')"
+
+    _dc_write_leaf_config leaf.cnf "$3" sans || return 1
     if ! (umask 077; openssl req -new -nodes -newkey rsa:2048 -sha256 \
         -keyout "${CERT_KEY_FILE}" -out dashboard.csr -config leaf.cnf >/dev/null 2>&1); then
         err "OpenSSL could not create the dashboard certificate request"
@@ -1009,14 +1042,7 @@ _dc_ensure_locked() (
             return 1
         fi
         _dce_node=$(_dc_node_name) || return 1
-        # The SAN list goes into the staging directory, which only root can reach.
-        _dce_sans_file="$(pwd -P)/${_dce_stage}/sans"
-        _dc_sans "${_dce_node}" "${_dce_sans_file}.source" >"${_dce_sans_file}" || return 1
-        [ -s "${_dce_sans_file}.source" ] && log "$(cat -- "${_dce_sans_file}.source")"
-        log "issuing ${CERT_FILE} for CN ${_dce_node} from ${_dce_ca_dir}" \
-            "(RSA 2048, SHA-256, 3650 days, serverAuth and clientAuth);" \
-            "SANs $(tr '\n' ' ' <"${_dce_sans_file}" | sed 's/ $//')"
-        _dc_issue_pair "${_dce_stage}" "${_dce_ca_dir}" "${_dce_node}" "${_dce_sans_file}" || return 1
+        _dc_issue_pair "${_dce_stage}" "${_dce_ca_dir}" "${_dce_node}" || return 1
         log "issued ${CERTS_DIR}/${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
         _dce_text=$(openssl x509 -in "${CERT_FILE}" -noout -text 2>/dev/null) || _dce_text=""
         log "${CERT_FILE} SANs: $(printf '%s\n' "${_dce_text}" | sed -n '/X509v3 Subject Alternative Name:/{n;s/^ *//p;}')"
@@ -1050,21 +1076,41 @@ resolve_certificates() {
 # CA_MINT_MARKER at the time, and which is therefore baked into the image. A CA with a key but no
 # marker was staged by the operator, and an anchor-only CA was handed to the host; both stay. Runs
 # under the shared lock like every other write to the CA directory.
+#
+# certs/ is entered exactly as the issuing path enters it, and everything is removed relative to
+# it. The service user owns ${CONFIG_DIR}, so it can put a symlink at certs/; a path spelled from
+# ${CERTS_DIR} would be resolved through it, and root would delete these names wherever it points
+# -- the shared anchor in the CA directory, for one. A certs/ that is not a real directory is
+# refused rather than skipped, so a clear that could not look is never reported as done.
 _dc_clear_locked() (
-    for _dcc_file in "${CERT_FILE}" "${CERT_KEY_FILE}" "${CERT_CA_FILE}"; do
-        if _dc_exists "${CERTS_DIR}/${_dcc_file}"; then
-            rm -f -- "${CERTS_DIR}/${_dcc_file}" || return 1
-            log "removed ${CERTS_DIR}/${_dcc_file}"
+    if [ -L "${CONFIG_DIR}" ] || { _dc_exists "${CONFIG_DIR}" && [ ! -d "${CONFIG_DIR}" ]; }; then
+        err "refusing to clear ${CERTS_DIR}: ${CONFIG_DIR} is not a real directory"
+        return 1
+    fi
+    if [ -d "${CONFIG_DIR}" ]; then
+        cd -P -- "${CONFIG_DIR}" || return 1
+        if _dc_exists certs; then
+            if [ -L certs ] || [ ! -d certs ]; then
+                err "refusing to clear ${CERTS_DIR}: it is not a real directory, so what it points to is not the dashboard's"
+                return 1
+            fi
+            _dc_enter_child certs || return 1
+            for _dcc_file in "${CERT_FILE}" "${CERT_KEY_FILE}" "${CERT_CA_FILE}"; do
+                if _dc_exists "${_dcc_file}"; then
+                    rm -f -- "${_dcc_file}" || return 1
+                    log "removed ${CERTS_DIR}/${_dcc_file}"
+                fi
+            done
+            # The trap removes the staging directory, but a SIGKILL does not run it, and what it
+            # leaves holds a private key. This path promises that nothing of this host's
+            # credentials survives into the image, so it goes too.
+            for _dcc_stage in .stage.*; do
+                [ -d "${_dcc_stage}" ] && [ ! -L "${_dcc_stage}" ] || continue
+                rm -rf -- "${_dcc_stage}" || return 1
+                log "removed ${CERTS_DIR}/${_dcc_stage}, left behind by an interrupted issue"
+            done
         fi
-    done
-    # The trap removes the staging directory, but a SIGKILL does not run it, and what it leaves
-    # holds a private key. This path promises that nothing of this host's credentials survives into
-    # the image, so it goes too.
-    for _dcc_stage in "${CERTS_DIR}"/.stage.*; do
-        [ -d "${_dcc_stage}" ] && [ ! -L "${_dcc_stage}" ] || continue
-        rm -rf -- "${_dcc_stage}" || return 1
-        log "removed ${_dcc_stage}, left behind by an interrupted issue"
-    done
+    fi
     _dcc_ca=$(wazuh_ca_get_dir 2>/dev/null) || _dcc_ca=""
     [ -n "${_dcc_ca}" ] || return 0
     if [ -f "${_dcc_ca}/${CA_MINT_MARKER}" ]; then

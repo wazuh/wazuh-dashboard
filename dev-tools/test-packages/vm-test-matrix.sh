@@ -109,6 +109,8 @@ CASES=(
   "D19|Upgrade while running|case_upgrade_running|dashboard-previous"
   "D20|Upgrade while stopped|case_upgrade_stopped|dashboard-previous"
   "D21|No wazuh_core default host: wazuh-wui not needed|case_no_wazuh_host|dashboard"
+  "D22|--clear refuses a certs/ symlink|case_clear_symlinked_certs|dashboard"
+  "D23|Service-user children: no terminal, no root environment|case_children_isolated|dashboard"
   "F01|Install order: indexer, manager, dashboard|case_order_imd|full"
   "F02|Install order: indexer, dashboard, manager|case_order_idm|full"
   "F03|Install order: manager, indexer, dashboard|case_order_mid|full"
@@ -965,6 +967,57 @@ case_no_wazuh_host() {
   check_not "no wazuh_core password written" ks_has wazuh_core.hosts.default.password
   check "systemctl start succeeds" svc_start
   check_running
+}
+
+case_clear_symlinked_certs() {
+  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  install_ok "${DASHBOARD_PKG}"
+  step "The service user points certs/ at another directory, then root runs --clear"
+  # Files with the names --clear removes, in a directory the service user has no rights over.
+  local decoy="${WORK}/decoy" f
+  install -d -m 0700 -o root -g root "${decoy}"
+  for f in dashboard.pem dashboard-key.pem root-ca.pem; do echo "not the dashboard's" >"${decoy}/${f}"; done
+  check "${NAME} can replace certs/ with a symlink" \
+    runuser -u "${NAME}" -- sh -c "cd '${CONFIG_DIR}' && mv certs certs.moved && ln -s '${decoy}' certs"
+  local out rc=0
+  out=$("${RESOLVER}" --clear 2>&1) || rc=$?
+  echo "${out}"
+  check "--clear fails rather than reporting a clear" test "${rc}" -ne 0
+  check "the refusal names certs/" contains "${out}" "refusing to clear ${CERTS_DIR}"
+  for f in dashboard.pem dashboard-key.pem root-ca.pem; do
+    check "${f} in the symlink's target is kept" test -f "${decoy}/${f}"
+  done
+  check "the shared CA is kept" test -f "${CA_DIR}/root-ca.pem"
+}
+
+case_children_isolated() {
+  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  install_ok "${DASHBOARD_PKG}"
+  step "Run --prestart from a terminal, with a secret in root's environment"
+  # node.options is the service user's, and the keystore's Node loads what it names -- the probe
+  # records what a child of the resolver could reach. It lives in the configuration directory,
+  # which the service user can read and the host cleanup removes.
+  local probe="${CONFIG_DIR}/probe.js" probe_log="${CONFIG_DIR}/probe.log"
+  cat >"${probe}" <<'EOF'
+const fs = require('fs');
+let tty = 'none';
+try { fs.closeSync(fs.openSync('/dev/tty', 'r')); tty = 'open'; } catch (e) {}
+try {
+  fs.appendFileSync(__dirname + '/probe.log',
+    `tty=${tty} canary=${'ROOT_CANARY' in process.env} env=${Object.keys(process.env).sort().join(',')}\n`);
+} catch (e) {}
+EOF
+  : >"${probe_log}"
+  chown "${NAME}:${NAME}" "${probe}" "${probe_log}"
+  cp -p "${CONFIG_DIR}/node.options" "${WORK}/node.options"
+  printf -- '--require=%s\n' "${probe}" >>"${CONFIG_DIR}/node.options"
+  # script(1) gives the resolver a controlling terminal, as an interactive dpkg or rpm would.
+  script -q -e -c "env ROOT_CANARY=1 ${RESOLVER} --prestart" /dev/null </dev/null || true
+  cp -p "${WORK}/node.options" "${CONFIG_DIR}/node.options"
+  sed 's/^/  [INFO] probe: /' "${probe_log}"
+  check "the probe ran in the keystore's Node" test -s "${probe_log}"
+  check_not "no child opened root's terminal" grep -q 'tty=open' "${probe_log}"
+  check_not "no child saw root's environment" grep -q 'canary=true' "${probe_log}"
 }
 
 # -----------------------------------------------------------------------------------------
