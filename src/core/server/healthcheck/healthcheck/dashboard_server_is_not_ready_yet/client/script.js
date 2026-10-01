@@ -820,7 +820,7 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       Components.notice({
         type: 'info',
         message:
-          'The Wazuh dashboard server is waiting for the Wazuh indexer or for its health checks to run. Check the Wazuh dashboard server logs for the cause, and reload this page later.',
+          'The Wazuh dashboard server is still starting and has no health check results yet. Reload this page in a few minutes. If this message persists, check the Wazuh dashboard logs.',
       })
     )}
     ${$if(

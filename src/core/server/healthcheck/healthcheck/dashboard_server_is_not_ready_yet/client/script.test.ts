@@ -292,7 +292,8 @@ describe('client script: server not ready page', () => {
 
   describe('notice when no critical check failed', () => {
     const SUCCESS_TEXT = 'No critical errors remain';
-    const WAITING_TEXT = 'is waiting for the Wazuh indexer or for its health checks to run';
+    const WAITING_TEXT =
+      'The Wazuh dashboard server is still starting and has no health check results yet. Reload this page in a few minutes. If this message persists, check the Wazuh dashboard logs.';
 
     async function renderWith(tasks: any[]) {
       mockFetchReturning(tasks);
