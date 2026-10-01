@@ -30,6 +30,8 @@
 
 import { Buffer } from 'buffer';
 import { stringify } from 'querystring';
+// Wazuh: import RequestEvent and errors to describe response errors without an OpenSearch error
+// import { Client, ClientOptions, Transport } from '@opensearch-project/opensearch';
 import {
   Client,
   ClientOptions,
@@ -69,6 +71,12 @@ export const configureClient = (
 const addLogging = (client: Client, logger: Logger, logQueries: boolean) => {
   client.on('response', (error, event) => {
     if (error) {
+      // Wazuh: log the status, request and body of response errors without an OpenSearch error
+      // const errorMessage =
+      //   // error details for response errors provided by opensearch, defaults to error name/message
+      //   `[${event.body?.error?.type ?? error.name}]: ${event.body?.error?.reason ?? error.message}`;
+      //
+      // logger.error(errorMessage);
       logger.error(formatResponseError(error, event));
     }
     if (event && logQueries) {
@@ -85,6 +93,7 @@ const addLogging = (client: Client, logger: Logger, logQueries: boolean) => {
   });
 };
 
+/* Wazuh BEGIN */
 const MAX_LOGGED_BODY_LENGTH = 500;
 
 // error details for response errors provided by opensearch, defaults to error name/message
@@ -113,6 +122,7 @@ const truncateBody = (body: string) => {
     ? `${singleLine.slice(0, MAX_LOGGED_BODY_LENGTH)}…`
     : singleLine;
 };
+/* Wazuh END */
 
 const convertQueryString = (qs: string | Record<string, any> | undefined): string => {
   if (qs === undefined || typeof qs === 'string') {

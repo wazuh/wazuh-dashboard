@@ -194,10 +194,19 @@ describe('configureClient', () => {
         body: {
           error: {},
         },
+        // Wazuh: request params, logged when the body carries no OpenSearch error
         params: { method: 'GET', path: '/_foo' },
       });
       client.emit('response', new errors.ResponseError(response), response);
 
+      // Wazuh: the fallback line carries the status code and the request
+      // expect(loggingSystemMock.collect(logger).error).toMatchInlineSnapshot(`
+      //   Array [
+      //     Array [
+      //       "[ResponseError]: Response Error",
+      //     ],
+      //   ]
+      // `);
       expect(loggingSystemMock.collect(logger).error).toMatchInlineSnapshot(`
         Array [
           Array [
@@ -215,6 +224,14 @@ describe('configureClient', () => {
       });
       client.emit('response', new errors.ResponseError(response), response);
 
+      // Wazuh: the fallback line carries the status code
+      // expect(loggingSystemMock.collect(logger).error).toMatchInlineSnapshot(`
+      //   Array [
+      //     Array [
+      //       "[ResponseError]: Response Error",
+      //     ],
+      //   ]
+      // `);
       expect(loggingSystemMock.collect(logger).error).toMatchInlineSnapshot(`
         Array [
           Array [
@@ -224,6 +241,7 @@ describe('configureClient', () => {
       `);
     });
 
+    /* Wazuh BEGIN */
     describe('when the response error carries no OpenSearch error details', () => {
       const emitResponseError = (response: RequestEvent<any>) => {
         const client = configureClient(config, { logger, scoped: false });
@@ -260,6 +278,7 @@ describe('configureClient', () => {
         expect(message.length).toBeLessThan(600);
       });
     });
+    /* Wazuh END */
 
     describe('logs each queries if `logQueries` is true', () => {
       function createResponseWithBody(body?: RequestBody) {
