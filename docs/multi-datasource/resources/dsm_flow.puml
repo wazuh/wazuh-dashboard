@@ -1,11 +1,11 @@
 @startuml 
-title DataSource Management in Stack Management
+title DataSource Management in Dashboards Management
 
 
 :DataSource Owner: as DSO
 :DataSource User: as DSU
 
-(Stack Management Page) as (Page-Stack)
+(Dashboards Management Page) as (Page-Stack)
 (DataSource Management Page) as (Page-DM)
 (Add new DataSource Page) as (Page-AND)
 (DataSource Grid View) as (Component-DSG)
