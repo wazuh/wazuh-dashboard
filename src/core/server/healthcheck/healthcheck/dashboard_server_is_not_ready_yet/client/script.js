@@ -411,6 +411,17 @@ function getNonCriticalTasks(tasks) {
 }
 
 /**
+ * Tells whether the health checks produced results. Until the server runs them, no task is
+ * enabled, so the absence of failed tasks does not mean the checks passed.
+ * @param {Task[]} tasks
+ * @returns {boolean}
+ */
+function haveHealthChecksRun(tasks) {
+  const enabledTasks = tasks.filter(({ enabled }) => enabled);
+  return enabledTasks.length > 0 && enabledTasks.every(({ status }) => Status.isFinished(status));
+}
+
+/**
  * Escape text before inserting it into HTML. Task names and errors can come from remote systems.
  * @param {unknown} value
  * @returns {string}
@@ -776,6 +787,10 @@ class Components {
  * @returns
  */
 function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
+  const noCriticalFailures =
+    !isRunning && Array.isArray(tasks) && tasks.length > 0 && criticalTasks.length === 0;
+  const healthChecksRan = haveHealthChecksRun(tasks);
+
   return /* html */ `
     <div class="title">
       ${Icons.wazuhDashboard}
@@ -793,11 +808,19 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       })
     )}
     ${$if(
-      !isRunning && Array.isArray(tasks) && tasks.length > 0 && criticalTasks.length === 0,
+      noCriticalFailures && healthChecksRan,
       Components.notice({
         type: 'success',
         message:
           'No critical errors remain. In about 30 seconds, you can reload this page and you should be redirected to the application.',
+      })
+    )}
+    ${$if(
+      noCriticalFailures && !healthChecksRan,
+      Components.notice({
+        type: 'info',
+        message:
+          'The Wazuh dashboard server is still starting and has no health check results yet. Reload this page in a few minutes. If this message persists, check the Wazuh dashboard logs.',
       })
     )}
     ${$if(
