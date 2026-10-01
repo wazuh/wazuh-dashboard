@@ -30,7 +30,13 @@
 
 import { Buffer } from 'buffer';
 import { stringify } from 'querystring';
-import { Client, ClientOptions, Transport } from '@opensearch-project/opensearch';
+import {
+  Client,
+  ClientOptions,
+  Transport,
+  RequestEvent,
+  errors,
+} from '@opensearch-project/opensearch';
 import { RequestBody } from '@opensearch-project/opensearch/lib/Transport';
 
 import { Logger } from '../../logging';
@@ -63,11 +69,7 @@ export const configureClient = (
 const addLogging = (client: Client, logger: Logger, logQueries: boolean) => {
   client.on('response', (error, event) => {
     if (error) {
-      const errorMessage =
-        // error details for response errors provided by opensearch, defaults to error name/message
-        `[${event.body?.error?.type ?? error.name}]: ${event.body?.error?.reason ?? error.message}`;
-
-      logger.error(errorMessage);
+      logger.error(formatResponseError(error, event));
     }
     if (event && logQueries) {
       const params = event.meta.request.params;
@@ -81,6 +83,35 @@ const addLogging = (client: Client, logger: Logger, logQueries: boolean) => {
       });
     }
   });
+};
+
+const MAX_LOGGED_BODY_LENGTH = 500;
+
+// error details for response errors provided by opensearch, defaults to error name/message
+const formatResponseError = (error: Error, event: RequestEvent) => {
+  const type = event.body?.error?.type;
+  const reason = event.body?.error?.reason;
+  if (type == null && reason == null && error instanceof errors.ResponseError) {
+    return `[${error.name}]: ${describeBodylessResponseError(error, event)}`;
+  }
+  return `[${type ?? error.name}]: ${reason ?? error.message}`;
+};
+
+// Some responses (e.g. the security plugin rejecting a request) carry a plain-text body instead
+// of an OpenSearch error object, so the status, request and body are the only hint to the cause.
+const describeBodylessResponseError = (error: Error, event: RequestEvent) => {
+  const params = event.meta?.request?.params;
+  const request = [event.statusCode, params?.method, params?.path].filter(Boolean).join(' ');
+  const body = typeof event.body === 'string' ? truncateBody(event.body) : '';
+  const detail = body || error.message;
+  return request ? `${request}: ${detail}` : detail;
+};
+
+const truncateBody = (body: string) => {
+  const singleLine = body.replace(/\s+/g, ' ').trim();
+  return singleLine.length > MAX_LOGGED_BODY_LENGTH
+    ? `${singleLine.slice(0, MAX_LOGGED_BODY_LENGTH)}…`
+    : singleLine;
 };
 
 const convertQueryString = (qs: string | Record<string, any> | undefined): string => {
