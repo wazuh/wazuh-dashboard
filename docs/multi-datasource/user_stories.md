@@ -45,7 +45,7 @@ Data source, as a new saved object type, should have a management page, like ind
 
 We will need to
 
-- add a new data source entry in the stack management Nav app, with a data source list table
+- add a new data source entry in the Dashboards Management app, with a data source list table
 - a data source detail page, to show detailed information of a specific data source, such as URL, auth type, endpoint capabilities etc.
 
 ### Index Pattern

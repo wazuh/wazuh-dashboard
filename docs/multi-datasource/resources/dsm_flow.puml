@@ -5,7 +5,7 @@ title DataSource Management in Dashboards Management
 :DataSource Owner: as DSO
 :DataSource User: as DSU
 
-(Dashboards Management Page) as (Page-Stack)
+(Dashboards Management Page) as (Page-DashMgmt)
 (DataSource Management Page) as (Page-DM)
 (Add new DataSource Page) as (Page-AND)
 (DataSource Grid View) as (Component-DSG)
@@ -20,8 +20,8 @@ title DataSource Management in Dashboards Management
 (DataSource Endpoint) as (Component-DSEndpoint)
 (DataSource Credential) as (Component-DSCredential)
 
-DSO -> (Page-Stack)
-(Page-Stack) -> (Page-DM)
+DSO -> (Page-DashMgmt)
+(Page-DashMgmt) -> (Page-DM)
 (Page-DM) -> (Page-AND) : Add
 (Page-AND) -> (Page-DM) : Save
 (Page-DM) ...> (Component-DSG): View
