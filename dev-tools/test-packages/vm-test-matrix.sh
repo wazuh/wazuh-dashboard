@@ -63,6 +63,9 @@ readonly CA_MINT_MARKER=".wazuh-dashboard-bootstrap-ca"
 # Both packages ship the unit's environment file here; the unit also reads /etc/sysconfig.
 readonly ENV_FILE="/etc/default/${NAME}"
 
+# Keeps the certificate detail in the install output, which the cases assert on.
+export WAZUH_DASHBOARD_VERBOSE=1
+
 readonly KIBANA_PASS="TestKibana1Password"
 readonly WUI_PASS="TestWui1Password"
 
@@ -545,7 +548,7 @@ clean_host() {
 
 case_fresh_install() {
   step "Install on an empty host"
-  install_ok "${DASHBOARD_PKG}"
+  WAZUH_DASHBOARD_VERBOSE=0 install_ok "${DASHBOARD_PKG}"
   check "user ${NAME} exists" id "${NAME}"
   check "resolver is root:root 750" perm_is "${RESOLVER}" root:root:750
   check "lib/ is root:root 755" perm_is "${INSTALL_DIR}/lib" root:root:755
@@ -556,6 +559,15 @@ case_fresh_install() {
   check "${WAZUH_DIR} is root:root 700" perm_is "${WAZUH_DIR}" root:root:700
   check "empty credentials.env is root:root 600" perm_is "${CREDENTIALS_FILE}" root:root:600
   check "credentials.env is empty" test ! -s "${CREDENTIALS_FILE}"
+
+  step "Install output says how to log in, without the certificate detail"
+  local out
+  out=$(cat "${WORK}/install.out")
+  check "prints the dashboard URL" contains "${out}" "Wazuh dashboard: https://"
+  check "names the login user and password" \
+    contains "${out}" "Log in as admin, with WAZUH_INDEXER_ADMIN_PASSWORD"
+  check "says how to start and enable the service" contains "${out}" "systemctl enable --now ${NAME}"
+  check_not "hides the certificate detail" contains "${out}" "SHA-256"
 
   step "Certificates issued from a freshly minted shared CA"
   check "shared CA certificate minted" test -f "${CA_DIR}/root-ca.pem"

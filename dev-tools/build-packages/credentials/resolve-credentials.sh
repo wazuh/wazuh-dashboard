@@ -41,7 +41,8 @@
 #                no opinion about whether the dashboard can run. Never fails: a maintainer script
 #                that aborts leaves the package half-configured, breaks `apt install -f` and fails
 #                image builds. Exits 0 whatever it could not resolve, and says nothing about it --
-#                except the TLS certificates, which are issued at this moment and no other.
+#                except the TLS certificates, which are issued at this moment and no other. Ends by
+#                telling a first-time user where and how to log in.
 #
 #   --upgrade    From postinst / %post when a previous version was already installed. Identical to
 #                --install for the consumed passwords: once both keystore entries exist step 0 is
@@ -162,6 +163,13 @@ log() {
 
 err() {
     echo "${LOG_TAG}: $*" >&2
+}
+
+# Routine detail, printed only with WAZUH_DASHBOARD_VERBOSE=1.
+detail() {
+    if [ "${WAZUH_DASHBOARD_VERBOSE-}" = 1 ]; then
+        log "$@"
+    fi
 }
 
 # Accumulated verdicts. A key is *unresolved* when nothing supplied it and we may not invent it;
@@ -664,6 +672,7 @@ credentials_file_ensure() {
 #                               environment then credentials.env. Default: the node name, the FQDN,
 #                               every global-scope address, and loopback.
 #   WAZUH_DASHBOARD_NODE_NAME   Certificate common name. Default: hostname -s.
+#   WAZUH_DASHBOARD_VERBOSE     1 prints each step of the issue. Default: only problems are printed.
 # -----------------------------------------------------------------------------------------
 
 CERTS_DIR="${CONFIG_DIR}/certs"
@@ -896,8 +905,8 @@ _dc_issue_pair() (
     # use, through certs/ -- an entry of the service user's directory, which it can swap between
     # the write and the read, and so choose where root writes and which names the CA signs.
     _dc_sans "$3" sans.source >sans || return 1
-    [ -s sans.source ] && log "$(cat -- sans.source)"
-    log "issuing ${CERT_FILE} for CN $3 from $2" \
+    [ -s sans.source ] && detail "$(cat -- sans.source)"
+    detail "issuing ${CERT_FILE} for CN $3 from $2" \
         "(RSA 2048, SHA-256, 3650 days, serverAuth and clientAuth);" \
         "SANs $(tr '\n' ' ' <sans | sed 's/ $//')"
 
@@ -922,7 +931,7 @@ _dc_issue_pair() (
     ln -T -- "${CERT_FILE}" "../${CERT_FILE}" || return 1
     _wazuh_restorecon "../${CERT_KEY_FILE}" || return 1
     _wazuh_restorecon "../${CERT_FILE}" || return 1
-    log "published ${CERTS_DIR}/${CERT_KEY_FILE} and ${CERT_FILE} (${SERVICE_USER}, 0400); serial ${_dci_serial}"
+    detail "published ${CERTS_DIR}/${CERT_KEY_FILE} and ${CERT_FILE} (${SERVICE_USER}, 0400); serial ${_dci_serial}"
 )
 
 # Runs from inside the certificates directory. $1 staging directory, $2 the shared anchor.
@@ -950,7 +959,7 @@ _dc_ensure_locked() (
     if ! _dc_exists certs; then
         (umask 077; mkdir -m 0700 certs) || { err "cannot create ${CERTS_DIR}"; return 1; }
         _dce_created=1
-        log "created ${CERTS_DIR}"
+        detail "created ${CERTS_DIR}"
     fi
     _dc_enter_child certs || return 1
     if [ "${_dce_created}" -eq 1 ] && [ "$(stat -c '%u:%a' . 2>/dev/null)" != "0:700" ]; then
@@ -971,8 +980,8 @@ _dc_ensure_locked() (
     if ! _dc_exists "${_dce_ca_dir}/root-ca.pem" && ! _dc_exists "${_dce_ca_dir}/root-ca.key"; then
         if [ "${_dce_state}" = complete ]; then
             _dc_validate_pair "${CERT_FILE}" "${CERT_KEY_FILE}" "" || return 1
-            log "${CERTS_DIR} already holds a certificate pair and ${_dce_ca_dir} has no CA; no CA is created"
-            log "kept ${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
+            detail "${CERTS_DIR} already holds a certificate pair and ${_dce_ca_dir} has no CA; no CA is created"
+            detail "kept ${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
             return 0
         fi
         if _dc_exists "${CERT_CA_FILE}"; then
@@ -991,7 +1000,7 @@ _dc_ensure_locked() (
     fi
     case "${_dce_ca_was}" in
         absent)
-            log "created the shared root CA in ${_dce_ca_dir}: $(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
+            detail "created the shared root CA in ${_dce_ca_dir}: $(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
             # Recorded here and not by the caller because only here is the observation atomic with
             # the mint: we hold the credentials lock, so the absence checked above and the CA that
             # exists now are the same moment.
@@ -1004,7 +1013,7 @@ _dc_ensure_locked() (
             fi
             ;;
         complete)
-            log "reusing the shared root CA in ${_dce_ca_dir}: $(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
+            detail "reusing the shared root CA in ${_dce_ca_dir}: $(_dc_describe_cert "${_dce_ca_dir}/root-ca.pem")"
             ;;
         anchor)
             log "the shared root CA in ${_dce_ca_dir} has no private key: it is trusted but cannot issue;" \
@@ -1022,17 +1031,17 @@ _dc_ensure_locked() (
             log "${CERTS_DIR}/${CERT_CA_FILE} is not the CA in ${_dce_ca_dir}; it is kept as it is:" \
                 "$(_dc_describe_cert "${CERT_CA_FILE}")"
         else
-            log "${CERTS_DIR}/${CERT_CA_FILE} is already the shared root CA"
+            detail "${CERTS_DIR}/${CERT_CA_FILE} is already the shared root CA"
         fi
     else
         _dc_install_anchor "${_dce_stage}" "${_dce_ca_dir}/root-ca.pem" || return 1
-        log "installed ${CERTS_DIR}/${CERT_CA_FILE} from ${_dce_ca_dir}"
+        detail "installed ${CERTS_DIR}/${CERT_CA_FILE} from ${_dce_ca_dir}"
     fi
 
     if [ "${_dce_state}" = complete ]; then
         _dc_validate_pair "${CERT_FILE}" "${CERT_KEY_FILE}" "" || return 1
-        log "${CERTS_DIR} already holds a certificate pair; it is kept as it is"
-        log "kept ${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
+        detail "${CERTS_DIR} already holds a certificate pair; it is kept as it is"
+        detail "kept ${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
         if ! openssl verify -CAfile "${_dce_ca_dir}/root-ca.pem" "${CERT_FILE}" >/dev/null 2>&1; then
             log "${CERT_FILE} does not chain to the shared root CA; it is kept as the operator's"
         fi
@@ -1043,9 +1052,9 @@ _dc_ensure_locked() (
         fi
         _dce_node=$(_dc_node_name) || return 1
         _dc_issue_pair "${_dce_stage}" "${_dce_ca_dir}" "${_dce_node}" || return 1
-        log "issued ${CERTS_DIR}/${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
+        detail "issued ${CERTS_DIR}/${CERT_FILE}: $(_dc_describe_cert "${CERT_FILE}")"
         _dce_text=$(openssl x509 -in "${CERT_FILE}" -noout -text 2>/dev/null) || _dce_text=""
-        log "${CERT_FILE} SANs: $(printf '%s\n' "${_dce_text}" | sed -n '/X509v3 Subject Alternative Name:/{n;s/^ *//p;}')"
+        detail "${CERT_FILE} SANs: $(printf '%s\n' "${_dce_text}" | sed -n '/X509v3 Subject Alternative Name:/{n;s/^ *//p;}')"
     fi
 
     # A directory created here gets wazuh-certs-tool's layout; an existing one is the operator's.
@@ -1055,9 +1064,9 @@ _dc_ensure_locked() (
         chown "${SERVICE_USER}:${SERVICE_USER}" . || return 1
         chmod 0500 . || return 1
         _wazuh_restorecon "${CERTS_DIR}" || return 1
-        log "set ${CERTS_DIR} to ${SERVICE_USER}:${SERVICE_USER} 0500"
+        detail "set ${CERTS_DIR} to ${SERVICE_USER}:${SERVICE_USER} 0500"
     fi
-    log "the TLS certificates in ${CERTS_DIR} are in place"
+    detail "the TLS certificates in ${CERTS_DIR} are in place"
 )
 
 resolve_certificates() {
@@ -1067,7 +1076,7 @@ resolve_certificates() {
     fi
     _dc_require || return 1
     _rcs_ca=$(wazuh_ca_get_dir 2>/dev/null) || _rcs_ca="(unresolved)"
-    log "resolving the TLS certificates in ${CERTS_DIR} (shared CA directory: ${_rcs_ca})"
+    detail "resolving the TLS certificates in ${CERTS_DIR} (shared CA directory: ${_rcs_ca})"
     _wazuh_with_lock _dc_ensure_locked
 }
 
@@ -1127,6 +1136,43 @@ _dc_clear_locked() (
 clear_certificates() {
     command -v _wazuh_with_lock >/dev/null 2>&1 || return 1
     _wazuh_with_lock _dc_clear_locked
+}
+
+# -----------------------------------------------------------------------------------------
+# First login: a fresh install ends by saying where to log in, as whom, and how to start.
+# -----------------------------------------------------------------------------------------
+
+# First global IP in the certificate's SANs, else its first DNS name, else the host name.
+dashboard_address() {
+    _dad_sans=$(as_service_user openssl x509 -in "${CERTS_DIR}/${CERT_FILE}" -noout -text \
+        </dev/null 2>/dev/null | sed -n '/X509v3 Subject Alternative Name:/{n;s/^ *//p;}')
+    _dad_host=$(printf '%s\n' "${_dad_sans}" | tr ',' '\n' | LC_ALL=C awk '
+        { sub(/^ +/, "") }
+        /^IP Address:/ {
+            ip = toupper(substr($0, 12))
+            if (ip ~ /^(127\.|169\.254\.)/ || ip == "0:0:0:0:0:0:0:1" || ip ~ /^FE[89AB]/) next
+            if (ip ~ /:/) ip = "[" ip "]"
+            if (ipv == "") ipv = ip
+        }
+        /^DNS:/ && dns == "" && tolower(substr($0, 5)) != "localhost" { dns = substr($0, 5) }
+        END { print (ipv != "" ? ipv : dns) }
+    ')
+    if [ -z "${_dad_host}" ]; then
+        _dad_host=$(hostname 2>/dev/null || uname -n)
+    fi
+    printf '%s\n' "${_dad_host}"
+}
+
+print_first_login() {
+    _pfl_credentials=$(wazuh_env_get_file 2>/dev/null) || _pfl_credentials="/etc/wazuh/credentials.env"
+    echo ""
+    echo "Wazuh dashboard: https://$(dashboard_address)"
+    echo "Log in as admin, with WAZUH_INDEXER_ADMIN_PASSWORD from ${_pfl_credentials} on the indexer host."
+    if command -v systemctl >/dev/null 2>&1; then
+        echo "Start the dashboard and enable it at boot: systemctl enable --now wazuh-dashboard"
+    else
+        echo "Start the dashboard: service wazuh-dashboard start"
+    fi
 }
 
 # -----------------------------------------------------------------------------------------
@@ -1266,7 +1312,11 @@ if [ "${MODE}" = "install" ]; then
         err "        (e.g. with wazuh-certs-tool); the dashboard will not start without them"
     fi
 else
-    log "TLS certificates are only issued on a fresh install; ${CERTS_DIR} is left as it is"
+    detail "TLS certificates are only issued on a fresh install; ${CERTS_DIR} is left as it is"
+fi
+
+if [ "${MODE}" = "install" ]; then
+    print_first_login
 fi
 
 # The installer has no opinion about whether the component can run: no warning, no failure, no

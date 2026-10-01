@@ -81,6 +81,8 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
   `wazuh-dashboard:wazuh-dashboard`.
 - `--upgrade` and `--prestart` never touch the certificates. A failed issue is reported by
   `--install` itself, and exits `0`.
+- Each step of the issue is printed only with `WAZUH_DASHBOARD_VERBOSE=1` (e.g.
+  `sudo WAZUH_DASHBOARD_VERBOSE=1 apt install ./wazuh-dashboard.deb`). Problems always print.
 
 ## Modes
 
@@ -90,6 +92,9 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
 | `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                                                                                                                            |
 | `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                                                                                                                        |
 | `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above, the AI assistant key, the certificates, and the shared CA only when this dashboard minted it (marker); must run as root |
+
+`--install` ends with the dashboard URL (the first global address in `dashboard.pem`), the login
+user (`admin`, with `WAZUH_INDEXER_ADMIN_PASSWORD` from the indexer host) and the start command.
 
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
 (`0600 root:root`) when the dashboard is the first Wazuh package on the host.
