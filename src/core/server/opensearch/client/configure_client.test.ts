@@ -275,7 +275,7 @@ describe('configureClient', () => {
 
         const [[message]] = emitResponseError(response);
         expect(message).toMatch(/^\[ResponseError\]: 401 POST \/_search: line one line two x+…$/);
-        expect(message.length).toBeLessThan(600);
+        expect(String(message).length).toBeLessThan(600);
       });
     });
     /* Wazuh END */
