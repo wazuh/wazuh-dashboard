@@ -57,6 +57,7 @@ import QueryStringInputUI from './query_string_input';
 import { doesKueryExpressionHaveLuceneSyntaxError, UI_SETTINGS } from '../../../common';
 import { PersistedLog, getQueryLog } from '../../query';
 import { NoDataPopover } from './no_data_popover';
+import { toDatePickerLocale, translateQuickRangeLabel } from './timepicker_i18n';
 
 const QueryStringInput = withOpenSearchDashboards(QueryStringInputUI);
 
@@ -343,7 +344,7 @@ export default function QueryBarTopRow(props: QueryBarTopRowProps) {
         return {
           start: from,
           end: to,
-          label: display,
+          label: translateQuickRangeLabel(from, to, display),
         };
       });
 
@@ -371,6 +372,7 @@ export default function QueryBarTopRow(props: QueryBarTopRowProps) {
           className="osdQueryBar__datePicker"
           data-test-subj="osdQueryBarDatePicker"
           compressed={true}
+          locale={toDatePickerLocale()}
         />
       </EuiFlexItem>
     );

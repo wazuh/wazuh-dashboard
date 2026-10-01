@@ -118,7 +118,9 @@ class TypeSelection extends React.Component<TypeSelectionProps, TypeSelectionSta
               >
                 <EuiFlexItem grow={false} className="visNewVisDialog__searchWrapper">
                   <EuiCompressedFieldSearch
-                    placeholder="Filter"
+                    placeholder={i18n.translate('visualizations.newVisWizard.filterPlaceholder', {
+                      defaultMessage: 'Filter',
+                    })}
                     value={query}
                     onChange={this.onQueryChange}
                     fullWidth

@@ -37,9 +37,11 @@ export interface MetricOptionsDefaults {
 
 export const createMetricConfig = (): VisualizationTypeOptions<MetricOptionsDefaults> => ({
   name: 'metric',
-  title: 'Metric',
+  title: i18n.translate('visBuilder.metric.visTitle', { defaultMessage: 'Metric' }),
   icon: 'visMetric',
-  description: 'Display metric visualizations',
+  description: i18n.translate('visBuilder.metric.visDescription', {
+    defaultMessage: 'Display metric visualizations',
+  }),
   toExpression,
   ui: {
     containerConfig: {

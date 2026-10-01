@@ -153,10 +153,13 @@ export class VisualizePlugin
     uiActions.addTriggerAction(VISUALIZE_FIELD_TRIGGER, visualizeFieldAction);
 
     const visualizeAppId = 'visualize';
+    const visualizeAppTitle = i18n.translate('visualize.applicationTitle', {
+      defaultMessage: 'Visualize',
+    });
 
     core.application.register({
       id: visualizeAppId,
-      title: 'Visualize',
+      title: visualizeAppTitle,
       order: 102,
       euiIconType: 'inputOutput',
       workspaceAvailability: WorkspaceAvailability.insideWorkspace,
@@ -280,7 +283,7 @@ export class VisualizePlugin
     if (home) {
       home.featureCatalogue.register({
         id: 'visualize',
-        title: 'Visualize',
+        title: visualizeAppTitle,
         description: i18n.translate('visualize.visualizeDescription', {
           defaultMessage:
             'Create visualizations and aggregate data stores in your OpenSearch indices.',

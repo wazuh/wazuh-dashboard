@@ -50,7 +50,9 @@ export function getTimelineVisDefinition(dependencies: TimelineVisDependencies) 
   // Vis object of this type.
   return {
     name: TIMELINE_VIS_NAME,
-    title: 'Timeline',
+    title: i18n.translate('timeline.visTitle', {
+      defaultMessage: 'Timeline',
+    }),
     icon: 'timeline',
     isClassic: true,
     description: i18n.translate('timeline.timelineDescription', {

@@ -18,9 +18,11 @@ export interface AreaOptionsDefaults extends BasicOptionsDefaults {
 
 export const createAreaConfig = (): VisualizationTypeOptions<AreaOptionsDefaults> => ({
   name: 'area',
-  title: 'Area',
+  title: i18n.translate('visBuilder.area.visTitle', { defaultMessage: 'Area' }),
   icon: 'visArea',
-  description: 'Display area chart',
+  description: i18n.translate('visBuilder.area.visDescription', {
+    defaultMessage: 'Display area chart',
+  }),
   toExpression,
   ui: {
     containerConfig: {

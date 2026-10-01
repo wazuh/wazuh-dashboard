@@ -191,7 +191,9 @@ export class VisBuilderPlugin
     // Register the plugin as an alias to create visualization
     visualizations.registerAlias({
       name: PLUGIN_ID,
-      title: PLUGIN_NAME,
+      title: i18n.translate('visBuilder.visPicker.title', {
+        defaultMessage: 'VisBuilder',
+      }),
       description: i18n.translate('visBuilder.visPicker.description', {
         defaultMessage: 'Create visualizations using the new VisBuilder',
       }),

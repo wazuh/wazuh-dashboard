@@ -26,9 +26,11 @@ export interface PieOptionsDefaults extends BasicOptionsDefaults {
 
 export const createPieConfig = (): VisualizationTypeOptions<PieOptionsDefaults> => ({
   name: 'pie',
-  title: 'Pie',
+  title: i18n.translate('visBuilder.pie.visTitle', { defaultMessage: 'Pie' }),
   icon: 'visPie',
-  description: 'Display pie chart',
+  description: i18n.translate('visBuilder.pie.visDescription', {
+    defaultMessage: 'Display pie chart',
+  }),
   toExpression,
   ui: {
     containerConfig: {

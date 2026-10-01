@@ -100,11 +100,20 @@ export function DiscoverFieldSearch({
   const typeLabel = i18n.translate('discover.fieldChooser.filter.typeLabel', {
     defaultMessage: 'Type',
   });
+  const anyLabel = i18n.translate('discover.fieldChooser.filter.anyOptionLabel', {
+    defaultMessage: 'any',
+  });
+  const yesLabel = i18n.translate('discover.fieldChooser.filter.yesOptionLabel', {
+    defaultMessage: 'yes',
+  });
+  const noLabel = i18n.translate('discover.fieldChooser.filter.noOptionLabel', {
+    defaultMessage: 'no',
+  });
   const typeOptions = types
     ? types.map((type) => {
-        return { value: type, text: type };
+        return { value: type, text: type === 'any' ? anyLabel : type };
       })
-    : [{ value: 'any', text: 'any' }];
+    : [{ value: 'any', text: anyLabel }];
 
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
@@ -203,15 +212,15 @@ export function DiscoverFieldSearch({
     return [
       {
         id: `${id}-any`,
-        label: 'any',
+        label: anyLabel,
       },
       {
         id: `${id}-true`,
-        label: 'yes',
+        label: yesLabel,
       },
       {
         id: `${id}-false`,
-        label: 'no',
+        label: noLabel,
       },
     ];
   };

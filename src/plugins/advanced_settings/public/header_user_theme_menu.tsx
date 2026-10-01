@@ -35,15 +35,21 @@ export const HeaderUserThemeMenu = () => {
   const colorModeOptions = [
     {
       value: 'light',
-      text: 'Light mode',
+      text: i18n.translate('advancedSettings.headerGlobalNav.colorMode.light', {
+        defaultMessage: 'Light mode',
+      }),
     },
     {
       value: 'dark',
-      text: 'Dark mode',
+      text: i18n.translate('advancedSettings.headerGlobalNav.colorMode.dark', {
+        defaultMessage: 'Dark mode',
+      }),
     },
     {
       value: 'automatic',
-      text: 'Use browser settings',
+      text: i18n.translate('advancedSettings.headerGlobalNav.colorMode.automatic', {
+        defaultMessage: 'Use browser settings',
+      }),
     },
   ];
   const defaultThemeVersion = uiSettings.getDefault('theme:version');
@@ -145,11 +151,24 @@ export const HeaderUserThemeMenu = () => {
     </EuiToolTip>
   );
 
-  // TODO: make i18n, check all translation ids
+  const defaultColorModeLabel =
+    colorModeOptions.find((t) => {
+      const defaultValue = defaultIsDarkMode ? 'dark' : 'light';
+      return defaultValue === t.value;
+    })?.text ?? '';
+
   // TODO: fix focus behavior
   const appearanceContent = (
     <div style={{ maxWidth: 300 }}>
-      <EuiCompressedFormRow label="Theme version" helpText={`Default: ${defaultThemeVersion}`}>
+      <EuiCompressedFormRow
+        label={i18n.translate('advancedSettings.headerGlobalNav.themeVersionLabel', {
+          defaultMessage: 'Theme version',
+        })}
+        helpText={i18n.translate('advancedSettings.field.defaultValueText', {
+          defaultMessage: 'Default: {value}',
+          values: { value: defaultThemeVersion },
+        })}
+      >
         <EuiCompressedSelect
           options={themeVersionOptions}
           value={selectedThemeVersion}
@@ -157,13 +176,13 @@ export const HeaderUserThemeMenu = () => {
         />
       </EuiCompressedFormRow>
       <EuiCompressedFormRow
-        label="Screen mode"
-        helpText={`Default: ${
-          colorModeOptions.find((t) => {
-            const defaultValue = defaultIsDarkMode ? 'dark' : 'light';
-            return defaultValue === t.value;
-          })?.text
-        }`}
+        label={i18n.translate('advancedSettings.headerGlobalNav.screenModeLabel', {
+          defaultMessage: 'Screen mode',
+        })}
+        helpText={i18n.translate('advancedSettings.field.defaultValueText', {
+          defaultMessage: 'Default: {value}',
+          values: { value: defaultColorModeLabel },
+        })}
       >
         <EuiCompressedSelect
           options={colorModeOptions}
@@ -178,7 +197,9 @@ export const HeaderUserThemeMenu = () => {
               target="_blank"
               href="https://forum.opensearch.org/t/feedback-on-dark-mode-experience/15725"
             >
-              Theme feedback
+              {i18n.translate('advancedSettings.headerGlobalNav.themeFeedbackLink', {
+                defaultMessage: 'Theme feedback',
+              })}
             </EuiLink>
           </EuiCompressedFormRow>
         </EuiFlexItem>
@@ -186,7 +207,9 @@ export const HeaderUserThemeMenu = () => {
           <EuiCompressedFormRow hasEmptyLabelSpace>
             {/* TODO: disable submit until changes */}
             <EuiSmallButton onClick={applyAppearanceSettings} type="submit">
-              Apply
+              {i18n.translate('advancedSettings.headerGlobalNav.applyButtonLabel', {
+                defaultMessage: 'Apply',
+              })}
             </EuiSmallButton>
           </EuiCompressedFormRow>
         </EuiFlexItem>

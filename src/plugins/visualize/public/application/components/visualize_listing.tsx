@@ -200,7 +200,9 @@ export const VisualizeListing = () => {
           controls={[
             {
               id: 'visualize.createVisualization',
-              label: 'Create visualization',
+              label: i18n.translate('visualize.listing.createVisualizationButtonLabel', {
+                defaultMessage: 'Create visualization',
+              }),
               testId: 'createVisualizationButton',
               run: createNewVis,
               fill: true,

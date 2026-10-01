@@ -430,12 +430,14 @@ export const getEuiContextMapping = () => {
       }),
     'euiRelativeTab.relativeDate': ({ position }: EuiValues) =>
       i18n.translate('core.euiRelativeTab.relativeDate', {
-        defaultMessage: '{position} date',
+        defaultMessage:
+          '{position, select, Start {Start date} End {End date} other {{position} date}}',
         values: { position },
       }),
     'euiRelativeTab.roundingLabel': ({ unit }: EuiValues) =>
       i18n.translate('core.euiRelativeTab.roundingLabel', {
-        defaultMessage: 'Round to the {unit}',
+        defaultMessage:
+          '{unit, select, second {Round to the second} minute {Round to the minute} hour {Round to the hour} day {Round to the day} week {Round to the week} month {Round to the month} year {Round to the year} other {Round to the {unit}}}',
         values: { unit },
       }),
     'euiRelativeTab.unitInputLabel': i18n.translate('core.euiRelativeTab.unitInputLabel', {
