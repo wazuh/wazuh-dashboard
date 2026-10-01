@@ -289,4 +289,48 @@ describe('client script: server not ready page', () => {
     expect(postCall![0]).toContain('/api/healthcheck/internal?');
     expect(postCall![0]).toContain('name=critical%3A1');
   });
+
+  describe('notice when no critical check failed', () => {
+    const SUCCESS_TEXT = 'No critical errors remain';
+    const WAITING_TEXT = 'is waiting for the Wazuh indexer or for its health checks to run';
+
+    async function renderWith(tasks: any[]) {
+      mockFetchReturning(tasks);
+      require('./script.js');
+      window.dispatchEvent(new Event('load'));
+      await new Promise((r) => setTimeout(r, 0));
+      return document.getElementById('root')!;
+    }
+
+    it('shows a waiting notice instead of the success notice when no check has run yet', async () => {
+      const root = await renderWith([
+        { name: 'check:1', status: 'not_started', result: 'gray', enabled: false, critical: true },
+        { name: 'check:2', status: 'not_started', result: 'gray', enabled: false, critical: false },
+      ]);
+
+      expect(root.innerHTML).toContain(WAITING_TEXT);
+      expect(root.innerHTML).not.toContain(SUCCESS_TEXT);
+      expect(root.querySelector('.notice--info')).toBeTruthy();
+    });
+
+    it('keeps waiting while an enabled check has not finished', async () => {
+      const root = await renderWith([
+        { name: 'check:1', status: 'finished', result: 'green', enabled: true, critical: true },
+        { name: 'check:2', status: 'running', result: 'gray', enabled: true, critical: true },
+      ]);
+
+      expect(root.innerHTML).toContain(WAITING_TEXT);
+      expect(root.innerHTML).not.toContain(SUCCESS_TEXT);
+    });
+
+    it('shows the success notice once the enabled checks finished without critical failures', async () => {
+      const root = await renderWith([
+        { name: 'check:1', status: 'finished', result: 'green', enabled: true, critical: true },
+        { name: 'check:2', status: 'not_started', result: 'gray', enabled: false, critical: false },
+      ]);
+
+      expect(root.innerHTML).toContain(SUCCESS_TEXT);
+      expect(root.innerHTML).not.toContain(WAITING_TEXT);
+    });
+  });
 });
