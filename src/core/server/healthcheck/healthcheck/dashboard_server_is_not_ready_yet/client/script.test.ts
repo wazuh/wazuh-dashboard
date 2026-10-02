@@ -107,6 +107,39 @@ describe('client script: server not ready page', () => {
     expect(document.getElementById('btn-run-failed-critical-checks')).toBeTruthy();
   });
 
+  it('renders task names and errors as text, not HTML', async () => {
+    const payload = '<img src=x onerror="window.__xss = true">';
+    mockFetchReturning([
+      {
+        name: payload,
+        status: 'finished',
+        result: 'red',
+        error: payload,
+        enabled: true,
+        critical: true,
+      },
+      {
+        name: payload,
+        status: 'finished',
+        result: 'yellow',
+        error: payload,
+        enabled: true,
+        critical: false,
+      },
+    ]);
+
+    require('./script.js');
+    window.dispatchEvent(new Event('load'));
+    await new Promise((r) => setTimeout(r, 0));
+
+    const root = document.getElementById('root')!;
+    expect(root.querySelector('img[onerror]')).toBeNull();
+    expect(root.querySelector('.critical-item__name')!.textContent).toBe(payload);
+    expect(root.querySelector('.critical-item__msg')!.textContent).toBe(payload);
+    expect(root.querySelector('.noncritical-item__name')!.textContent).toBe(payload);
+    expect(root.querySelector('.noncritical-item__msg')!.textContent).toBe(payload);
+  });
+
   it('clicking "Download checks" triggers a download named healthcheck.json', async () => {
     // Prepare a fake export button in the DOM
     const exportBtn = document.createElement('button');
@@ -255,5 +288,50 @@ describe('client script: server not ready page', () => {
     expect(postCall).toBeTruthy();
     expect(postCall![0]).toContain('/api/healthcheck/internal?');
     expect(postCall![0]).toContain('name=critical%3A1');
+  });
+
+  describe('notice when no critical check failed', () => {
+    const SUCCESS_TEXT = 'No critical errors remain';
+    const WAITING_TEXT =
+      'The Wazuh dashboard server is still starting and has no health check results yet. Reload this page in a few minutes. If this message persists, check the Wazuh dashboard logs.';
+
+    async function renderWith(tasks: any[]) {
+      mockFetchReturning(tasks);
+      require('./script.js');
+      window.dispatchEvent(new Event('load'));
+      await new Promise((r) => setTimeout(r, 0));
+      return document.getElementById('root')!;
+    }
+
+    it('shows a waiting notice instead of the success notice when no check has run yet', async () => {
+      const root = await renderWith([
+        { name: 'check:1', status: 'not_started', result: 'gray', enabled: false, critical: true },
+        { name: 'check:2', status: 'not_started', result: 'gray', enabled: false, critical: false },
+      ]);
+
+      expect(root.innerHTML).toContain(WAITING_TEXT);
+      expect(root.innerHTML).not.toContain(SUCCESS_TEXT);
+      expect(root.querySelector('.notice--info')).toBeTruthy();
+    });
+
+    it('keeps waiting while an enabled check has not finished', async () => {
+      const root = await renderWith([
+        { name: 'check:1', status: 'finished', result: 'green', enabled: true, critical: true },
+        { name: 'check:2', status: 'running', result: 'gray', enabled: true, critical: true },
+      ]);
+
+      expect(root.innerHTML).toContain(WAITING_TEXT);
+      expect(root.innerHTML).not.toContain(SUCCESS_TEXT);
+    });
+
+    it('shows the success notice once the enabled checks finished without critical failures', async () => {
+      const root = await renderWith([
+        { name: 'check:1', status: 'finished', result: 'green', enabled: true, critical: true },
+        { name: 'check:2', status: 'not_started', result: 'gray', enabled: false, critical: false },
+      ]);
+
+      expect(root.innerHTML).toContain(SUCCESS_TEXT);
+      expect(root.innerHTML).not.toContain(WAITING_TEXT);
+    });
   });
 });

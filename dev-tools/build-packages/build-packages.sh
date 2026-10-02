@@ -94,12 +94,49 @@ get_packages(){
   cd ..
 }
 
+# Candidate refs of wazuh-installation-assistant to download the shared
+# credentials library from, in order, space separated. The Wazuh repositories
+# cut the same tag names, so a tag build resolves to the matching tag:
+#   1. WAZUH_CREDENTIALS_LIB_REF, an explicit override
+#   2. the tag being built -- and then nothing else: a release must never
+#      fall back to a branch that keeps moving after it is cut
+#   3. the branch being built, which only exists upstream when it was created
+#      there too (a feature branch 404s and falls through)
+#   4. the version branch, then the version tag
+credentials_lib_refs() {
+  local refs="" tag="" branch="" ref
+  if [ "${GITHUB_REF_TYPE:-}" = "tag" ] && [ -n "${GITHUB_REF_NAME:-}" ]; then
+    tag="${GITHUB_REF_NAME}"
+  else
+    tag="$(git -C "${root_dir}" describe --tags --exact-match 2>/dev/null || true)"
+  fi
+  if [ -z "${tag}" ]; then
+    branch="${GITHUB_HEAD_REF:-}"
+    [ -n "${branch}" ] || [ "${GITHUB_REF_TYPE:-}" != "branch" ] || branch="${GITHUB_REF_NAME:-}"
+    [ -n "${branch}" ] || branch="$(git -C "${root_dir}" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+    [ "${branch}" != "HEAD" ] || branch=""
+  fi
+  for ref in "${WAZUH_CREDENTIALS_LIB_REF:-}" "${tag}" "${branch}"; do
+    [ -n "${ref}" ] || continue
+    case " ${refs} " in *" ${ref} "*) continue ;; esac
+    refs="${refs:+${refs} }${ref}"
+  done
+  if [ -z "${tag}" ]; then
+    for ref in "${version}" "v${version}"; do
+      case " ${refs} " in *" ${ref} "*) continue ;; esac
+      refs="${refs:+${refs} }${ref}"
+    done
+  fi
+  echo "${refs}"
+}
+
 build_tar() {
   log
   log "Building base package..."
   log
   mkdir -p ${output_dir}
   cp -r ${config_dir} ${tmp_dir}
+  cp -r ${current_path}/credentials ${tmp_dir}
   cd ./base
   dockerfile_path="${current_path}/base/Docker"
   container_name="dashboard-base-builder"
@@ -111,6 +148,8 @@ build_tar() {
   run_with_retry docker run -t --rm \
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
+    -e "WAZUH_CREDENTIALS_LIB_REFS=$(credentials_lib_refs)" \
+    -e "WAZUH_CREDENTIALS_LIB_SHA256=${WAZUH_CREDENTIALS_LIB_SHA256:-}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
     "${container_name}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
   cd ..
