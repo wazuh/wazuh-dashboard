@@ -67,7 +67,8 @@ export const Template: FunctionComponent<Props> = ({
   );
 
   const favicon = injectedMetadata.branding.faviconUrl;
-  const applicationTitle = injectedMetadata.branding.applicationTitle || 'OpenSearch Dashboards';
+  // Wazuh: fall back to the Wazuh brand
+  const applicationTitle = injectedMetadata.branding.applicationTitle || 'Wazuh';
 
   return (
     <html lang={locale}>

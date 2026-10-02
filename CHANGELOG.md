@@ -48,6 +48,7 @@
 | [#1619](https://github.com/wazuh/wazuh-dashboard/issues/1619)                                | Fixed the dashboard keystore being created readable by every user                                                      |
 | [wazuh-dashboard-plugins#9257](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9257) | Fixed the RPM package removal leaving the kept configuration files owned by the removed `wazuh-dashboard` user         |
 | [#1638](https://github.com/wazuh/wazuh-dashboard/issues/1638)                                | Fixed the not ready page claiming success before the health checks ran, and the indexer error log losing the cause     |
+| [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Fixed the browser tab title to read `<app> - Wazuh`, and its fallback to read Wazuh instead of OpenSearch Dashboards   |
 
 ## Prior versions
 
