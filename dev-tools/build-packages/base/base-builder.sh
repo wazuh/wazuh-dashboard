@@ -141,6 +141,51 @@ cp -f $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.y
 cp -f $config_path/node.options.prod config/node.options
 
 log
+log "Adding credentials resolver"
+log
+
+# resolve-credentials is the dashboard's own half of the credential ladder and
+# lives in this repository. Its shared half, wazuh-credentials.sh, is owned by
+# wazuh-installation-assistant and downloaded here, at build time only, so
+# maintainer scripts and the unit never reach the network. There is no bundled
+# fallback: a failed download or a checksum mismatch fails the build.
+#
+# WAZUH_CREDENTIALS_LIB_REFS is the ordered list of refs to try, computed by
+# build-packages.sh from the ref being built (a tag build lists only its tag).
+# The first ref that downloads wins; a 404 falls through to the next one, and
+# curl retries transient failures on each.
+credentials_lib_base="https://raw.githubusercontent.com/wazuh/wazuh-installation-assistant"
+credentials_lib_ref=""
+credentials_lib_url=""
+
+install -m 750 "${tmp_dir}/credentials/resolve-credentials.sh" bin/resolve-credentials
+mkdir -p lib
+for ref in ${WAZUH_CREDENTIALS_LIB_REFS:-${version}}; do
+  url="${credentials_lib_base}/${ref}/credentials_lib/wazuh-credentials.sh"
+  log "Downloading the shared credentials library from ${url}"
+  if curl --output lib/wazuh-credentials.sh --silent --show-error --fail \
+    --retry 3 --retry-delay 5 --retry-connrefused "${url}"; then
+    credentials_lib_ref="${ref}"
+    credentials_lib_url="${url}"
+    break
+  fi
+  log "The shared credentials library is not available at ${ref} (${url})"
+done
+if [ -z "${credentials_lib_ref}" ]; then
+  echo "Failed to download the shared credentials library from any of: ${WAZUH_CREDENTIALS_LIB_REFS:-${version}}"
+  rm -f lib/wazuh-credentials.sh
+  exit 1
+fi
+if [ -n "${WAZUH_CREDENTIALS_LIB_SHA256}" ] &&
+  ! echo "${WAZUH_CREDENTIALS_LIB_SHA256}  lib/wazuh-credentials.sh" | sha256sum --check --status -; then
+  echo "Checksum mismatch for the shared credentials library from ${credentials_lib_ref} (${credentials_lib_url})"
+  rm -f lib/wazuh-credentials.sh
+  exit 1
+fi
+chmod 640 lib/wazuh-credentials.sh
+log "Shared credentials library from ${credentials_lib_ref} (${credentials_lib_url}): $(sha256sum lib/wazuh-credentials.sh | cut -d' ' -f1)"
+
+log
 log "Fixing shebangs"
 log
 # TODO: investigate to remove this if possible

@@ -1,15 +1,15 @@
 #!/bin/bash
-# Runs inside the systemd container started by run_in_systemd_container.sh.
+# Runs as root on the allocated RPM test machine, next to the package copied there.
 # Tests that the package installs, the service starts, and the package uninstalls cleanly.
 #
-# Usage: deb-test-install-uninstall.sh <package-name>
+# Usage: rpm-test-install-uninstall.sh <package-path>
 
 set -euo pipefail
 
 PACKAGE_NAME="$1"
 
-dpkg -i "/test-packages/deb/${PACKAGE_NAME}"
-if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
+rpm -i "${PACKAGE_NAME}"
+if rpm -q wazuh-dashboard &>/dev/null; then
   echo "Package installed"
 else
   echo "Package not installed"
@@ -109,10 +109,50 @@ else
   exit 1
 fi
 
-apt-get remove --purge wazuh-dashboard -y
-if dpkg-query -W -f='${Status}' wazuh-dashboard 2>/dev/null | grep -q "install ok installed"; then
+# A file the operator added outside certs/, which only the fresh-install takeover gives back.
+operator_file=/etc/wazuh-dashboard/operator-added.pem
+install -m 0600 -o wazuh-dashboard -g wazuh-dashboard /dev/null "${operator_file}"
+
+yum remove -y wazuh-dashboard
+if rpm -q wazuh-dashboard &>/dev/null; then
   echo "Package not uninstalled"
   exit 1
 else
   echo "Package uninstalled"
 fi
+
+echo "==> Checking what the removal kept"
+# rpm keeps /etc/wazuh-dashboard. The service user and group are removed, so nothing kept may
+# still carry their freed IDs or stay readable by group or others.
+if getent passwd wazuh-dashboard >/dev/null || getent group wazuh-dashboard >/dev/null; then
+  echo "The wazuh-dashboard user or group was not removed"
+  exit 1
+fi
+orphaned="$(find -P /etc/wazuh-dashboard \( -nouser -o -nogroup \) -print)"
+if [ -n "${orphaned}" ]; then
+  echo "Files kept with the ID of the removed user or group:"
+  echo "${orphaned}"
+  exit 1
+fi
+for kept_file in "${certs_dir}/dashboard-key.pem" "${keystore_file}" "${operator_file}"; do
+  kept_stat="$(stat -c '%U:%G %A' "${kept_file}")" || kept_stat=""
+  if [[ "${kept_stat}" != root:root\ -???------ ]]; then
+    echo "${kept_file} not handed over to root: ${kept_stat:-<missing>}"
+    exit 1
+  fi
+done
+echo "Kept files handed over to root"
+
+echo "==> Checking that a reinstall takes the kept files back"
+rpm -i "${PACKAGE_NAME}"
+for kept_file in "${certs_dir}/dashboard-key.pem" "${keystore_file}" "${operator_file}"; do
+  kept_stat="$(stat -c '%U:%G' "${kept_file}")" || kept_stat=""
+  if [ "${kept_stat}" != "wazuh-dashboard:wazuh-dashboard" ]; then
+    echo "${kept_file} not taken back by the reinstall: ${kept_stat:-<missing>}"
+    exit 1
+  fi
+done
+echo "Reinstall took the kept files back"
+
+yum remove -y wazuh-dashboard
+rm -rf /etc/wazuh-dashboard/ /etc/wazuh/

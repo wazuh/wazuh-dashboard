@@ -22,5 +22,4 @@ wazuh_core.hosts:
     url: https://localhost
     port: 55000
     username: wazuh-wui
-    password: wazuh-wui
     run_as: true
