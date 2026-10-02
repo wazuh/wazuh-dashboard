@@ -45,6 +45,7 @@ jest.mock('fs', () => ({
     return !path.includes('nonexistent');
   }),
   writeFileSync: jest.fn(),
+  chmodSync: jest.fn(),
 }));
 
 import sinon from 'sinon';
