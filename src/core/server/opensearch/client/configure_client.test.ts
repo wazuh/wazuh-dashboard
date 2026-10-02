@@ -194,13 +194,23 @@ describe('configureClient', () => {
         body: {
           error: {},
         },
+        // Wazuh: request params, logged when the body carries no OpenSearch error
+        params: { method: 'GET', path: '/_foo' },
       });
       client.emit('response', new errors.ResponseError(response), response);
 
+      // Wazuh: the fallback line carries the status code and the request
+      // expect(loggingSystemMock.collect(logger).error).toMatchInlineSnapshot(`
+      //   Array [
+      //     Array [
+      //       "[ResponseError]: Response Error",
+      //     ],
+      //   ]
+      // `);
       expect(loggingSystemMock.collect(logger).error).toMatchInlineSnapshot(`
         Array [
           Array [
-            "[ResponseError]: Response Error",
+            "[ResponseError]: 400 GET /_foo: Response Error",
           ],
         ]
       `);
@@ -214,14 +224,61 @@ describe('configureClient', () => {
       });
       client.emit('response', new errors.ResponseError(response), response);
 
+      // Wazuh: the fallback line carries the status code
+      // expect(loggingSystemMock.collect(logger).error).toMatchInlineSnapshot(`
+      //   Array [
+      //     Array [
+      //       "[ResponseError]: Response Error",
+      //     ],
+      //   ]
+      // `);
       expect(loggingSystemMock.collect(logger).error).toMatchInlineSnapshot(`
         Array [
           Array [
-            "[ResponseError]: Response Error",
+            "[ResponseError]: 400: Response Error",
           ],
         ]
       `);
     });
+
+    /* Wazuh BEGIN */
+    describe('when the response error carries no OpenSearch error details', () => {
+      const emitResponseError = (response: RequestEvent<any>) => {
+        const client = configureClient(config, { logger, scoped: false });
+        client.emit('response', new errors.ResponseError(response), response);
+        return loggingSystemMock.collect(logger).error;
+      };
+
+      it('logs the status code, request and plain-text body', () => {
+        const response = createApiResponse({
+          statusCode: 503,
+          body: '  OpenSearch Security not initialized.\n' as any,
+          params: {
+            method: 'GET',
+            path: '/_nodes',
+            querystring: { secret: 'value' },
+          },
+        });
+        response.meta.request.options = { headers: { authorization: 'Basic abc' } } as any;
+
+        expect(emitResponseError(response)).toEqual([
+          ['[ResponseError]: 503 GET /_nodes: OpenSearch Security not initialized.'],
+        ]);
+      });
+
+      it('bounds the logged body and keeps it on a single line', () => {
+        const response = createApiResponse({
+          statusCode: 401,
+          body: `line one\nline two ${'x'.repeat(1000)}` as any,
+          params: { method: 'POST', path: '/_search' },
+        });
+
+        const [[message]] = emitResponseError(response);
+        expect(message).toMatch(/^\[ResponseError\]: 401 POST \/_search: line one line two x+…$/);
+        expect(String(message).length).toBeLessThan(600);
+      });
+    });
+    /* Wazuh END */
 
     describe('logs each queries if `logQueries` is true', () => {
       function createResponseWithBody(body?: RequestBody) {

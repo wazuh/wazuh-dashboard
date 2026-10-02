@@ -79,32 +79,35 @@ override_dh_install:
 
 	rm -rf $(TARGET_DIR)$(INSTALLATION_DIR)/etc
 
-	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)
+	chown -R root:root $(TARGET_DIR)$(INSTALLATION_DIR)
 	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(CONFIG_DIR)
-
-	find $(TARGET_DIR)$(INSTALLATION_DIR)/plugins/wazuh/ -exec chown $(USER):$(GROUP) {} \;
 
 # -----------------------------------------------------------------------------
 
 override_dh_fixperms:
 	chmod 750 $(TARGET_DIR)$(CONFIG_DIR)
 	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(CONFIG_DIR)
-	chmod 750 $(TARGET_DIR)$(INSTALLATION_DIR)
-	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)
+	chmod 755 $(TARGET_DIR)$(INSTALLATION_DIR)
+	chown -R root:root $(TARGET_DIR)$(INSTALLATION_DIR)
 	chown root:root $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
 	chown root:root $(TARGET_DIR)/usr/lib/systemd/system/"$(NAME)"
-	chown $(USER):$(GROUP) $(TARGET_DIR)/etc/default/"$(NAME)"
-	chown $(USER):$(GROUP) $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION.json
-	chmod 440 $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION.json
+	chown root:$(GROUP) $(TARGET_DIR)/etc/default/"$(NAME)"
+	chown root:root $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION.json
+	chmod 444 $(TARGET_DIR)$(INSTALLATION_DIR)/VERSION.json
 	chmod 750 $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard
-	chmod 750 $(TARGET_DIR)/etc/default/wazuh-dashboard
+	chmod 640 $(TARGET_DIR)/etc/default/wazuh-dashboard
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/opensearch_dashboards.yml
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/node.options
 	chmod 644 $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
-	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type d -exec chmod 750 {} \;
-	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 644 -exec chmod 640 {} \;
-	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 755 -exec chmod 750 {} \;
-	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -perm 744 -exec chmod 740 {} \;
+	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type d -exec chmod 755 {} \;
+	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -exec chmod go+rX,go-w {} \;
+	chown root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials
+	chmod 750 "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials
+	chown -R root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib
+	chmod 755 "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib
+	chmod 644 "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib/wazuh-credentials.sh
+	chown -R $(USER):$(GROUP) "$(TARGET_DIR)$(INSTALLATION_DIR)"/data
+	chmod 750 "$(TARGET_DIR)$(INSTALLATION_DIR)"/data
 
 # -----------------------------------------------------------------------------
 
