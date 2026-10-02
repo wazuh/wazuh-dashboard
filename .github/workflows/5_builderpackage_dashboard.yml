@@ -626,43 +626,13 @@ jobs:
         run: |
           # echo 'Installing package...' is necessary to init the ssh connection prior to running scp
           ${{ steps.setup_rpm_env.outputs.ssh_command }} "echo 'Installing package...'"
-          ${{ steps.setup_rpm_env.outputs.scp_command }} ${{ github.workspace }}/dev-tools/test-packages/rpm/${{needs.build-package.outputs.PACKAGE_NAME}} ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
+          ${{ steps.setup_rpm_env.outputs.scp_command }} \
+            ${{ github.workspace }}/dev-tools/test-packages/rpm/${{needs.build-package.outputs.PACKAGE_NAME}} \
+            ${{ github.workspace }}/dev-tools/test-packages/rpm-test-install-uninstall.sh \
+            ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
 
-          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo rpm -i ./${{needs.build-package.outputs.PACKAGE_NAME}}; \
-              if rpm -q wazuh-dashboard &>/dev/null; then \
-                echo 'Package installed'; \
-              else \
-                echo 'Package not installed'; \
-                exit 1; \
-              fi; \
-              sudo  systemctl daemon-reload;\
-              sudo  systemctl enable wazuh-dashboard;\
-              sudo  systemctl start wazuh-dashboard;\
-              if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
-                echo 'Service running'; \
-              else \
-                echo 'Service not running' ;\
-                exit 1 ;\
-              fi; \
-              if sudo runuser wazuh-dashboard --shell='/bin/bash' \
-                --command='/usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore list' \
-                | grep -q '^wazuh_ai_assistant.encryptionKey$'; then \
-                echo 'AI assistant encryption key present in keystore'; \
-              else \
-                echo 'AI assistant encryption key missing from keystore'; \
-                exit 1; \
-              fi; \
-              sudo yum remove wazuh-dashboard -y ;\
-              sudo rm -rf /var/lib/wazuh-dashboard/ ; \
-              sudo rm -rf /usr/share/wazuh-dashboard/ ; \
-              sudo rm -rf /etc/wazuh-dashboard/; \
-              if rpm -q wazuh-dashboard &>/dev/null; then \
-                echo 'Package not uninstalled'; \
-                exit 1; \
-              else \
-                echo 'Package uninstalled'; \
-              fi
-              "
+          ${{ steps.setup_rpm_env.outputs.ssh_command }} \
+            "sudo bash ./rpm-test-install-uninstall.sh './${{needs.build-package.outputs.PACKAGE_NAME}}'"
 
       - name: RPM - Test package upgrade
         if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'rpm' }}

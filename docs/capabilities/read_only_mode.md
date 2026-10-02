@@ -35,7 +35,7 @@ In this case, we might assume that a plugin relies on the `save` and `delete` ca
 
 If `registerSwitcher` will try to provide or remove capabilites when invoking the switcher will be ignored.
 
-*In case of a disabled / not installed `security` plugin changes will be never applied to a capabilites.*
+_In case of a disabled / not installed `security` plugin changes will be never applied to a capabilites._
 
 ## Requirements
 
@@ -51,7 +51,7 @@ For more context, see [this group issues of problems connected with read-only ro
 
 ### Usage
 
-1. Go to `Management > Security > Internal users`
+1. Go to `Indexer management > Security > Internal users`
 2. Create or select an already existing user
 3. Add a new `Backend role` called `kibana_read_only` (or use name used in `opensearch_security.readonly_mode.roles`)
 4. Save changes
@@ -63,18 +63,18 @@ Dashboards Security plugin recognizes the selection of read-only tenant after lo
 ### Usage
 
 1. Prepare tenant:
-    * Use an existing tenant or create a new one in `Management > Security > Tenants`
+   - Use an existing tenant or create a new one in `Indexer management > Security > Tenants`
 2. Prepare role:
-    * Go to `Management > Security > Roles`
-    * Use an existing role or create a new one
-    * Fill **index permissions** with:
-        * `indices:data/read/search`
-        * `indices:data/read/get`
-    * Add new **tenant permission** with:
-        * your name of the tenant
-        * read only
+   - Go to `Indexer management > Security > Roles`
+   - Use an existing role or create a new one
+   - Fill **index permissions** with:
+     - `indices:data/read/search`
+     - `indices:data/read/get`
+   - Add new **tenant permission** with:
+     - your name of the tenant
+     - read only
 3. Assign a role to a user:
-    * Go to role
-    * Click the tab `Mapped users`
-    * Click `Manage mapping`
-    * In `Users` select the user that will be affected
+   - Go to role
+   - Click the tab `Mapped users`
+   - Click `Manage mapping`
+   - In `Users` select the user that will be affected

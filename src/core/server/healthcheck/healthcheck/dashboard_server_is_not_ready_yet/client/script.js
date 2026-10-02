@@ -411,6 +411,31 @@ function getNonCriticalTasks(tasks) {
 }
 
 /**
+ * Tells whether the health checks produced results. Until the server runs them, no task is
+ * enabled, so the absence of failed tasks does not mean the checks passed.
+ * @param {Task[]} tasks
+ * @returns {boolean}
+ */
+function haveHealthChecksRun(tasks) {
+  const enabledTasks = tasks.filter(({ enabled }) => enabled);
+  return enabledTasks.length > 0 && enabledTasks.every(({ status }) => Status.isFinished(status));
+}
+
+/**
+ * Escape text before inserting it into HTML. Task names and errors can come from remote systems.
+ * @param {unknown} value
+ * @returns {string}
+ */
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * Format ISO date or numeric timestamps to a short, readable string
  * @param {string | number | undefined} value
  */
@@ -683,10 +708,10 @@ class Components {
           <span class="critical-item__icon" aria-hidden="true">${Icons.alertCircle}</span>
           <div class="critical-item__text">
             <div class="critical-item__title">
-              Check [<code class="critical-item__name">${task.name}</code>]
+              Check [<code class="critical-item__name">${escapeHtml(task.name)}</code>]
               <span class="badge badge--critical">Critical</span>
             </div>
-            <div class="critical-item__msg">${task.error || 'No details provided'}</div>
+            <div class="critical-item__msg">${escapeHtml(task.error || 'No details provided')}</div>
           </div>
         </div>
         <div class="critical-item__meta">
@@ -725,12 +750,12 @@ class Components {
                   <span class="noncritical-item__icon" aria-hidden="true">${Icons.warning}</span>
                   <div class="noncritical-item__text">
                     <div class="noncritical-item__title">
-                      Check [<code class="noncritical-item__name">${task.name}</code>]
+                      Check [<code class="noncritical-item__name">${escapeHtml(task.name)}</code>]
                       <span class="badge badge--minor">Minor</span>
                     </div>
-                    <div class="noncritical-item__msg" style="white-space: pre-wrap;">${
+                    <div class="noncritical-item__msg" style="white-space: pre-wrap;">${escapeHtml(
                       task.error || 'No details provided'
-                    }</div>
+                    )}</div>
                   </div>
                 </div>
                 <div class="noncritical-item__meta">
@@ -762,6 +787,10 @@ class Components {
  * @returns
  */
 function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
+  const noCriticalFailures =
+    !isRunning && Array.isArray(tasks) && tasks.length > 0 && criticalTasks.length === 0;
+  const healthChecksRan = haveHealthChecksRun(tasks);
+
   return /* html */ `
     <div class="title">
       ${Icons.wazuhDashboard}
@@ -779,11 +808,19 @@ function buildHealthCheckReport(criticalTasks, nonCriticalTasks) {
       })
     )}
     ${$if(
-      !isRunning && Array.isArray(tasks) && tasks.length > 0 && criticalTasks.length === 0,
+      noCriticalFailures && healthChecksRan,
       Components.notice({
         type: 'success',
         message:
           'No critical errors remain. In about 30 seconds, you can reload this page and you should be redirected to the application.',
+      })
+    )}
+    ${$if(
+      noCriticalFailures && !healthChecksRan,
+      Components.notice({
+        type: 'info',
+        message:
+          'The Wazuh dashboard server is still starting and has no health check results yet. Reload this page in a few minutes. If this message persists, check the Wazuh dashboard logs.',
       })
     )}
     ${$if(
