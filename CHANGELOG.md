@@ -29,6 +29,7 @@
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Changed the packages to resolve the `kibanaserver` and `wazuh-wui` passwords into the keystore from `/etc/wazuh/credentials.env` instead of shipping default values        |
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Changed the packages to install `/usr/share/wazuh-dashboard` as `root:root` and `/etc/default/wazuh-dashboard` as `root:wazuh-dashboard`                                   |
 | [#1637](https://github.com/wazuh/wazuh-dashboard/issues/1637)                                | Changed the package install to end with the dashboard URL, the login user and the start command, and to print the certificate detail only with `WAZUH_DASHBOARD_VERBOSE=1` |
+| [#1630](https://github.com/wazuh/wazuh-dashboard/issues/1630)                                | Changed the production build to compress and mangle the browser bundles, reducing the JavaScript the browser downloads by about a quarter                                  |
 
 ### Removed
 
