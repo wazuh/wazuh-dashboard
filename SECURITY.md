@@ -50,6 +50,7 @@ We believe in giving credit where credit is due. If you report a security vulner
 We do appreciate and encourage feedback from our community, but currently we do not have a bounty program. We might start bounty programs in the future.
 
 ## Compliance with this Policy
+
 We consider the discovery and reporting of security vulnerabilities an important public service. We encourage responsible reporting of any vulnerabilities that may be found in our site or applications.
 
 Furthermore, we will not take legal action against or suspend or terminate access to the site or services of those who discover and report security vulnerabilities in accordance with this policy because of the fact.
