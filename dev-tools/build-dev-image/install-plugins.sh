@@ -22,7 +22,11 @@ for plugin in $plugins; do
     if [[ $plugin == "wazuh-dashboard-security-analytics" ]]; then
       git clone --depth 1 --branch ${WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH} https://github.com/wazuh/$plugin.git
       cd $base_path_plugins/$plugin
-      GIT_REF="${WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH}" yarn install
+      # The engine schemas are fetched from wazuh/wazuh. Fall back to main when
+      # the branch does not exist there (e.g. migrate-* branches).
+      schemas_ref="${WAZUH_DASHBOARD_SECURITY_ANALYTICS_BRANCH}"
+      git ls-remote --exit-code --heads --tags https://github.com/wazuh/wazuh.git "$schemas_ref" >/dev/null 2>&1 || schemas_ref=main
+      GIT_REF="$schemas_ref" yarn install
       cd $base_path_plugins
     fi
     # Clone the Wazuh dashboard notifications plugin
