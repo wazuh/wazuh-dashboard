@@ -53,7 +53,7 @@ describe('Home loader', () => {
       expect(homeIcon.exists()).toBeTruthy();
       homeIcon.simulate('click');
       expect(props.navigateToApp).toHaveBeenCalledTimes(1);
-      expect(props.navigateToApp).toHaveBeenCalledWith('home');
+      expect(props.navigateToApp).toHaveBeenCalledWith('wz-home');
     });
   });
 });

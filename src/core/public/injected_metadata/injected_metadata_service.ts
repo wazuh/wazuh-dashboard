@@ -30,6 +30,7 @@
 
 import { get } from 'lodash';
 import { deepFreeze } from '@osd/std';
+import { HealthCheckConfig } from 'src/core/common/healthcheck';
 import { DiscoveredPlugin, PluginName } from '../../server';
 import {
   EnvironmentMode,
@@ -38,6 +39,7 @@ import {
   UserProvidedValues,
 } from '../../server/types';
 import { AppCategory, Branding } from '../';
+import { WazuhBuildInfo } from '../../types/wazuh_build_info';
 
 export interface InjectedPluginMetadata {
   id: PluginName;
@@ -53,6 +55,7 @@ export interface InjectedMetadataParams {
     version: string;
     buildNumber: number;
     branch: string;
+    wazuhBuildInfo: WazuhBuildInfo;
     basePath: string;
     serverBasePath: string;
     category?: AppCategory;
@@ -80,6 +83,8 @@ export interface InjectedMetadataParams {
     keyboardShortcuts: {
       enabled: boolean;
     };
+    // Wazuh
+    healthCheck: HealthCheckConfig;
   };
 }
 
@@ -165,6 +170,21 @@ export class InjectedMetadataService {
       getKeyboardShortcuts: () => {
         return this.state.keyboardShortcuts;
       },
+
+      // Wazuh
+      getWazuhBuildInfo: () => {
+        return this.state.wazuhBuildInfo;
+      },
+
+      // Wazuh
+      getWazuhDocVersion: () => {
+        return this.state.wazuhBuildInfo.version?.split('.').slice(0, 2).join('.') || 'current';
+      },
+
+      // Wazuh
+      getHealthCheck: () => {
+        return this.state.healthCheck;
+      },
     };
   }
 }
@@ -204,6 +224,10 @@ export interface InjectedMetadataSetup {
   getKeyboardShortcuts: () => {
     enabled: boolean;
   };
+  // Wazuh
+  getWazuhBuildInfo: () => WazuhBuildInfo;
+  getWazuhDocVersion: () => string;
+  getHealthCheck: () => HealthCheckConfig;
 }
 
 /** @internal */

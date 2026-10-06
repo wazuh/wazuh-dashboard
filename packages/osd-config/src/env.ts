@@ -67,6 +67,24 @@ export interface RawPackageInfo {
     number: number;
     sha: string;
   };
+  wazuh: {
+    version: string;
+    revision?: string;
+  };
+}
+
+/** @internal */
+interface RawWazuhVersionFile {
+  version?: string;
+  stage?: string;
+}
+
+function loadWazuhVersionFile(repoRoot: string): RawWazuhVersionFile {
+  try {
+    return loadJsonFile.sync(join(repoRoot, 'VERSION.json')) as RawWazuhVersionFile;
+  } catch {
+    return {};
+  }
 }
 
 export class Env {
@@ -155,6 +173,7 @@ export class Env {
     const isOpenSearchDashboardsDistributable = Boolean(
       pkg.build && pkg.build.distributable === true
     );
+    const wazuhVersionFile = loadWazuhVersionFile(this.homeDir);
     this.packageInfo = Object.freeze({
       branch: pkg.branch,
       buildNum: isOpenSearchDashboardsDistributable ? pkg.build.number : Number.MAX_SAFE_INTEGER,
@@ -163,6 +182,9 @@ export class Env {
         : 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
       version: pkg.version,
       dist: isOpenSearchDashboardsDistributable,
+      wazuhVersion: pkg.wazuh.version,
+      wazuhRevision: pkg.wazuh.revision ?? '01',
+      wazuhStage: wazuhVersionFile.stage ?? '',
     });
   }
 }

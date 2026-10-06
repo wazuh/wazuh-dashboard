@@ -45,3 +45,19 @@
     height: 100%;
   }
 }
+
+// WAZUH
+// EuiFlyout is `position: fixed` and portaled to <body>, so it sits outside
+// the app-wrapper subtree that the sidecar pushes over via padding (see
+// getOsdSidecarPaddingStyle). Left to itself it keeps `right: 0` / `left: 0`
+// and ends up underneath the sidecar instead of beside it. `Sidecar` keeps
+// these attributes/custom property in sync with its own config while docked
+// left or right (not for `--dockedTakeover`, which is meant to cover
+// everything), so displace any open flyout by that same amount here.
+body[data-osd-sidecar-docked-mode="right"] .euiFlyout:not(.euiFlyout--left) {
+  right: var(--osd-sidecar-size, 0);
+}
+
+body[data-osd-sidecar-docked-mode="left"] .euiFlyout--left {
+  left: var(--osd-sidecar-size, 0);
+}

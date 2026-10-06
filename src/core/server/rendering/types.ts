@@ -37,6 +37,8 @@ import { InternalHttpServiceSetup, OpenSearchDashboardsRequest, LegacyRequest } 
 import { UiPlugins, DiscoveredPlugin } from '../plugins';
 import { IUiSettingsClient, UserProvidedValues } from '../ui_settings';
 import type { InternalStatusServiceSetup } from '../status';
+// Wazuh
+import { HealthCheckConfig } from '../healthcheck';
 
 /** @internal */
 export interface RenderingMetadata {
@@ -51,6 +53,11 @@ export interface RenderingMetadata {
     version: string;
     buildNumber: number;
     branch: string;
+    wazuhBuildInfo: {
+      version: string;
+      revision: string;
+      stage: string;
+    };
     basePath: string;
     serverBasePath: string;
     env: {
@@ -80,6 +87,8 @@ export interface RenderingMetadata {
     keyboardShortcuts: {
       enabled: boolean;
     };
+    // Wazuh
+    healthCheck: HealthCheckConfig;
   };
 }
 
@@ -89,6 +98,10 @@ export interface RenderingSetupDeps {
   status: InternalStatusServiceSetup;
   uiPlugins: UiPlugins;
   dynamicConfig: InternalDynamicConfigServiceSetup;
+  // Wazuh
+  healthCheck: {
+    getConfig: () => HealthCheckConfig;
+  };
 }
 
 /** @public */

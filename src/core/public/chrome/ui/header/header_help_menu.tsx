@@ -52,8 +52,9 @@ import { ExclusiveUnion } from '@elastic/eui';
 import { combineLatest } from 'rxjs';
 import { HeaderExtension } from './header_extension';
 import { ChromeHelpExtension } from '../../chrome_service';
-import { GITHUB_CREATE_ISSUE_LINK } from '../../constants';
 import { KeyboardShortcutHelpModal, KeyboardShortcutStart } from '../../../keyboard_shortcut';
+import { WAZUH_DOCUMENTATION_URL } from '../../constants';
+import type { HelpMenuLinkItem } from '../../../../types';
 
 /** @public */
 export type ChromeHelpExtensionMenuGitHubLink = EuiButtonEmptyProps & {
@@ -132,6 +133,15 @@ interface Props {
    * opens the shortcut reference modal (previously a standalone footer icon).
    */
   keyboardShortcut?: KeyboardShortcutStart;
+  darkmode: boolean;
+  // Wazuh: configurable, always-rendered link list, sourced from
+  // opensearchDashboards.branding.helpMenuLinks. Falls back to the built-in
+  // Documentation/Slack/GitHub/Google Group list when unset; an empty list
+  // renders no links.
+  links?: HelpMenuLinkItem[];
+  // Wazuh: opensearchDashboards.branding.applicationVersion. When set,
+  // rendered as-is (no "v" prefix) instead of `v {opensearchDashboardsVersion}`.
+  versionOverride?: string;
 }
 
 interface State {
@@ -207,12 +217,14 @@ class HeaderHelpMenuUI extends Component<Props, State> {
       intl,
       opensearchDashboardsVersion,
       useDefaultContent,
-      opensearchDashboardsDocLink,
       surveyLink,
       useUpdatedAppearance,
       keyboardShortcut,
+      darkmode,
+      links: configuredLinks,
+      versionOverride,
     } = this.props;
-    const { helpExtension, helpSupportUrl } = this.state;
+    const { helpExtension } = this.state;
 
     // "Keyboard shortcuts" lives in the help menu (instead of a standalone
     // footer rail icon). The modal registers its own shift+/ shortcut and opens
@@ -236,9 +248,34 @@ class HeaderHelpMenuUI extends Component<Props, State> {
       />
     ) : null;
 
-    const defaultContent = useDefaultContent ? (
+    // Wazuh: opensearchDashboards.branding.helpMenuLinks, when configured,
+    // fully replaces the built-in list below (an empty list hides every link).
+    const defaultContent = !useDefaultContent ? null : configuredLinks !== undefined ? (
       <Fragment>
-        <EuiButtonEmpty href={opensearchDashboardsDocLink} target="_blank" size="xs" flush="left">
+        {configuredLinks.map((link, index) => (
+          <Fragment key={`helpMenuConfiguredLink${index}`}>
+            <EuiButtonEmpty
+              href={link.link}
+              target="_blank"
+              size="xs"
+              flush="left"
+              iconType={darkmode && link.darkModeIcon ? link.darkModeIcon : link.icon}
+            >
+              {link.label}
+            </EuiButtonEmpty>
+            {index < configuredLinks.length - 1 && <EuiSpacer size="xs" />}
+          </Fragment>
+        ))}
+      </Fragment>
+    ) : (
+      <Fragment>
+        <EuiButtonEmpty
+          href={WAZUH_DOCUMENTATION_URL}
+          target="_blank"
+          size="xs"
+          flush="left"
+          iconType={darkmode ? '/ui/logos/icon_dark.svg' : '/ui/logos/icon_light.svg'}
+        >
           <FormattedMessage
             id="core.ui.chrome.headerGlobalNav.helpMenuOpenSearchDashboardsDocumentationTitle"
             defaultMessage="Documentation"
@@ -247,10 +284,16 @@ class HeaderHelpMenuUI extends Component<Props, State> {
 
         <EuiSpacer size="xs" />
 
-        <EuiButtonEmpty href={helpSupportUrl} target="_blank" size="xs" flush="left">
+        <EuiButtonEmpty
+          href="https://wazuh.com/community/join-us-on-slack/"
+          target="_blank"
+          size="xs"
+          flush="left"
+          iconType="logoSlack"
+        >
           <FormattedMessage
             id="core.ui.chrome.headerGlobalNav.helpMenuAskOpenSearchTitle"
-            defaultMessage="Community"
+            defaultMessage="Slack Channel"
           />
         </EuiButtonEmpty>
 
@@ -258,10 +301,16 @@ class HeaderHelpMenuUI extends Component<Props, State> {
 
         {surveyLink && (
           <div>
-            <EuiButtonEmpty href={surveyLink} target="_blank" size="xs" flush="left">
+            <EuiButtonEmpty
+              href="https://github.com/wazuh/"
+              target="_blank"
+              size="xs"
+              flush="left"
+              iconType="logoGithub"
+            >
               <FormattedMessage
                 id="core.ui.chrome.headerGlobalNav.helpMenuFeedbackSurveyTitle"
-                defaultMessage="Give feedback"
+                defaultMessage="Projects on Github"
               />
             </EuiButtonEmpty>
             <EuiSpacer size="xs" />
@@ -271,19 +320,19 @@ class HeaderHelpMenuUI extends Component<Props, State> {
         <EuiSpacer size="xs" />
 
         <EuiButtonEmpty
-          href={GITHUB_CREATE_ISSUE_LINK}
+          href="https://groups.google.com/forum/#!forum/wazuh/"
           target="_blank"
           size="xs"
-          iconType="logoGithub"
+          iconType="/ui/logos/google_groups.svg"
           flush="left"
         >
           <FormattedMessage
             id="core.ui.chrome.headerGlobalNav.helpMenuOpenGitHubIssueTitle"
-            defaultMessage="Open an issue in GitHub"
+            defaultMessage="Google Group"
           />
         </EuiButtonEmpty>
       </Fragment>
-    ) : null;
+    );
 
     let customContent;
     if (helpExtension) {
@@ -419,11 +468,15 @@ class HeaderHelpMenuUI extends Component<Props, State> {
               </h2>
             </EuiFlexItem>
             <EuiFlexItem grow={false} className="chrHeaderHelpMenu__version">
-              <FormattedMessage
-                id="core.ui.chrome.headerGlobalNav.helpMenuVersion"
-                defaultMessage="v {version}"
-                values={{ version: opensearchDashboardsVersion }}
-              />
+              {versionOverride ? (
+                versionOverride
+              ) : (
+                <FormattedMessage
+                  id="core.ui.chrome.headerGlobalNav.helpMenuVersion"
+                  defaultMessage="v {version}"
+                  values={{ version: opensearchDashboardsVersion }}
+                />
+              )}
             </EuiFlexItem>
           </EuiFlexGroup>
         </EuiPopoverTitle>

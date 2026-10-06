@@ -62,6 +62,7 @@ import { workspacesServiceMock } from '../workspace/workspaces_service.mock';
 import { keyboardShortcutServiceMock } from '../keyboard_shortcut/keyboard_shortcut_service.mock';
 import { coreChatServiceMock } from '../chat/chat_service.mock';
 import { coreTelemetryServiceMock } from '../telemetry/telemetry_service.mock';
+import { healthCheckServiceMock } from '../healthcheck/service.mock';
 
 export let mockPluginInitializers: Map<PluginName, MockedPluginInitializer>;
 
@@ -117,12 +118,18 @@ describe('PluginsService', () => {
       keyboardShortcut: keyboardShortcutServiceMock.createSetup(),
       chat: coreChatServiceMock.createSetupContract(),
       telemetry: coreTelemetryServiceMock.createSetupContract(),
+      healthCheck: healthCheckServiceMock.createSetupContract(),
     };
     mockSetupContext = {
       ...mockSetupDeps,
       application: expect.any(Object),
       getStartServices: expect.any(Function),
-      injectedMetadata: pick(mockSetupDeps.injectedMetadata, 'getInjectedVar', 'getBranding'),
+      injectedMetadata: pick(
+        mockSetupDeps.injectedMetadata,
+        'getInjectedVar',
+        'getBranding',
+        'getWazuhBuildInfo'
+      ),
     };
     mockStartDeps = {
       application: applicationServiceMock.createInternalStartContract(),
@@ -140,12 +147,18 @@ describe('PluginsService', () => {
       keyboardShortcut: keyboardShortcutServiceMock.createStart(),
       chat: coreChatServiceMock.createStartContract(),
       telemetry: coreTelemetryServiceMock.createStartContract(),
+      healthCheck: healthCheckServiceMock.createStartContract() as any, // TODO: fix in healthcheck mock
     };
     mockStartContext = {
       ...mockStartDeps,
       application: expect.any(Object),
       chrome: omit(mockStartDeps.chrome, 'getComponent'),
-      injectedMetadata: pick(mockStartDeps.injectedMetadata, 'getInjectedVar', 'getBranding'),
+      injectedMetadata: pick(
+        mockStartDeps.injectedMetadata,
+        'getInjectedVar',
+        'getBranding',
+        'getWazuhBuildInfo'
+      ),
       telemetry: expect.any(Object),
     };
 

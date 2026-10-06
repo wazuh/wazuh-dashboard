@@ -1,0 +1,115 @@
+#!/bin/sh
+# postinst script for wazuh-dashboard
+# Copyright (C) 2021, Wazuh Inc.
+#
+# This program is a free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public
+# License (version 2) as published by the FSF - Free Software
+# Foundation.
+
+set -e
+
+# Version guard: block 5.x installation when a pre-5.x Wazuh version is detected on disk.
+# NOTE: we check files on disk rather than dpkg -s because during
+# dpkg -i the old package data remains on disk until postinst runs.
+# Detection order:
+#   1. VERSION.json        — wazuh-dashboard 5.x+
+#   2. VERSION             — wazuh-dashboard 4.x (legacy file)
+#   3. plugin package.json — wazuh-dashboard 4.x+ (plugin metadata)
+print_upgrade_error() {
+    cat >&2 <<EOF
+==============================================================
+ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported.
+
+Detected installed version: ${1:-undetermined}
+
+A clean installation of Wazuh dashboard 5.x is required.
+Refer to the 5.x migration guide for more information.
+==============================================================
+EOF
+}
+
+if [ -f /usr/share/wazuh-dashboard/VERSION.json ]; then
+    INSTALLED_VER=$(grep -m 1 '"version"' /usr/share/wazuh-dashboard/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+elif [ -f /usr/share/wazuh-dashboard/VERSION ]; then
+    INSTALLED_VER=$(cat /usr/share/wazuh-dashboard/VERSION 2>/dev/null)
+elif [ -f /usr/share/wazuh-dashboard/plugins/wazuh/package.json ]; then
+    INSTALLED_VER=$(grep -m 1 '"version"' /usr/share/wazuh-dashboard/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+fi
+
+if [ -n "$INSTALLED_VER" ]; then
+    MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+    if [ "$MAJOR" -lt 5 ]; then
+        print_upgrade_error "$INSTALLED_VER"
+        exit 1
+    fi
+elif [ "$1" = "upgrade" ] && [ -d /usr/share/wazuh-dashboard/plugins ]; then
+    # Upgrade requested but version could not be determined from any source.
+    # Files may have been removed or corrupted. Block the upgrade; a fresh
+    # install ($1=install) is still allowed.
+    print_upgrade_error
+    exit 1
+fi
+
+#
+# This script is executed in the pre-installation phase
+#
+#   On Debian,
+#       $1=install : indicates an new install
+#       $1=upgrade : indicates an upgrade
+
+# configuration variables
+export NAME=wazuh-dashboard
+export CONFIG_DIR=/etc/"${NAME}"
+export INSTALLATION_DIR=/usr/share/"${NAME}"
+
+case "$1" in
+# Debian ####################################################
+install)
+    # environment configuration
+    mkdir -p "${CONFIG_DIR}"
+    mkdir -p "${INSTALLATION_DIR}"
+
+    # Create wazuh-dashboard group if not existing
+    if ! getent group "${NAME}" >/dev/null 2>&1; then
+        echo -n "Creating ${NAME} group..."
+        addgroup --quiet --system "${NAME}"
+        echo " OK"
+    fi
+    # Create wazuh-dashboard user if not existing
+    if ! id "${NAME}" >/dev/null 2>&1; then
+        echo -n "Creating ${NAME} user..."
+        adduser --quiet \
+            --system \
+            --no-create-home \
+            --home /nonexistent \
+            --ingroup "${NAME}" \
+            --disabled-password \
+            --shell /bin/false \
+            "${NAME}"
+        echo " OK"
+    fi
+
+    ;;
+upgrade)
+    # Stop the services to upgrade the package
+    if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1 && systemctl is-active --quiet "${NAME}" >/dev/null 2>&1; then
+        systemctl stop "${NAME}".service >/dev/null 2>&1
+        touch "${INSTALLATION_DIR}"/"${NAME}".restart
+    # Check for SysV
+    elif command -v service >/dev/null 2>&1 && service "${NAME}" status 2>/dev/null | grep "running" >/dev/null 2>&1; then
+        service "${NAME}" stop >/dev/null 2>&1
+        touch "${INSTALLATION_DIR}"/"${NAME}".restart
+    fi
+    ;;
+abort-deconfigure | abort-upgrade | abort-remove) ;;
+
+*)
+    echo "preinst called with unknown argument \`$1'" >&2
+    exit 1
+
+    ;;
+
+esac
+
+exit 0

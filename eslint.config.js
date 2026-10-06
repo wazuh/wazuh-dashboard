@@ -35,6 +35,13 @@ const OSD_HEADER = `
  */
 `;
 
+const OSD_WAZUH = `
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+`;
+
 const OSD_BAD_HEADER = `
 /*
  * Modifications Copyright OpenSearch Contributors. See
@@ -165,7 +172,7 @@ module.exports = defineConfig([
       '@osd/eslint/require-license-header': [
         'error',
         {
-          licenses: [OSD_NEW_HEADER, OSD_HEADER],
+          licenses: [OSD_NEW_HEADER, OSD_HEADER, OSD_WAZUH],
         },
       ],
 

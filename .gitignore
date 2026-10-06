@@ -1,6 +1,9 @@
 .aws-config.json
 .signing-config.json
 .ackrc
+/dev-tools/build-packages/output
+/dev-tools/build-packages/zipped_packages
+/dev-tools/build-packages/tmp
 /.opensearch
 /.chromium
 /package.json.bak
@@ -10,8 +13,12 @@
 
 # Temporary files and directories
 tmp/
+.claude/*
+!.claude/settings.json
+!.claude/skills/
 .claude/settings.local.json
 CLAUDE.local.md
+tmp/
 .DS_Store
 .node_binaries
 .native_modules
@@ -97,3 +104,7 @@ snapshots.js
 
 # git worktrees (local isolated workspaces)
 /.worktrees/
+# Ignore the generated packages
+/dev-tools/build-packages/base-packages-to-base/packages
+
+*.zip

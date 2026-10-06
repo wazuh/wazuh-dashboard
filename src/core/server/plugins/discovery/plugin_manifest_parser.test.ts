@@ -45,6 +45,9 @@ const packageInfo = {
   buildSha: '',
   version: '7.0.0-alpha1',
   dist: false,
+  wazuhVersion: '4.0.0',
+  wazuhRevision: '01',
+  wazuhStage: '',
 };
 
 afterEach(() => {

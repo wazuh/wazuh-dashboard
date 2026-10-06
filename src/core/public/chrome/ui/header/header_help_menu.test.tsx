@@ -14,6 +14,7 @@ function mockProps() {
     opensearchDashboardsDocLink: '/doclink',
     opensearchDashboardsVersion: '1.0',
     useDefaultContent: true,
+    darkmode: false,
   };
 }
 
@@ -38,5 +39,37 @@ describe('Header help menu', () => {
     component.find('button').simulate('click');
 
     expect(component).toMatchSnapshot();
+  });
+
+  describe('configured links', () => {
+    const SLACK_URL = 'https://wazuh.com/community/join-us-on-slack/';
+
+    const mountAndOpen = (links?: Array<{ label: string; link: string }>) => {
+      const component = mountWithIntl(<HeaderHelpMenu {...mockProps()} links={links} />);
+      component.find('button').simulate('click');
+      return component;
+    };
+
+    it('renders the built-in links when unset', () => {
+      const component = mountAndOpen(undefined);
+
+      expect(component.find(`a[href="${SLACK_URL}"]`).exists()).toBe(true);
+    });
+
+    it('renders no links when configured as an empty list', () => {
+      const component = mountAndOpen([]);
+
+      expect(component.find(`a[href="${SLACK_URL}"]`).exists()).toBe(false);
+      expect(component.find('a[href^="https://groups.google.com"]').exists()).toBe(false);
+    });
+
+    it('replaces the built-in links with the configured ones', () => {
+      const component = mountAndOpen([{ label: 'Custom', link: 'https://example.com' }]);
+
+      const customLink = component.find('a[href="https://example.com"]');
+      expect(customLink.exists()).toBe(true);
+      expect(customLink.text()).toBe('Custom');
+      expect(component.find(`a[href="${SLACK_URL}"]`).exists()).toBe(false);
+    });
   });
 });

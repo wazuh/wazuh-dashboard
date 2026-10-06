@@ -57,6 +57,7 @@ import {
   HeaderVariant,
 } from '../..';
 import type { Logos } from '../../../../common/types';
+import type { HelpMenuLinkItem } from '../../../../types';
 import { WorkspaceObject, WorkspacesStart } from '../../../../public/workspace';
 import { InternalApplicationStart } from '../../../application/types';
 import { HttpStart } from '../../../http';
@@ -143,6 +144,9 @@ export interface HeaderProps {
   globalBanner$?: Observable<ChromeGlobalBanner | undefined>;
   keyboardShortcut?: KeyboardShortcutStart;
   globalSearchCommands$: Observable<GlobalSearchCommand[]>;
+  darkmode: boolean; // Wazuh
+  helpMenuLinks?: HelpMenuLinkItem[]; // Wazuh
+  helpMenuVersionOverride?: string; // Wazuh
 }
 
 const hasValue = (value: any) => {
@@ -170,6 +174,8 @@ export function Header({
   useUpdatedHeader,
   enableIconSideNav: enableIconSideNavSetting,
   keyboardShortcut,
+  helpMenuLinks,
+  helpMenuVersionOverride,
   ...observables
 }: HeaderProps) {
   const isVisible = useObservable(observables.isVisible$, false);
@@ -560,8 +566,11 @@ export function Header({
         helpSupportUrl$={observables.helpSupportUrl$}
         opensearchDashboardsDocLink={opensearchDashboardsDocLink}
         opensearchDashboardsVersion={opensearchDashboardsVersion}
+        links={helpMenuLinks}
+        versionOverride={helpMenuVersionOverride}
         surveyLink={survey}
         keyboardShortcut={keyboardShortcut}
+        darkmode={observables.darkmode}
       />
     </EuiHeaderSectionItem>
   );

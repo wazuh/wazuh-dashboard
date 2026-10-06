@@ -28,13 +28,16 @@
  * under the License.
  */
 
-import { writeFileSync, readFileSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, chmodSync } from 'fs';
 import { createCipheriv, createDecipheriv, randomBytes, pbkdf2Sync } from 'crypto';
 import * as errors from './errors';
 
 const VERSION = 1;
 const ALGORITHM = 'aes-256-gcm';
 const ITERATIONS = 10000;
+// The keystore is encrypted with an empty password by default, so its file mode is
+// what keeps the secrets private: only the owner may read or write it.
+const FILE_MODE = 0o600;
 
 export class Keystore {
   constructor(path, password = '') {
@@ -90,7 +93,13 @@ export class Keystore {
 
     const keystore = [VERSION, Keystore.encrypt(text, this.password)].join(':');
 
-    writeFileSync(this.path, keystore);
+    // `mode` only applies when the file is created, so an existing keystore is
+    // tightened before the new secrets are written into it.
+    if (existsSync(this.path)) {
+      chmodSync(this.path, FILE_MODE);
+    }
+
+    writeFileSync(this.path, keystore, { mode: FILE_MODE });
   }
 
   load() {

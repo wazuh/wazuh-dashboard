@@ -103,5 +103,19 @@ describe('DiscoverDownloadCsvPopoverContent', () => {
       );
       expect(screen.queryByTestId('dscDownloadCsvOptionMax')).not.toBeInTheDocument();
     });
+
+    it('caps max using the maxCount prop when provided', () => {
+      const maxCount = 250;
+      render(<TestHarness hitsCount={5000} rowsCount={100} maxCount={maxCount} />);
+      expect(screen.queryByTestId('dscDownloadCsvOptionMax')).toHaveTextContent(
+        new RegExp(`${maxCount.toLocaleString()}`)
+      );
+    });
+
+    it('hides the max option when rowsCount reaches the maxCount prop', () => {
+      const maxCount = 250;
+      render(<TestHarness hitsCount={5000} rowsCount={maxCount} maxCount={maxCount} />);
+      expect(screen.queryByTestId('dscDownloadCsvOptionMax')).not.toBeInTheDocument();
+    });
   });
 });

@@ -44,6 +44,15 @@ export const mockPackage = {
   raw: {},
 };
 
+export const mockVersionFile = {
+  raw: { stage: '' },
+};
+
 jest.doMock('load-json-file', () => ({
-  sync: () => mockPackage.raw,
+  sync: (filePath: string) => {
+    if (filePath.endsWith('VERSION.json')) {
+      return mockVersionFile.raw;
+    }
+    return mockPackage.raw;
+  },
 }));

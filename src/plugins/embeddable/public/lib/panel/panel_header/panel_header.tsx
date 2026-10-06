@@ -119,7 +119,8 @@ function getViewDescription(embeddable: IEmbeddable | EmbeddableWithDescription)
   if ('getDescription' in embeddable) {
     const description = embeddable.getDescription();
 
-    if (description) {
+    // Wazuh - added check to exclude descriptions containing "Provided by Wazuh" in visualization card titles
+    if (description && !description.includes('Provided by Wazuh.')) {
       return description;
     }
   }

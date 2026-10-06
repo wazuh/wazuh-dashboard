@@ -104,14 +104,17 @@ import {
   HandlerContextType,
   HandlerParameters,
 } from './context';
-import { Branding } from '../types';
+import { Branding, HelpMenuLinkItem } from '../types';
 import { WorkspacesStart, WorkspacesSetup } from './workspace';
 import { KeyboardShortcutSetup, KeyboardShortcutStart } from './keyboard_shortcut';
 import { ChatServiceSetup, ChatServiceStart } from './chat';
 import type { TelemetryServiceSetup, TelemetryServiceStart } from './telemetry';
+import { HealthCheckServiceSetup, HealthCheckServiceStart } from './healthcheck';
+import type { WazuhBuildInfo } from '../types/wazuh_build_info';
 
 export type { Logos } from '../common';
 export { PackageInfo, EnvironmentMode } from '../server/types';
+export type { WazuhBuildInfo } from '../types/wazuh_build_info';
 /** @interal */
 export { CoreContext, CoreSystem } from './core_system';
 export {
@@ -294,6 +297,8 @@ export interface CoreSetup<TPluginsStart extends object = object, TStart = unkno
   injectedMetadata: {
     getInjectedVar: (name: string, defaultValue?: any) => unknown;
     getBranding: () => Branding;
+    // Wazuh
+    getWazuhBuildInfo: () => WazuhBuildInfo;
   };
   /** {@link StartServicesAccessor} */
   getStartServices: StartServicesAccessor<TPluginsStart, TStart>;
@@ -305,6 +310,9 @@ export interface CoreSetup<TPluginsStart extends object = object, TStart = unkno
   chat: ChatServiceSetup;
   /** {@link TelemetryServiceSetup} */
   telemetry: TelemetryServiceSetup;
+  // Wazuh
+  /** {@link HealthCheckServiceSetup} */
+  healthCheck: HealthCheckServiceSetup;
 }
 
 /**
@@ -358,6 +366,8 @@ export interface CoreStart {
   injectedMetadata: {
     getInjectedVar: (name: string, defaultValue?: any) => unknown;
     getBranding: () => Branding;
+    // Wazuh
+    getWazuhBuildInfo: () => WazuhBuildInfo;
   };
   /** {@link WorkspacesStart} */
   workspaces: WorkspacesStart;
@@ -367,6 +377,9 @@ export interface CoreStart {
   chat: ChatServiceStart;
   /** {@link TelemetryServiceStart} */
   telemetry: TelemetryServiceStart;
+  // Wazuh
+  /** {@link HealthCheckServiceStart} */
+  healthCheck: HealthCheckServiceStart;
 }
 
 export {
@@ -412,6 +425,7 @@ export {
   UiSettingsState,
   NavType,
   Branding,
+  HelpMenuLinkItem,
   RightNavigationOrder,
   RightNavigationButton,
   RightNavigationButtonProps,

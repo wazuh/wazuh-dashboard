@@ -19,6 +19,10 @@
     "number": 8467,
     "sha": "6cb7fec4e154faa0a4a3fee4b33dfef91b9870d9"
   },
+  "wazuh": {
+    "version": "5.1.0",
+    "revision": "00"
+  },
   "homepage": "https://opensearch.org",
   "bugs": {
     "url": "http://github.com/opensearch-project/OpenSearch-Dashboards/issues"
@@ -124,7 +128,9 @@
     "generate:grammars:ppl": "yarn workspace @osd/antlr-grammar generate:opensearchppl",
     "generate:grammars:ppl-simplified": "yarn workspace @osd/antlr-grammar generate:opensearchppl-simplified",
     "generate:grammars:dql": "yarn workspace @osd/antlr-grammar generate:dql",
-    "generate:grammars:peg": "scripts/use_node scripts/generate_grammars"
+    "generate:grammars:peg": "scripts/use_node scripts/generate_grammars",
+    "wzd-revision": "scripts/use_node -e \"console.log(require('./package.json').wazuh.revision)\"",
+    "wzd-version": "scripts/use_node -e \"console.log(require('./package.json').wazuh.version)\""
   },
   "repository": {
     "type": "git",
@@ -282,6 +288,7 @@
     "query-string": "^9.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "3.1.4",
     "react-router": "^5.2.1",
     "react-use": "^17.6.1",
     "redux-thunk": "^2.3.0",

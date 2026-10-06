@@ -10,7 +10,7 @@ import { act, renderHook } from '@testing-library/react';
 import { useDiscoverContext } from '../../view_components/context';
 import { useSelector } from '../../utils/state_management';
 import { AbortError, IndexPattern } from '../../../../../data/common';
-import { setServices } from '../../../opensearch_dashboards_services';
+import { getServices, setServices } from '../../../opensearch_dashboards_services';
 import { discoverPluginMock } from '../../../mocks';
 import { OpenSearchSearchHit } from '../../doc_views/doc_views_types';
 import {
@@ -19,7 +19,11 @@ import {
   useDiscoverDownloadCsv,
   UseDiscoverDownloadCsvProps,
 } from './use_download_csv';
-import { DownloadCsvFormId, MAX_DOWNLOAD_CSV_COUNT } from './constants';
+import {
+  DownloadCsvFormId,
+  MAX_DOWNLOAD_CSV_COUNT,
+  REPORTS_CSV_MAX_ROWS_SETTING,
+} from './constants';
 
 jest.mock('file-saver', () => ({
   saveAs: jest.fn(),
@@ -255,6 +259,26 @@ describe('useDiscoverDownloadCsv', () => {
         await result.current.downloadCsvForOption(DownloadCsvFormId.Max);
       });
       expect(mockFetchForMaxCsvOption).toHaveBeenCalledWith(MAX_DOWNLOAD_CSV_COUNT);
+    });
+
+    it('caps the Max download using the reports.csv.maxRows setting', async () => {
+      const configuredMaxRows = 250;
+      const uiSettingsGet = getServices().uiSettings.get as jest.MockedFunction<any>;
+      uiSettingsGet.mockImplementation((key: string) =>
+        key === REPORTS_CSV_MAX_ROWS_SETTING ? configuredMaxRows : undefined
+      );
+      const { result } = renderHook(() =>
+        useDiscoverDownloadCsv({
+          ...mockProps,
+          hits: configuredMaxRows + 100,
+        })
+      );
+      await act(async () => {
+        await result.current.downloadCsvForOption(DownloadCsvFormId.Max);
+      });
+      expect(mockFetchForMaxCsvOption).toHaveBeenCalledWith(configuredMaxRows);
+      expect(result.current.maxCsvRows).toBe(configuredMaxRows);
+      uiSettingsGet.mockReset();
     });
 
     it('uses rows provided by props if option is visible', async () => {

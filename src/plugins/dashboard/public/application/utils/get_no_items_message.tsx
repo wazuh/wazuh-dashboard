@@ -8,6 +8,7 @@ import { FormattedMessage } from '@osd/i18n/react';
 import { EuiSmallButton, EuiEmptyPrompt, EuiLink, EuiText } from '@elastic/eui';
 import { ApplicationStart } from 'opensearch-dashboards/public';
 
+const appName = 'Wazuh dashboard';
 export const getNoItemsMessage = (
   hideWriteControls: boolean,
   createItem: () => void,
@@ -50,16 +51,21 @@ export const getNoItemsMessage = (
             <p>
               <FormattedMessage
                 id="dashboard.listing.createNewDashboard.combineDataViewFromOpenSearchDashboardsAppDescription"
-                defaultMessage="You can combine data views from any OpenSearch Dashboards app into one dashboard and see everything in one place."
+                defaultMessage="You can combine data views from any {appName} app into one dashboard and see everything in one place."
+                values={{
+                  appName,
+                }}
               />
             </p>
+            {/* Wazuh - Sample Data App is hidden in Wazuh 5.0 until updated for new features
             <p>
               <FormattedMessage
                 id="dashboard.listing.createNewDashboard.newToOpenSearchDashboardsDescription"
-                defaultMessage="New to OpenSearch Dashboards? {sampleDataInstallLink} to take a test drive."
+                defaultMessage="New to {appName}? {sampleDataInstallLink} to take a test drive."
                 values={{
+                  appName,
                   sampleDataInstallLink: (
-                    <EuiLink onClick={() => application.navigateToApp('import_sample_data')}>
+                    <EuiLink onClick={() => application.navigateToApp('sample-data')}>
                       <FormattedMessage
                         id="dashboard.listing.createNewDashboard.sampleDataInstallLinkText"
                         defaultMessage="Install some sample data"
@@ -69,6 +75,7 @@ export const getNoItemsMessage = (
                 }}
               />
             </p>
+            */}
           </EuiText>
         </Fragment>
       }

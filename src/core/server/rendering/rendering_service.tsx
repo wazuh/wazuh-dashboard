@@ -66,6 +66,8 @@ export class RenderingService {
     status,
     uiPlugins,
     dynamicConfig,
+    // Wazuh
+    healthCheck,
   }: RenderingSetupDeps): Promise<InternalRenderingServiceSetup> {
     const [opensearchDashboardsConfig, serverConfig] = await Promise.all([
       this.coreContext.configService
@@ -122,6 +124,11 @@ export class RenderingService {
             version: env.packageInfo.version,
             buildNumber: env.packageInfo.buildNum,
             branch: env.packageInfo.branch,
+            wazuhBuildInfo: {
+              version: env.packageInfo.wazuhVersion,
+              revision: env.packageInfo.wazuhRevision,
+              stage: env.packageInfo.wazuhStage,
+            },
             basePath,
             serverBasePath,
             env,
@@ -165,6 +172,10 @@ export class RenderingService {
               },
               faviconUrl: brandingAssignment.favicon,
               applicationTitle: brandingAssignment.applicationTitle,
+              // Wazuh
+              applicationVersion: opensearchDashboardsConfig.branding.applicationVersion,
+              // Wazuh
+              helpMenuLinks: opensearchDashboardsConfig.branding.helpMenuLinks,
               useExpandedHeader: brandingAssignment.useExpandedHeader,
             },
             survey: opensearchDashboardsConfig.survey.url,
@@ -172,6 +183,8 @@ export class RenderingService {
             keyboardShortcuts: {
               enabled: opensearchDashboardsConfig.keyboardShortcuts.enabled,
             },
+            // Wazuh
+            healthCheck: healthCheck.getConfig(),
           },
         };
 

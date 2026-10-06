@@ -317,7 +317,9 @@ export class ChromeService {
 
     const getIsNavDrawerLocked$ = isNavDrawerLocked$.pipe(takeUntil(this.stop$));
 
-    const logos = getLogos(injectedMetadata.getBranding(), http.basePath.serverBasePath);
+    // Wazuh
+    const branding = injectedMetadata.getBranding();
+    const logos = getLogos(branding, http.basePath.serverBasePath);
 
     // Services handed to a nav item's popover callbacks (actions + render) so
     // plugins can drive actions / render contextual content without re-resolving
@@ -376,9 +378,12 @@ export class ChromeService {
                 helpSupportUrl$={helpSupportUrl$.pipe(takeUntil(this.stop$))}
                 opensearchDashboardsDocLink={docLinks.links.opensearchDashboards.introduction}
                 opensearchDashboardsVersion={injectedMetadata.getOpenSearchDashboardsVersion()}
+                versionOverride={branding.applicationVersion}
+                links={branding.helpMenuLinks}
                 surveyLink={injectedMetadata.getSurvey()}
                 keyboardShortcut={keyboardShortcut}
                 useUpdatedAppearance
+                darkmode={uiSettings.get('theme:darkMode')}
               />
             </I18nProvider>
           );
@@ -446,14 +451,16 @@ export class ChromeService {
           breadcrumbs$={breadcrumbs$.pipe(takeUntil(this.stop$))}
           breadcrumbsEnricher$={breadcrumbsEnricher$.pipe(takeUntil(this.stop$))}
           customNavLink$={customNavLink$.pipe(takeUntil(this.stop$))}
-          opensearchDashboardsDocLink={docLinks.links.opensearchDashboards.introduction}
+          opensearchDashboardsDocLink={docLinks.links.wazuh.index}
           forceAppSwitcherNavigation$={navLinks.getForceAppSwitcherNavigation$()}
           helpExtension$={helpExtension$.pipe(takeUntil(this.stop$))}
           helpSupportUrl$={helpSupportUrl$.pipe(takeUntil(this.stop$))}
-          homeHref={application.getUrlForApp('home')}
+          homeHref={application.getUrlForApp('wz-home')}
           isVisible$={this.isVisible$}
           headerVariant$={this.headerVariant$}
-          opensearchDashboardsVersion={injectedMetadata.getOpenSearchDashboardsVersion()}
+          opensearchDashboardsVersion={injectedMetadata.getWazuhBuildInfo().version}
+          helpMenuVersionOverride={branding.applicationVersion}
+          helpMenuLinks={branding.helpMenuLinks}
           navLinks$={navLinks.getNavLinks$()}
           recentlyAccessed$={recentlyAccessed.get$()}
           navControlsLeft$={navControls.getLeft$()}
@@ -466,7 +473,7 @@ export class ChromeService {
           navControlsIconSideNavFooter$={navControls.getIconSideNavFooter$()}
           onIsLockedUpdate={setIsNavDrawerLocked}
           isLocked$={getIsNavDrawerLocked$}
-          branding={injectedMetadata.getBranding()}
+          branding={branding}
           logos={logos}
           survey={injectedMetadata.getSurvey()}
           collapsibleNavHeaderRender={this.collapsibleNavHeaderRender}
@@ -483,6 +490,7 @@ export class ChromeService {
           globalSearchCommands$={globalSearch.getAllSearchCommands$()}
           globalBanner$={this.globalBanner$.pipe(takeUntil(this.stop$))}
           keyboardShortcut={keyboardShortcut}
+          darkmode={uiSettings.get('theme:darkMode')} // Wazuh
         />
       ),
 
