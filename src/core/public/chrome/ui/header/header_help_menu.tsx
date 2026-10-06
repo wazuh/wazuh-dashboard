@@ -52,7 +52,6 @@ import { ExclusiveUnion } from '@elastic/eui';
 import { combineLatest } from 'rxjs';
 import { HeaderExtension } from './header_extension';
 import { ChromeHelpExtension } from '../../chrome_service';
-import { GITHUB_CREATE_ISSUE_LINK } from '../../constants';
 import { KeyboardShortcutHelpModal, KeyboardShortcutStart } from '../../../keyboard_shortcut';
 import { WAZUH_DOCUMENTATION_URL } from '../../constants';
 import type { HelpMenuLinkItem } from '../../../../types';

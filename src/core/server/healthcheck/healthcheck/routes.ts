@@ -103,7 +103,7 @@ async function handlerGetTasks(
   response: ResponseHandler
 ) {
   try {
-    const tasksNames = request.query.name ? getTaskList(request.query.name) : undefined;
+    const tasksNames = request.query.name ? getTaskList(request.query.name as string) : undefined;
 
     this.logger.debug(`Getting health check tasks related to internal scope`);
 
@@ -140,7 +140,7 @@ async function handlerRunTasks(
     this.logger.debug(`Running healthcheck tasks related to internal scope`);
     // Sort and dedupe so reordered or repeated names share the same in-flight run
     const tasksNames = request.query.name
-      ? [...new Set(getTaskList(request.query.name))].sort()
+      ? [...new Set(getTaskList(request.query.name as string))].sort()
       : undefined;
 
     let tasks;

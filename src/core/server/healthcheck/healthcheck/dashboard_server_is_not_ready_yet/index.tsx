@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   SERVER_NOT_READY_RESET_STYLES_ROUTE,
