@@ -71,4 +71,28 @@ describe('label.js', () => {
       }),
     ]);
   });
+
+  it('replaces only the first match', () => {
+    return invoke(fn, [seriesList, '_', ' ']).then((r) => {
+      expect(r.output.list[2].label).to.equal('All_the same');
+    });
+  });
+
+  it('runs nested quantifiers in linear time', () => {
+    const label = `${'a'.repeat(27)}!`;
+    seriesList.list[0].label = label;
+    const start = Date.now();
+    return invoke(fn, [seriesList, 'x', '(a+)+$']).then((r) => {
+      expect(Date.now() - start).to.be.below(1000);
+      expect(r.output.list[0].label).to.equal(label);
+    });
+  });
+
+  it('rejects backreferences and lookarounds', async () => {
+    for (const regex of ['(a)\\1', '(?=N)']) {
+      let error;
+      await invoke(fn, [seriesList, 'x', regex]).catch((e) => (error = e));
+      expect(error.message).to.contain('error parsing regexp');
+    }
+  });
 });
