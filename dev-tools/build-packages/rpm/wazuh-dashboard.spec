@@ -282,6 +282,11 @@ if [ $1 = 0 ];then
   if ! rpm -q --quiet wazuh-indexer && ! rpm -q --quiet wazuh-manager; then
     rm -rf /etc/wazuh
   fi
+
+  # Make systemd forget the unit, now that its file is gone
+  if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
+    systemctl daemon-reload > /dev/null 2>&1 || true
+  fi
 fi
 
 # -----------------------------------------------------------------------------
