@@ -217,7 +217,7 @@ fi
 if [ $1 = 0 ];then # Remove
   echo -n "Stopping wazuh-dashboard service..."
   if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
-      systemctl stop wazuh-dashboard.service > /dev/null 2>&1
+      systemctl --no-reload stop wazuh-dashboard.service > /dev/null 2>&1
       systemctl --no-reload disable wazuh-dashboard.service > /dev/null 2>&1 || true
   # Check for SysV
   elif command -v service > /dev/null 2>&1; then
