@@ -156,7 +156,7 @@ fi
 # Stop the services to upgrade the package
 if [ $1 = 2 ]; then
   if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1 && systemctl is-active --quiet wazuh-dashboard > /dev/null 2>&1; then
-    systemctl stop wazuh-dashboard.service > /dev/null 2>&1
+    systemctl --no-reload stop wazuh-dashboard.service > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   # Check for SysV
   elif command -v service > /dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "is running" > /dev/null 2>&1; then
@@ -217,7 +217,8 @@ fi
 if [ $1 = 0 ];then # Remove
   echo -n "Stopping wazuh-dashboard service..."
   if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
-      systemctl stop wazuh-dashboard.service > /dev/null 2>&1
+      systemctl --no-reload stop wazuh-dashboard.service > /dev/null 2>&1
+      systemctl --no-reload disable wazuh-dashboard.service > /dev/null 2>&1 || true
   # Check for SysV
   elif command -v service > /dev/null 2>&1; then
     service wazuh-dashboard stop > /dev/null 2>&1
@@ -280,6 +281,11 @@ if [ $1 = 0 ];then
   # removed by the last Wazuh central component to leave the host.
   if ! rpm -q --quiet wazuh-indexer && ! rpm -q --quiet wazuh-manager; then
     rm -rf /etc/wazuh
+  fi
+
+  # Make systemd forget the unit, now that its file is gone
+  if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
+    systemctl daemon-reload > /dev/null 2>&1 || true
   fi
 fi
 

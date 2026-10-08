@@ -14,6 +14,7 @@
 | [wazuh-dashboard-plugins#9199](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9199) | Added the `opensearchDashboards.branding.applicationVersion`, `opensearchDashboards.branding.helpMenuLinks` and `about.communityLinks` settings to override the displayed version, help menu links and About page community links |
 | [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Added support for health check tasks to report their own result status                                                                                                                                                            |
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Added the issuance of the dashboard TLS certificates from the shared Wazuh root CA on a fresh install, creating the CA when none exists                                                                                           |
+| [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Added a skip to main content link before the header for keyboard users                                                                                                                                                            |
 
 ### Changed
 
@@ -30,6 +31,7 @@
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Changed the packages to install `/usr/share/wazuh-dashboard` as `root:root` and `/etc/default/wazuh-dashboard` as `root:wazuh-dashboard`                                   |
 | [#1637](https://github.com/wazuh/wazuh-dashboard/issues/1637)                                | Changed the package install to end with the dashboard URL, the login user and the start command, and to print the certificate detail only with `WAZUH_DASHBOARD_VERBOSE=1` |
 | [wazuh-dashboard-plugins#9300](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9300) | Changed the Server API user of the default host from `wazuh-wui` to `wazuh-internal-client`, following its rename in the Wazuh manager                                     |
+| [#1630](https://github.com/wazuh/wazuh-dashboard/issues/1630)                                | Changed the production build to compress and mangle the browser bundles, reducing the JavaScript the browser downloads by about a quarter                                  |
 
 ### Removed
 
@@ -49,6 +51,8 @@
 | [#1619](https://github.com/wazuh/wazuh-dashboard/issues/1619)                                | Fixed the dashboard keystore being created readable by every user                                                      |
 | [wazuh-dashboard-plugins#9257](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9257) | Fixed the RPM package removal leaving the kept configuration files owned by the removed `wazuh-dashboard` user         |
 | [#1638](https://github.com/wazuh/wazuh-dashboard/issues/1638)                                | Fixed the not ready page claiming success before the health checks ran, and the indexer error log losing the cause     |
+| [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Fixed the browser tab title to read `<app> - Wazuh`, and its fallback to read Wazuh instead of OpenSearch Dashboards   |
+| [#1653](https://github.com/wazuh/wazuh-dashboard/issues/1653)                                | Fixed the RPM package removal leaving the wazuh-dashboard service enabled with a dangling systemd link                 |
 
 ## Prior versions
 

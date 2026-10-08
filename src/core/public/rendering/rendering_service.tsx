@@ -36,6 +36,8 @@ import { InternalChromeStart } from '../chrome';
 import { InternalApplicationStart } from '../application';
 import { OverlayStart } from '../overlays';
 import { AppWrapper, AppContainer } from './app_containers';
+// Wazuh
+import { SkipLink } from './skip_link';
 
 export interface StartDeps {
   application: InternalApplicationStart;
@@ -65,6 +67,8 @@ export class RenderingService {
     root.render(
       <I18nProvider>
         <div className={classContent} data-test-subj="opensearchDashboardsChrome">
+          {/* Wazuh: let keyboard users skip the header */}
+          <SkipLink chromeVisible$={chrome.getIsVisible$()} />
           {chromeUi}
 
           <AppWrapper
