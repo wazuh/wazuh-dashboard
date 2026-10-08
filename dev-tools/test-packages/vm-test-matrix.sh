@@ -370,6 +370,18 @@ ks_file_sha() {
   sha256sum "${CONFIG_DIR}/opensearch_dashboards.keystore" 2>/dev/null | awk '{print $1}' | grep .
 }
 
+# The cookie password exists once the new version has started, and a further restart leaves the
+# keystore as it was (compared by the hash of the file), so the value is not rotated.
+check_cookie_password_kept_across_restart() {
+  check "session cookie password generated" ks_has opensearch_security.cookie.password
+  local before
+  before=$(ks_file_sha) || before=""
+  check "keystore file is readable" test -n "${before}"
+  check "systemctl restart succeeds" timeout 120 systemctl restart "${NAME}"
+  check_running
+  check "keystore not rewritten by the restart" test "$(ks_file_sha)" = "${before}"
+}
+
 # Removes a keystore entry as the service user, e.g. to stand in for a host that never had it.
 ks_remove() {
   (cd / && runuser -u "${NAME}" -- "${KEYSTORE_BIN}" remove "$1") </dev/null >/dev/null 2>&1
@@ -1000,7 +1012,9 @@ install_previous() {
   # that already generates one gets it removed, so what the upgrade does about it is what is tested.
   if ks_has opensearch_security.cookie.password >/dev/null 2>&1; then
     info "the previous package generated opensearch_security.cookie.password; removing it"
-    ks_remove opensearch_security.cookie.password
+    check "the previous package's cookie password entry is removed" \
+      ks_remove opensearch_security.cookie.password
+    check_not "the entry is gone" ks_has opensearch_security.cookie.password
   fi
 }
 
@@ -1024,14 +1038,7 @@ case_upgrade_running() {
   step "The first start of the new version generates the session cookie password"
   check "systemctl restart succeeds" timeout 120 systemctl restart "${NAME}"
   check_running
-  check "session cookie password generated" ks_has opensearch_security.cookie.password
-  local cookie_sha
-  cookie_sha=$(ks_file_sha) || cookie_sha=""
-  check "keystore file is readable" test -n "${cookie_sha}"
-  check "systemctl restart succeeds again" timeout 120 systemctl restart "${NAME}"
-  check_running
-  check "keystore not rewritten by the restart" \
-    test "$(ks_file_sha)" = "${cookie_sha}"
+  check_cookie_password_kept_across_restart
 }
 
 case_upgrade_stopped() {
@@ -1048,14 +1055,7 @@ case_upgrade_stopped() {
   check "systemctl start succeeds" svc_start
   check_running
   step "The first start of the new version generated the session cookie password"
-  check "session cookie password generated" ks_has opensearch_security.cookie.password
-  local cookie_sha
-  cookie_sha=$(ks_file_sha) || cookie_sha=""
-  check "keystore file is readable" test -n "${cookie_sha}"
-  check "systemctl restart succeeds" timeout 120 systemctl restart "${NAME}"
-  check_running
-  check "keystore not rewritten by the restart" \
-    test "$(ks_file_sha)" = "${cookie_sha}"
+  check_cookie_password_kept_across_restart
 }
 
 case_no_wazuh_host() {
