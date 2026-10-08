@@ -59,12 +59,14 @@ validation and does not start.
 How to set it depends on when:
 
 - **New installation.** The package has already generated a random value on each node by the time
-  the install finishes, so replace it on every node, as the service user, and restart:
+  the install finishes, so replace it on every node, as the service user, and restart. Keep the
+  shared value in a file only root can read (for example `/root/cookie-password`, mode `600`) and
+  feed it on stdin, so it never appears on a command line or in the shell history:
 
   ```bash
-  printf '%s' "<shared value>" | runuser -u wazuh-dashboard -- \
+  runuser -u wazuh-dashboard -- \
     /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore add \
-    opensearch_security.cookie.password --force --stdin
+    opensearch_security.cookie.password --force --stdin < /root/cookie-password
   systemctl restart wazuh-dashboard
   ```
 
@@ -77,10 +79,11 @@ How to set it depends on when:
   runuser -u wazuh-dashboard -- \
     /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore remove \
     opensearch_security.cookie.password
+  systemctl restart wazuh-dashboard
   ```
 
 - **Upgrading existing nodes.** Set the shared value on every node **before** upgrading it, either
-  with `opensearch-dashboards-keystore add` (no `--force` needed, the entry does not exist yet) or in
+  with the same `add` command as above but without `--force` (the entry does not exist yet) or in
   `opensearch_dashboards.yml`. Generation then skips it (an entry in the keystore or the yml counts
   as already set), on every start. Without it, each node generates its own random value at its first
   start after the upgrade, and a load balancer without sticky sessions will log users out whenever
