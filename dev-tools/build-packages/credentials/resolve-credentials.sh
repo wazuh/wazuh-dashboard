@@ -26,9 +26,11 @@
 # a value does not make the peer accept it, and a key has exactly one writer -- its owner. It is
 # the only component that can end with every one of its credentials unresolved.
 #
-# The one secret it does own is local to it: wazuh_ai_assistant.encryptionKey, which the AI
-# assistant encrypts the provider API keys it stores with. Nobody else reads it, so it is
-# generated here, straight into the keystore, and never published. See its own section below.
+# The two secrets it does own are local to it. wazuh_ai_assistant.encryptionKey is what the AI
+# assistant encrypts the provider API keys it stores with; opensearch_security.cookie.password is
+# what the security plugin seals the session cookie with. Nobody else reads either, so each is
+# generated here, straight into the keystore, and never published.
+# See their own section below.
 #
 # It also owns its TLS certificates, certs/dashboard.pem and dashboard-key.pem, which a fresh
 # install issues from the shared CA -- minting that CA first when no component has yet -- together
@@ -38,28 +40,33 @@
 # The same script runs at three moments, and the difference between them is the whole design:
 #
 #   --install    From a FRESH postinst / %post -- never from an upgrade. Stores what it can, and has
-#                no opinion about whether the dashboard can run. Never fails: a maintainer script
-#                that aborts leaves the package half-configured, breaks `apt install -f` and fails
-#                image builds. Exits 0 whatever it could not resolve, and says nothing about it --
-#                except the TLS certificates, which are issued at this moment and no other. Ends by
-#                telling a first-time user where and how to log in.
+#                no opinion about whether the dashboard can run. Generates its two owned secrets.
+#                Never fails: a maintainer script that aborts leaves the package half-configured,
+#                breaks `apt install -f` and fails image builds. Exits 0 whatever it could not
+#                resolve, and says nothing about it -- except the TLS certificates, which are
+#                issued at this moment and no other. Ends by telling a first-time user where and
+#                how to log in.
 #
 #   --upgrade    From postinst / %post when a previous version was already installed. Identical to
 #                --install for the consumed passwords: once both keystore entries exist step 0 is
 #                true for both, so the only values it can fill in are the ones this host never had,
 #                and nothing that is already configured changes. It does NOT generate the AI
-#                assistant key: an upgrade adds no secret the operator did not have. Nor does it
-#                touch the certificates: a pair the operator replaced must not be re-examined.
+#                assistant key or the cookie password: an upgrade adds no secret the operator did
+#                not have (the next --prestart does). Nor does it touch the certificates: a pair
+#                the operator replaced must not be re-examined.
 #
 #   --prestart   From the unit's ExecStartPre=+ and from the SysV init script's start. Runs the same
 #                ladder again, not merely a check, so a dashboard installed before the indexer or
 #                the manager picks up what became available since and configures itself. Exits
-#                non-zero naming every key it could not resolve.
+#                non-zero naming every key it could not resolve. Generates the owned secrets that
+#                are still missing, which is how a host upgraded from a version without the cookie
+#                password gets one, at its first start: users then log in again, once. A failure
+#                to generate them is a warning and never part of the exit status.
 #
-#   --clear      Removes every credential this dashboard stores, the AI assistant key and the
-#                certificates included -- and the shared CA when this dashboard minted it, which
-#                the install recorded at the time -- so the next --install or --prestart resolves
-#                from nothing. Nothing in the product calls it: it exists for an image that was
+#   --clear      Removes every credential this dashboard stores, the AI assistant key, the cookie
+#                password and the certificates included -- and the shared CA when this dashboard
+#                minted it, which the install recorded at the time -- so the next --install or
+#                --prestart resolves from nothing. Nothing in the product calls it: it exists for an image that was
 #                built by installing the package, whose postinst therefore resolved this host's
 #                credentials into the image layer. Every container started from such an image
 #                would otherwise share them. Run it as root at the end of the Dockerfile, or once
@@ -151,9 +158,9 @@ NODE_BIN="${DIR}/node/bin/node"
 PID_FILE="/run/wazuh-dashboard/wazuh-dashboard.pid"
 
 # Every keystore entry this script may write, and so every one --clear removes: the consumed
-# credentials, and the one secret the dashboard owns.
+# credentials, and the two secrets the dashboard owns.
 LADDER_ENTRIES="opensearch.username opensearch.password wazuh_core.hosts.default.password"
-OWNED_ENTRIES="wazuh_ai_assistant.encryptionKey"
+OWNED_ENTRIES="wazuh_ai_assistant.encryptionKey opensearch_security.cookie.password"
 
 LOG_TAG="resolve-credentials"
 
@@ -538,22 +545,39 @@ config_resolves_wui() {
 }
 
 # -----------------------------------------------------------------------------------------
-# Owned: the AI assistant encryption key
+# Owned: the AI assistant encryption key and the session cookie password
 #
-# Deliberately separate from the ladder: it is not a credential anybody else holds, so it is never
-# read from the environment or the credentials file, never checked as a supplied value would be,
-# and never published. The AI assistant is optional, so failing to generate it is a warning and
-# never blocks the start -- the plugin itself says what is missing when it is used.
+# Deliberately separate from the ladder: neither is a credential anybody else holds, so they are
+# never read from the environment or the credentials file, never checked as a supplied value would
+# be, and never published. They share one generator and one function, and differ only in what
+# failing to generate them means:
+#
+#   wazuh_ai_assistant.encryptionKey      What the AI assistant encrypts the provider API keys it
+#                                         stores with. The assistant is optional, so failing to
+#                                         generate it is a warning and never blocks the start -- the
+#                                         plugin itself says what is missing when it is used.
+#   opensearch_security.cookie.password   What the security plugin seals the session cookie with.
+#                                         The plugin falls back to its built-in default when no
+#                                         value is configured. Failing to generate it is only a
+#                                         warning -- the dashboard then starts on that default,
+#                                         which is what it did before -- but the warning says so.
 #
 # Step 0 is the keystore entry or a value the operator configured in opensearch_dashboards.yml.
-# Once either exists the key is never touched again: the provider API keys the assistant stored
-# are encrypted with it, and a new key could no longer decrypt them.
+# Once either exists the secret is never touched again: the provider API keys the assistant stored
+# are encrypted with the first key, and a new one could no longer decrypt them; a new cookie
+# password would end every session, and a restart must never do that.
+#
+# A host upgraded from a version that had no cookie password gets one at its first start, because
+# --upgrade generates nothing. That one start ends the sessions open at the time: users log in
+# again, once.
 #
 # base64 of exactly 32 bytes is always 44 characters with one '=' pad, which also means it can
-# never parse as a JSON number, so the keystore stores it as the string the plugin expects.
+# never parse as a JSON number, so the keystore stores it as the string the plugin expects, and it
+# satisfies the 32-character minimum of the cookie password.
 # -----------------------------------------------------------------------------------------
 
 ENCRYPTION_KEY_ENTRY="wazuh_ai_assistant.encryptionKey"
+COOKIE_PASSWORD_ENTRY="opensearch_security.cookie.password"
 
 encryption_key_generate() {
     _ekg_key=""
@@ -571,29 +595,41 @@ encryption_key_generate() {
     printf '%s' "${_ekg_key}"
 }
 
-resolve_encryption_key() {
+# $1 is the keystore entry, $2 what to tell the operator when it could not be generated; it follows
+# "warning: could not generate <entry>;".
+resolve_owned_secret() {
+    _ros_entry="$1"
+    _ros_warning="$2"
+
     [ "${KEYSTORE_READY}" -eq 1 ] || return 1
 
-    if keystore_has "${ENCRYPTION_KEY_ENTRY}"; then
-        log "${ENCRYPTION_KEY_ENTRY} is already in the keystore"
+    if keystore_has "${_ros_entry}"; then
+        log "${_ros_entry} is already in the keystore"
         return 0
     fi
-    if config_has "${ENCRYPTION_KEY_ENTRY}"; then
-        log "${ENCRYPTION_KEY_ENTRY} is set in ${CONFIG_FILE}; not generated"
+    if config_has "${_ros_entry}"; then
+        log "${_ros_entry} is set in ${CONFIG_FILE}; not generated"
         return 0
     fi
 
     # Captured, then piped: the value is never on a command line, and never printed.
-    if _rek_key=$(encryption_key_generate) &&
-       printf '%s' "${_rek_key}" | keystore_add "${ENCRYPTION_KEY_ENTRY}"; then
-        _rek_key=""
-        keystore_mark "${ENCRYPTION_KEY_ENTRY}"
-        log "generated ${ENCRYPTION_KEY_ENTRY}"
+    if _ros_key=$(encryption_key_generate) &&
+       printf '%s' "${_ros_key}" | keystore_add "${_ros_entry}"; then
+        _ros_key=""
+        keystore_mark "${_ros_entry}"
+        log "generated ${_ros_entry}"
         return 0
     fi
-    _rek_key=""
-    err "warning: could not generate ${ENCRYPTION_KEY_ENTRY}; configure it manually to enable the AI assistant"
+    _ros_key=""
+    err "warning: could not generate ${_ros_entry}; ${_ros_warning}"
     return 1
+}
+
+resolve_owned_secrets() {
+    resolve_owned_secret "${ENCRYPTION_KEY_ENTRY}" \
+        "configure it manually to enable the AI assistant" || :
+    resolve_owned_secret "${COOKIE_PASSWORD_ENTRY}" \
+        "the dashboard would then keep the built-in default; set ${COOKIE_PASSWORD_ENTRY} (32 or more characters) in the keystore or in ${CONFIG_FILE}" || :
 }
 
 # -----------------------------------------------------------------------------------------
@@ -1188,6 +1224,11 @@ print_first_login() {
 # nothing on an image that was never used, and exactly why this is not something a running host
 # should ever do.
 #
+# The same goes for the cookie password, for the same reason: an image that baked one would have
+# every container seal its sessions with one shared value. The next --prestart of each container
+# generates its own. Removing it on a running host would end every session, which is the other
+# half of why this refuses to run then.
+#
 # What it deliberately does NOT remove:
 #
 #   * A shared CA this dashboard did not mint. One with a private key but no CA_MINT_MARKER was
@@ -1296,10 +1337,10 @@ if ! config_resolves_wui; then
         wazuh_core.hosts.default.password
 fi
 
-# Owned, and only at install and start -- an upgrade adds no secret. Its result never counts
-# towards the verdict: the AI assistant is optional.
+# Owned, and only at install and start -- an upgrade adds no secret. Their result never counts
+# towards the verdict: a failure is a warning, never a reason to refuse the start.
 if [ "${MODE}" = "install" ] || [ "${MODE}" = "prestart" ]; then
-    resolve_encryption_key || true
+    resolve_owned_secrets || true
 fi
 
 # Certificates are issued once, on a fresh install -- see their section. Their result never counts
