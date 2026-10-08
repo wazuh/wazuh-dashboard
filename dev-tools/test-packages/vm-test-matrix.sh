@@ -377,7 +377,8 @@ check_cookie_password_kept_across_restart() {
   local before
   before=$(ks_file_sha) || before=""
   check "keystore file is readable" test -n "${before}"
-  check "systemctl restart succeeds" timeout 120 systemctl restart "${NAME}"
+  check "systemctl restart succeeds (cookie password stability)" \
+    timeout 120 systemctl restart "${NAME}"
   check_running
   check "keystore not rewritten by the restart" test "$(ks_file_sha)" = "${before}"
 }
