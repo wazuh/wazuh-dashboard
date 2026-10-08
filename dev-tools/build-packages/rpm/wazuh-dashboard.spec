@@ -194,9 +194,9 @@ if [ $1 = 1 ] && [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
 fi
 
 # Create the keystore if needed, resolve the consumed kibanaserver and
-# wazuh-wui passwords into it and, on a fresh install, generate the AI
-# assistant encryption key. An unresolved credential is not an error at
-# install time: the unit's pre-start step runs the resolver again and
+# wazuh-internal-client passwords into it and, on a fresh install, generate
+# the AI assistant encryption key. An unresolved credential is not an error
+# at install time: the unit's pre-start step runs the resolver again and
 # refuses to start if needed.
 # $1 is 1 on a fresh install and 2 or more on an upgrade.
 if [ $1 = 1 ]; then
