@@ -99,6 +99,16 @@ else
   exit 1
 fi
 
+# Presence only: the value is a secret and is never printed.
+echo "==> Checking the keystore for opensearch_security.cookie.password"
+if grep -qx "opensearch_security.cookie.password" <<<"${keystore_keys}"; then
+  echo "Session cookie password present in keystore"
+else
+  echo "Session cookie password missing from keystore"
+  echo "Keystore entries: ${keystore_keys:-<none>}"
+  exit 1
+fi
+
 echo "==> Checking the keystore mode and ownership"
 keystore_file=/etc/wazuh-dashboard/opensearch_dashboards.keystore
 keystore_stat="$(stat -c '%a %U:%G' "${keystore_file}")" || keystore_stat=""

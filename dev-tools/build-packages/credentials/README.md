@@ -29,11 +29,67 @@ two passwords into its keystore:
 The manager account was named `wazuh-wui` before Wazuh 5.0.0. The credentials key keeps its `WUI`
 name.
 
-The dashboard also owns one secret of its own, `wazuh_ai_assistant.encryptionKey`, which the AI
-assistant encrypts the provider API keys it stores with. It is generated (32 random bytes, base64)
-straight into the keystore by `--install` and `--prestart` when neither the keystore nor
-`opensearch_dashboards.yml` has it, never by `--upgrade`, and never published. An existing key is
-never replaced. Failing to generate it is a warning only: the AI assistant is optional.
+The dashboard also owns two secrets of its own:
+
+| Keystore entry                        | Used for                                                 | If it cannot be generated                                                                                       |
+| ------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `wazuh_ai_assistant.encryptionKey`    | Encrypting the provider API keys the AI assistant stores | Warning only: the AI assistant is optional.                                                                     |
+| `opensearch_security.cookie.password` | Sealing the session cookie                               | Warning only, and the start is not blocked, but the dashboard then keeps the built-in default until one is set. |
+
+Each is generated (32 random bytes, base64) straight into the keystore by `--install` and
+`--prestart` when neither the keystore nor `opensearch_dashboards.yml` has it, never by
+`--upgrade`, and never published. An existing value is never replaced, and a restart never rotates
+it. Neither is read from the environment or from `credentials.env`.
+
+### Upgrades
+
+`--upgrade` adds no secret the operator did not have, so a host upgraded from a version that had no
+`opensearch_security.cookie.password` gets one at its first start (`--prestart`). That start ends
+the sessions that were open: users log in again, once. Later starts keep the value.
+
+### Multi-node / load balancer
+
+Every node behind a load balancer must share the same `opensearch_security.cookie.password`. A
+random value per node means a request that lands on another node cannot unseal the session cookie,
+and the user is logged out. The shared value must be 32 characters or more and must not look like
+JSON (a number, `true`, a quoted string...); surrounding whitespace is trimmed by the keystore. The
+keystore accepts a value that breaks these rules, but the dashboard then fails its configuration
+validation and does not start.
+
+How to set it depends on when:
+
+- **New installation.** The package has already generated a random value on each node by the time
+  the install finishes, so replace it on every node, as the service user, and restart. Keep the
+  shared value in a file only root can read (for example `/root/cookie-password`, mode `600`) and
+  feed it on stdin, so it never appears on a command line or in the shell history:
+
+  ```bash
+  runuser -u wazuh-dashboard -- \
+    /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore add \
+    opensearch_security.cookie.password --force --stdin < /root/cookie-password
+  systemctl restart wazuh-dashboard
+  ```
+
+  `--force` is required: without it `add --stdin` leaves an existing entry untouched. Setting the
+  value in `opensearch_dashboards.yml` does not take effect on its own, because the keystore is
+  merged over the yml and the generated entry wins. If the yml is where the value should live,
+  remove the entry first, as the service user (the keystore refuses to run as root), and restart:
+
+  ```bash
+  runuser -u wazuh-dashboard -- \
+    /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore remove \
+    opensearch_security.cookie.password
+  systemctl restart wazuh-dashboard
+  ```
+
+- **Upgrading existing nodes.** Set the shared value on every node **before** upgrading it, either
+  with the same `add` command as above but without `--force` (the entry does not exist yet) or in
+  `opensearch_dashboards.yml`. Generation then skips it (an entry in the keystore or the yml counts
+  as already set), on every start. Without it, each node generates its own random value at its first
+  start after the upgrade, and a load balancer without sticky sessions will log users out whenever
+  it moves them to another node. The sessions of nodes that were running with the built-in default
+  end once, when the new value takes effect; nodes that were already restarted with the shared value
+  before the upgrade keep their sessions.
 
 For each consumed key, the ladder is:
 
@@ -90,18 +146,21 @@ and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared lib
 
 ## Modes
 
-| Mode         | Called from                                  | Exit status                                                                                                                                                       |
-| ------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--install`  | fresh `postinst` / `%post`                   | always `0`; warns only when the certificates cannot be issued                                                                                                     |
-| `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                                                                                                                            |
-| `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                                                                                                                        |
-| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above, the AI assistant key, the certificates, and the shared CA only when this dashboard minted it (marker); must run as root |
+| Mode         | Called from                                  | Exit status                                                                                                                                                                                                                |
+| ------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--install`  | fresh `postinst` / `%post`                   | always `0`; warns only when the certificates cannot be issued                                                                                                                                                              |
+| `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                                                                                                                                                                                     |
+| `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                                                                                                                                                                                 |
+| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three consumed keystore entries above, the two owned secrets (the AI assistant key and the cookie password), the certificates, and the shared CA only when this dashboard minted it (marker); must run as root |
 
 `--install` ends with the dashboard URL (the first global address in `dashboard.pem`), the login
 user (`admin`, with `WAZUH_INDEXER_ADMIN_PASSWORD` from the indexer host) and the start command.
 
 `--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
 (`0600 root:root`) when the dashboard is the first Wazuh package on the host.
+
+`--clear` removes the cookie password too, so containers started from an image built with the
+package do not share one session key: each one generates its own at its first start.
 
 `--clear` enters `certs/` the way the install does and removes the files relative to it. A
 `certs/` that is a symbolic link or not a directory is refused, and the clear fails.

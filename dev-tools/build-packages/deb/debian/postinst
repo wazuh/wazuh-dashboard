@@ -55,9 +55,10 @@ configure)
     fi
     # Create the keystore if needed, resolve the consumed kibanaserver and
     # wazuh-internal-client passwords into it and, on a fresh install,
-    # generate the AI assistant encryption key. An unresolved credential is
-    # not an error at install time: the unit's pre-start step runs the
-    # resolver again and refuses to start if needed.
+    # generate the AI assistant encryption key and the session cookie
+    # password. An unresolved credential is not an error at install time: the
+    # unit's pre-start step runs the resolver again and refuses to start if
+    # needed.
     # $2 is the previously configured version, empty on a fresh install.
     if [ -n "$2" ]; then
         "${INSTALLATION_DIR}"/bin/resolve-credentials --upgrade || true
