@@ -23,3 +23,4 @@ wazuh_core.hosts:
     port: 55000
     username: wazuh-internal-client
     run_as: true
+    ca: '/etc/wazuh-dashboard/certs/root-ca.pem'

@@ -641,8 +641,9 @@ credentials_file_ensure() {
 # Owned: the dashboard's own certificates
 #
 # opensearch_dashboards.yml serves HTTPS from certs/dashboard.pem and dashboard-key.pem, and trusts
-# the indexer through certs/root-ca.pem. On a fresh install, and only then, this issues whatever of
-# that is missing from the shared CA, so every Wazuh component on the host chains to one anchor:
+# the indexer and the manager's Server API through certs/root-ca.pem. On a fresh install, and only
+# then, this issues whatever of that is missing from the shared CA, so every Wazuh component on the
+# host chains to one anchor:
 #
 #   * No CA in the CA directory (/etc/wazuh/ca, or WAZUH_CA_DIR): the library mints one, and the
 #     manager and the indexer installed after us issue from it too.

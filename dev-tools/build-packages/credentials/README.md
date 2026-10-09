@@ -55,7 +55,8 @@ For each consumed key, the ladder is:
 ## Certificates
 
 `opensearch_dashboards.yml` serves HTTPS from `/etc/wazuh-dashboard/certs/dashboard.pem` and
-`dashboard-key.pem`, and trusts the indexer through `certs/root-ca.pem`. A fresh install
+`dashboard-key.pem`, and trusts the indexer and the manager's Server API (the `ca` of
+`wazuh_core.hosts.default`) through `certs/root-ca.pem`. A fresh install
 (`--install` only) issues whatever of that is missing from the **shared CA**, the one the manager
 and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared library's
 `_wazuh_ca_ensure_locked`, under its lock:
