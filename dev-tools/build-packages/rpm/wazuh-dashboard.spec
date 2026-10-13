@@ -89,7 +89,7 @@ chmod 640 %{buildroot}/etc/default/wazuh-dashboard
 rm -rf %{buildroot}%{INSTALL_DIR}/etc/
 
 find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
-find %{buildroot}%{CONFIG_DIR} -exec chown %{USER}:%{GROUP} {} \;
+find %{buildroot}%{CONFIG_DIR} -exec chown root:%{GROUP} {} \;
 
 chown root:root %{buildroot}/usr/lib/systemd/system/wazuh-dashboard.service
 
@@ -176,21 +176,34 @@ if [ -f /etc/default/wazuh-dashboard ]; then
   chmod 640 /etc/default/wazuh-dashboard
 fi
 
-# A certificate pair staged before the package was installed -- by the
-# installation assistant, or by an operator -- is root's: the service user did
-# not exist yet. The resolver keeps an existing pair exactly as it finds it, and
-# the service reads it after dropping privileges, so it must be the service
-# user's. DEB does the same for the whole configuration directory in its
-# postinst; the indexer and the manager do it in their packaging too. On an
-# upgrade this also repairs a host that was left unable to start. -P never
-# follows a symlink, and a certs/ that is itself one is left alone.
-if [ -d %{CONFIG_DIR}/certs ] && [ ! -L %{CONFIG_DIR}/certs ]; then
-  chown -R -P %{USER}:%{GROUP} %{CONFIG_DIR}/certs || true
-fi
-# Removing the package hands what it kept in the configuration directory over to
-# root before the service user goes, so a fresh install takes all of it back.
-if [ $1 = 1 ] && [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
-  chown -R -P %{USER}:%{GROUP} %{CONFIG_DIR} || true
+# Root owns the configuration directory; the service reads it through its group.
+# Runs before the resolver, which refuses a directory not owned by root.
+if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
+  chown root:%{GROUP} %{CONFIG_DIR}
+  chmod 750 %{CONFIG_DIR}
+  for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
+    if [ -f "%{CONFIG_DIR}/$f" ] && [ ! -L "%{CONFIG_DIR}/$f" ]; then
+      chown root:%{GROUP} "%{CONFIG_DIR}/$f"
+      chmod 640 "%{CONFIG_DIR}/$f"
+    fi
+  done
+  if [ -d %{CONFIG_DIR}/certs ] && [ ! -L %{CONFIG_DIR}/certs ]; then
+    chown -R -P root:%{GROUP} %{CONFIG_DIR}/certs
+    chmod 750 %{CONFIG_DIR}/certs
+    for f in %{CONFIG_DIR}/certs/* %{CONFIG_DIR}/certs/.[!.]*; do
+      if [ -f "$f" ] && [ ! -L "$f" ]; then chmod 640 "$f"; fi
+    done
+  fi
+  for d in ca export; do
+    if [ -d "%{CONFIG_DIR}/$d" ] && [ ! -L "%{CONFIG_DIR}/$d" ]; then
+      chown -R -P root:root "%{CONFIG_DIR}/$d"
+      chmod 700 "%{CONFIG_DIR}/$d"
+    fi
+  done
+  if [ -f %{CONFIG_DIR}/local.env ] && [ ! -L %{CONFIG_DIR}/local.env ]; then
+    chown root:root %{CONFIG_DIR}/local.env
+    chmod 600 %{CONFIG_DIR}/local.env
+  fi
 fi
 
 # Create the keystore if needed, resolve the consumed kibanaserver and
@@ -204,11 +217,10 @@ if [ $1 = 1 ]; then
 else
   %{INSTALL_DIR}/bin/resolve-credentials --upgrade || true
 fi
-# The keystore holds secrets under an empty password, so its mode must keep it private
-# on fresh installs and on upgrades of keystores created with a wider mode
-if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
-  chown %{USER}:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
-  chmod 600 %{CONFIG_DIR}/opensearch_dashboards.keystore
+# The keystore holds secrets under an empty password
+if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ] && [ ! -L %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
+  chown root:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
+  chmod 640 %{CONFIG_DIR}/opensearch_dashboards.keystore
 fi
 
 # -----------------------------------------------------------------------------
@@ -319,10 +331,10 @@ rm -fr %{buildroot}
 
 %files
 %defattr(-,%{USER},%{GROUP})
-%dir %attr(750, %{USER}, %{GROUP}) %{CONFIG_DIR}
+%dir %attr(750, root, %{GROUP}) %{CONFIG_DIR}
 
 %config(noreplace) %attr(0640, root, %{GROUP}) "/etc/default/wazuh-dashboard"
-%config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
+%config(noreplace) %attr(0640, root, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 
 %attr(444, root, root) %{INSTALL_DIR}/VERSION.json
 %dir %attr(755, root, root) %{INSTALL_DIR}
@@ -526,10 +538,9 @@ rm -fr %{buildroot}
 %attr(755, root, root) "%{INSTALL_DIR}/bin/opensearch-dashboards-plugin"
 %attr(755, root, root) "%{INSTALL_DIR}/bin/opensearch-dashboards-keystore"
 %attr(750, root, root) "%{INSTALL_DIR}/bin/resolve-credentials"
-%dir %attr(755, root, root) "%{INSTALL_DIR}/lib"
-%attr(644, root, root) "%{INSTALL_DIR}/lib/wazuh-credentials.sh"
+%attr(644, root, root) "%{INSTALL_DIR}/bin/resolve-credentials.js"
 %dir %attr(755, root, root) "%{INSTALL_DIR}/config"
-%attr(640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/node.options"
+%attr(640, root, %{GROUP}) "%{CONFIG_DIR}/node.options"
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
 
 %changelog

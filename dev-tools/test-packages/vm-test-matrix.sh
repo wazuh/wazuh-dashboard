@@ -157,6 +157,15 @@ check_not() {
 
 contains() { grep -qF -- "$2" <<<"$1"; }
 perm_is() { [ "$(stat -c '%U:%G:%a' "$1" 2>/dev/null)" = "$2" ]; }
+# The configuration directory is root's; the service reads it through its group.
+check_config_dir_ownership() {
+  check "${CONFIG_DIR} is root:${NAME} 750" perm_is "${CONFIG_DIR}" "root:${NAME}:750"
+  local f
+  for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
+    check "${f} is root:${NAME} 640" perm_is "${CONFIG_DIR}/${f}" "root:${NAME}:640"
+  done
+  check "certs/ is root:${NAME} 750" perm_is "${CERTS_DIR}" "root:${NAME}:750"
+}
 absent() { [ ! -e "$1" ] && [ ! -L "$1" ]; }
 same_file() { cmp -s "$1" "$2"; }
 fingerprint() { openssl x509 -in "$1" -noout -fingerprint -sha256 2>/dev/null; }
@@ -418,7 +427,7 @@ stage_operator_certs() {
     -CAcreateserial -extfile "${d}/leaf.ext" -out "${d}/leaf.pem" >/dev/null 2>&1
 
   id "${NAME}" >/dev/null 2>&1 && owner="${NAME}:${NAME}"
-  install -d -m 0755 "${CONFIG_DIR}"
+  [ -d "${CONFIG_DIR}" ] || install -d -m 0700 "${CONFIG_DIR}"
   install -d -m 0700 "${CERTS_DIR}"
   install -m 0400 "${d}/leaf.pem" "${CERTS_DIR}/dashboard.pem"
   if [ "${what}" = pair ]; then
@@ -551,8 +560,8 @@ case_fresh_install() {
   WAZUH_DASHBOARD_VERBOSE=0 install_ok "${DASHBOARD_PKG}"
   check "user ${NAME} exists" id "${NAME}"
   check "resolver is root:root 750" perm_is "${RESOLVER}" root:root:750
-  check "lib/ is root:root 755" perm_is "${INSTALL_DIR}/lib" root:root:755
-  check "shared library is root:root 644" perm_is "${INSTALL_DIR}/lib/wazuh-credentials.sh" root:root:644
+  check "resolver program is root:root 644" perm_is "${RESOLVER}.js" root:root:644
+  check_not "no lib/ in ${INSTALL_DIR}" test -e "${INSTALL_DIR}/lib"
   check "${INSTALL_DIR} is root:root 755" perm_is "${INSTALL_DIR}" root:root:755
   check "data/ is ${NAME} 750" perm_is "${INSTALL_DIR}/data" "${NAME}:${NAME}:750"
   check "${ENV_FILE} is root:${NAME} 640" perm_is "${ENV_FILE}" "root:${NAME}:640"
@@ -573,10 +582,10 @@ case_fresh_install() {
   check "shared CA certificate minted" test -f "${CA_DIR}/root-ca.pem"
   check "shared CA key minted" test -f "${CA_DIR}/root-ca.key"
   check "mint recorded by the dashboard's marker" test -f "${CA_DIR}/${CA_MINT_MARKER}"
-  check "certs/ is ${NAME} 500" perm_is "${CERTS_DIR}" "${NAME}:${NAME}:500"
+  check "certs/ is root:${NAME} 750" perm_is "${CERTS_DIR}" "root:${NAME}:750"
   local f
   for f in dashboard.pem dashboard-key.pem root-ca.pem; do
-    check "certs/${f} is ${NAME} 400" perm_is "${CERTS_DIR}/${f}" "${NAME}:${NAME}:400"
+    check "certs/${f} is root:${NAME} 640" perm_is "${CERTS_DIR}/${f}" "root:${NAME}:640"
   done
   check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
   check "dashboard.pem chains to the shared CA for server use" \
@@ -584,6 +593,7 @@ case_fresh_install() {
 
   step "Keystore after install without credentials"
   check "keystore exists" test -f "${CONFIG_DIR}/opensearch_dashboards.keystore"
+  check_config_dir_ownership
   check "AI assistant encryption key generated" ks_has wazuh_ai_assistant.encryptionKey
   check_not "opensearch.password not stored" ks_has opensearch.password
   check_not "wazuh_core.hosts.default.password not stored" ks_has wazuh_core.hosts.default.password
@@ -797,17 +807,17 @@ case_operator_pair() {
   check "root-ca.pem unchanged" test "$(sha "${CERTS_DIR}/root-ca.pem")" = "${ca_sha}"
   check "no shared CA minted over operator material" absent "${CA_DIR}/root-ca.pem"
 
-  # Staged on a host without the service user, so root's until the package takes it over -- which
-  # is what the installation assistant does. The service reads the pair after dropping privileges.
-  step "The staged pair is the service user's and the dashboard starts with it"
+  step "The staged directory is opened to the service's group and the dashboard starts with it"
   local f
   for f in dashboard.pem dashboard-key.pem root-ca.pem; do
-    check "certs/${f} is owned by ${NAME}" test "$(stat -c '%U:%G' "${CERTS_DIR}/${f}")" = "${NAME}:${NAME}"
+    check "certs/${f} is root:${NAME} 640" perm_is "${CERTS_DIR}/${f}" "root:${NAME}:640"
   done
-  check "certs/ is owned by ${NAME}" test "$(stat -c '%U:%G' "${CERTS_DIR}")" = "${NAME}:${NAME}"
+  check_config_dir_ownership
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   check "systemctl start succeeds" svc_start
   check_running
+  check "the running service owns nothing under ${CONFIG_DIR}" \
+    test -z "$(find "${CONFIG_DIR}" -user "${NAME}" -print -quit)"
 }
 
 case_partial_pair() {
@@ -947,6 +957,8 @@ case_upgrade_running() {
   check "dashboard.pem unchanged by the upgrade" test "$(sha "${CERTS_DIR}/dashboard.pem")" = "${cert_sha}"
   check "dashboard-key.pem unchanged by the upgrade" test "$(sha "${CERTS_DIR}/dashboard-key.pem")" = "${key_sha}"
   check "keystore holds every consumed entry" has_all_consumed_entries
+  step "The upgrade takes the configuration directory back to root"
+  check_config_dir_ownership
 }
 
 case_upgrade_stopped() {
