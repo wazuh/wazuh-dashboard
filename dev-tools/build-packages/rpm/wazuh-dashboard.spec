@@ -17,8 +17,9 @@ buildroot:   %{_tmppath}/%{name}-%{version}-%{release}-wazuh-dashboard-%(%{__id_
 Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
+Requires(postun): /usr/sbin/userdel /usr/sbin/groupdel
 AutoReqProv: no
-Requires: openssl, diffutils, util-linux
+Requires: /bin/sh
 ExclusiveOS: linux
 
 # -----------------------------------------------------------------------------
@@ -119,16 +120,28 @@ Refer to the 5.x migration guide for more information.
 EOF
 }
 
+# Prints the first "version" value of a JSON file with tr and parameter expansion
+# only. Shell percent operators are doubled in this spec for rpm's macro pass.
+json_version() {
+  json=$(tr -d ' \t\r\n' < "$1" 2>/dev/null) || return 0
+  case "$json" in
+    *'"version":"'*)
+      json=${json#*'"version":"'}
+      echo "${json%%%%\"*}"
+      ;;
+  esac
+}
+
 if [ -f %{INSTALL_DIR}/VERSION.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  INSTALLED_VER=$(json_version %{INSTALL_DIR}/VERSION.json)
 elif [ -f %{INSTALL_DIR}/VERSION ]; then
   INSTALLED_VER=$(cat %{INSTALL_DIR}/VERSION 2>/dev/null)
 elif [ -f %{INSTALL_DIR}/plugins/wazuh/package.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  INSTALLED_VER=$(json_version %{INSTALL_DIR}/plugins/wazuh/package.json)
 fi
 
 if [ -n "$INSTALLED_VER" ]; then
-  MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+  MAJOR=${INSTALLED_VER%%%%.*}
   if [ "$MAJOR" -lt 5 ]; then
     print_upgrade_error "$INSTALLED_VER"
     exit 1
@@ -159,7 +172,7 @@ if [ $1 = 2 ]; then
     systemctl --no-reload stop wazuh-dashboard.service > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   # Check for SysV
-  elif command -v service > /dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "is running" > /dev/null 2>&1; then
+  elif command -v service > /dev/null 2>&1 && case "$(service wazuh-dashboard status 2>/dev/null)" in *"is running"*) true ;; *) false ;; esac; then
     service wazuh-dashboard stop > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   fi
