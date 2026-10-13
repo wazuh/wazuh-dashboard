@@ -34,6 +34,7 @@
 | [#1630](https://github.com/wazuh/wazuh-dashboard/issues/1630)                                | Changed the production build to compress and mangle the browser bundles, reducing the JavaScript the browser downloads by about a quarter                                                           |
 | [#1665](https://github.com/wazuh/wazuh-dashboard/issues/1665)                                | Changed the credential resolver to run on the bundled Node, read the peers' `export/` directories and its own `local.env` instead of `/etc/wazuh`, and mint its own CA in `/etc/wazuh-dashboard/ca` |
 | [#1666](https://github.com/wazuh/wazuh-dashboard/issues/1666)                                | Changed the packages to install `/etc/wazuh-dashboard` as `root:wazuh-dashboard`, so the service reads its configuration, keystore and certificates through its group and cannot modify them        |
+| [#1667](https://github.com/wazuh/wazuh-dashboard/issues/1667)                                | Changed the service to bind port 443 with a capability granted by its systemd unit instead of one set on `node`, dropping `libcap2-bin` and `libcap`                                                |
 
 ### Removed
 
