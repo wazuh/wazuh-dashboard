@@ -11,8 +11,8 @@ runtime the package bundles, through a short launcher:
 
 The launcher fixes `PATH`, drops `LD_PRELOAD`, `LD_LIBRARY_PATH`, `NODE_OPTIONS` and `NODE_PATH`,
 and runs the program with `node/bin/node`. Certificates are issued with `node-forge` and parsed
-with Node's `crypto`; `opensearch_dashboards.yml` is read with `js-yaml`. Both are already in
-`node_modules`. From the host it uses only `getent` (glibc), `systemctl`, and `restorecon` when
+with Node's `crypto`; `opensearch_dashboards.yml` is read with `js-yaml`. Both are declared in
+the root `package.json`. From the host it uses only `getent` (glibc), `systemctl`, and `restorecon` when
 present.
 
 ## Per-package model

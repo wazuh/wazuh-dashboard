@@ -4,12 +4,13 @@
  */
 
 // The resolver runs on the bundled Node outside the dashboard build, so this is a node:test file:
-//   node --test dev-tools/build-packages/credentials/
+//   node --test dev-tools/build-packages/credentials/resolve-credentials.test.js
 // The current user stands in for root.
 
 const { test } = require('node:test');
 const assert = require('node:assert');
 const crypto = require('crypto');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -270,4 +271,49 @@ test('prestart checks local.env even when nothing is left to read from it', () =
   assert.ok(
     problems.includes(`UNSAFE ${path.join(configDir, 'local.env')}: it is group- or world-writable`)
   );
+});
+
+test('a group-readable local.env is UNSAFE and not read', () => {
+  const { configDir, ctx } = setup();
+  const file = path.join(configDir, 'local.env');
+  fs.writeFileSync(file, 'K=local\n');
+  fs.chmodSync(file, 0o640);
+  assert.strictEqual(r.lookup(ctx, 'K', null, null), null);
+  assert.ok(ctx.problems.includes(`UNSAFE ${file}: it is group- or world-readable`));
+});
+
+test('a staged dashboard CA without an RSA key is refused', () => {
+  const { configDir, ctx } = setup();
+  const ca = path.join(configDir, 'ca');
+  fs.mkdirSync(ca, { mode: 0o700 });
+  // forge cannot build an EC certificate, so openssl stages it.
+  execFileSync(
+    'openssl',
+    [
+      'req',
+      '-x509',
+      '-newkey',
+      'ec',
+      '-pkeyopt',
+      'ec_paramgen_curve:prime256v1',
+      '-nodes',
+      '-subj',
+      '/CN=ec-ca',
+      '-days',
+      '1',
+      '-addext',
+      'basicConstraints=critical,CA:TRUE',
+      '-addext',
+      'keyUsage=critical,keyCertSign',
+      '-keyout',
+      path.join(ca, 'root-ca.key'),
+      '-out',
+      path.join(ca, 'root-ca.pem'),
+    ],
+    { stdio: 'ignore' }
+  );
+  fs.chmodSync(path.join(ca, 'root-ca.key'), 0o400);
+  fs.chmodSync(path.join(ca, 'root-ca.pem'), 0o644);
+  r.resolve(ctx, 'install');
+  assert.ok(!fs.existsSync(path.join(configDir, 'certs', 'dashboard.pem')));
 });

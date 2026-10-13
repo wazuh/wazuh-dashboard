@@ -130,6 +130,7 @@ function trustReason(ctx, stat, kind) {
   }
   if (stat.uid !== ctx.rootUid) return 'it is not owned by root';
   if (stat.mode & 0o022) return 'it is group- or world-writable';
+  if (kind === 'secret' && stat.mode & 0o044) return 'it is group- or world-readable';
   return null;
 }
 
@@ -157,7 +158,7 @@ function trustedDir(ctx, dir) {
 // The file's contents, undefined when it (or its directory) is absent, null when unsafe.
 // Opened without following a link and checked through the descriptor, so a name swapped
 // between the check and the read is not read.
-function readTrusted(ctx, file) {
+function readTrusted(ctx, file, kind = 'file') {
   const dirState = trustedDir(ctx, path.dirname(file));
   if (dirState !== true) return dirState === false ? undefined : null;
   let fd;
@@ -176,7 +177,7 @@ function readTrusted(ctx, file) {
     return null;
   }
   try {
-    const reason = trustReason(ctx, fs.fstatSync(fd), 'file');
+    const reason = trustReason(ctx, fs.fstatSync(fd), kind);
     if (reason) {
       unsafe(ctx, file, reason);
       return null;
@@ -293,8 +294,10 @@ function parseEnv(text) {
   return values;
 }
 
+// local.env holds passwords, so it must also be unreadable by anyone but root.
 function readEnvFile(ctx, file) {
-  const data = readTrusted(ctx, file);
+  const kind = path.basename(file) === 'local.env' ? 'secret' : 'file';
+  const data = readTrusted(ctx, file, kind);
   return data ? parseEnv(data.toString('utf8')) : {};
 }
 
@@ -672,6 +675,10 @@ function ensureCa(ctx, forge) {
       err(`the CA in ${caDir} is not a valid, current CA with its private key`);
       return null;
     }
+    if (crypto.createPrivateKey(keyPem).asymmetricKeyType !== 'rsa') {
+      err(`the CA in ${caDir} does not have an RSA key; only RSA can sign the certificate`);
+      return null;
+    }
     detail(ctx, `using the CA in ${caDir}`);
     return { certPem: certPem.toString(), keyPem: keyPem.toString() };
   }
@@ -781,7 +788,7 @@ function checkFiles(ctx) {
     if (trustedDir(ctx, dir) !== true) continue;
     for (const name of names) {
       const stat = lstatOrNull(path.join(dir, name));
-      const reason = stat && trustReason(ctx, stat, 'file');
+      const reason = stat && trustReason(ctx, stat, name === 'local.env' ? 'secret' : 'file');
       if (reason) unsafe(ctx, path.join(dir, name), reason);
     }
   }
@@ -823,7 +830,10 @@ function dashboardIsRunning() {
   const unit = spawnSync('systemctl', ['is-active', '--quiet', `${SERVICE}.service`]);
   if (unit.status === 0) return true;
   try {
-    process.kill(Number(fs.readFileSync(PID_FILE, 'utf8').trim()), 0);
+    const pid = Number(fs.readFileSync(PID_FILE, 'utf8').trim());
+    // 0 or 1 would signal the process group or init, not the dashboard.
+    if (!Number.isInteger(pid) || pid <= 1) return false;
+    process.kill(pid, 0);
     return true;
   } catch (e) {
     return false;
