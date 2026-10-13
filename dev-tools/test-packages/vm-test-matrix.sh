@@ -1098,6 +1098,9 @@ case_declared_dependencies() {
   step "Package scripts run only builtins, coreutils and the declared tools"
   check_not "no script calls awk, ps, pgrep, openssl, curl, runuser or setcap" \
     calls awk ps pgrep openssl curl runuser setcap
+  # The unit's launcher sources use_node, which reads node.options on every start
+  check_not "use_node reads node.options without grep or xargs" \
+    grep -Eq "^[^#]*(^|[;&|(\`\$[:space:]])(grep|xargs)([[:space:]]|\$)" "${INSTALL_DIR}/bin/use_node"
   case "${FAMILY}" in
     deb)
       check_not "no script calls adduser or addgroup" calls adduser addgroup
