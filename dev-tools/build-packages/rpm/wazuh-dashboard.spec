@@ -18,7 +18,7 @@ Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
 AutoReqProv: no
-Requires: libcap, openssl, diffutils, util-linux
+Requires: openssl, diffutils, util-linux
 ExclusiveOS: linux
 
 # -----------------------------------------------------------------------------
@@ -168,7 +168,6 @@ fi
 # -----------------------------------------------------------------------------
 
 %post
-setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
 rm -f /usr/share/wazuh-dashboard/VERSION
 # Root reads the environment file at every start, so the service user must not own it
 if [ -f /etc/default/wazuh-dashboard ]; then
@@ -290,6 +289,11 @@ fi
 if [ ! -d %{PID_DIR} ]; then
     mkdir -p %{PID_DIR}
     chown %{USER}:%{GROUP} %{PID_DIR}
+fi
+
+# Load the new unit even if the service is stopped, so its next start gets the capability
+if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
+  systemctl daemon-reload > /dev/null 2>&1 || true
 fi
 
 if [ -f %{INSTALL_DIR}/wazuh-dashboard.restart ]; then

@@ -65,12 +65,14 @@ configure)
             chmod 600 "${CONFIG_DIR}/local.env"
         fi
     fi
-    setcap 'cap_net_bind_service=+ep' "${INSTALLATION_DIR}"/node/bin/node
     rm -f /usr/share/wazuh-dashboard/VERSION
+    # Load the new unit even if the service is stopped, so its next start gets the capability
+    if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
+        systemctl daemon-reload >/dev/null 2>&1 || true
+    fi
     if [ -f "${INSTALLATION_DIR}"/"${NAME}".restart ]; then
         rm -f "${INSTALLATION_DIR}"/"${NAME}".restart
         if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
-            systemctl daemon-reload >/dev/null 2>&1
             systemctl restart wazuh-dashboard.service >/dev/null 2>&1
         elif command -v service >/dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "running" >/dev/null 2>&1; then
             service wazuh-dashboard restart >/dev/null 2>&1
