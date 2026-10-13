@@ -19,7 +19,7 @@
 #
 #   WAZUH_INDEXER_KIBANASERVER_PASSWORD  kibanaserver, owned by the indexer
 #                                        -> opensearch.username (kibanaserver), opensearch.password
-#   WAZUH_MANAGER_WUI_PASSWORD           wazuh-wui, owned by the manager
+#   WAZUH_MANAGER_WUI_PASSWORD           wazuh-internal-client, owned by the manager
 #                                        -> wazuh_core.hosts.default.password
 #
 # So it never generates a password and never publishes a key into the credentials file: inventing
@@ -381,7 +381,7 @@ keystore_stores_verbatim() {
 }
 
 # -----------------------------------------------------------------------------------------
-# Consumed: kibanaserver and wazuh-wui
+# Consumed: kibanaserver and wazuh-internal-client
 #
 # Never generated, never published. Step 0 is the keystore entry itself: once it exists the
 # credential is resolved, whatever the file now says -- a package must never reconfigure what is
@@ -641,8 +641,9 @@ credentials_file_ensure() {
 # Owned: the dashboard's own certificates
 #
 # opensearch_dashboards.yml serves HTTPS from certs/dashboard.pem and dashboard-key.pem, and trusts
-# the indexer through certs/root-ca.pem. On a fresh install, and only then, this issues whatever of
-# that is missing from the shared CA, so every Wazuh component on the host chains to one anchor:
+# the indexer and the manager's Server API through certs/root-ca.pem. On a fresh install, and only
+# then, this issues whatever of that is missing from the shared CA, so every Wazuh component on the
+# host chains to one anchor:
 #
 #   * No CA in the CA directory (/etc/wazuh/ca, or WAZUH_CA_DIR): the library mints one, and the
 #     manager and the indexer installed after us issue from it too.
@@ -1359,7 +1360,7 @@ for _key in ${UNRESOLVED}; do
             err "        set it in ${CREDENTIALS_FILE}, or install wazuh-indexer on this host first"
             ;;
         WAZUH_MANAGER_WUI_PASSWORD)
-            err "MISSING WAZUH_MANAGER_WUI_PASSWORD (the manager's wazuh-wui account)"
+            err "MISSING WAZUH_MANAGER_WUI_PASSWORD (the manager's wazuh-internal-client account)"
             err "        set it in ${CREDENTIALS_FILE}, or install wazuh-manager on this host first"
             ;;
         *)
