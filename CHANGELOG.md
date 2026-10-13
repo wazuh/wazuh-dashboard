@@ -32,6 +32,7 @@
 | [#1637](https://github.com/wazuh/wazuh-dashboard/issues/1637)                                | Changed the package install to end with the dashboard URL, the login user and the start command, and to print the certificate detail only with `WAZUH_DASHBOARD_VERBOSE=1` |
 | [wazuh-dashboard-plugins#9300](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9300) | Changed the Server API user of the default host from `wazuh-wui` to `wazuh-internal-client`, following its rename in the Wazuh manager                                     |
 | [#1630](https://github.com/wazuh/wazuh-dashboard/issues/1630)                                | Changed the production build to compress and mangle the browser bundles, reducing the JavaScript the browser downloads by about a quarter                                  |
+| [#1669](https://github.com/wazuh/wazuh-dashboard/issues/1669)                                | Changed the package removal to clean up only `/etc/wazuh-dashboard` and never touch `/etc/wazuh`                                                                           |
 
 ### Removed
 
