@@ -486,8 +486,10 @@ const subject = (cn) => [
   { name: 'commonName', value: cn },
 ];
 
+// The short host name; a host named by its address keeps the whole address.
 function shortHostname() {
-  return os.hostname().split('.')[0];
+  const host = os.hostname();
+  return net.isIP(host) ? host : host.split('.')[0];
 }
 
 function fqdn(host) {
@@ -572,7 +574,8 @@ function leafSans(ctx, host) {
     list = [override.value];
   } else {
     const full = fqdn(host);
-    list = [`DNS:${host}`];
+    // Untyped, so a host named by its address becomes an IP SAN.
+    list = [host];
     if (full && full !== host && DNS_NAME.test(full)) list.push(`DNS:${full}`);
     list.push(...discoverAddresses().map((a) => `IP:${a}`));
   }
@@ -768,6 +771,7 @@ function resolvePeerCa(ctx, peer) {
 // The files root relies on, checked at every start whether or not anything is left to resolve.
 function checkFiles(ctx) {
   const groups = {
+    '.': ['local.env'],
     certs: [CERT, KEY, ...ctx.peers.flatMap((p) => [peerCa(p), peerMarker(p)])],
     ca: ['root-ca.pem', 'root-ca.key', CA_MARKER],
     export: ['ca.pem'],

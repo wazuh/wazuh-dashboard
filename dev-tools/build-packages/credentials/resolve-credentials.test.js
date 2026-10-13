@@ -261,3 +261,13 @@ test('prestart reports a planted file in certs/ as UNSAFE', () => {
     problems.includes(`UNSAFE ${path.join(certs, 'dashboard.pem')}: it is group- or world-writable`)
   );
 });
+
+test('prestart checks local.env even when nothing is left to read from it', () => {
+  const { configDir, ctx } = setup();
+  fs.writeFileSync(path.join(configDir, 'local.env'), 'X=1\n');
+  fs.chmodSync(path.join(configDir, 'local.env'), 0o666);
+  const problems = r.resolve(ctx, 'prestart');
+  assert.ok(
+    problems.includes(`UNSAFE ${path.join(configDir, 'local.env')}: it is group- or world-writable`)
+  );
+});
