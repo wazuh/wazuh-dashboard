@@ -193,11 +193,11 @@ fi
 # Root owns the configuration directory; the service reads it through its group.
 # Runs before the resolver, which refuses a directory not owned by root.
 if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
-  chown root:%{GROUP} %{CONFIG_DIR}
+  chown -h root:%{GROUP} %{CONFIG_DIR}
   chmod 750 %{CONFIG_DIR}
   for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
     if [ -f "%{CONFIG_DIR}/$f" ] && [ ! -L "%{CONFIG_DIR}/$f" ]; then
-      chown root:%{GROUP} "%{CONFIG_DIR}/$f"
+      chown -h root:%{GROUP} "%{CONFIG_DIR}/$f"
       chmod 640 "%{CONFIG_DIR}/$f"
     fi
   done
@@ -215,7 +215,7 @@ if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
     fi
   done
   if [ -f %{CONFIG_DIR}/local.env ] && [ ! -L %{CONFIG_DIR}/local.env ]; then
-    chown root:root %{CONFIG_DIR}/local.env
+    chown -h root:root %{CONFIG_DIR}/local.env
     chmod 600 %{CONFIG_DIR}/local.env
   fi
 fi
@@ -233,7 +233,7 @@ else
 fi
 # The keystore holds secrets under an empty password
 if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ] && [ ! -L %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
-  chown root:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
+  chown -h root:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
   chmod 640 %{CONFIG_DIR}/opensearch_dashboards.keystore
 fi
 
