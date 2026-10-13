@@ -108,7 +108,7 @@ CASES=(
   "D15|Custom SANs and node name|case_custom_sans|dashboard"
   "D16|resolve-credentials --clear|case_clear|dashboard"
   "D17|Package removal / purge cleans the host|case_remove|dashboard"
-  "D18|Reinstall after removal mints a new CA|case_reinstall|dashboard"
+  "D18|Reinstall after removal starts|case_reinstall|dashboard"
   "D19|Upgrade while running|case_upgrade_running|dashboard-previous"
   "D20|Upgrade while stopped|case_upgrade_stopped|dashboard-previous"
   "D21|No wazuh_core default host: wazuh-internal-client not needed|case_no_wazuh_host|dashboard"
@@ -342,8 +342,29 @@ wait_tls() {
   return 1
 }
 
+# Non-root, with only CAP_NET_BIND_SERVICE (0x400), granted by the unit (CapAmb) and bounded by it (CapBnd).
+proc_caps_ok() {
+  local pid
+  pid=$(systemctl show -p MainPID --value "${NAME}" 2>/dev/null)
+  [ -n "${pid}" ] && [ "${pid}" != 0 ] || return 1
+  awk -v want=0000000000000400 '/^Uid:/ { uid = $2 } /^Cap(Eff|Amb|Bnd):/ { cap[$1] = $2 }
+    END { exit !(uid != 0 && cap["CapEff:"] == want && cap["CapAmb:"] == want && cap["CapBnd:"] == want) }' \
+    "/proc/${pid}/status"
+}
+
+no_file_caps() {
+  local node="${INSTALL_DIR}/node/bin/node" caps
+  [ -e "${node}" ] || return 1
+  caps=$(getcap "${node}") || return 1
+  [ -z "${caps}" ]
+}
+
 check_running() {
   check "service is active and stable" wait_active
+  check "runs as non-root with only CAP_NET_BIND_SERVICE, from the unit" proc_caps_ok
+  if command -v getcap >/dev/null 2>&1; then
+    check "node binary has no file capability" no_file_caps
+  fi
   if [ "${SKIP_TLS}" -eq 0 ]; then
     check "HTTPS on port $(server_port) serves certs/dashboard.pem" wait_tls
   fi
@@ -897,32 +918,29 @@ case_remove() {
   check_not "package no longer registered" pkg_present
   check_not "service no longer active" systemctl is-active --quiet "${NAME}"
   check "${INSTALL_DIR} removed" absent "${INSTALL_DIR}"
-  check "${WAZUH_DIR} removed (no other Wazuh component)" absent "${WAZUH_DIR}"
+  check "${CREDENTIALS_FILE} left alone" test -f "${CREDENTIALS_FILE}"
   check_not "user ${NAME} removed" id "${NAME}"
   check_not "group ${NAME} removed" getent group "${NAME}"
   if [ "${FAMILY}" = deb ]; then
     check "${CONFIG_DIR} removed by purge" absent "${CONFIG_DIR}"
-  elif absent "${CONFIG_DIR}"; then
-    info "${CONFIG_DIR} removed"
   else
-    info "${CONFIG_DIR} left behind by rpm (not a failure):"
-    find "${CONFIG_DIR}" -maxdepth 2 | sed 's/^/         /'
+    check "${CONFIG_DIR} kept by erase" test -d "${CONFIG_DIR}"
+    check "${CONFIG_DIR}/ca removed" absent "${CONFIG_DIR}/ca"
+    check "${CONFIG_DIR}/export removed" absent "${CONFIG_DIR}/export"
+    check "${CONFIG_DIR} is root's, with no group or other access" \
+      test -z "$(find "${CONFIG_DIR}" \( ! -user root -o ! -group root -o -perm /077 \) ! -type l)"
   fi
 }
 
 case_reinstall() {
   install_ok "${DASHBOARD_PKG}"
-  local ca_fp
-  ca_fp=$(fingerprint "${CA_DIR}/root-ca.pem")
   step "Remove with the package's own scripts, then reinstall"
   check "package removal succeeds" pkg_remove
-  check "${WAZUH_DIR} removed with the last component" absent "${WAZUH_DIR}"
-  # rpm may leave config files behind (.rpmsave); a reinstall must start from its own defaults.
-  [ "${FAMILY}" = rpm ] && rm -rf "${CONFIG_DIR}"
-  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  check "${WAZUH_DIR} left alone" test -d "${WAZUH_DIR}"
+  # rpm keeps ${CONFIG_DIR}; the reinstall must take it back.
   install_ok "${DASHBOARD_PKG}"
-  check "a new shared CA was minted" test "$(fingerprint "${CA_DIR}/root-ca.pem")" != "${ca_fp}"
-  check "dashboard.pem chains to the new CA" \
+  check "${CONFIG_DIR} readable by ${NAME} again" test "$(stat -c '%G:%a' "${CONFIG_DIR}")" = "${NAME}:750"
+  check "dashboard.pem chains to the CA" \
     openssl verify -purpose sslserver -CAfile "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/dashboard.pem"
   check "systemctl start succeeds" svc_start
   check_running
@@ -1518,8 +1536,6 @@ preflight() {
   fi
 
   preflight_host
-  command -v setcap >/dev/null 2>&1 ||
-    echo "vm-test-matrix: warning: setcap not found (libcap2-bin / libcap); the install may fail" >&2
 
   local fstype
   fstype=$(stat -f -c '%T' "${LOG_DIR:-$(pwd)}" 2>/dev/null || echo unknown)

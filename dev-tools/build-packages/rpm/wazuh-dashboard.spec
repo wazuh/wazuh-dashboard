@@ -18,7 +18,7 @@ Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
 AutoReqProv: no
-Requires: libcap, openssl, diffutils, util-linux
+Requires: openssl, diffutils, util-linux
 ExclusiveOS: linux
 
 # -----------------------------------------------------------------------------
@@ -168,7 +168,6 @@ fi
 # -----------------------------------------------------------------------------
 
 %post
-setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
 rm -f /usr/share/wazuh-dashboard/VERSION
 # Root reads the environment file at every start, so the service user must not own it
 if [ -f /etc/default/wazuh-dashboard ]; then
@@ -242,24 +241,13 @@ fi
 %postun
 if [ $1 = 0 ];then
   # If the package is been uninstalled
-  # rpm keeps the configuration directory: the certificates and their private
-  # keys, the keystore and any *.rpmsave. Hand every file the service account
-  # owns there over to root, with group and other access stripped, before the
-  # account goes. userdel frees the UID, and the next system account created
-  # would inherit it -- and with it the secrets left behind. Nothing is deleted:
-  # %post takes the directory back on a reinstall. find -P and chown -h act on
-  # links themselves and chmod never sees one, so a link the account planted
-  # cannot aim any of this at another file. Same as the Wazuh indexer package.
-  if getent passwd %{USER} > /dev/null 2>&1 && [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
-    config_dir_ok=true
-    find -P %{CONFIG_DIR} -user %{USER} \
-      \( -type l -o -exec chmod go-rwx {} + \) \
-      -exec chown -h root:root {} + 2>/dev/null || config_dir_ok=false
-    find -P %{CONFIG_DIR} -group %{GROUP} \
-      \( -type l -o -exec chmod g-rwx {} + \) \
-      -exec chgrp -h root {} + 2>/dev/null || config_dir_ok=false
-    if [ "${config_dir_ok}" = true ]; then
-      echo "Kept %{CONFIG_DIR}, now owned by root. Reinstalling %{name} takes it back."
+  # rpm keeps the config directory (certificates, keys, keystore, *.rpmsave).
+  # Drop the minted CA and export/, then hand the rest to root before userdel
+  # frees the UID. chown -h and chmod -R never follow a planted link.
+  if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
+    rm -rf %{CONFIG_DIR}/export %{CONFIG_DIR}/ca
+    if chown -R -h root:root %{CONFIG_DIR} 2>/dev/null && chmod -R go-rwx %{CONFIG_DIR} 2>/dev/null; then
+      echo "Kept %{CONFIG_DIR}, owned by root. Reinstalling %{name} takes it back."
     else
       echo "Some files under %{CONFIG_DIR} could not be handed over to root; they keep the ID of the removed %{name} user." >&2
     fi
@@ -282,17 +270,10 @@ if [ $1 = 0 ];then
     groupdel %{GROUP} >/dev/null 2>&1
   fi
 
-  # Remove /etc/wazuh-dashboard and /usr/share/wazuh-dashboard dirs
+  # Remove the installation and PID directories
   rm -rf %{INSTALL_DIR}
   if [ -d %{PID_DIR} ]; then
     rm -rf %{PID_DIR}
-  fi
-
-  # The dashboard owns no key in /etc/wazuh/credentials.env. The shared
-  # /etc/wazuh directory (credentials file and default CA directory) is only
-  # removed by the last Wazuh central component to leave the host.
-  if ! rpm -q --quiet wazuh-indexer && ! rpm -q --quiet wazuh-manager; then
-    rm -rf /etc/wazuh
   fi
 
   # Make systemd forget the unit, now that its file is gone
@@ -308,6 +289,11 @@ fi
 if [ ! -d %{PID_DIR} ]; then
     mkdir -p %{PID_DIR}
     chown %{USER}:%{GROUP} %{PID_DIR}
+fi
+
+# Load the new unit even if the service is stopped, so its next start gets the capability
+if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
+  systemctl daemon-reload > /dev/null 2>&1 || true
 fi
 
 if [ -f %{INSTALL_DIR}/wazuh-dashboard.restart ]; then

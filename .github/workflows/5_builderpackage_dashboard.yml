@@ -629,6 +629,7 @@ jobs:
           ${{ steps.setup_rpm_env.outputs.scp_command }} \
             ${{ github.workspace }}/dev-tools/test-packages/rpm/${{needs.build-package.outputs.PACKAGE_NAME}} \
             ${{ github.workspace }}/dev-tools/test-packages/rpm-test-install-uninstall.sh \
+            ${{ github.workspace }}/dev-tools/test-packages/check-service-bind.sh \
             ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
 
           ${{ steps.setup_rpm_env.outputs.ssh_command }} \
@@ -664,7 +665,8 @@ jobs:
             else \
               echo 'Service not running'; \
               exit 1; \
-            fi
+            fi; \
+            sudo bash ./check-service-bind.sh
             "
       - name: RPM - Verify cross-major upgrade is blocked
         if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'rpm' }}
