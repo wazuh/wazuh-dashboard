@@ -1,0 +1,921 @@
+/*
+ * Copyright Wazuh
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
+ * The dashboard's credential resolver. Run as root, by bin/resolve-credentials, on the Node
+ * runtime the package bundles:
+ *
+ *   --install    fresh postinst / %post. Stores what it can, issues the TLS pair, imports the
+ *                peers' CAs and prints where to log in. Always exits 0.
+ *   --upgrade    postinst / %post on upgrade. Keystore and passwords only. Always exits 0.
+ *   --prestart   the unit's ExecStartPre=+. Resolves again, refreshes the trust bundle, and
+ *                exits 1 naming every problem that would keep the dashboard from working.
+ *   --clear      image builds. Removes what the resolver stored, issued and minted.
+ *
+ * Per-package model: the dashboard owns /etc/wazuh-dashboard (its CA in ca/, what it publishes in
+ * export/) and only reads its peers' export/ directories. /etc/wazuh is never touched.
+ *
+ * Every file read as root must be a regular file in a regular directory, both owned by root and
+ * neither group- nor world-writable. Anything else is reported as UNSAFE and is never used,
+ * repaired or followed.
+ */
+
+const fs = require('fs');
+const os = require('os');
+const net = require('net');
+const path = require('path');
+const crypto = require('crypto');
+const { spawnSync } = require('child_process');
+
+const SERVICE = 'wazuh-dashboard';
+const PID_FILE = '/run/wazuh-dashboard/wazuh-dashboard.pid';
+const TEN_YEARS_MS = 3650 * 24 * 60 * 60 * 1000;
+
+const CA_MARKER = '.wazuh-dashboard-bootstrap-ca';
+const BUNDLE_MARKER = '.root-ca.managed';
+const CERT = 'dashboard.pem';
+const KEY = 'dashboard-key.pem';
+const BUNDLE = 'root-ca.pem';
+
+// What each peer publishes and what the dashboard takes from it.
+const PEERS = [
+  {
+    name: 'indexer',
+    exportDir: '/etc/wazuh-indexer/export',
+    key: 'WAZUH_INDEXER_KIBANASERVER_PASSWORD',
+    alias: 'INDEXER_PASSWORD',
+    account: "the indexer's kibanaserver account",
+    entry: 'opensearch.password',
+    username: { entry: 'opensearch.username', value: 'kibanaserver' },
+  },
+  {
+    name: 'manager',
+    exportDir: '/etc/wazuh-manager/export',
+    key: 'WAZUH_MANAGER_WUI_PASSWORD',
+    alias: 'API_PASSWORD',
+    account: "the manager's wazuh-internal-client account",
+    entry: 'wazuh_core.hosts.default.password',
+    // Without a default host there is nothing to authenticate.
+    neededIf: 'wazuh_core.hosts.default',
+  },
+];
+
+const AI_KEY_ENTRY = 'wazuh_ai_assistant.encryptionKey';
+const CLEARED_ENTRIES = [
+  'opensearch.username',
+  'opensearch.password',
+  'wazuh_core.hosts.default.password',
+  AI_KEY_ENTRY,
+];
+
+const log = (msg) => process.stdout.write(`resolve-credentials: ${msg}\n`);
+const err = (msg) => process.stderr.write(`resolve-credentials: ${msg}\n`);
+
+function createContext({
+  home,
+  configDir,
+  rootUid = 0,
+  rootGid = 0,
+  peers = PEERS,
+  env = process.env,
+} = {}) {
+  return {
+    home,
+    configDir,
+    rootUid,
+    rootGid,
+    peers,
+    env,
+    verbose: env.WAZUH_DASHBOARD_VERBOSE === '1',
+    gid: null,
+    problems: [],
+    reported: new Set(),
+    keys: null,
+    runKeystore: (args, input) => runKeystore(home, configDir, args, input),
+  };
+}
+
+const detail = (ctx, msg) => ctx.verbose && log(msg);
+
+function unsafe(ctx, file, reason) {
+  const line = `UNSAFE ${file}: ${reason}`;
+  if (!ctx.reported.has(line)) {
+    ctx.reported.add(line);
+    ctx.problems.push(line);
+    err(line);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Trust rules
+// ---------------------------------------------------------------------------------------------
+
+function trustReason(ctx, stat, kind) {
+  if (stat.isSymbolicLink()) return 'it is a symbolic link';
+  if (kind === 'dir' ? !stat.isDirectory() : !stat.isFile()) {
+    return kind === 'dir' ? 'it is not a directory' : 'it is not a regular file';
+  }
+  if (stat.uid !== ctx.rootUid) return 'it is not owned by root';
+  if (stat.mode & 0o022) return 'it is group- or world-writable';
+  return null;
+}
+
+function lstatOrNull(file) {
+  try {
+    return fs.lstatSync(file);
+  } catch (e) {
+    if (e.code === 'ENOENT') return null;
+    throw e;
+  }
+}
+
+// true: trusted, false: absent, null: unsafe (reported).
+function trustedDir(ctx, dir) {
+  const stat = lstatOrNull(dir);
+  if (!stat) return false;
+  const reason = trustReason(ctx, stat, 'dir');
+  if (reason) {
+    unsafe(ctx, dir, reason);
+    return null;
+  }
+  return true;
+}
+
+// The file's contents, undefined when it (or its directory) is absent, null when unsafe.
+// Opened without following a link and checked through the descriptor, so a name swapped
+// between the check and the read is not read.
+function readTrusted(ctx, file) {
+  const dirState = trustedDir(ctx, path.dirname(file));
+  if (dirState !== true) return dirState === false ? undefined : null;
+  let fd;
+  try {
+    fd = fs.openSync(
+      file,
+      fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK
+    );
+  } catch (e) {
+    if (e.code === 'ENOENT') return undefined;
+    if (e.code === 'ELOOP') {
+      unsafe(ctx, file, 'it is a symbolic link');
+      return null;
+    }
+    unsafe(ctx, file, e.code || e.message);
+    return null;
+  }
+  try {
+    const reason = trustReason(ctx, fs.fstatSync(fd), 'file');
+    if (reason) {
+      unsafe(ctx, file, reason);
+      return null;
+    }
+    return fs.readFileSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function restorecon(file) {
+  spawnSync('restorecon', [file], { stdio: 'ignore' });
+}
+
+// Creates the directory when absent; an existing one must already be trusted.
+function ensureDir(ctx, dir, mode, gid) {
+  const state = trustedDir(ctx, dir);
+  if (state !== false) return state === true;
+  fs.mkdirSync(dir, { mode: 0o700 });
+  fs.chownSync(dir, ctx.rootUid, gid);
+  fs.chmodSync(dir, mode);
+  restorecon(dir);
+  return trustedDir(ctx, dir) === true;
+}
+
+// Temporary file and rename, in a trusted directory.
+function writeTrusted(ctx, file, data, { mode = 0o640, gid = serviceGid(ctx) } = {}) {
+  const dir = path.dirname(file);
+  if (trustedDir(ctx, dir) !== true) throw new Error(`cannot write ${file}`);
+  const tmp = path.join(dir, `.${path.basename(file)}.${crypto.randomBytes(6).toString('hex')}`);
+  const fd = fs.openSync(
+    tmp,
+    fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW,
+    0o600
+  );
+  try {
+    fs.writeFileSync(fd, data);
+    fs.fchownSync(fd, ctx.rootUid, gid);
+    fs.fchmodSync(fd, mode);
+    fs.fsyncSync(fd);
+  } catch (e) {
+    fs.closeSync(fd);
+    fs.rmSync(tmp, { force: true });
+    throw e;
+  }
+  fs.closeSync(fd);
+  fs.renameSync(tmp, file);
+  restorecon(file);
+}
+
+function serviceGid(ctx) {
+  if (ctx.gid === null) {
+    const out = spawnSync('getent', ['group', SERVICE], { encoding: 'utf8' });
+    const gid = Number((out.stdout || '').split(':')[2]);
+    if (out.status === 0 && Number.isInteger(gid)) {
+      ctx.gid = gid;
+    } else {
+      err(`cannot find the ${SERVICE} group; files are left readable by root only`);
+      ctx.gid = ctx.rootGid;
+    }
+  }
+  return ctx.gid;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Values: the process environment, then local.env, then the publisher's export/credentials.env
+// ---------------------------------------------------------------------------------------------
+
+function parseEnv(text) {
+  const values = {};
+  for (const raw of text.split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    const eq = line.indexOf('=');
+    if (/^\s*(#|$)/.test(line) || eq < 1) continue;
+    let value = line.slice(eq + 1);
+    // No accepted password contains a quote, so a quoted value is unquoted.
+    const quoted = value.match(/^(["'])(.*)\1$/);
+    if (quoted) value = quoted[2];
+    values[line.slice(0, eq).trim()] = value;
+  }
+  return values;
+}
+
+function readEnvFile(ctx, file) {
+  const data = readTrusted(ctx, file);
+  return data ? parseEnv(data.toString('utf8')) : {};
+}
+
+function lookup(ctx, key, alias, publisherDir) {
+  for (const name of [key, alias].filter(Boolean)) {
+    if (ctx.env[name]) return { value: ctx.env[name], source: `the environment (${name})` };
+  }
+  const sources = [path.join(ctx.configDir, 'local.env')];
+  if (publisherDir) sources.push(path.join(publisherDir, 'credentials.env'));
+  for (const file of sources) {
+    const value = readEnvFile(ctx, file)[key];
+    if (value) return { value, source: file };
+  }
+  return null;
+}
+
+// `keystore add` trims the value and stores it JSON.parse'd when it parses (src/cli_keystore/
+// add.js), so only a value that survives both is stored as the text supplied.
+function storesVerbatim(value) {
+  const trimmed = value.trim();
+  let parsed;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (e) {
+    parsed = undefined;
+  }
+  return (parsed ?? trimmed) === value;
+}
+
+// ---------------------------------------------------------------------------------------------
+// opensearch_dashboards.yml
+// ---------------------------------------------------------------------------------------------
+
+function loadYml(ctx) {
+  const data = readTrusted(ctx, path.join(ctx.configDir, 'opensearch_dashboards.yml'));
+  if (!data) return {};
+  try {
+    return require('js-yaml').load(data.toString('utf8')) || {};
+  } catch (e) {
+    // A broken yml is the dashboard's to report when it starts.
+    return {};
+  }
+}
+
+// Flat (`a.b: x`), nested and mixed keys all mean the same thing to the dashboard.
+function ymlGet(node, parts) {
+  if (parts.length === 0) return node;
+  if (node === null || typeof node !== 'object') return undefined;
+  for (let i = parts.length; i > 0; i--) {
+    const head = parts.slice(0, i).join('.');
+    if (Object.prototype.hasOwnProperty.call(node, head)) {
+      const found = ymlGet(node[head], parts.slice(i));
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
+
+function ymlHas(yml, key) {
+  const value = ymlGet(yml, key.split('.'));
+  return (
+    (typeof value === 'string' && value !== '') ||
+    (value !== null && typeof value === 'object' && Object.keys(value).length > 0)
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Keystore: the bundled CLI, as root with --allow-root, an empty environment, from /
+// ---------------------------------------------------------------------------------------------
+
+function runKeystore(home, configDir, args, input = '') {
+  const out = spawnSync(
+    path.join(home, 'node', 'bin', 'node'),
+    [path.join(home, 'src', 'cli_keystore', 'dist'), ...args, '--allow-root'],
+    { cwd: '/', env: { OSD_PATH_CONF: configDir, NODE_ENV: 'production' }, input, encoding: 'utf8' }
+  );
+  return { ok: out.status === 0, stdout: out.stdout || '' };
+}
+
+function keystorePath(ctx) {
+  return path.join(ctx.configDir, 'opensearch_dashboards.keystore');
+}
+
+// The CLI writes the keystore 0600; the service reads it through its group.
+function secureKeystore(ctx) {
+  const fd = fs.openSync(keystorePath(ctx), fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+  try {
+    fs.fchownSync(fd, ctx.rootUid, serviceGid(ctx));
+    fs.fchmodSync(fd, 0o640);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function loadKeys(ctx) {
+  const { ok, stdout } = ctx.runKeystore(['list']);
+  ctx.keys = ok ? new Set(stdout.split('\n').filter(Boolean)) : null;
+  return ctx.keys;
+}
+
+function ensureKeystore(ctx) {
+  const stat = lstatOrNull(keystorePath(ctx));
+  if (stat) {
+    const reason = trustReason(ctx, stat, 'file');
+    if (reason) {
+      unsafe(ctx, keystorePath(ctx), reason);
+      return false;
+    }
+  } else {
+    ctx.runKeystore(['create']);
+    if (!lstatOrNull(keystorePath(ctx))) return false;
+    log(`created the keystore in ${keystorePath(ctx)}`);
+  }
+  secureKeystore(ctx);
+  return loadKeys(ctx) !== null;
+}
+
+function keystoreAdd(ctx, entry, value) {
+  const { ok } = ctx.runKeystore(['add', entry, '--stdin'], value);
+  secureKeystore(ctx);
+  if (ok) ctx.keys.add(entry);
+  return ok;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Passwords
+// ---------------------------------------------------------------------------------------------
+
+// 'stored', 'missing' or 'invalid'.
+function resolvePassword(ctx, yml, peer) {
+  if (ctx.keys.has(peer.entry)) {
+    detail(ctx, `${peer.entry} is already in the keystore`);
+    return 'stored';
+  }
+  if (ymlHas(yml, peer.entry)) {
+    detail(ctx, `${peer.entry} is set in opensearch_dashboards.yml`);
+    return 'stored';
+  }
+  if (peer.neededIf && !ymlHas(yml, peer.neededIf)) {
+    detail(ctx, `no ${peer.neededIf} in opensearch_dashboards.yml; ${peer.key} is not needed`);
+    return 'stored';
+  }
+  const found = lookup(ctx, peer.key, peer.alias, peer.exportDir);
+  if (!found) return 'missing';
+  if (!storesVerbatim(found.value)) {
+    err(`${peer.key} from ${found.source} cannot be stored in the keystore as text`);
+    return 'invalid';
+  }
+  const { username } = peer;
+  if (
+    username &&
+    !ctx.keys.has(username.entry) &&
+    !ymlHas(yml, username.entry) &&
+    !keystoreAdd(ctx, username.entry, username.value)
+  ) {
+    err(`could not write ${username.entry} to the keystore`);
+    return 'missing';
+  }
+  if (!keystoreAdd(ctx, peer.entry, found.value)) {
+    err(`could not write ${peer.entry} to the keystore`);
+    return 'missing';
+  }
+  log(`stored ${peer.entry} in the keystore from ${found.source}`);
+  return 'stored';
+}
+
+// The AI assistant encrypts the provider keys it stores with it, so an existing key is never
+// replaced. The assistant is optional: failing here is a warning only.
+function resolveAiKey(ctx, yml) {
+  if (ctx.keys.has(AI_KEY_ENTRY) || ymlHas(yml, AI_KEY_ENTRY)) return;
+  if (keystoreAdd(ctx, AI_KEY_ENTRY, crypto.randomBytes(32).toString('base64'))) {
+    log(`generated ${AI_KEY_ENTRY}`);
+  } else {
+    err(`warning: could not generate ${AI_KEY_ENTRY}; configure it to enable the AI assistant`);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Certificates
+// ---------------------------------------------------------------------------------------------
+
+const subject = (cn) => [
+  { name: 'countryName', value: 'US' },
+  { name: 'localityName', value: 'California' },
+  { name: 'organizationName', value: 'Wazuh' },
+  { shortName: 'OU', value: 'Wazuh' },
+  { name: 'commonName', value: cn },
+];
+
+function shortHostname() {
+  return os.hostname().split('.')[0];
+}
+
+function fqdn(host) {
+  const out = spawnSync('getent', ['hosts', host], { encoding: 'utf8' });
+  const name = (out.stdout || '').trim().split(/\s+/)[1];
+  return out.status === 0 && name ? name : null;
+}
+
+// Interfaces that carry a default route, from the kernel's routing tables.
+function defaultRouteInterfaces() {
+  const names = new Set();
+  const read = (file) => {
+    try {
+      return fs.readFileSync(file, 'utf8').split('\n');
+    } catch (e) {
+      return [];
+    }
+  };
+  for (const line of read('/proc/net/route').slice(1)) {
+    const [iface, destination] = line.trim().split(/\s+/);
+    if (destination === '00000000') names.add(iface);
+  }
+  for (const line of read('/proc/net/ipv6_route')) {
+    const fields = line.trim().split(/\s+/);
+    if (fields[0] === '0'.repeat(32) && fields[1] === '00' && fields[9] !== 'lo') {
+      names.add(fields[9]);
+    }
+  }
+  return names;
+}
+
+function isGlobalAddress(address) {
+  const a = address.toLowerCase();
+  return !(a.startsWith('127.') || a.startsWith('169.254.') || a === '::1' || /^fe[89ab]/.test(a));
+}
+
+function discoverAddresses() {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+  for (const name of defaultRouteInterfaces()) {
+    for (const { address, internal } of interfaces[name] || []) {
+      if (!internal && isGlobalAddress(address)) addresses.push(address);
+    }
+  }
+  return addresses;
+}
+
+const DNS_NAME = /^(?!-)[A-Za-z0-9*-]+(?<!-)(\.(?!-)[A-Za-z0-9-]+(?<!-))*$/;
+
+// `DNS:x,IP:y,z` into [{ type: 'DNS'|'IP', value }], deduplicated. Throws on a bad entry.
+function parseSans(list) {
+  const sans = [];
+  const seen = new Set();
+  for (const item of list
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)) {
+    const typed = item.match(/^(DNS|IP):(.*)$/i);
+    const value = typed ? typed[2].trim() : item;
+    const untyped = net.isIP(value) ? 'IP' : 'DNS';
+    const type = typed ? typed[1].toUpperCase() : untyped;
+    const valid = type === 'IP' ? net.isIP(value) : value.length <= 253 && DNS_NAME.test(value);
+    if (!valid) throw new Error(`invalid SAN entry: ${item}`);
+    const id = `${type}:${value.toLowerCase()}`;
+    if (!seen.has(id)) {
+      seen.add(id);
+      sans.push({ type, value });
+    }
+  }
+  return sans;
+}
+
+function leafSans(ctx, host) {
+  const override = lookup(ctx, 'WAZUH_DASHBOARD_CERT_SANS');
+  let list;
+  if (override) {
+    detail(ctx, `SANs set by WAZUH_DASHBOARD_CERT_SANS from ${override.source}`);
+    list = [override.value];
+  } else {
+    const full = fqdn(host);
+    list = [`DNS:${host}`];
+    if (full && full !== host && DNS_NAME.test(full)) list.push(`DNS:${full}`);
+    list.push(...discoverAddresses().map((a) => `IP:${a}`));
+  }
+  list.push('DNS:localhost', 'IP:127.0.0.1', 'IP:::1');
+  return parseSans(list.join(','));
+}
+
+function newKeyPair(forge) {
+  const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const pem = privateKey.export({ type: 'pkcs8', format: 'pem' });
+  const key = forge.pki.privateKeyFromPem(pem);
+  return { pem, key, publicKey: forge.pki.setRsaPublicKey(key.n, key.e) };
+}
+
+function newCertificate(forge, publicKey) {
+  const cert = forge.pki.createCertificate();
+  cert.publicKey = publicKey;
+  // A positive 128-bit serial.
+  cert.serialNumber = '01' + crypto.randomBytes(15).toString('hex');
+  cert.validity.notBefore = new Date();
+  cert.validity.notAfter = new Date(Date.now() + TEN_YEARS_MS);
+  return cert;
+}
+
+function mintCa(forge, host) {
+  const { pem, key, publicKey } = newKeyPair(forge);
+  const cert = newCertificate(forge, publicKey);
+  cert.setSubject(subject(`wazuh-dashboard-${host}`));
+  cert.setIssuer(subject(`wazuh-dashboard-${host}`));
+  cert.setExtensions([
+    { name: 'basicConstraints', cA: true, critical: true },
+    { name: 'keyUsage', keyCertSign: true, cRLSign: true, critical: true },
+    { name: 'subjectKeyIdentifier' },
+  ]);
+  cert.sign(key, forge.md.sha256.create());
+  return { certPem: forge.pki.certificateToPem(cert), keyPem: pem };
+}
+
+function issueLeaf(forge, caCertPem, caKeyPem, host, sans) {
+  const caCert = forge.pki.certificateFromPem(caCertPem);
+  const caKey = forge.pki.privateKeyFromPem(caKeyPem);
+  const { pem, publicKey } = newKeyPair(forge);
+  const cert = newCertificate(forge, publicKey);
+  cert.setSubject(subject(host));
+  cert.setIssuer(caCert.subject.attributes);
+  cert.setExtensions([
+    { name: 'basicConstraints', cA: false, critical: true },
+    { name: 'keyUsage', digitalSignature: true, keyEncipherment: true, critical: true },
+    { name: 'extKeyUsage', serverAuth: true, clientAuth: true },
+    { name: 'subjectKeyIdentifier' },
+    {
+      name: 'authorityKeyIdentifier',
+      keyIdentifier: caCert.generateSubjectKeyIdentifier().getBytes(),
+    },
+    {
+      name: 'subjectAltName',
+      altNames: sans.map(({ type, value }) =>
+        type === 'IP' ? { type: 7, ip: value } : { type: 2, value }
+      ),
+    },
+  ]);
+  cert.sign(caKey, forge.md.sha256.create());
+  return { certPem: forge.pki.certificateToPem(cert), keyPem: pem };
+}
+
+// A usable CA: a CA certificate, in date, whose key matches.
+function validCa(certPem, keyPem) {
+  try {
+    const cert = new crypto.X509Certificate(certPem);
+    const now = Date.now();
+    return (
+      cert.ca &&
+      Date.parse(cert.validFrom) <= now &&
+      now <= Date.parse(cert.validTo) &&
+      (keyPem === undefined || cert.checkPrivateKey(crypto.createPrivateKey(keyPem)))
+    );
+  } catch (e) {
+    return false;
+  }
+}
+
+// The CA in ca/: minted when absent, a staged pair (no marker) validated and used as is.
+function ensureCa(ctx, forge) {
+  const caDir = path.join(ctx.configDir, 'ca');
+  if (!ensureDir(ctx, caDir, 0o700, ctx.rootGid)) return null;
+  const certFile = path.join(caDir, 'root-ca.pem');
+  const keyFile = path.join(caDir, 'root-ca.key');
+  const certPem = readTrusted(ctx, certFile);
+  const keyPem = readTrusted(ctx, keyFile);
+  if (certPem === null || keyPem === null) return null;
+  if (certPem && keyPem) {
+    if (!validCa(certPem, keyPem)) {
+      err(`the CA in ${caDir} is not a valid, current CA with its private key`);
+      return null;
+    }
+    detail(ctx, `using the CA in ${caDir}`);
+    return { certPem: certPem.toString(), keyPem: keyPem.toString() };
+  }
+  if (certPem || keyPem) {
+    err(`only one of root-ca.pem and root-ca.key exists in ${caDir}; refusing to complete it`);
+    return null;
+  }
+  const ca = mintCa(forge, shortHostname());
+  // The marker first: a CA without it would pass for the operator's and never be cleared.
+  writeTrusted(ctx, path.join(caDir, CA_MARKER), '', { mode: 0o600, gid: ctx.rootGid });
+  writeTrusted(ctx, keyFile, ca.keyPem, { mode: 0o400, gid: ctx.rootGid });
+  writeTrusted(ctx, certFile, ca.certPem, { mode: 0o644, gid: ctx.rootGid });
+  log(`created the dashboard CA in ${caDir}`);
+  return ca;
+}
+
+function certsDir(ctx) {
+  return path.join(ctx.configDir, 'certs');
+}
+
+function resolveCertificate(ctx) {
+  const dir = certsDir(ctx);
+  if (!ensureDir(ctx, dir, 0o750, serviceGid(ctx))) return false;
+  const hasCert = Boolean(lstatOrNull(path.join(dir, CERT)));
+  const hasKey = Boolean(lstatOrNull(path.join(dir, KEY)));
+  if (hasCert && hasKey) {
+    detail(ctx, `${dir} already holds a certificate pair; it is kept as it is`);
+    return true;
+  }
+  if (hasCert || hasKey) {
+    err(`only one of ${CERT} and ${KEY} exists in ${dir}; refusing to complete it`);
+    return false;
+  }
+  const forge = require('node-forge');
+  const ca = ensureCa(ctx, forge);
+  if (!ca) return false;
+  const host = shortHostname();
+  const sans = leafSans(ctx, host);
+  detail(ctx, `issuing ${CERT} for ${host}; SANs ${sans.map((s) => `${s.type}:${s.value}`)}`);
+  const leaf = issueLeaf(forge, ca.certPem, ca.keyPem, host, sans);
+  // The key first: an interrupted run leaves half a pair, which the next run refuses.
+  writeTrusted(ctx, path.join(dir, KEY), leaf.keyPem);
+  writeTrusted(ctx, path.join(dir, CERT), leaf.certPem);
+  log(`issued ${path.join(dir, CERT)}`);
+
+  const exportDir = path.join(ctx.configDir, 'export');
+  if (ensureDir(ctx, exportDir, 0o700, ctx.rootGid)) {
+    writeTrusted(ctx, path.join(exportDir, 'ca.pem'), ca.certPem, {
+      mode: 0o644,
+      gid: ctx.rootGid,
+    });
+    detail(ctx, `published ${path.join(exportDir, 'ca.pem')}`);
+  }
+  return true;
+}
+
+// Imports each peer's export/ca.pem into certs/<peer>-ca.pem, then rebuilds certs/root-ca.pem
+// from them when the package owns it (marker present, or no bundle yet).
+function resolveTrustBundle(ctx) {
+  const dir = certsDir(ctx);
+  if (!ensureDir(ctx, dir, 0o750, serviceGid(ctx))) return;
+  const cas = [];
+  for (const peer of ctx.peers) {
+    const dest = path.join(dir, `${peer.name}-ca.pem`);
+    const current = readTrusted(ctx, dest);
+    const published = readTrusted(ctx, path.join(peer.exportDir, 'ca.pem'));
+    if (published && !validCa(published)) {
+      err(`${path.join(peer.exportDir, 'ca.pem')} is not a valid, current CA certificate`);
+    } else if (published && current !== null && !(current && current.equals(published))) {
+      writeTrusted(ctx, dest, published);
+      log(`imported ${dest} from ${peer.exportDir}`);
+    }
+    const ca = readTrusted(ctx, dest);
+    if (ca) cas.push(ca.toString().trim() + '\n');
+  }
+
+  const bundle = path.join(dir, BUNDLE);
+  const marker = path.join(dir, BUNDLE_MARKER);
+  if (lstatOrNull(bundle) && !lstatOrNull(marker)) {
+    detail(ctx, `${bundle} has no ${BUNDLE_MARKER}; it is the operator's and is left alone`);
+    return;
+  }
+  if (cas.length === 0) return;
+  const content = Buffer.from(cas.join(''));
+  const current = readTrusted(ctx, bundle);
+  if (current === null || (current && current.equals(content))) return;
+  // The marker first: a bundle without it would pass for the operator's and never be refreshed.
+  writeTrusted(ctx, marker, '');
+  writeTrusted(ctx, bundle, content);
+  log(`wrote ${bundle} from ${cas.length} CA certificate(s)`);
+}
+
+// The first global address in the certificate's SANs, else its first DNS name, else the host.
+function dashboardAddress(ctx) {
+  try {
+    const cert = new crypto.X509Certificate(fs.readFileSync(path.join(certsDir(ctx), CERT)));
+    const sans = (cert.subjectAltName || '').split(/,\s*/);
+    const ip = sans
+      .filter((s) => s.startsWith('IP Address:'))
+      .map((s) => s.slice('IP Address:'.length))
+      .find(isGlobalAddress);
+    if (ip) return net.isIPv6(ip) ? `[${ip}]` : ip;
+    const dns = sans.find((s) => s.startsWith('DNS:') && s !== 'DNS:localhost');
+    if (dns) return dns.slice(4);
+  } catch (e) {
+    // Fall back to the host name.
+  }
+  return os.hostname();
+}
+
+function printFirstLogin(ctx) {
+  const indexer = ctx.peers.find((p) => p.name === 'indexer');
+  process.stdout.write(
+    `\nWazuh dashboard: https://${dashboardAddress(ctx)}\n` +
+      'Log in as admin, with WAZUH_INDEXER_ADMIN_PASSWORD from ' +
+      `${path.join(indexer.exportDir, 'credentials.env')} on the indexer host.\n` +
+      'Start the dashboard and enable it at boot: systemctl enable --now wazuh-dashboard\n'
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// --clear
+// ---------------------------------------------------------------------------------------------
+
+function dashboardIsRunning() {
+  const unit = spawnSync('systemctl', ['is-active', '--quiet', `${SERVICE}.service`]);
+  if (unit.status === 0) return true;
+  try {
+    process.kill(Number(fs.readFileSync(PID_FILE, 'utf8').trim()), 0);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function removeFrom(ctx, dir, names) {
+  const state = trustedDir(ctx, dir);
+  if (state === null) return false;
+  if (state === false) return true;
+  for (const name of names) {
+    const file = path.join(dir, name);
+    if (lstatOrNull(file)) {
+      fs.rmSync(file, { force: true });
+      log(`removed ${file}`);
+    }
+  }
+  if (fs.readdirSync(dir).length === 0) fs.rmdirSync(dir);
+  return true;
+}
+
+function clear(ctx) {
+  if (dashboardIsRunning()) {
+    err('refusing to clear credentials while the dashboard is running');
+    err('        stop it first: systemctl stop wazuh-dashboard');
+    return 1;
+  }
+  if (trustedDir(ctx, ctx.configDir) !== true) return 1;
+
+  const certs = [CERT, KEY, ...ctx.peers.map((p) => `${p.name}-ca.pem`)];
+  if (lstatOrNull(path.join(certsDir(ctx), BUNDLE_MARKER))) certs.push(BUNDLE, BUNDLE_MARKER);
+  let ok = removeFrom(ctx, certsDir(ctx), certs);
+
+  const caDir = path.join(ctx.configDir, 'ca');
+  if (lstatOrNull(path.join(caDir, CA_MARKER))) {
+    ok = removeFrom(ctx, caDir, ['root-ca.pem', 'root-ca.key', 'root-ca.srl', CA_MARKER]) && ok;
+  } else if (lstatOrNull(caDir)) {
+    log(`kept the CA in ${caDir}: this dashboard did not mint it`);
+  }
+  ok = removeFrom(ctx, path.join(ctx.configDir, 'export'), ['ca.pem']) && ok;
+
+  if (lstatOrNull(keystorePath(ctx))) {
+    if (!ensureKeystore(ctx)) return 1;
+    for (const entry of CLEARED_ENTRIES.filter((e) => ctx.keys.has(e))) {
+      ctx.runKeystore(['remove', entry]);
+    }
+    secureKeystore(ctx);
+    // Read back rather than trusted from exit codes: a keystore that still holds them is the
+    // failure this path exists to prevent.
+    const keys = loadKeys(ctx);
+    const left = keys ? CLEARED_ENTRIES.filter((e) => keys.has(e)) : CLEARED_ENTRIES;
+    if (left.length) {
+      err(`could not remove from the keystore: ${left.join(' ')}`);
+      return 1;
+    }
+    log(`removed ${CLEARED_ENTRIES.join(' ')} from the keystore`);
+  }
+  if (!ok) return 1;
+  log('cleared; the next start resolves from nothing');
+  return 0;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Run
+// ---------------------------------------------------------------------------------------------
+
+function resolve(ctx, mode) {
+  if (trustedDir(ctx, ctx.configDir) !== true) {
+    if (!ctx.problems.length) ctx.problems.push(`MISSING ${ctx.configDir}`);
+    return ctx.problems;
+  }
+  const yml = loadYml(ctx);
+  const passwords = {};
+  if (ensureKeystore(ctx)) {
+    for (const peer of ctx.peers) passwords[peer.key] = resolvePassword(ctx, yml, peer);
+    if (mode !== 'upgrade') resolveAiKey(ctx, yml);
+  } else {
+    ctx.problems.push(`MISSING keystore: ${keystorePath(ctx)} could not be created or read`);
+  }
+
+  if (mode === 'install' && !resolveCertificate(ctx)) {
+    err(`the dashboard has no TLS certificates and this install could not issue them`);
+    err(`        provision ${CERT} and ${KEY} into ${certsDir(ctx)}`);
+  }
+  if (mode !== 'upgrade') resolveTrustBundle(ctx);
+  if (mode === 'install') printFirstLogin(ctx);
+
+  for (const peer of ctx.peers) {
+    if (passwords[peer.key] === 'invalid') {
+      ctx.problems.push(
+        `INVALID ${peer.key}: the keystore would not store the supplied value as text`,
+        '        (it must not be JSON nor have surrounding whitespace)'
+      );
+    } else if (passwords[peer.key] === 'missing') {
+      ctx.problems.push(
+        `MISSING ${peer.key} (${peer.account})`,
+        `        set it in ${path.join(ctx.configDir, 'local.env')}, ` +
+          `or install wazuh-${peer.name} on this host first`
+      );
+    }
+  }
+  const dir = certsDir(ctx);
+  if (!lstatOrNull(path.join(dir, BUNDLE))) {
+    ctx.problems.push(`MISSING ${path.join(dir, BUNDLE)}: no CA to verify the indexer with`);
+  }
+  for (const name of [CERT, KEY]) {
+    if (!lstatOrNull(path.join(dir, name))) {
+      ctx.problems.push(
+        `MISSING ${path.join(dir, name)}: the dashboard will not serve TLS without it`
+      );
+    }
+  }
+  return ctx.problems;
+}
+
+function main(argv) {
+  let mode = 'prestart';
+  let configDir = '/etc/wazuh-dashboard';
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (['--install', '--upgrade', '--prestart', '--clear'].includes(arg)) {
+      mode = arg.slice(2);
+    } else if (arg === '-H' && argv[i + 1]) {
+      configDir = path.resolve(argv[++i]);
+    } else if (arg === '-h' || arg === '--help') {
+      log('usage: resolve-credentials [--install|--upgrade|--prestart|--clear] [-H <config-dir>]');
+      return 0;
+    } else {
+      err(`unknown option: ${arg}`);
+      return 2;
+    }
+  }
+  const failure = mode === 'install' || mode === 'upgrade' ? 0 : 1;
+  if (process.getuid() !== 0) {
+    err('must run as root');
+    return failure;
+  }
+  const ctx = createContext({ home: path.resolve(__dirname, '..'), configDir });
+  if (mode === 'clear') return clear(ctx);
+
+  const problems = resolve(ctx, mode);
+  if (mode !== 'prestart') return 0;
+  // UNSAFE lines were printed when found.
+  problems.filter((p) => !p.startsWith('UNSAFE ')).forEach(err);
+  return problems.length ? 1 : 0;
+}
+
+module.exports = {
+  createContext,
+  readTrusted,
+  writeTrusted,
+  parseEnv,
+  lookup,
+  storesVerbatim,
+  ymlHas,
+  parseSans,
+  mintCa,
+  issueLeaf,
+  validCa,
+  resolve,
+  clear,
+};
+
+if (require.main === module) {
+  try {
+    process.exitCode = main(process.argv.slice(2));
+  } catch (e) {
+    err(e.stack || String(e));
+    process.exitCode =
+      process.argv.includes('--install') || process.argv.includes('--upgrade') ? 0 : 1;
+  }
+}
