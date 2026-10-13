@@ -73,19 +73,17 @@ install)
     # Create wazuh-dashboard group if not existing
     if ! getent group "${NAME}" >/dev/null 2>&1; then
         echo -n "Creating ${NAME} group..."
-        addgroup --quiet --system "${NAME}"
+        groupadd --system "${NAME}"
         echo " OK"
     fi
     # Create wazuh-dashboard user if not existing
     if ! id "${NAME}" >/dev/null 2>&1; then
         echo -n "Creating ${NAME} user..."
-        adduser --quiet \
-            --system \
+        useradd --system \
             --no-create-home \
-            --home /nonexistent \
-            --ingroup "${NAME}" \
-            --disabled-password \
-            --shell /bin/false \
+            --home-dir /nonexistent \
+            --gid "${NAME}" \
+            --shell /usr/sbin/nologin \
             "${NAME}"
         echo " OK"
     fi
