@@ -36,6 +36,7 @@
 | [#1666](https://github.com/wazuh/wazuh-dashboard/issues/1666)                                | Changed the packages to install `/etc/wazuh-dashboard` as `root:wazuh-dashboard`, so the service reads its configuration, keystore and certificates through its group and cannot modify them        |
 | [#1669](https://github.com/wazuh/wazuh-dashboard/issues/1669)                                | Changed the package removal to clean up only `/etc/wazuh-dashboard` and never touch `/etc/wazuh`                                                                                                    |
 | [#1667](https://github.com/wazuh/wazuh-dashboard/issues/1667)                                | Changed the service to bind port 443 with a capability granted by its systemd unit instead of one set on `node`, dropping `libcap2-bin` and `libcap`                                                |
+| [#1668](https://github.com/wazuh/wazuh-dashboard/issues/1668)                                | Changed the packages to declare only `passwd` (DEB) and `/bin/sh` with the account tools (RPM), and the package scripts to run only shell builtins and coreutils                                    |
 
 ### Removed
 
