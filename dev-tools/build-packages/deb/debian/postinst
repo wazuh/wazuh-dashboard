@@ -65,7 +65,6 @@ configure)
             chmod 600 "${CONFIG_DIR}/local.env"
         fi
     fi
-    setcap 'cap_net_bind_service=+ep' "${INSTALLATION_DIR}"/node/bin/node
     rm -f /usr/share/wazuh-dashboard/VERSION
     if [ -f "${INSTALLATION_DIR}"/"${NAME}".restart ]; then
         rm -f "${INSTALLATION_DIR}"/"${NAME}".restart

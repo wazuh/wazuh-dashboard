@@ -342,8 +342,23 @@ wait_tls() {
   return 1
 }
 
+# Non-root, with only CAP_NET_BIND_SERVICE (0x400) granted by the unit.
+proc_caps_ok() {
+  local pid
+  pid=$(systemctl show -p MainPID --value "${NAME}" 2>/dev/null)
+  [ -n "${pid}" ] && [ "${pid}" != 0 ] || return 1
+  awk '/^Uid:/ { uid = $2 } /^CapEff:/ { eff = $2 } END { exit !(uid != 0 && eff == "0000000000000400") }' \
+    "/proc/${pid}/status"
+}
+
+no_file_caps() { [ -z "$(getcap "${INSTALL_DIR}/node/bin/node" 2>/dev/null)" ]; }
+
 check_running() {
   check "service is active and stable" wait_active
+  check "runs as non-root with only CAP_NET_BIND_SERVICE" proc_caps_ok
+  if command -v getcap >/dev/null 2>&1; then
+    check "node binary has no file capability" no_file_caps
+  fi
   if [ "${SKIP_TLS}" -eq 0 ]; then
     check "HTTPS on port $(server_port) serves certs/dashboard.pem" wait_tls
   fi
@@ -1518,8 +1533,6 @@ preflight() {
   fi
 
   preflight_host
-  command -v setcap >/dev/null 2>&1 ||
-    echo "vm-test-matrix: warning: setcap not found (libcap2-bin / libcap); the install may fail" >&2
 
   local fstype
   fstype=$(stat -f -c '%T' "${LOG_DIR:-$(pwd)}" 2>/dev/null || echo unknown)
