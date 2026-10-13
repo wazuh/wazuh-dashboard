@@ -20,8 +20,6 @@ chown -R "${NAME}":"${NAME}" "${PID_DIR}"
 
 case "$1" in
 configure)
-    chmod 750 "${TARGET_DIR}""${CONFIG_DIR}"
-    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${CONFIG_DIR}"
     chmod 755 "${TARGET_DIR}""${INSTALLATION_DIR}"
     chown -R root:root "${TARGET_DIR}""${INSTALLATION_DIR}"
     chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/data
@@ -37,6 +35,35 @@ configure)
     if [ -f /etc/default/"${NAME}" ]; then
         chown root:"${NAME}" /etc/default/"${NAME}"
         chmod 640 /etc/default/"${NAME}"
+    fi
+    # Root owns the configuration directory; the service reads it through its group.
+    # Runs before the resolver, which refuses a directory not owned by root.
+    if [ -d "${CONFIG_DIR}" ] && [ ! -L "${CONFIG_DIR}" ]; then
+        chown root:"${NAME}" "${CONFIG_DIR}"
+        chmod 750 "${CONFIG_DIR}"
+        for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
+            if [ -f "${CONFIG_DIR}/$f" ] && [ ! -L "${CONFIG_DIR}/$f" ]; then
+                chown root:"${NAME}" "${CONFIG_DIR}/$f"
+                chmod 640 "${CONFIG_DIR}/$f"
+            fi
+        done
+        if [ -d "${CONFIG_DIR}/certs" ] && [ ! -L "${CONFIG_DIR}/certs" ]; then
+            chown -R -P root:"${NAME}" "${CONFIG_DIR}/certs"
+            chmod 750 "${CONFIG_DIR}/certs"
+            for f in "${CONFIG_DIR}"/certs/* "${CONFIG_DIR}"/certs/.[!.]*; do
+                if [ -f "$f" ] && [ ! -L "$f" ]; then chmod 640 "$f"; fi
+            done
+        fi
+        for d in ca export; do
+            if [ -d "${CONFIG_DIR}/$d" ] && [ ! -L "${CONFIG_DIR}/$d" ]; then
+                chown -R -P root:root "${CONFIG_DIR}/$d"
+                chmod 700 "${CONFIG_DIR}/$d"
+            fi
+        done
+        if [ -f "${CONFIG_DIR}/local.env" ] && [ ! -L "${CONFIG_DIR}/local.env" ]; then
+            chown root:root "${CONFIG_DIR}/local.env"
+            chmod 600 "${CONFIG_DIR}/local.env"
+        fi
     fi
     setcap 'cap_net_bind_service=+ep' "${INSTALLATION_DIR}"/node/bin/node
     rm -f /usr/share/wazuh-dashboard/VERSION
@@ -60,11 +87,10 @@ configure)
     else
         "${INSTALLATION_DIR}"/bin/resolve-credentials --install || true
     fi
-    # The keystore holds secrets under an empty password, so its mode must keep it private
-    # on fresh installs and on upgrades of keystores created with a wider mode
-    if [ -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
-        chown "${NAME}":"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
-        chmod 600 "${CONFIG_DIR}"/opensearch_dashboards.keystore
+    # The keystore holds secrets under an empty password
+    if [ -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ] && [ ! -L "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
+        chown root:"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
+        chmod 640 "${CONFIG_DIR}"/opensearch_dashboards.keystore
     fi
     ;;
 
