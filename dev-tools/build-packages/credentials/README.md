@@ -21,10 +21,13 @@ top-level directory of the installation root and exits on `EACCES`.
 The dashboard owns no shared credential and publishes nothing into `credentials.env`. It consumes
 two passwords into its keystore:
 
-| Key                                   | Env-only alias     | Account        | Owner   | Keystore entries                                              |
-| ------------------------------------- | ------------------ | -------------- | ------- | ------------------------------------------------------------- |
-| `WAZUH_INDEXER_KIBANASERVER_PASSWORD` | `INDEXER_PASSWORD` | `kibanaserver` | Indexer | `opensearch.username` (`kibanaserver`), `opensearch.password` |
-| `WAZUH_MANAGER_WUI_PASSWORD`          | `API_PASSWORD`     | `wazuh-wui`    | Manager | `wazuh_core.hosts.default.password`                           |
+| Key                                   | Env-only alias     | Account                 | Owner   | Keystore entries                                              |
+| ------------------------------------- | ------------------ | ----------------------- | ------- | ------------------------------------------------------------- |
+| `WAZUH_INDEXER_KIBANASERVER_PASSWORD` | `INDEXER_PASSWORD` | `kibanaserver`          | Indexer | `opensearch.username` (`kibanaserver`), `opensearch.password` |
+| `WAZUH_MANAGER_WUI_PASSWORD`          | `API_PASSWORD`     | `wazuh-internal-client` | Manager | `wazuh_core.hosts.default.password`                           |
+
+The manager account was named `wazuh-wui` before Wazuh 5.0.0. The credentials key keeps its `WUI`
+name.
 
 The dashboard also owns one secret of its own, `wazuh_ai_assistant.encryptionKey`, which the AI
 assistant encrypts the provider API keys it stores with. It is generated (32 random bytes, base64)
@@ -37,9 +40,9 @@ For each consumed key, the ladder is:
 0. The keystore entry already exists, or the setting is configured in
    `opensearch_dashboards.yml`: resolved. Nothing is written, so the yml keeps authority (the
    keystore is merged over it at start). A yml `opensearch.username` is never overwritten with
-   `kibanaserver`, and without a `wazuh_core.hosts.default` host the `wazuh-wui` entry is not
-   needed. The yml is read with the dashboard's own Node and `@osd/config`; if it cannot be read,
-   the check is skipped.
+   `kibanaserver`, and without a `wazuh_core.hosts.default` host the `wazuh-internal-client` entry
+   is not needed. The yml is read with the dashboard's own Node and `@osd/config`; if it cannot be
+   read, the check is skipped.
 1. The process environment (scoped name, then alias), then `credentials.env`: stored in the
    keystore through stdin. The password policy is enforced by the owners (the indexer and the
    manager), not here. The dashboard only checks that the keystore stores the value verbatim:
@@ -52,7 +55,8 @@ For each consumed key, the ladder is:
 ## Certificates
 
 `opensearch_dashboards.yml` serves HTTPS from `/etc/wazuh-dashboard/certs/dashboard.pem` and
-`dashboard-key.pem`, and trusts the indexer through `certs/root-ca.pem`. A fresh install
+`dashboard-key.pem`, and trusts the indexer and the manager's Server API (the `ca` of
+`wazuh_core.hosts.default`) through `certs/root-ca.pem`. A fresh install
 (`--install` only) issues whatever of that is missing from the **shared CA**, the one the manager
 and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared library's
 `_wazuh_ca_ensure_locked`, under its lock:

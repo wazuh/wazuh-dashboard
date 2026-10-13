@@ -45,7 +45,7 @@ import {
 import { map, switchMap, takeUntil } from 'rxjs/operators';
 import { EuiLink } from '@elastic/eui';
 import { mountReactNode } from '../utils/mount';
-import { InternalApplicationStart } from '../application';
+import { InternalApplicationStart, PublicAppInfo } from '../application'; // Wazuh: PublicAppInfo
 import { DocLinksStart } from '../doc_links';
 import { HttpStart } from '../http';
 import { InjectedMetadataStart } from '../injected_metadata';
@@ -294,12 +294,25 @@ export class ChromeService {
 
     const globalSearch = this.globalSearch.start();
 
+    // Wazuh: keep the registered apps at hand to name the tab after the current app
+    let applications: ReadonlyMap<string, PublicAppInfo> = new Map();
+    application.applications$.pipe(takeUntil(this.stop$)).subscribe((apps) => {
+      applications = apps;
+    });
+
     // erase chrome fields from a previous app while switching to a next app
-    application.currentAppId$.subscribe(() => {
+    // Wazuh: also name the tab "<app title> - <branding title>"; apps can still change it
+    application.currentAppId$.subscribe((appId) => {
       helpExtension$.next(undefined);
       breadcrumbs$.next([]);
       badge$.next(undefined);
-      docTitle.reset();
+      // Wazuh
+      const appTitle = appId ? applications.get(appId)?.title : undefined;
+      if (appTitle) {
+        docTitle.change(appTitle);
+      } else {
+        docTitle.reset();
+      }
     });
 
     const setIsNavDrawerLocked = (isLocked: boolean) => {
