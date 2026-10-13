@@ -33,6 +33,8 @@ function setup() {
     account: 'kibanaserver',
     entry: 'opensearch.password',
     username: { entry: 'opensearch.username', value: 'kibanaserver' },
+    caRequired: true,
+    caMissing: 'no indexer CA',
   };
   peers[1] = {
     ...peers[1],
@@ -40,6 +42,8 @@ function setup() {
     alias: 'API_PASSWORD',
     account: 'wazuh-internal-client',
     entry: 'wazuh_core.hosts.default.password',
+    caRequired: false,
+    caMissing: 'no manager CA',
   };
   const ctx = r.createContext({
     home: root,
@@ -136,27 +140,32 @@ test('install resolves everything from the peers; a restart changes nothing', ()
     'wazuh_core.hosts:\n  default:\n    url: https://localhost\n'
   );
 
-  // The manager is not installed yet: its password is missing.
+  // The manager is not installed yet: its password is missing, its CA is only a warning.
   let problems = r.resolve(ctx, 'install');
-  assert.deepStrictEqual(
-    problems.filter((p) => p.startsWith('MISSING')),
-    ['MISSING WAZUH_MANAGER_WUI_PASSWORD (wazuh-internal-client)']
-  );
+  assert.deepStrictEqual(problems, [
+    'MISSING WAZUH_MANAGER_WUI_PASSWORD (wazuh-internal-client)',
+    `        set it in ${path.join(
+      configDir,
+      'local.env'
+    )}, or install wazuh-manager on this host first`,
+  ]);
   assert.strictEqual(store.get('opensearch.password'), 'Kibana.Pass1');
   assert.strictEqual(store.get('opensearch.username'), 'kibanaserver');
   assert.strictEqual(store.get('wazuh_ai_assistant.encryptionKey').length, 44);
 
   const certs = path.join(configDir, 'certs');
-  const dashCert = new crypto.X509Certificate(fs.readFileSync(path.join(certs, 'dashboard.pem')));
-  const ownCa = fs.readFileSync(path.join(configDir, 'ca', 'root-ca.pem'));
+  const chain = fs.readFileSync(path.join(certs, 'dashboard.pem'), 'utf8');
+  const ownCa = fs.readFileSync(path.join(configDir, 'ca', 'root-ca.pem'), 'utf8');
+  const dashCert = new crypto.X509Certificate(chain);
   assert.ok(dashCert.verify(new crypto.X509Certificate(ownCa).publicKey));
-  assert.deepStrictEqual(fs.readFileSync(path.join(configDir, 'export', 'ca.pem')), ownCa);
+  assert.ok(chain.endsWith(ownCa), 'dashboard.pem carries the leaf followed by the CA');
+  assert.ok(Date.parse(dashCert.validFrom) < Date.now() - 23 * 60 * 60 * 1000, 'backdated');
+  assert.strictEqual(fs.readFileSync(path.join(configDir, 'export', 'ca.pem'), 'utf8'), ownCa);
   assert.ok(fs.existsSync(path.join(configDir, 'ca', '.wazuh-dashboard-bootstrap-ca')));
   assert.strictEqual(fs.statSync(path.join(certs, 'dashboard-key.pem')).mode & 0o777, 0o640);
-  assert.strictEqual(
-    fs.readFileSync(path.join(certs, 'root-ca.pem'), 'utf8'),
-    indexerCa.trim() + '\n'
-  );
+  assert.strictEqual(fs.readFileSync(path.join(certs, 'indexer-ca.pem'), 'utf8'), indexerCa);
+  assert.ok(fs.existsSync(path.join(certs, '.indexer-ca.imported')));
+  assert.ok(!fs.existsSync(path.join(certs, 'root-ca.pem')), 'no merged bundle');
 
   // The manager arrives; the next start picks up its password and CA.
   const managerCa = caPair().certPem;
@@ -165,40 +174,71 @@ test('install resolves everything from the peers; a restart changes nothing', ()
     'WAZUH_MANAGER_WUI_PASSWORD=Wui.Pass1\n'
   );
   fs.writeFileSync(path.join(peers[1].exportDir, 'ca.pem'), managerCa);
-  const pair = fs.readFileSync(path.join(certs, 'dashboard.pem'));
   ctx.problems = [];
   problems = r.resolve(ctx, 'prestart');
   assert.deepStrictEqual(problems, []);
   assert.strictEqual(store.get('wazuh_core.hosts.default.password'), 'Wui.Pass1');
-  assert.strictEqual(
-    fs.readFileSync(path.join(certs, 'root-ca.pem'), 'utf8'),
-    indexerCa.trim() + '\n' + managerCa.trim() + '\n'
-  );
-  assert.deepStrictEqual(fs.readFileSync(path.join(certs, 'dashboard.pem')), pair);
+  assert.strictEqual(fs.readFileSync(path.join(certs, 'manager-ca.pem'), 'utf8'), managerCa);
+  assert.strictEqual(fs.readFileSync(path.join(certs, 'dashboard.pem'), 'utf8'), chain);
 
-  // --clear removes what the resolver stored, issued and minted.
+  // A reinstalled indexer publishes a new CA: the import follows it.
+  const newIndexerCa = caPair().certPem;
+  fs.writeFileSync(path.join(peers[0].exportDir, 'ca.pem'), newIndexerCa);
+  r.resolve(ctx, 'prestart');
+  assert.strictEqual(fs.readFileSync(path.join(certs, 'indexer-ca.pem'), 'utf8'), newIndexerCa);
+
+  // --clear removes what the resolver stored, issued, imported and minted.
   assert.strictEqual(r.clear(ctx), 0);
   assert.strictEqual(store.size, 0);
-  for (const gone of ['certs', 'ca', 'export'])
+  for (const gone of ['certs', 'ca', 'export']) {
     assert.ok(!fs.existsSync(path.join(configDir, gone)));
+  }
 });
 
-test("an operator's root-ca.pem and staged CA are kept", () => {
-  const { configDir, ctx } = setup();
+test('a staged peer CA and a staged dashboard CA are used and kept', () => {
+  const { configDir, peers, ctx } = setup();
   const certs = path.join(configDir, 'certs');
   fs.mkdirSync(certs, { mode: 0o750 });
-  fs.writeFileSync(path.join(certs, 'root-ca.pem'), 'operator\n');
+  const stagedIndexerCa = caPair().certPem;
+  fs.writeFileSync(path.join(certs, 'indexer-ca.pem'), stagedIndexerCa);
+  fs.writeFileSync(path.join(peers[0].exportDir, 'ca.pem'), caPair().certPem);
   const staged = caPair();
   fs.mkdirSync(path.join(configDir, 'ca'), { mode: 0o700 });
   fs.writeFileSync(path.join(configDir, 'ca', 'root-ca.pem'), staged.certPem);
   fs.writeFileSync(path.join(configDir, 'ca', 'root-ca.key'), staged.keyPem, { mode: 0o400 });
+
   r.resolve(ctx, 'install');
-  assert.strictEqual(fs.readFileSync(path.join(certs, 'root-ca.pem'), 'utf8'), 'operator\n');
+  assert.strictEqual(fs.readFileSync(path.join(certs, 'indexer-ca.pem'), 'utf8'), stagedIndexerCa);
   const leaf = new crypto.X509Certificate(fs.readFileSync(path.join(certs, 'dashboard.pem')));
   assert.ok(leaf.verify(new crypto.X509Certificate(staged.certPem).publicKey));
+
   r.clear(ctx);
   assert.ok(fs.existsSync(path.join(configDir, 'ca', 'root-ca.key')));
-  assert.strictEqual(fs.readFileSync(path.join(certs, 'root-ca.pem'), 'utf8'), 'operator\n');
+  assert.strictEqual(fs.readFileSync(path.join(certs, 'indexer-ca.pem'), 'utf8'), stagedIndexerCa);
+});
+
+test('a staged peer CA that is not a CA certificate is INVALID', () => {
+  const { configDir, ctx } = setup();
+  const certs = path.join(configDir, 'certs');
+  fs.mkdirSync(certs, { mode: 0o750 });
+  const ca = caPair();
+  const leaf = r.issueLeaf(forge, ca.certPem, ca.keyPem, 'x', r.parseSans('DNS:x'));
+  fs.writeFileSync(path.join(certs, 'indexer-ca.pem'), leaf.certPem);
+  const problems = r.resolve(ctx, 'prestart');
+  assert.ok(
+    problems.includes(
+      `INVALID ${path.join(certs, 'indexer-ca.pem')}: it is not a valid, current CA certificate`
+    )
+  );
+});
+
+test('an empty WAZUH_DASHBOARD_CERT_SANS is refused', () => {
+  const { configDir, ctx } = setup();
+  fs.writeFileSync(path.join(configDir, 'local.env'), 'WAZUH_DASHBOARD_CERT_SANS=\n', {
+    mode: 0o600,
+  });
+  r.resolve(ctx, 'install');
+  assert.ok(!fs.existsSync(path.join(configDir, 'certs', 'dashboard.pem')));
 });
 
 test('half a pair is refused', () => {
@@ -208,4 +248,16 @@ test('half a pair is refused', () => {
   r.resolve(ctx, 'install');
   assert.ok(!fs.existsSync(path.join(configDir, 'certs', 'dashboard-key.pem')));
   assert.ok(!fs.existsSync(path.join(configDir, 'ca')));
+});
+
+test('prestart reports a planted file in certs/ as UNSAFE', () => {
+  const { configDir, ctx } = setup();
+  const certs = path.join(configDir, 'certs');
+  fs.mkdirSync(certs, { mode: 0o750 });
+  fs.writeFileSync(path.join(certs, 'dashboard.pem'), 'x');
+  fs.chmodSync(path.join(certs, 'dashboard.pem'), 0o666);
+  const problems = r.resolve(ctx, 'prestart');
+  assert.ok(
+    problems.includes(`UNSAFE ${path.join(certs, 'dashboard.pem')}: it is group- or world-writable`)
+  );
 });
