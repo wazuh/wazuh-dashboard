@@ -111,7 +111,7 @@ CASES=(
   "D18|Reinstall after removal mints a new CA|case_reinstall|dashboard"
   "D19|Upgrade while running|case_upgrade_running|dashboard-previous"
   "D20|Upgrade while stopped|case_upgrade_stopped|dashboard-previous"
-  "D21|No wazuh_core default host: wazuh-wui not needed|case_no_wazuh_host|dashboard"
+  "D21|No wazuh_core default host: wazuh-internal-client not needed|case_no_wazuh_host|dashboard"
   "D22|--clear refuses a certs/ symlink|case_clear_symlinked_certs|dashboard"
   "D23|Service-user children: no terminal, no root environment|case_children_isolated|dashboard"
   "F01|Install order: indexer, manager, dashboard|case_order_imd|full"
@@ -372,7 +372,7 @@ prestart() {
 
 prestart_rc_is() { [ "${PRE_RC}" -eq "$1" ]; }
 
-# write_creds <kibanaserver> <wazuh-wui> [mode]; an empty value leaves the key out.
+# write_creds <kibanaserver> <wazuh-internal-client> [mode]; an empty value leaves the key out.
 write_creds() {
   install -d -m 0700 -o root -g root "${WAZUH_DIR}"
   {
@@ -975,7 +975,7 @@ case_no_wazuh_host() {
   write_creds "${KIBANA_PASS}" ""
   prestart
   check "prestart exits 0" prestart_rc_is 0
-  check "reports wazuh-wui is not needed" contains "${PRE_OUT}" "WAZUH_MANAGER_WUI_PASSWORD is not needed"
+  check "reports wazuh-internal-client is not needed" contains "${PRE_OUT}" "WAZUH_MANAGER_WUI_PASSWORD is not needed"
   check_not "no wazuh_core password written" ks_has wazuh_core.hosts.default.password
   check "systemctl start succeeds" svc_start
   check_running
@@ -1290,7 +1290,7 @@ case_full_reinstall() {
     contains "$(cat "${WORK}/install.out")" "reusing the shared root CA"
   check "shared CA unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
   if has_key WAZUH_MANAGER_WUI_PASSWORD; then
-    check "wazuh-wui resolved again from credentials.env" \
+    check "wazuh-internal-client resolved again from credentials.env" \
       contains "$(cat "${WORK}/install.out")" "stored wazuh_core.hosts.default.password in the keystore from ${CREDENTIALS_FILE}"
   else
     info "the manager did not publish WAZUH_MANAGER_WUI_PASSWORD; nothing to resolve again"

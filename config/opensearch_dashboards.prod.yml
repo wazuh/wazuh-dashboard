@@ -21,5 +21,6 @@ wazuh_core.hosts:
   default:
     url: https://localhost
     port: 55000
-    username: wazuh-wui
+    username: wazuh-internal-client
     run_as: true
+    ca: '/etc/wazuh-dashboard/certs/root-ca.pem'

@@ -18,7 +18,7 @@ Array [
     name="csp-nonce"
   />,
   <title>
-    OpenSearch Dashboards
+    Wazuh
   </title>,
   <link
     href="[object Object]/ui/favicons/apple-touch-icon.png"
@@ -88,7 +88,7 @@ Array [
         class="loadingLogoContainer"
       >
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo darkOnly"
           data-test-image-url="/darkModeLoadingLogo"
           data-test-subj="customLogo"
@@ -96,7 +96,7 @@ Array [
           src="/darkModeLoadingLogo"
         />
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo lightOnly"
           data-test-image-url="/defaultModeLoadingLogo"
           data-test-subj="customLogo"
@@ -116,14 +116,14 @@ Array [
     style="display:none"
   >
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo darkOnly"
       data-test-image-url="/darkModeMark"
       data-test-subj="custom logo"
       src="/darkModeMark"
     />
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/defaultModeMark"
       data-test-subj="custom logo"
@@ -160,7 +160,7 @@ Array [
     name="csp-nonce"
   />,
   <title>
-    OpenSearch Dashboards
+    Wazuh
   </title>,
   <link
     href="[object Object]/ui/favicons/apple-touch-icon.png"
@@ -230,7 +230,7 @@ Array [
         class="loadingLogoContainer"
       >
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo darkOnly"
           data-test-image-url="/defaultModeLoadingLogo"
           data-test-subj="customLogo"
@@ -238,7 +238,7 @@ Array [
           src="/defaultModeLoadingLogo"
         />
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo lightOnly"
           data-test-image-url="/defaultModeLoadingLogo"
           data-test-subj="customLogo"
@@ -258,14 +258,14 @@ Array [
     style="display:none"
   >
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo darkOnly"
       data-test-image-url="/darkModeMark"
       data-test-subj="custom logo"
       src="/darkModeMark"
     />
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/defaultModeMark"
       data-test-subj="custom logo"
@@ -302,7 +302,7 @@ Array [
     name="csp-nonce"
   />,
   <title>
-    OpenSearch Dashboards
+    Wazuh
   </title>,
   <link
     href="[object Object]/ui/favicons/apple-touch-icon.png"
@@ -372,7 +372,7 @@ Array [
         class="loadingLogoContainer"
       >
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo darkOnly"
           data-test-image-url="/darkModeMark"
           data-test-subj="alternativeLogo"
@@ -380,7 +380,7 @@ Array [
           src="/darkModeMark"
         />
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo lightOnly"
           data-test-image-url="/defaultModeMark"
           data-test-subj="alternativeLogo"
@@ -406,14 +406,14 @@ Array [
     style="display:none"
   >
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo darkOnly"
       data-test-image-url="/darkModeMark"
       data-test-subj="custom logo"
       src="/darkModeMark"
     />
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/defaultModeMark"
       data-test-subj="custom logo"
@@ -450,7 +450,7 @@ Array [
     name="csp-nonce"
   />,
   <title>
-    OpenSearch Dashboards
+    Wazuh
   </title>,
   <link
     href="[object Object]/ui/favicons/apple-touch-icon.png"
@@ -520,7 +520,7 @@ Array [
         class="loadingLogoContainer"
       >
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo darkOnly"
           data-test-image-url="/defaultModeMark"
           data-test-subj="alternativeLogo"
@@ -528,7 +528,7 @@ Array [
           src="/defaultModeMark"
         />
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo lightOnly"
           data-test-image-url="/defaultModeMark"
           data-test-subj="alternativeLogo"
@@ -554,14 +554,14 @@ Array [
     style="display:none"
   >
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo darkOnly"
       data-test-image-url="/defaultModeMark"
       data-test-subj="custom logo"
       src="/defaultModeMark"
     />
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/defaultModeMark"
       data-test-subj="custom logo"
@@ -598,7 +598,7 @@ Array [
     name="csp-nonce"
   />,
   <title>
-    OpenSearch Dashboards
+    Wazuh
   </title>,
   <link
     href="[object Object]/ui/favicons/apple-touch-icon.png"
@@ -668,7 +668,7 @@ Array [
         class="loadingLogoContainer"
       >
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo darkOnly"
           data-test-image-url="/ui/logos/spinner_on_dark.svg"
           data-test-subj="defaultLogo"
@@ -676,7 +676,7 @@ Array [
           src="/ui/logos/spinner_on_dark.svg"
         />
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo lightOnly"
           data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
@@ -696,14 +696,14 @@ Array [
     style="display:none"
   >
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo darkOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_dark.svg"
       data-test-subj="default logo"
       src="/ui/logos/wazuh_mark_on_dark.svg"
     />
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
@@ -1172,7 +1172,7 @@ Array [
     name="csp-nonce"
   />,
   <title>
-    OpenSearch Dashboards
+    Wazuh
   </title>,
   <link
     href="/customFavicon"
@@ -1242,7 +1242,7 @@ Array [
         class="loadingLogoContainer"
       >
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo darkOnly"
           data-test-image-url="/ui/logos/spinner_on_dark.svg"
           data-test-subj="defaultLogo"
@@ -1250,7 +1250,7 @@ Array [
           src="/ui/logos/spinner_on_dark.svg"
         />
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo lightOnly"
           data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
@@ -1270,14 +1270,14 @@ Array [
     style="display:none"
   >
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo darkOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_dark.svg"
       data-test-subj="default logo"
       src="/ui/logos/wazuh_mark_on_dark.svg"
     />
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
@@ -1314,7 +1314,7 @@ Array [
     name="csp-nonce"
   />,
   <title>
-    OpenSearch Dashboards
+    Wazuh
   </title>,
   <link
     href="[object Object]/ui/favicons/apple-touch-icon.png"
@@ -1384,7 +1384,7 @@ Array [
         class="loadingLogoContainer"
       >
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo darkOnly"
           data-test-image-url="/ui/logos/spinner_on_dark.svg"
           data-test-subj="defaultLogo"
@@ -1392,7 +1392,7 @@ Array [
           src="/ui/logos/spinner_on_dark.svg"
         />
         <img
-          alt="OpenSearch Dashboards logo"
+          alt="Wazuh logo"
           class="loadingLogo lightOnly"
           data-test-image-url="/ui/logos/spinner_on_light.svg"
           data-test-subj="defaultLogo"
@@ -1412,14 +1412,14 @@ Array [
     style="display:none"
   >
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo darkOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_dark.svg"
       data-test-subj="default logo"
       src="/ui/logos/wazuh_mark_on_dark.svg"
     />
     <img
-      alt="OpenSearch Dashboards logo"
+      alt="Wazuh logo"
       class="legacyBrowserErrorLogo lightOnly"
       data-test-image-url="/ui/logos/wazuh_mark_on_light.svg"
       data-test-subj="default logo"
