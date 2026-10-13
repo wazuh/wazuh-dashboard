@@ -1,137 +1,103 @@
 # Dashboard credential resolution
 
-`resolve-credentials.sh` is the dashboard's half of the install-time credential resolution
-ladder ([wazuh-indexer#1928](https://github.com/wazuh/wazuh-indexer/issues/1928),
-[#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)). It is installed as
-`/usr/share/wazuh-dashboard/bin/resolve-credentials`, `root:root 0750`.
+`resolve-credentials.js` resolves the dashboard's passwords and TLS material at install and
+start time ([#1665](https://github.com/wazuh/wazuh-dashboard/issues/1665)). It runs on the Node
+runtime the package bundles, through a short launcher:
 
-**Only one of the two halves lives here.** `wazuh-credentials.sh`, the shared half (credentials
-file format, locking, path validation, password policy), is shared with the indexer and the
-manager: all three resolve against the same `/etc/wazuh/credentials.env`, so all three must agree
-on it exactly. It is owned by
-[wazuh-installation-assistant](https://github.com/wazuh/wazuh-installation-assistant) under
-`credentials_lib/`, and `base/base-builder.sh` downloads it at package build time into
-`lib/wazuh-credentials.sh` (`root:root 0644`, in a `root:root 0755` `lib/`).
-It is not committed here, because a copy in this repository is a copy that can drift. The service
-user cannot write it, but must be able to read `lib/`: at startup the dashboard's i18n loader lists every
-top-level directory of the installation root and exits on `EACCES`.
+| Installed as                                            | Mode             | Source                   |
+| ------------------------------------------------------- | ---------------- | ------------------------ |
+| `/usr/share/wazuh-dashboard/bin/resolve-credentials`    | `root:root 0750` | `resolve-credentials`    |
+| `/usr/share/wazuh-dashboard/bin/resolve-credentials.js` | `root:root 0644` | `resolve-credentials.js` |
 
-## What the dashboard resolves
+The launcher fixes `PATH`, drops `LD_PRELOAD`, `LD_LIBRARY_PATH`, `NODE_OPTIONS` and `NODE_PATH`,
+and runs the program with `node/bin/node`. Certificates are issued with `node-forge` and parsed
+with Node's `crypto`; `opensearch_dashboards.yml` is read with `js-yaml`. Both are already in
+`node_modules`. From the host it uses only `getent` (glibc), `systemctl`, and `restorecon` when
+present.
 
-The dashboard owns no shared credential and publishes nothing into `credentials.env`. It consumes
-two passwords into its keystore:
+## Per-package model
 
-| Key                                   | Env-only alias     | Account                 | Owner   | Keystore entries                                              |
-| ------------------------------------- | ------------------ | ----------------------- | ------- | ------------------------------------------------------------- |
-| `WAZUH_INDEXER_KIBANASERVER_PASSWORD` | `INDEXER_PASSWORD` | `kibanaserver`          | Indexer | `opensearch.username` (`kibanaserver`), `opensearch.password` |
-| `WAZUH_MANAGER_WUI_PASSWORD`          | `API_PASSWORD`     | `wazuh-internal-client` | Manager | `wazuh_core.hosts.default.password`                           |
+Each Wazuh package owns one configuration directory and publishes what its peers need in its own
+`export/`. `/etc/wazuh` is never created or read.
 
-The manager account was named `wazuh-wui` before Wazuh 5.0.0. The credentials key keeps its `WUI`
-name.
+```
+/etc/wazuh-dashboard
+  opensearch_dashboards.keystore   root:wazuh-dashboard 0640
+  local.env                        root:root 0600, optional, the operator's
+  ca/                              root:root 0700, the dashboard CA
+    root-ca.pem, root-ca.key
+    .wazuh-dashboard-bootstrap-ca  marker: this install minted the CA
+  export/                          root:root 0700
+    ca.pem                         the dashboard CA certificate
+  certs/                           root:wazuh-dashboard 0750
+    dashboard.pem, dashboard-key.pem
+    indexer-ca.pem, manager-ca.pem imported from the peers (or staged by the operator)
+    root-ca.pem                    trust bundle
+    .root-ca.managed               marker: the package wrote the bundle
+```
 
-The dashboard also owns one secret of its own, `wazuh_ai_assistant.encryptionKey`, which the AI
-assistant encrypts the provider API keys it stores with. It is generated (32 random bytes, base64)
-straight into the keystore by `--install` and `--prestart` when neither the keystore nor
-`opensearch_dashboards.yml` has it, never by `--upgrade`, and never published. An existing key is
-never replaced. Failing to generate it is a warning only: the AI assistant is optional.
+## Values
 
-For each consumed key, the ladder is:
+| Key                                   | Env-only alias     | Publisher                                   | Keystore entries                                              |
+| ------------------------------------- | ------------------ | ------------------------------------------- | ------------------------------------------------------------- |
+| `WAZUH_INDEXER_KIBANASERVER_PASSWORD` | `INDEXER_PASSWORD` | `/etc/wazuh-indexer/export/credentials.env` | `opensearch.username` (`kibanaserver`), `opensearch.password` |
+| `WAZUH_MANAGER_WUI_PASSWORD`          | `API_PASSWORD`     | `/etc/wazuh-manager/export/credentials.env` | `wazuh_core.hosts.default.password`                           |
+| `WAZUH_DASHBOARD_CERT_SANS`           |                    |                                             | (certificate SANs, `DNS:x,IP:y,...`)                          |
 
-0. The keystore entry already exists, or the setting is configured in
-   `opensearch_dashboards.yml`: resolved. Nothing is written, so the yml keeps authority (the
-   keystore is merged over it at start). A yml `opensearch.username` is never overwritten with
-   `kibanaserver`, and without a `wazuh_core.hosts.default` host the `wazuh-internal-client` entry
-   is not needed. The yml is read with the dashboard's own Node and `@osd/config`; if it cannot be
-   read, the check is skipped.
-1. The process environment (scoped name, then alias), then `credentials.env`: stored in the
-   keystore through stdin. The password policy is enforced by the owners (the indexer and the
-   manager), not here. The dashboard only checks that the keystore stores the value verbatim:
-   `keystore add` trims it and stores it `JSON.parse`d, so a value that is JSON (a number, `true`,
-   a quoted string, an array or an object) or has surrounding whitespace is reported as
-   `INVALID`, naming the key and the rule, never the value.
-2. Never generated: inventing a value does not make the peer accept it.
-3. Absent everywhere: unresolved.
+The first hit wins: the process environment (scoped name, then alias), then
+`/etc/wazuh-dashboard/local.env`, then the publisher's `export/credentials.env`. An empty value is
+no hit.
+
+- A password already in the keystore or set in `opensearch_dashboards.yml` is never overwritten.
+  An operator's `opensearch.username` is never replaced with `kibanaserver`. Without a
+  `wazuh_core.hosts.default` host, the manager password is not needed.
+- `keystore add` trims the value and stores it `JSON.parse`d, so a value that is JSON or has
+  surrounding whitespace is reported as `INVALID`, naming the key, never the value.
+- `wazuh_ai_assistant.encryptionKey` (32 random bytes, base64) is generated by `--install` and
+  `--prestart` when neither the keystore nor the yml has it. Failing is a warning only.
+
+The keystore CLI runs as root with `--allow-root`, an empty environment (`OSD_PATH_CONF` only),
+from `/`. The keystore is set to `root:wazuh-dashboard 0640` after every operation.
+
+## Trust rules
+
+Every file read as root must be a regular file (no symlink) in a regular directory, both owned by
+root and neither group- nor world-writable. Anything else is reported as `UNSAFE <path>: <reason>`
+and is never used, repaired or followed. Files are opened with `O_NOFOLLOW` and checked through
+the descriptor. Writes go to a temporary file in the same trusted directory followed by a rename.
 
 ## Certificates
 
-`opensearch_dashboards.yml` serves HTTPS from `/etc/wazuh-dashboard/certs/dashboard.pem` and
-`dashboard-key.pem`, and trusts the indexer and the manager's Server API (the `ca` of
-`wazuh_core.hosts.default`) through `certs/root-ca.pem`. A fresh install
-(`--install` only) issues whatever of that is missing from the **shared CA**, the one the manager
-and the indexer use (`/etc/wazuh/ca`, or `WAZUH_CA_DIR`), through the shared library's
-`_wazuh_ca_ensure_locked`, under its lock:
+Issued by `--install` only:
 
-| Shared CA                       | Result                                                                                                                     |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Absent                          | A CA is minted there (`root-ca.pem` + `root-ca.key`), and the pair is issued from it. Components installed later reuse it. |
-| Anchor and key present          | Reused: the pair is issued from it.                                                                                        |
-| Anchor only (managed elsewhere) | `root-ca.pem` is installed, but no pair can be issued: stage one.                                                          |
+- `certs/dashboard.pem` and `dashboard-key.pem` present: left alone. Only one of them: error.
+- Both absent: the CA in `ca/` is used, or minted when `ca/` has none
+  (`CN=wazuh-dashboard-<host>, OU=Wazuh, O=Wazuh, L=California, C=US`, 10 years, marker dropped).
+  A pair staged in `ca/` by the operator (no marker) is validated and used, and never removed.
+  The leaf is RSA 2048, SHA-256, 10 years, `serverAuth,clientAuth`, `CN=<host>`. Its SANs are
+  `DNS:<host>`, the FQDN when it differs, every global address of the default-route interfaces,
+  or `WAZUH_DASHBOARD_CERT_SANS`; `localhost`, `127.0.0.1` and `::1` are always added. The CA
+  certificate is published as `export/ca.pem`.
 
-- An existing complete pair is kept as it is (checked, never replaced). This is how an operator
-  supplies their own, e.g. from `wazuh-certs-tool`. A pair staged before install is root's (the
-  service user does not exist yet), so the packages give `certs/` to `wazuh-dashboard` before the
-  resolver runs: DEB with its `chown -R` of the configuration directory, RPM in `%post`.
-- A partial pair (only the certificate or only the key) is refused, not completed.
-- With no shared CA but dashboard material already present, no CA is minted.
-- When the install mints the shared CA it records that with `.wazuh-dashboard-bootstrap-ca` in the
-  CA directory. That marker is the only thing that lets `--clear` delete the CA later.
-- An existing `certs/root-ca.pem` is kept, even when it is not the shared CA.
-- The leaf is RSA 2048 / SHA-256, valid 3650 days, `serverAuth,clientAuth`. Its CN is
-  `WAZUH_DASHBOARD_NODE_NAME` or `hostname -s`. Its SANs are `WAZUH_DASHBOARD_CERT_SANS` (an exact
-  comma-separated list, `DNS:`/`IP:` or untyped; environment, then `credentials.env`) or, by
-  default, the node name, the FQDN and every global-scope address. Loopback is always added.
-- Files, the SAN list included, are staged in a root-only directory and published with `ln -T`,
-  key first. A new `certs/` directory gets `wazuh-certs-tool`'s layout: `0500`, files `0400`,
-  `wazuh-dashboard:wazuh-dashboard`.
-- `--upgrade` and `--prestart` never touch the certificates. A failed issue is reported by
-  `--install` itself, and exits `0`.
-- Each step of the issue is printed only with `WAZUH_DASHBOARD_VERBOSE=1` (e.g.
-  `sudo WAZUH_DASHBOARD_VERBOSE=1 apt install ./wazuh-dashboard.deb`). Problems always print.
+The trust bundle is refreshed by `--install` and `--prestart`: each peer's `export/ca.pem` is
+imported into `certs/<peer>-ca.pem` when present, valid and different, and `certs/root-ca.pem`
+is written from the `<peer>-ca.pem` files with the `.root-ca.managed` marker. A `root-ca.pem`
+without the marker belongs to the operator (or RC1) and is left alone.
 
 ## Modes
 
-| Mode         | Called from                                  | Exit status                                                                                                                                                       |
-| ------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--install`  | fresh `postinst` / `%post`                   | always `0`; warns only when the certificates cannot be issued                                                                                                     |
-| `--upgrade`  | `postinst` / `%post` on upgrade              | always `0`, no warning                                                                                                                                            |
-| `--prestart` | `ExecStartPre=+` and the SysV init start     | `1` naming every unresolved or invalid key                                                                                                                        |
-| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the three keystore entries above, the AI assistant key, the certificates, and the shared CA only when this dashboard minted it (marker); must run as root |
+`bin/resolve-credentials --install|--upgrade|--prestart|--clear [-H <config-dir>]`, as root.
+`WAZUH_DASHBOARD_VERBOSE=1` prints detail lines.
 
-`--install` ends with the dashboard URL (the first global address in `dashboard.pem`), the login
-user (`admin`, with `WAZUH_INDEXER_ADMIN_PASSWORD` from the indexer host) and the start command.
+| Mode         | Called from                                  | Does                                                                                                                              | Exit status                                                                                               |
+| ------------ | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `--install`  | fresh `postinst` / `%post`                   | everything; ends with the dashboard URL and login hint                                                                            | always `0`                                                                                                |
+| `--upgrade`  | `postinst` / `%post` on upgrade              | keystore and passwords only                                                                                                       | always `0`                                                                                                |
+| `--prestart` | `ExecStartPre=+` and the SysV init start     | passwords, AI key, trust bundle                                                                                                   | `1` with one `MISSING`, `INVALID` or `UNSAFE` line per problem: a password, `root-ca.pem` or the TLS pair |
+| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the keystore entries above, the pair, the imports, the managed bundle, the minted CA (a staged one is kept) and `export/` | `1` when the dashboard is running or something could not be removed                                       |
 
-`--install` and `--upgrade` also create `/etc/wazuh` (`0700`) and an empty `credentials.env`
-(`0600 root:root`) when the dashboard is the first Wazuh package on the host.
+## Tests
 
-`--clear` enters `certs/` the way the install does and removes the files relative to it. A
-`certs/` that is a symbolic link or not a directory is refused, and the clear fails.
-
-Run as root, every mode starts the keystore and Node as `wazuh-dashboard` in a session of their
-own (`setsid`), without a controlling terminal, and with an empty environment except `PATH` and
-`OSD_PATH_CONF` (`env -i`).
-
-`-H <dir>` sets the installation directory (default: derived from the script's location).
-`WAZUH_BASE_DIR` moves `/etc/wazuh`, as for every other consumer of the library.
-
-## Building
-
-`build-packages.sh` copies this directory into the base builder. `base-builder.sh` then installs
-the script and downloads the library from
-`https://raw.githubusercontent.com/wazuh/wazuh-installation-assistant/<ref>/credentials_lib/wazuh-credentials.sh`.
-
-The ref is chosen the way the manager's `make deps` chooses it. The Wazuh repositories cut the
-same tag names, so a tag build downloads the library from the matching tag. `build-packages.sh`
-computes an ordered list, and the first ref that exists wins:
-
-1. `WAZUH_CREDENTIALS_LIB_REF`, when set: an explicit override.
-2. The tag being built (`GITHUB_REF_NAME` when `GITHUB_REF_TYPE=tag`, else
-   `git describe --tags --exact-match`). A tag build tries **only** this, after the override: a
-   release never falls back to a branch that keeps moving, so a tag missing upstream fails the
-   build.
-3. The branch being built. This only exists upstream when the branch was created there too; a
-   feature branch 404s and falls through.
-4. The version branch (`5.0.0`), then the version tag (`v5.0.0`).
-
-- `WAZUH_CREDENTIALS_LIB_SHA256`: when set, the download must match it.
-
-A failed download or a checksum mismatch fails the build. There is no bundled fallback.
+```bash
+node --test dev-tools/build-packages/credentials/resolve-credentials.test.js
+```

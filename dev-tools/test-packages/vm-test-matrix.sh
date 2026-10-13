@@ -551,8 +551,8 @@ case_fresh_install() {
   WAZUH_DASHBOARD_VERBOSE=0 install_ok "${DASHBOARD_PKG}"
   check "user ${NAME} exists" id "${NAME}"
   check "resolver is root:root 750" perm_is "${RESOLVER}" root:root:750
-  check "lib/ is root:root 755" perm_is "${INSTALL_DIR}/lib" root:root:755
-  check "shared library is root:root 644" perm_is "${INSTALL_DIR}/lib/wazuh-credentials.sh" root:root:644
+  check "resolver program is root:root 644" perm_is "${RESOLVER}.js" root:root:644
+  check_not "no lib/ in ${INSTALL_DIR}" test -e "${INSTALL_DIR}/lib"
   check "${INSTALL_DIR} is root:root 755" perm_is "${INSTALL_DIR}" root:root:755
   check "data/ is ${NAME} 750" perm_is "${INSTALL_DIR}/data" "${NAME}:${NAME}:750"
   check "${ENV_FILE} is root:${NAME} 640" perm_is "${ENV_FILE}" "root:${NAME}:640"
