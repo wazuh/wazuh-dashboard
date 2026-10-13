@@ -114,6 +114,7 @@ CASES=(
   "D21|No wazuh_core default host: wazuh-internal-client not needed|case_no_wazuh_host|dashboard"
   "D22|--clear refuses a certs/ symlink|case_clear_symlinked_certs|dashboard"
   "D23|Service-user children: no terminal, no root environment|case_children_isolated|dashboard"
+  "D24|Declared dependencies, package scripts and payload|case_declared_dependencies|dashboard"
   "F01|Install order: indexer, manager, dashboard|case_order_imd|full"
   "F02|Install order: indexer, dashboard, manager|case_order_idm|full"
   "F03|Install order: manager, indexer, dashboard|case_order_mid|full"
@@ -1060,6 +1061,72 @@ EOF
   check "the probe ran in the keystore's Node" test -s "${probe_log}"
   check_not "no child opened root's terminal" grep -q 'tty=open' "${probe_log}"
   check_not "no child saw root's environment" grep -q 'canary=true' "${probe_log}"
+}
+
+# The package scripts, without comment lines, as the package manager stored them.
+pkg_scripts() {
+  case "${FAMILY}" in
+    deb) cat /var/lib/dpkg/info/"${NAME}".{preinst,postinst,prerm,postrm} 2>/dev/null ;;
+    rpm) rpm -q --scripts "${NAME}" ;;
+  esac | grep -v '^[[:space:]]*#'
+}
+
+# calls <tool...>: a package script runs one of the tools as a command.
+calls() {
+  local tools
+  tools=$(IFS='|'; echo "$*")
+  pkg_scripts | grep -Eq "(^|[;&|(\`[:space:]])(${tools})([[:space:]]|\$)"
+}
+
+case_declared_dependencies() {
+  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  install_ok "${DASHBOARD_PKG}"
+  step "Declared dependencies"
+  case "${FAMILY}" in
+    deb)
+      info "Depends: $(dpkg-query -W -f='${Depends}' "${NAME}")"
+      check "Depends is passwd only" [ "$(dpkg-query -W -f='${Depends}' "${NAME}")" = "passwd" ]
+      ;;
+    rpm)
+      local requires
+      requires=$(rpm -qR "${NAME}" | grep -v '^rpmlib(' | sed 's/[[:space:]]*$//' | sort -u | tr '\n' ' ')
+      info "Requires (without rpmlib): ${requires}"
+      check "Requires is /bin/sh and the account tools only" \
+        [ "${requires}" = "/bin/sh /usr/sbin/groupadd /usr/sbin/groupdel /usr/sbin/useradd /usr/sbin/userdel " ]
+      ;;
+  esac
+  step "Package scripts run only builtins, coreutils and the declared tools"
+  check_not "no script calls awk, ps, pgrep, openssl, curl, runuser or setcap" \
+    calls awk ps pgrep openssl curl runuser setcap
+  case "${FAMILY}" in
+    deb)
+      check_not "no script calls adduser or addgroup" calls adduser addgroup
+      check_not "the SysV script does not call ps" grep -Eq '(^|[[:space:]])ps[[:space:]]' \
+        "/usr/lib/systemd/system/${NAME}"
+      check "the service user has no login shell" \
+        [ "$(getent passwd "${NAME}" | cut -d: -f6-7)" = "/nonexistent:/usr/sbin/nologin" ]
+      ;;
+    rpm)
+      check_not "no scriptlet calls grep, sed or find" calls grep sed find
+      check "the scriptlets keep the %% operators" pkg_scripts_have '${json%%' '${INSTALLED_VER%%.*}'
+      ;;
+  esac
+  step "Payload"
+  local list
+  case "${FAMILY}" in
+    deb) list=$(dpkg -L "${NAME}") ;;
+    rpm) list=$(rpm -ql "${NAME}") ;;
+  esac
+  check_not "no test/ or tests/ directory is shipped" grep -Eq '/tests?(/|$)' <<<"${list}"
+}
+
+# pkg_scripts_have <text...>: every text is in the package scripts.
+pkg_scripts_have() {
+  local scripts text
+  scripts=$(pkg_scripts)
+  for text in "$@"; do
+    contains "${scripts}" "${text}" || return 1
+  done
 }
 
 # -----------------------------------------------------------------------------------------
