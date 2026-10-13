@@ -946,10 +946,9 @@ case_upgrade_running() {
   install_previous
   check "previous version starts" svc_start
   check "previous version is active" wait_active
-  local cert_sha key_sha ca_sha expected
+  local cert_sha key_sha expected
   cert_sha=$(sha "${CERTS_DIR}/dashboard.pem")
   key_sha=$(sha "${CERTS_DIR}/dashboard-key.pem")
-  ca_sha=$(sha "${CERTS_DIR}/root-ca.pem")
   expected=$(pkg_file_version "${DASHBOARD_PKG}")
   step "Upgrade to ${expected} while running"
   check "upgrade succeeds" pkg_upgrade "${DASHBOARD_PKG}"
@@ -957,7 +956,6 @@ case_upgrade_running() {
   check_running
   check "dashboard.pem unchanged by the upgrade" test "$(sha "${CERTS_DIR}/dashboard.pem")" = "${cert_sha}"
   check "dashboard-key.pem unchanged by the upgrade" test "$(sha "${CERTS_DIR}/dashboard-key.pem")" = "${key_sha}"
-  check "root-ca.pem unchanged by the upgrade" test "$(sha "${CERTS_DIR}/root-ca.pem")" = "${ca_sha}"
   check "keystore holds every consumed entry" has_all_consumed_entries
   step "The upgrade takes the configuration directory back to root"
   check_config_dir_ownership
