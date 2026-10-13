@@ -33,6 +33,7 @@
 | [wazuh-dashboard-plugins#9300](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9300) | Changed the Server API user of the default host from `wazuh-wui` to `wazuh-internal-client`, following its rename in the Wazuh manager                                                              |
 | [#1630](https://github.com/wazuh/wazuh-dashboard/issues/1630)                                | Changed the production build to compress and mangle the browser bundles, reducing the JavaScript the browser downloads by about a quarter                                                           |
 | [#1665](https://github.com/wazuh/wazuh-dashboard/issues/1665)                                | Changed the credential resolver to run on the bundled Node, read the peers' `export/` directories and its own `local.env` instead of `/etc/wazuh`, and mint its own CA in `/etc/wazuh-dashboard/ca` |
+| [#1666](https://github.com/wazuh/wazuh-dashboard/issues/1666)                                | Changed the packages to install `/etc/wazuh-dashboard` as `root:wazuh-dashboard`, so the service reads its configuration, keystore and certificates through its group and cannot modify them        |
 
 ### Removed
 
