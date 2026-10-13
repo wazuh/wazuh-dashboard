@@ -36,11 +36,8 @@ configure)
         chown root:"${NAME}" /etc/default/"${NAME}"
         chmod 640 /etc/default/"${NAME}"
     fi
-    # The configuration directory is root's and the service reads it through its group, so a
-    # compromised service cannot rewrite its configuration, keystore or TLS material. This also
-    # takes back a directory the service user owned (5.0.0 RC1) or one staged by the operator
-    # before the install, and must run before the resolver, which refuses a directory that is
-    # not root's. Nothing here follows a symbolic link.
+    # Root owns the configuration directory; the service reads it through its group.
+    # Runs before the resolver, which refuses a directory not owned by root.
     if [ -d "${CONFIG_DIR}" ] && [ ! -L "${CONFIG_DIR}" ]; then
         chown root:"${NAME}" "${CONFIG_DIR}"
         chmod 750 "${CONFIG_DIR}"
@@ -90,8 +87,7 @@ configure)
     else
         "${INSTALLATION_DIR}"/bin/resolve-credentials --install || true
     fi
-    # The keystore holds secrets under an empty password: root's, read by the service through
-    # its group, on fresh installs and on upgrades of keystores created with another owner or mode
+    # The keystore holds secrets under an empty password
     if [ -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ] && [ ! -L "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
         chown root:"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
         chmod 640 "${CONFIG_DIR}"/opensearch_dashboards.keystore

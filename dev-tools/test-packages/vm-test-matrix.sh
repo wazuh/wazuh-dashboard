@@ -807,9 +807,6 @@ case_operator_pair() {
   check "root-ca.pem unchanged" test "$(sha "${CERTS_DIR}/root-ca.pem")" = "${ca_sha}"
   check "no shared CA minted over operator material" absent "${CA_DIR}/root-ca.pem"
 
-  # Staged root's and private, before the service user exists -- which is what the installation
-  # assistant does. The package keeps it root's and opens it to the service's group, which reads
-  # the pair after dropping privileges.
   step "The staged directory is opened to the service's group and the dashboard starts with it"
   local f
   for f in dashboard.pem dashboard-key.pem root-ca.pem; do

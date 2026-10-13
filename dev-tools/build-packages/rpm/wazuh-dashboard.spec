@@ -176,13 +176,8 @@ if [ -f /etc/default/wazuh-dashboard ]; then
   chmod 640 /etc/default/wazuh-dashboard
 fi
 
-# The configuration directory is root's and the service reads it through its
-# group, so a compromised service cannot rewrite its configuration, keystore or
-# TLS material. This also takes back a directory the service user owned (5.0.0
-# RC1), one staged by the operator or the installation assistant before the
-# install, and what a removal left to root, and must run before the resolver,
-# which refuses a directory that is not root's. Nothing here follows a symbolic
-# link.
+# Root owns the configuration directory; the service reads it through its group.
+# Runs before the resolver, which refuses a directory not owned by root.
 if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
   chown root:%{GROUP} %{CONFIG_DIR}
   chmod 750 %{CONFIG_DIR}
@@ -222,8 +217,7 @@ if [ $1 = 1 ]; then
 else
   %{INSTALL_DIR}/bin/resolve-credentials --upgrade || true
 fi
-# The keystore holds secrets under an empty password: root's, read by the service through
-# its group, on fresh installs and on upgrades of keystores created with another owner or mode
+# The keystore holds secrets under an empty password
 if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ] && [ ! -L %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
   chown root:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
   chmod 640 %{CONFIG_DIR}/opensearch_dashboards.keystore
