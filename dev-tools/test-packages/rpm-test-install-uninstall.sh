@@ -85,6 +85,7 @@ else
   journalctl -u wazuh-dashboard --no-pager | tail -50
   exit 1
 fi
+bash "$(dirname "$0")/check-service-bind.sh"
 
 echo "==> Checking the keystore for wazuh_ai_assistant.encryptionKey"
 # Capture before grepping: `grep -q` closes the pipe on the first match, and under pipefail the

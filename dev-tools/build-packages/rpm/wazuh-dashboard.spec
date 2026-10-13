@@ -309,6 +309,11 @@ if [ ! -d %{PID_DIR} ]; then
     chown %{USER}:%{GROUP} %{PID_DIR}
 fi
 
+# Load the new unit even if the service is stopped, so its next start gets the capability
+if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
+  systemctl daemon-reload > /dev/null 2>&1 || true
+fi
+
 if [ -f %{INSTALL_DIR}/wazuh-dashboard.restart ]; then
   rm -f %{INSTALL_DIR}/wazuh-dashboard.restart
   if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then

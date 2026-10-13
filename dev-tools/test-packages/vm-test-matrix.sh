@@ -342,20 +342,26 @@ wait_tls() {
   return 1
 }
 
-# Non-root, with only CAP_NET_BIND_SERVICE (0x400) granted by the unit.
+# Non-root, with only CAP_NET_BIND_SERVICE (0x400), granted by the unit (CapAmb) and bounded by it (CapBnd).
 proc_caps_ok() {
   local pid
   pid=$(systemctl show -p MainPID --value "${NAME}" 2>/dev/null)
   [ -n "${pid}" ] && [ "${pid}" != 0 ] || return 1
-  awk '/^Uid:/ { uid = $2 } /^CapEff:/ { eff = $2 } END { exit !(uid != 0 && eff == "0000000000000400") }' \
+  awk -v want=0000000000000400 '/^Uid:/ { uid = $2 } /^Cap(Eff|Amb|Bnd):/ { cap[$1] = $2 }
+    END { exit !(uid != 0 && cap["CapEff:"] == want && cap["CapAmb:"] == want && cap["CapBnd:"] == want) }' \
     "/proc/${pid}/status"
 }
 
-no_file_caps() { [ -z "$(getcap "${INSTALL_DIR}/node/bin/node" 2>/dev/null)" ]; }
+no_file_caps() {
+  local node="${INSTALL_DIR}/node/bin/node" caps
+  [ -e "${node}" ] || return 1
+  caps=$(getcap "${node}") || return 1
+  [ -z "${caps}" ]
+}
 
 check_running() {
   check "service is active and stable" wait_active
-  check "runs as non-root with only CAP_NET_BIND_SERVICE" proc_caps_ok
+  check "runs as non-root with only CAP_NET_BIND_SERVICE, from the unit" proc_caps_ok
   if command -v getcap >/dev/null 2>&1; then
     check "node binary has no file capability" no_file_caps
   fi
