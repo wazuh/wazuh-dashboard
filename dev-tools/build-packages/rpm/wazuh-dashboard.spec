@@ -59,6 +59,8 @@ useradd -g %{GROUP} %{USER}
 tar -xf %{DASHBOARD_FILE}
 sed -i 's/OSD_NODE_OPTS_PREFIX/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_NODE_OPTS_PREFIX/g' "wazuh-dashboard-base/bin/opensearch-dashboards"
 sed -i 's/OSD_USE_NODE_JS_FILE_PATH/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_USE_NODE_JS_FILE_PATH/g' "wazuh-dashboard-base/bin/opensearch-dashboards-keystore"
+# The test suites of the bundled packages are not shipped
+find wazuh-dashboard-base -type d \( -name test -o -name tests \) -prune -exec rm -rf {} +
 
 
 # -----------------------------------------------------------------------------
