@@ -11,8 +11,8 @@ runtime the package bundles, through a short launcher:
 
 The launcher fixes `PATH`, drops `LD_PRELOAD`, `LD_LIBRARY_PATH`, `NODE_OPTIONS` and `NODE_PATH`,
 and runs the program with `node/bin/node`. Certificates are issued with `node-forge` and parsed
-with Node's `crypto`; `opensearch_dashboards.yml` is read with `js-yaml`. Both are already in
-`node_modules`. From the host it uses only `getent` (glibc), `systemctl`, and `restorecon` when
+with Node's `crypto`; `opensearch_dashboards.yml` is read with `js-yaml`. Both are declared in
+the root `package.json`. From the host it uses only `getent` (glibc), `systemctl`, and `restorecon` when
 present.
 
 ## Per-package model
@@ -31,10 +31,12 @@ Each Wazuh package owns one configuration directory and publishes what its peers
     ca.pem                         the dashboard CA certificate
   certs/                           root:wazuh-dashboard 0750
     dashboard.pem, dashboard-key.pem
-    indexer-ca.pem, manager-ca.pem imported from the peers (or staged by the operator)
-    root-ca.pem                    trust bundle
-    .root-ca.managed               marker: the package wrote the bundle
+    indexer-ca.pem                 verifies the indexer (opensearch.ssl.certificateAuthorities)
+    manager-ca.pem                 verifies the Server API (wazuh_core.hosts.default.ca)
+    .indexer-ca.imported, .manager-ca.imported   markers: the package imported the file
 ```
+
+Each connection is verified with its own peer's CA; there is no merged bundle.
 
 ## Values
 
@@ -64,7 +66,13 @@ from `/`. The keystore is set to `root:wazuh-dashboard 0640` after every operati
 Every file read as root must be a regular file (no symlink) in a regular directory, both owned by
 root and neither group- nor world-writable. Anything else is reported as `UNSAFE <path>: <reason>`
 and is never used, repaired or followed. Files are opened with `O_NOFOLLOW` and checked through
-the descriptor. Writes go to a temporary file in the same trusted directory followed by a rename.
+the descriptor. `--prestart` runs the same checks over `certs/`, `ca/` and `export/` at every
+start, whether or not anything is left to resolve.
+
+Writes go to a temporary file followed by a rename, through a descriptor on the target directory
+opened with `O_DIRECTORY|O_NOFOLLOW` and checked with `fstat`. Node has no `renameat`, so the names
+are resolved through `/proc/self/fd/<fd>/`. A new directory is created with `mkdir`, and its owner
+and mode are set through a descriptor, never by path.
 
 ## Certificates
 
@@ -74,27 +82,38 @@ Issued by `--install` only:
 - Both absent: the CA in `ca/` is used, or minted when `ca/` has none
   (`CN=wazuh-dashboard-<host>, OU=Wazuh, O=Wazuh, L=California, C=US`, 10 years, marker dropped).
   A pair staged in `ca/` by the operator (no marker) is validated and used, and never removed.
-  The leaf is RSA 2048, SHA-256, 10 years, `serverAuth,clientAuth`, `CN=<host>`. Its SANs are
-  `DNS:<host>`, the FQDN when it differs, every global address of the default-route interfaces,
-  or `WAZUH_DASHBOARD_CERT_SANS`; `localhost`, `127.0.0.1` and `::1` are always added. The CA
-  certificate is published as `export/ca.pem`.
+  The leaf is RSA 2048, SHA-256, 10 years backdated one day, `serverAuth,clientAuth`,
+  `CN=<host>`. `dashboard.pem` holds the leaf followed by the CA. Its SANs are `DNS:<host>`, the
+  FQDN when it differs, every global address of the default-route interfaces, or
+  `WAZUH_DASHBOARD_CERT_SANS` (an empty list is refused); `localhost`, `127.0.0.1` and `::1` are
+  always added. The CA certificate is published as `export/ca.pem`.
 
-The trust bundle is refreshed by `--install` and `--prestart`: each peer's `export/ca.pem` is
-imported into `certs/<peer>-ca.pem` when present, valid and different, and `certs/root-ca.pem`
-is written from the `<peer>-ca.pem` files with the `.root-ca.managed` marker. A `root-ca.pem`
-without the marker belongs to the operator (or RC1) and is left alone.
+## Peer CAs
+
+`--install` and `--prestart` keep one file per peer, `certs/indexer-ca.pem` and
+`certs/manager-ca.pem`:
+
+1. **Staged:** present without its `.<peer>-ca.imported` marker. The operator's (another host, an
+   external PKI): used as is, never replaced, never cleared.
+2. **Imported:** absent, or present with the marker. Copied from the peer's `export/ca.pem`
+   whenever it differs, so a reinstalled peer is picked up at the next start.
+3. Either way it must be a CA certificate, otherwise `--prestart` reports `INVALID <path>`.
+
+A missing `indexer-ca.pem` stops the start. A missing `manager-ca.pem` is a warning: the dashboard
+starts, and the Server API connection is refused until the manager is installed and the
+dashboard restarted.
 
 ## Modes
 
 `bin/resolve-credentials --install|--upgrade|--prestart|--clear [-H <config-dir>]`, as root.
 `WAZUH_DASHBOARD_VERBOSE=1` prints detail lines.
 
-| Mode         | Called from                                  | Does                                                                                                                              | Exit status                                                                                               |
-| ------------ | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `--install`  | fresh `postinst` / `%post`                   | everything; ends with the dashboard URL and login hint                                                                            | always `0`                                                                                                |
-| `--upgrade`  | `postinst` / `%post` on upgrade              | keystore and passwords only                                                                                                       | always `0`                                                                                                |
-| `--prestart` | `ExecStartPre=+` and the SysV init start     | passwords, AI key, trust bundle                                                                                                   | `1` with one `MISSING`, `INVALID` or `UNSAFE` line per problem: a password, `root-ca.pem` or the TLS pair |
-| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the keystore entries above, the pair, the imports, the managed bundle, the minted CA (a staged one is kept) and `export/` | `1` when the dashboard is running or something could not be removed                                       |
+| Mode         | Called from                                  | Does                                                                                                                    | Exit status                                                                                                  |
+| ------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `--install`  | fresh `postinst` / `%post`                   | everything; ends with the dashboard URL and login hint                                                                  | always `0`                                                                                                   |
+| `--upgrade`  | `postinst` / `%post` on upgrade              | keystore and passwords only                                                                                             | always `0`                                                                                                   |
+| `--prestart` | `ExecStartPre=+` and the SysV init start     | file checks, passwords, AI key, peer CAs                                                                                | `1` with one `MISSING`, `INVALID` or `UNSAFE` line per problem: a password, `indexer-ca.pem` or the TLS pair |
+| `--clear`    | image builds only (e.g. end of a Dockerfile) | removes the keystore entries above, the pair, the imported peer CAs, the minted CA (staged ones are kept) and `export/` | `1` when the dashboard is running or something could not be removed                                          |
 
 ## Tests
 

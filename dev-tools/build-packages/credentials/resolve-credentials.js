@@ -10,8 +10,9 @@
  *   --install    fresh postinst / %post. Stores what it can, issues the TLS pair, imports the
  *                peers' CAs and prints where to log in. Always exits 0.
  *   --upgrade    postinst / %post on upgrade. Keystore and passwords only. Always exits 0.
- *   --prestart   the unit's ExecStartPre=+. Resolves again, refreshes the trust bundle, and
- *                exits 1 naming every problem that would keep the dashboard from working.
+ *   --prestart   the unit's ExecStartPre=+. Checks the files, resolves again, re-imports the
+ *                peers' CAs, and exits 1 naming every problem that would keep the dashboard
+ *                from working.
  *   --clear      image builds. Removes what the resolver stored, issued and minted.
  *
  * Per-package model: the dashboard owns /etc/wazuh-dashboard (its CA in ca/, what it publishes in
@@ -31,15 +32,15 @@ const { spawnSync } = require('child_process');
 
 const SERVICE = 'wazuh-dashboard';
 const PID_FILE = '/run/wazuh-dashboard/wazuh-dashboard.pid';
-const TEN_YEARS_MS = 3650 * 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const TEN_YEARS_MS = 3650 * ONE_DAY_MS;
 
 const CA_MARKER = '.wazuh-dashboard-bootstrap-ca';
-const BUNDLE_MARKER = '.root-ca.managed';
 const CERT = 'dashboard.pem';
 const KEY = 'dashboard-key.pem';
-const BUNDLE = 'root-ca.pem';
 
-// What each peer publishes and what the dashboard takes from it.
+// What each peer publishes and what the dashboard takes from it. Each connection is verified
+// with its own peer's CA, in certs/<name>-ca.pem.
 const PEERS = [
   {
     name: 'indexer',
@@ -49,6 +50,9 @@ const PEERS = [
     account: "the indexer's kibanaserver account",
     entry: 'opensearch.password',
     username: { entry: 'opensearch.username', value: 'kibanaserver' },
+    // Without the indexer CA the dashboard cannot work at all.
+    caRequired: true,
+    caMissing: 'no CA to verify the indexer with',
   },
   {
     name: 'manager',
@@ -59,8 +63,15 @@ const PEERS = [
     entry: 'wazuh_core.hosts.default.password',
     // Without a default host there is nothing to authenticate.
     neededIf: 'wazuh_core.hosts.default',
+    caRequired: false,
+    caMissing:
+      'the Server API connection is refused until it is present; ' +
+      'once wazuh-manager is installed, the next start imports it',
   },
 ];
+
+const peerCa = (peer) => `${peer.name}-ca.pem`;
+const peerMarker = (peer) => `.${peer.name}-ca.imported`;
 
 const AI_KEY_ENTRY = 'wazuh_ai_assistant.encryptionKey';
 const CLEARED_ENTRIES = [
@@ -119,6 +130,7 @@ function trustReason(ctx, stat, kind) {
   }
   if (stat.uid !== ctx.rootUid) return 'it is not owned by root';
   if (stat.mode & 0o022) return 'it is group- or world-writable';
+  if (kind === 'secret' && stat.mode & 0o044) return 'it is group- or world-readable';
   return null;
 }
 
@@ -146,7 +158,7 @@ function trustedDir(ctx, dir) {
 // The file's contents, undefined when it (or its directory) is absent, null when unsafe.
 // Opened without following a link and checked through the descriptor, so a name swapped
 // between the check and the read is not read.
-function readTrusted(ctx, file) {
+function readTrusted(ctx, file, kind = 'file') {
   const dirState = trustedDir(ctx, path.dirname(file));
   if (dirState !== true) return dirState === false ? undefined : null;
   let fd;
@@ -165,7 +177,7 @@ function readTrusted(ctx, file) {
     return null;
   }
   try {
-    const reason = trustReason(ctx, fs.fstatSync(fd), 'file');
+    const reason = trustReason(ctx, fs.fstatSync(fd), kind);
     if (reason) {
       unsafe(ctx, file, reason);
       return null;
@@ -180,39 +192,72 @@ function restorecon(file) {
   spawnSync('restorecon', [file], { stdio: 'ignore' });
 }
 
-// Creates the directory when absent; an existing one must already be trusted.
+const O_DIR = fs.constants.O_RDONLY | fs.constants.O_DIRECTORY | fs.constants.O_NOFOLLOW;
+
+// A descriptor on a real directory owned by root and writable by nobody else, or a thrown error.
+function openTrustedDir(ctx, dir) {
+  const fd = fs.openSync(dir, O_DIR);
+  const reason = trustReason(ctx, fs.fstatSync(fd), 'dir');
+  if (reason) {
+    fs.closeSync(fd);
+    unsafe(ctx, dir, reason);
+    throw new Error(`cannot write in ${dir}`);
+  }
+  return fd;
+}
+
+// A name inside the directory behind `fd`, resolved through the descriptor (what renameat would
+// do), so the directory cannot be swapped for another between the check and the write.
+// ponytail: Node has no *at() calls; /proc/self/fd gives the same on Linux, the plain path is
+// only for running the tests on other systems.
+function at(fd, dir, name) {
+  return fs.existsSync('/proc/self/fd') ? `/proc/self/fd/${fd}/${name}` : path.join(dir, name);
+}
+
+// Creates the directory when absent; an existing one must already be trusted. The owner and the
+// mode of a new directory are set through a descriptor, never by path.
 function ensureDir(ctx, dir, mode, gid) {
   const state = trustedDir(ctx, dir);
   if (state !== false) return state === true;
   fs.mkdirSync(dir, { mode: 0o700 });
-  fs.chownSync(dir, ctx.rootUid, gid);
-  fs.chmodSync(dir, mode);
+  const fd = fs.openSync(dir, O_DIR);
+  try {
+    fs.fchownSync(fd, ctx.rootUid, gid);
+    fs.fchmodSync(fd, mode);
+  } finally {
+    fs.closeSync(fd);
+  }
   restorecon(dir);
   return trustedDir(ctx, dir) === true;
 }
 
-// Temporary file and rename, in a trusted directory.
+// Temporary file and rename, through a descriptor on a trusted directory.
 function writeTrusted(ctx, file, data, { mode = 0o640, gid = serviceGid(ctx) } = {}) {
   const dir = path.dirname(file);
-  if (trustedDir(ctx, dir) !== true) throw new Error(`cannot write ${file}`);
-  const tmp = path.join(dir, `.${path.basename(file)}.${crypto.randomBytes(6).toString('hex')}`);
-  const fd = fs.openSync(
-    tmp,
-    fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW,
-    0o600
-  );
+  const name = path.basename(file);
+  const dfd = openTrustedDir(ctx, dir);
   try {
-    fs.writeFileSync(fd, data);
-    fs.fchownSync(fd, ctx.rootUid, gid);
-    fs.fchmodSync(fd, mode);
-    fs.fsyncSync(fd);
-  } catch (e) {
+    const tmp = at(dfd, dir, `.${name}.${crypto.randomBytes(6).toString('hex')}`);
+    const fd = fs.openSync(
+      tmp,
+      fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW,
+      0o600
+    );
+    try {
+      fs.writeFileSync(fd, data);
+      fs.fchownSync(fd, ctx.rootUid, gid);
+      fs.fchmodSync(fd, mode);
+      fs.fsyncSync(fd);
+    } catch (e) {
+      fs.closeSync(fd);
+      fs.rmSync(tmp, { force: true });
+      throw e;
+    }
     fs.closeSync(fd);
-    fs.rmSync(tmp, { force: true });
-    throw e;
+    fs.renameSync(tmp, at(dfd, dir, name));
+  } finally {
+    fs.closeSync(dfd);
   }
-  fs.closeSync(fd);
-  fs.renameSync(tmp, file);
   restorecon(file);
 }
 
@@ -249,20 +294,24 @@ function parseEnv(text) {
   return values;
 }
 
+// local.env holds passwords, so it must also be unreadable by anyone but root.
 function readEnvFile(ctx, file) {
-  const data = readTrusted(ctx, file);
+  const kind = path.basename(file) === 'local.env' ? 'secret' : 'file';
+  const data = readTrusted(ctx, file, kind);
   return data ? parseEnv(data.toString('utf8')) : {};
 }
 
-function lookup(ctx, key, alias, publisherDir) {
+// An empty value is no hit, unless `allowEmpty`: then it is returned for the caller to refuse.
+function lookup(ctx, key, alias, publisherDir, { allowEmpty = false } = {}) {
+  const hit = (value) => value !== undefined && (value !== '' || allowEmpty);
   for (const name of [key, alias].filter(Boolean)) {
-    if (ctx.env[name]) return { value: ctx.env[name], source: `the environment (${name})` };
+    if (hit(ctx.env[name])) return { value: ctx.env[name], source: `the environment (${name})` };
   }
   const sources = [path.join(ctx.configDir, 'local.env')];
   if (publisherDir) sources.push(path.join(publisherDir, 'credentials.env'));
   for (const file of sources) {
     const value = readEnvFile(ctx, file)[key];
-    if (value) return { value, source: file };
+    if (hit(value)) return { value, source: file };
   }
   return null;
 }
@@ -440,8 +489,10 @@ const subject = (cn) => [
   { name: 'commonName', value: cn },
 ];
 
+// The short host name; a host named by its address keeps the whole address.
 function shortHostname() {
-  return os.hostname().split('.')[0];
+  const host = os.hostname();
+  return net.isIP(host) ? host : host.split('.')[0];
 }
 
 function fqdn(host) {
@@ -514,15 +565,20 @@ function parseSans(list) {
   return sans;
 }
 
+// Throws on an invalid or empty WAZUH_DASHBOARD_CERT_SANS.
 function leafSans(ctx, host) {
-  const override = lookup(ctx, 'WAZUH_DASHBOARD_CERT_SANS');
+  const override = lookup(ctx, 'WAZUH_DASHBOARD_CERT_SANS', null, null, { allowEmpty: true });
   let list;
   if (override) {
     detail(ctx, `SANs set by WAZUH_DASHBOARD_CERT_SANS from ${override.source}`);
+    if (parseSans(override.value).length === 0) {
+      throw new Error(`WAZUH_DASHBOARD_CERT_SANS from ${override.source} is empty`);
+    }
     list = [override.value];
   } else {
     const full = fqdn(host);
-    list = [`DNS:${host}`];
+    // Untyped, so a host named by its address becomes an IP SAN.
+    list = [host];
     if (full && full !== host && DNS_NAME.test(full)) list.push(`DNS:${full}`);
     list.push(...discoverAddresses().map((a) => `IP:${a}`));
   }
@@ -542,7 +598,8 @@ function newCertificate(forge, publicKey) {
   cert.publicKey = publicKey;
   // A positive 128-bit serial.
   cert.serialNumber = '01' + crypto.randomBytes(15).toString('hex');
-  cert.validity.notBefore = new Date();
+  // Backdated a day, so a peer whose clock is a little behind still accepts it.
+  cert.validity.notBefore = new Date(Date.now() - ONE_DAY_MS);
   cert.validity.notAfter = new Date(Date.now() + TEN_YEARS_MS);
   return cert;
 }
@@ -618,6 +675,10 @@ function ensureCa(ctx, forge) {
       err(`the CA in ${caDir} is not a valid, current CA with its private key`);
       return null;
     }
+    if (crypto.createPrivateKey(keyPem).asymmetricKeyType !== 'rsa') {
+      err(`the CA in ${caDir} does not have an RSA key; only RSA can sign the certificate`);
+      return null;
+    }
     detail(ctx, `using the CA in ${caDir}`);
     return { certPem: certPem.toString(), keyPem: keyPem.toString() };
   }
@@ -655,12 +716,19 @@ function resolveCertificate(ctx) {
   const ca = ensureCa(ctx, forge);
   if (!ca) return false;
   const host = shortHostname();
-  const sans = leafSans(ctx, host);
+  let sans;
+  try {
+    sans = leafSans(ctx, host);
+  } catch (e) {
+    err(e.message);
+    return false;
+  }
   detail(ctx, `issuing ${CERT} for ${host}; SANs ${sans.map((s) => `${s.type}:${s.value}`)}`);
   const leaf = issueLeaf(forge, ca.certPem, ca.keyPem, host, sans);
   // The key first: an interrupted run leaves half a pair, which the next run refuses.
   writeTrusted(ctx, path.join(dir, KEY), leaf.keyPem);
-  writeTrusted(ctx, path.join(dir, CERT), leaf.certPem);
+  // The leaf followed by the CA, so a client can build the chain.
+  writeTrusted(ctx, path.join(dir, CERT), leaf.certPem + ca.certPem);
   log(`issued ${path.join(dir, CERT)}`);
 
   const exportDir = path.join(ctx.configDir, 'export');
@@ -674,40 +742,56 @@ function resolveCertificate(ctx) {
   return true;
 }
 
-// Imports each peer's export/ca.pem into certs/<peer>-ca.pem, then rebuilds certs/root-ca.pem
-// from them when the package owns it (marker present, or no bundle yet).
-function resolveTrustBundle(ctx) {
+// One CA file per peer, certs/<peer>-ca.pem:
+//   * present without its import marker: staged by the operator, used as is, never replaced;
+//   * absent, or present with the marker: copied from the peer's export/ca.pem whenever it
+//     differs, so a reinstalled peer is picked up at the next start;
+//   * either way it must be a CA certificate.
+// Returns 'ok', 'missing', 'invalid' or 'unsafe'.
+function resolvePeerCa(ctx, peer) {
   const dir = certsDir(ctx);
-  if (!ensureDir(ctx, dir, 0o750, serviceGid(ctx))) return;
-  const cas = [];
-  for (const peer of ctx.peers) {
-    const dest = path.join(dir, `${peer.name}-ca.pem`);
-    const current = readTrusted(ctx, dest);
-    const published = readTrusted(ctx, path.join(peer.exportDir, 'ca.pem'));
-    if (published && !validCa(published)) {
-      err(`${path.join(peer.exportDir, 'ca.pem')} is not a valid, current CA certificate`);
-    } else if (published && current !== null && !(current && current.equals(published))) {
-      writeTrusted(ctx, dest, published);
-      log(`imported ${dest} from ${peer.exportDir}`);
-    }
-    const ca = readTrusted(ctx, dest);
-    if (ca) cas.push(ca.toString().trim() + '\n');
-  }
+  const dest = path.join(dir, peerCa(peer));
+  const staged = Boolean(lstatOrNull(dest)) && !lstatOrNull(path.join(dir, peerMarker(peer)));
+  let current = readTrusted(ctx, dest);
+  if (current === null) return 'unsafe';
 
-  const bundle = path.join(dir, BUNDLE);
-  const marker = path.join(dir, BUNDLE_MARKER);
-  if (lstatOrNull(bundle) && !lstatOrNull(marker)) {
-    detail(ctx, `${bundle} has no ${BUNDLE_MARKER}; it is the operator's and is left alone`);
-    return;
+  if (staged) {
+    detail(ctx, `${dest} has no ${peerMarker(peer)}; it is the operator's and is used as is`);
+  } else {
+    const source = path.join(peer.exportDir, 'ca.pem');
+    const published = readTrusted(ctx, source);
+    if (published && !validCa(published)) {
+      err(`${source} is not a valid, current CA certificate; it is not imported`);
+    } else if (published && !(current && current.equals(published))) {
+      // The marker first: an import without it would pass for the operator's and never be
+      // refreshed again.
+      writeTrusted(ctx, path.join(dir, peerMarker(peer)), '');
+      writeTrusted(ctx, dest, published);
+      log(`imported ${dest} from ${source}`);
+      current = published;
+    }
   }
-  if (cas.length === 0) return;
-  const content = Buffer.from(cas.join(''));
-  const current = readTrusted(ctx, bundle);
-  if (current === null || (current && current.equals(content))) return;
-  // The marker first: a bundle without it would pass for the operator's and never be refreshed.
-  writeTrusted(ctx, marker, '');
-  writeTrusted(ctx, bundle, content);
-  log(`wrote ${bundle} from ${cas.length} CA certificate(s)`);
+  if (!current) return 'missing';
+  return validCa(current) ? 'ok' : 'invalid';
+}
+
+// The files root relies on, checked at every start whether or not anything is left to resolve.
+function checkFiles(ctx) {
+  const groups = {
+    '.': ['local.env'],
+    certs: [CERT, KEY, ...ctx.peers.flatMap((p) => [peerCa(p), peerMarker(p)])],
+    ca: ['root-ca.pem', 'root-ca.key', CA_MARKER],
+    export: ['ca.pem'],
+  };
+  for (const [sub, names] of Object.entries(groups)) {
+    const dir = path.join(ctx.configDir, sub);
+    if (trustedDir(ctx, dir) !== true) continue;
+    for (const name of names) {
+      const stat = lstatOrNull(path.join(dir, name));
+      const reason = stat && trustReason(ctx, stat, name === 'local.env' ? 'secret' : 'file');
+      if (reason) unsafe(ctx, path.join(dir, name), reason);
+    }
+  }
 }
 
 // The first global address in the certificate's SANs, else its first DNS name, else the host.
@@ -746,7 +830,10 @@ function dashboardIsRunning() {
   const unit = spawnSync('systemctl', ['is-active', '--quiet', `${SERVICE}.service`]);
   if (unit.status === 0) return true;
   try {
-    process.kill(Number(fs.readFileSync(PID_FILE, 'utf8').trim()), 0);
+    const pid = Number(fs.readFileSync(PID_FILE, 'utf8').trim());
+    // 0 or 1 would signal the process group or init, not the dashboard.
+    if (!Number.isInteger(pid) || pid <= 1) return false;
+    process.kill(pid, 0);
     return true;
   } catch (e) {
     return false;
@@ -776,8 +863,13 @@ function clear(ctx) {
   }
   if (trustedDir(ctx, ctx.configDir) !== true) return 1;
 
-  const certs = [CERT, KEY, ...ctx.peers.map((p) => `${p.name}-ca.pem`)];
-  if (lstatOrNull(path.join(certsDir(ctx), BUNDLE_MARKER))) certs.push(BUNDLE, BUNDLE_MARKER);
+  // Only imported peer CAs: a staged one (no marker) is the operator's.
+  const certs = [CERT, KEY];
+  for (const peer of ctx.peers) {
+    if (lstatOrNull(path.join(certsDir(ctx), peerMarker(peer)))) {
+      certs.push(peerCa(peer), peerMarker(peer));
+    }
+  }
   let ok = removeFrom(ctx, certsDir(ctx), certs);
 
   const caDir = path.join(ctx.configDir, 'ca');
@@ -818,6 +910,7 @@ function resolve(ctx, mode) {
     if (!ctx.problems.length) ctx.problems.push(`MISSING ${ctx.configDir}`);
     return ctx.problems;
   }
+  checkFiles(ctx);
   const yml = loadYml(ctx);
   const passwords = {};
   if (ensureKeystore(ctx)) {
@@ -831,7 +924,10 @@ function resolve(ctx, mode) {
     err(`the dashboard has no TLS certificates and this install could not issue them`);
     err(`        provision ${CERT} and ${KEY} into ${certsDir(ctx)}`);
   }
-  if (mode !== 'upgrade') resolveTrustBundle(ctx);
+  const cas = {};
+  if (mode !== 'upgrade' && ensureDir(ctx, certsDir(ctx), 0o750, serviceGid(ctx))) {
+    for (const peer of ctx.peers) cas[peer.name] = resolvePeerCa(ctx, peer);
+  }
   if (mode === 'install') printFirstLogin(ctx);
 
   for (const peer of ctx.peers) {
@@ -849,8 +945,17 @@ function resolve(ctx, mode) {
     }
   }
   const dir = certsDir(ctx);
-  if (!lstatOrNull(path.join(dir, BUNDLE))) {
-    ctx.problems.push(`MISSING ${path.join(dir, BUNDLE)}: no CA to verify the indexer with`);
+  for (const peer of ctx.peers) {
+    const file = path.join(dir, peerCa(peer));
+    // Not resolved this run (--upgrade): judged by presence only.
+    const state = cas[peer.name] || (lstatOrNull(file) ? 'ok' : 'missing');
+    if (state === 'invalid') {
+      ctx.problems.push(`INVALID ${file}: it is not a valid, current CA certificate`);
+    } else if (state === 'missing' && peer.caRequired) {
+      ctx.problems.push(`MISSING ${file}: ${peer.caMissing}`);
+    } else if (state === 'missing' && mode === 'prestart') {
+      err(`warning: MISSING ${file}: ${peer.caMissing}`);
+    }
   }
   for (const name of [CERT, KEY]) {
     if (!lstatOrNull(path.join(dir, name))) {
