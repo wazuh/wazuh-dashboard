@@ -23,19 +23,19 @@ chmod 0755 "${PID_DIR}"
 case "$1" in
 configure)
     chmod 755 "${TARGET_DIR}""${INSTALLATION_DIR}"
-    chown -R root:root "${TARGET_DIR}""${INSTALLATION_DIR}"
-    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/data
+    chown -R -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"
+    chown -R -h "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/data
     # The resolver runs as root from ExecStartPre=+, so the service user must not own it
-    chown root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
+    chown -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
-    chown root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
+    chown -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
     chmod 644 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
     if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
         chmod 644 "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service
     fi
     # Root reads the environment file at every start, so the service user must not own it
-    if [ -f /etc/default/"${NAME}" ]; then
-        chown root:"${NAME}" /etc/default/"${NAME}"
+    if [ -f /etc/default/"${NAME}" ] && [ ! -L /etc/default/"${NAME}" ]; then
+        chown -h root:"${NAME}" /etc/default/"${NAME}"
         chmod 640 /etc/default/"${NAME}"
     fi
     # Root owns the configuration directory; the service reads it through its group.

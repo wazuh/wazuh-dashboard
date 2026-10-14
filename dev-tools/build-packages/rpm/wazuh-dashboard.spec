@@ -185,8 +185,8 @@ fi
 %post
 rm -f /usr/share/wazuh-dashboard/VERSION
 # Root reads the environment file at every start, so the service user must not own it
-if [ -f /etc/default/wazuh-dashboard ]; then
-  chown root:%{GROUP} /etc/default/wazuh-dashboard
+if [ -f /etc/default/wazuh-dashboard ] && [ ! -L /etc/default/wazuh-dashboard ]; then
+  chown -h root:%{GROUP} /etc/default/wazuh-dashboard
   chmod 640 /etc/default/wazuh-dashboard
 fi
 
