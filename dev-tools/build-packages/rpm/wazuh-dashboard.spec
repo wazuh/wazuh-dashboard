@@ -18,6 +18,8 @@ Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
 Requires(postun): /usr/sbin/userdel /usr/sbin/groupdel
+# The bundled node needs glibc, libstdc++ and libgcc, which are not declared on purpose:
+# rpm needs glibc and libdnf needs all three, so any host that installs this package has them.
 AutoReqProv: no
 Requires: /bin/sh
 ExclusiveOS: linux

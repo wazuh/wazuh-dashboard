@@ -39,6 +39,9 @@ export DASHBOARD_FILE=wazuh-dashboard.tar.gz
 
 # -----------------------------------------------------------------------------
 
+# The bundled node needs libc6, libstdc++6 and libgcc-s1, which are not declared on purpose:
+# dpkg pre-depends on libc6 and apt depends on all three, so any host that installs this
+# package has them.
 override_dh_shlibdeps:
 
 # -----------------------------------------------------------------------------
