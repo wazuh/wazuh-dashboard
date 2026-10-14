@@ -1088,14 +1088,15 @@ calls() {
   runs_tool "$@" <<<"${scripts}"
 }
 
-# shipped_test_dirs: the listed paths that are a test/ or tests/ directory or lie inside one.
-# A file named test or tests does not count.
+# shipped_test_dirs: the listed paths that are a test/ or tests/ directory of a bundled npm
+# package, or lie inside one. A file named test or tests does not count, and neither does a
+# test/ directory of src/ or of a plugin's own code, which the packages keep.
 shipped_test_dirs() {
   local path
   while IFS= read -r path; do
     case "${path}" in
-      */test/* | */tests/*) echo "${path}" ;;
-      */test | */tests) if [ -d "${path}" ]; then echo "${path}"; fi ;;
+      */node_modules/*/test/* | */node_modules/*/tests/*) echo "${path}" ;;
+      */node_modules/*/test | */node_modules/*/tests) if [ -d "${path}" ]; then echo "${path}"; fi ;;
     esac
   done
 }
@@ -1159,7 +1160,7 @@ case_declared_dependencies() {
   check "the package lists its files" [ -n "${list}" ]
   found=$(shipped_test_dirs <<<"${list}")
   if [ -n "${found}" ]; then info "first test path: ${found%%$'\n'*}"; fi
-  check "no test/ or tests/ directory is shipped" [ -z "${found}" ]
+  check "no test/ or tests/ directory of a bundled npm package is shipped" [ -z "${found}" ]
 }
 
 # pkg_scripts_have <text...>: every text is in the package scripts.

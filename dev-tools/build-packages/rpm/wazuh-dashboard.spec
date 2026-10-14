@@ -59,8 +59,10 @@ useradd -g %{GROUP} %{USER}
 tar -xf %{DASHBOARD_FILE}
 sed -i 's/OSD_NODE_OPTS_PREFIX/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_NODE_OPTS_PREFIX/g' "wazuh-dashboard-base/bin/opensearch-dashboards"
 sed -i 's/OSD_USE_NODE_JS_FILE_PATH/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_USE_NODE_JS_FILE_PATH/g' "wazuh-dashboard-base/bin/opensearch-dashboards-keystore"
-# The test suites of the bundled packages are not shipped
-find wazuh-dashboard-base -type d \( -name test -o -name tests \) -prune -exec rm -rf {} +
+# The test suites of the bundled npm packages are not shipped. The plugins install their
+# node_modules after the OSD build, which cleans only its own. src/ and the plugins' own
+# code are left alone, in case one of their test/ directories is ever needed at runtime.
+find wazuh-dashboard-base -path '*/node_modules/*/*' -type d \( -name test -o -name tests \) -prune -exec rm -rf {} +
 
 
 # -----------------------------------------------------------------------------
