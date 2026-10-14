@@ -301,10 +301,11 @@ fi
 
 # posttrans code is the last thing executed in a install/upgrade
 %posttrans
-if [ ! -d %{PID_DIR} ]; then
-    mkdir -p %{PID_DIR}
-    chown %{USER}:%{GROUP} %{PID_DIR}
-fi
+# Only root writes the pidfile, so root owns its directory, also when an older
+# package gave it to the service user
+mkdir -p %{PID_DIR}
+chown -h root:root %{PID_DIR}
+chmod 0755 %{PID_DIR}
 
 # Load the new unit even if the service is stopped, so its next start gets the capability
 if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then

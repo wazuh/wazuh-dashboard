@@ -14,9 +14,11 @@ export CONFIG_DIR=/etc/"${NAME}"
 export INSTALLATION_DIR=/usr/share/"${NAME}"
 export PID_DIR=/run/"${NAME}"
 
-# Setting Owner and group of own folders
+# Only root writes the pidfile, so root owns its directory, also when an older
+# package gave it to the service user
 mkdir -p "${PID_DIR}"
-chown -R "${NAME}":"${NAME}" "${PID_DIR}"
+chown -h root:root "${PID_DIR}"
+chmod 0755 "${PID_DIR}"
 
 case "$1" in
 configure)

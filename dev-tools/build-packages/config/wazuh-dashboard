@@ -46,17 +46,11 @@ start() {
 
   # Setup any environmental stuff beforehand
 
-  # Ensure that the PID_DIR exists (it is cleaned at OS startup time)
-  if [ -n "$PID_DIR" ] && [ ! -e "$PID_DIR" ]; then
-      mkdir -p "$PID_DIR" && chown -h "$user":"$group" "$PID_DIR"
-  fi
-  # PID_DIR is the service user's: a link there is never the pidfile, and root
-  # must not touch, chown or write through one.
-  if [ -L "$pidfile" ]; then
-      rm -f "$pidfile"
-  fi
-  if [ -n "$pidfile" ] && [ ! -e "$pidfile" ]; then
-      touch "$pidfile" && chown -h "$user":"$group" "$pidfile"
+  # Ensure that the PID_DIR exists (it is cleaned at OS startup time). Only
+  # root writes the pidfile, so root owns the directory, also when an older
+  # package left it to the service user.
+  if [ -n "$PID_DIR" ]; then
+      mkdir -p "$PID_DIR" && chown -h root:root "$PID_DIR" && chmod 0755 "$PID_DIR"
   fi
 
   # Resolve the kibanaserver and wazuh-internal-client passwords into the
@@ -77,9 +71,9 @@ start() {
   # Generate the pidfile from here. If we instead made the forked process
   # generate it there will be a race condition between the pidfile writing
   # and a process possibly asking for status.
-  # Recreated with noclobber, so the write fails instead of following a link.
+  # Recreated, so an older pidfile of the service user is never written to.
   rm -f "$pidfile"
-  (set -C; echo $! > "$pidfile")
+  echo $! > "$pidfile"
 
   emit "$name started"
   return 0
@@ -113,11 +107,14 @@ stop() {
 status() {
   if [ -f "$pidfile" ] ; then
     pid=$(cat "$pidfile")
-    # Only a positive PID: kill -0 accepts 0 and negative values as process groups.
+    # Only a PID above 1: kill -0 accepts 0 and negative values as process
+    # groups, and 1 is init.
     case "$pid" in
-      ''|0*|*[!0-9]*) return 2 ;;
+      ''|0*|1|*[!0-9]*) return 2 ;;
     esac
-    if kill -0 "$pid" > /dev/null 2> /dev/null ; then
+    # kill -0 fails with EPERM for a caller other than root and the service
+    # user; /proc still shows the process to them.
+    if kill -0 "$pid" > /dev/null 2> /dev/null || [ -d "/proc/$pid" ] ; then
       # process by this pid is running.
       # It may not be our pid, but that's what you get with just pidfiles.
       # TODO(sissel): Check if this process seems to be the same as the one we
