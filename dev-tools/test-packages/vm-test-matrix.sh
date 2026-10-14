@@ -114,6 +114,7 @@ CASES=(
   "D21|No wazuh_core default host: wazuh-internal-client not needed|case_no_wazuh_host|dashboard"
   "D22|--clear refuses a certs/ symlink|case_clear_symlinked_certs|dashboard"
   "D23|Service-user children: no terminal, no root environment|case_children_isolated|dashboard"
+  "D24|Declared dependencies, package scripts and payload|case_declared_dependencies|dashboard"
   "F01|Install order: indexer, manager, dashboard|case_order_imd|full"
   "F02|Install order: indexer, dashboard, manager|case_order_idm|full"
   "F03|Install order: manager, indexer, dashboard|case_order_mid|full"
@@ -1060,6 +1061,115 @@ EOF
   check "the probe ran in the keystore's Node" test -s "${probe_log}"
   check_not "no child opened root's terminal" grep -q 'tty=open' "${probe_log}"
   check_not "no child saw root's environment" grep -q 'canary=true' "${probe_log}"
+}
+
+# The package scripts, without comment lines, as the package manager stored them.
+pkg_scripts() {
+  case "${FAMILY}" in
+    deb) cat /var/lib/dpkg/info/"${NAME}".{preinst,postinst,prerm,postrm} 2>/dev/null ;;
+    rpm) rpm -q --scripts "${NAME}" ;;
+  esac | grep -v '^[[:space:]]*#'
+}
+
+# runs_tool <tool...>: stdin, without comment lines, runs one of the tools as a command: by name
+# or path, quoted or not, after ; & | ( or a backquote and before ; ) a quote, a space or the
+# line end. Matched on a variable: grep -q in a pipe can fail the pipe (pipefail) on a match.
+runs_tool() {
+  local tools text
+  tools=$(IFS='|'; echo "$*")
+  text=$(grep -v '^[[:space:]]*#')
+  grep -Eq "(^|[;&|(\`\"'/[:space:]])(${tools})([;)\"'[:space:]]|\$)" <<<"${text}"
+}
+
+# calls <tool...>: a package script runs one of the tools as a command.
+calls() {
+  local scripts
+  scripts=$(pkg_scripts)
+  runs_tool "$@" <<<"${scripts}"
+}
+
+# shipped_test_dirs: the listed paths that are a test/ or tests/ directory of a bundled npm
+# package, or lie inside one. A file named test or tests does not count, and neither does a
+# test/ directory of src/ or of a plugin's own code, which the packages keep.
+shipped_test_dirs() {
+  local path
+  while IFS= read -r path; do
+    case "${path}" in
+      */node_modules/*/test/* | */node_modules/*/tests/*) echo "${path}" ;;
+      */node_modules/*/test | */node_modules/*/tests) if [ -d "${path}" ]; then echo "${path}"; fi ;;
+    esac
+  done
+}
+
+case_declared_dependencies() {
+  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  install_ok "${DASHBOARD_PKG}"
+  step "Declared dependencies"
+  case "${FAMILY}" in
+    deb)
+      # preinst creates the account, so passwd is a Pre-Depends
+      info "Pre-Depends: $(dpkg-query -W -f='${Pre-Depends}' "${NAME}"); Depends: $(dpkg-query -W -f='${Depends}' "${NAME}")"
+      check "Pre-Depends is passwd only and there is no Depends" \
+        [ "$(dpkg-query -W -f='${Pre-Depends}|${Depends}' "${NAME}")" = "passwd|" ]
+      ;;
+    rpm)
+      local requires
+      requires=$(rpm -qR "${NAME}" | grep -v '^rpmlib(' | sed 's/[[:space:]]*$//' | sort -u | tr '\n' ' ')
+      info "Requires (without rpmlib): ${requires}"
+      check "Requires is /bin/sh and the account tools only" \
+        [ "${requires}" = "/bin/sh /usr/sbin/groupadd /usr/sbin/groupdel /usr/sbin/useradd /usr/sbin/userdel " ]
+      ;;
+  esac
+  step "Package scripts run only builtins, coreutils and the declared tools"
+  # An empty or missing script would pass every check_not below
+  local script
+  case "${FAMILY}" in
+    deb)
+      for script in preinst postinst prerm postrm; do
+        check "dpkg keeps the ${script} script" test -s "/var/lib/dpkg/info/${NAME}.${script}"
+      done
+      ;;
+  esac
+  check "the package scripts are not empty" [ -n "$(pkg_scripts)" ]
+  check_not "no script calls awk, ps, pgrep, openssl, curl, runuser or setcap" \
+    calls awk ps pgrep openssl curl runuser setcap
+  # grep and sed are Essential on Debian, but no script uses them any more
+  check_not "no script calls grep, sed or find" calls grep sed find
+  # The unit's launcher sources use_node, which reads node.options on every start
+  check "use_node exists" test -f "${INSTALL_DIR}/bin/use_node"
+  check_not "use_node reads node.options without grep or xargs" \
+    runs_tool grep xargs <"${INSTALL_DIR}/bin/use_node"
+  case "${FAMILY}" in
+    deb)
+      check_not "no script calls adduser or addgroup" calls adduser addgroup
+      check "the SysV script exists" test -f "/usr/lib/systemd/system/${NAME}"
+      check_not "the SysV script does not call ps" runs_tool ps <"/usr/lib/systemd/system/${NAME}"
+      check "the service user has no login shell" \
+        [ "$(getent passwd "${NAME}" | cut -d: -f6-7)" = "/nonexistent:/usr/sbin/nologin" ]
+      ;;
+    rpm)
+      check "the scriptlets keep the %% operators" pkg_scripts_have '${json%%' '${INSTALLED_VER%%.*}'
+      ;;
+  esac
+  step "Payload"
+  local list found
+  case "${FAMILY}" in
+    deb) list=$(dpkg -L "${NAME}") ;;
+    rpm) list=$(rpm -ql "${NAME}") ;;
+  esac
+  check "the package lists its files" [ -n "${list}" ]
+  found=$(shipped_test_dirs <<<"${list}")
+  if [ -n "${found}" ]; then info "first test path: ${found%%$'\n'*}"; fi
+  check "no test/ or tests/ directory of a bundled npm package is shipped" [ -z "${found}" ]
+}
+
+# pkg_scripts_have <text...>: every text is in the package scripts.
+pkg_scripts_have() {
+  local scripts text
+  scripts=$(pkg_scripts)
+  for text in "$@"; do
+    contains "${scripts}" "${text}" || return 1
+  done
 }
 
 # -----------------------------------------------------------------------------------------

@@ -14,36 +14,38 @@ export CONFIG_DIR=/etc/"${NAME}"
 export INSTALLATION_DIR=/usr/share/"${NAME}"
 export PID_DIR=/run/"${NAME}"
 
-# Setting Owner and group of own folders
+# Only root writes the pidfile, so root owns its directory, also when an older
+# package gave it to the service user
 mkdir -p "${PID_DIR}"
-chown -R "${NAME}":"${NAME}" "${PID_DIR}"
+chown -h root:root "${PID_DIR}"
+chmod 0755 "${PID_DIR}"
 
 case "$1" in
 configure)
     chmod 755 "${TARGET_DIR}""${INSTALLATION_DIR}"
-    chown -R root:root "${TARGET_DIR}""${INSTALLATION_DIR}"
-    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/data
+    chown -R -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"
+    chown -R -h "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/data
     # The resolver runs as root from ExecStartPre=+, so the service user must not own it
-    chown root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
+    chown -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
-    chown root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
+    chown -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
     chmod 644 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
     if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
         chmod 644 "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service
     fi
     # Root reads the environment file at every start, so the service user must not own it
-    if [ -f /etc/default/"${NAME}" ]; then
-        chown root:"${NAME}" /etc/default/"${NAME}"
+    if [ -f /etc/default/"${NAME}" ] && [ ! -L /etc/default/"${NAME}" ]; then
+        chown -h root:"${NAME}" /etc/default/"${NAME}"
         chmod 640 /etc/default/"${NAME}"
     fi
     # Root owns the configuration directory; the service reads it through its group.
     # Runs before the resolver, which refuses a directory not owned by root.
     if [ -d "${CONFIG_DIR}" ] && [ ! -L "${CONFIG_DIR}" ]; then
-        chown root:"${NAME}" "${CONFIG_DIR}"
+        chown -h root:"${NAME}" "${CONFIG_DIR}"
         chmod 750 "${CONFIG_DIR}"
         for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
             if [ -f "${CONFIG_DIR}/$f" ] && [ ! -L "${CONFIG_DIR}/$f" ]; then
-                chown root:"${NAME}" "${CONFIG_DIR}/$f"
+                chown -h root:"${NAME}" "${CONFIG_DIR}/$f"
                 chmod 640 "${CONFIG_DIR}/$f"
             fi
         done
@@ -61,7 +63,7 @@ configure)
             fi
         done
         if [ -f "${CONFIG_DIR}/local.env" ] && [ ! -L "${CONFIG_DIR}/local.env" ]; then
-            chown root:root "${CONFIG_DIR}/local.env"
+            chown -h root:root "${CONFIG_DIR}/local.env"
             chmod 600 "${CONFIG_DIR}/local.env"
         fi
     fi
@@ -74,7 +76,8 @@ configure)
         rm -f "${INSTALLATION_DIR}"/"${NAME}".restart
         if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
             systemctl restart wazuh-dashboard.service >/dev/null 2>&1
-        elif command -v service >/dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "running" >/dev/null 2>&1; then
+        # preinst stopped it and left the .restart marker, so it is not running here
+        elif command -v service >/dev/null 2>&1; then
             service wazuh-dashboard restart >/dev/null 2>&1
         fi
     fi
@@ -91,7 +94,7 @@ configure)
     fi
     # The keystore holds secrets under an empty password
     if [ -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ] && [ ! -L "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
-        chown root:"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
+        chown -h root:"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
         chmod 640 "${CONFIG_DIR}"/opensearch_dashboards.keystore
     fi
     ;;

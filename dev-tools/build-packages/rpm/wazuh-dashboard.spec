@@ -17,8 +17,11 @@ buildroot:   %{_tmppath}/%{name}-%{version}-%{release}-wazuh-dashboard-%(%{__id_
 Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
+Requires(postun): /usr/sbin/userdel /usr/sbin/groupdel
+# The bundled node needs glibc, libstdc++ and libgcc, which are not declared on purpose:
+# rpm needs glibc and libdnf needs all three, so any host that installs this package has them.
 AutoReqProv: no
-Requires: openssl, diffutils, util-linux
+Requires: /bin/sh
 ExclusiveOS: linux
 
 # -----------------------------------------------------------------------------
@@ -58,6 +61,10 @@ useradd -g %{GROUP} %{USER}
 tar -xf %{DASHBOARD_FILE}
 sed -i 's/OSD_NODE_OPTS_PREFIX/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_NODE_OPTS_PREFIX/g' "wazuh-dashboard-base/bin/opensearch-dashboards"
 sed -i 's/OSD_USE_NODE_JS_FILE_PATH/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_USE_NODE_JS_FILE_PATH/g' "wazuh-dashboard-base/bin/opensearch-dashboards-keystore"
+# The test suites of the bundled npm packages are not shipped. The plugins install their
+# node_modules after the OSD build, which cleans only its own. src/ and the plugins' own
+# code are left alone, in case one of their test/ directories is ever needed at runtime.
+find wazuh-dashboard-base -path '*/node_modules/*/*' -type d \( -name test -o -name tests \) -prune -exec rm -rf {} +
 
 
 # -----------------------------------------------------------------------------
@@ -119,16 +126,28 @@ Refer to the 5.x migration guide for more information.
 EOF
 }
 
+# Prints the first "version" value of a JSON file with tr and parameter expansion
+# only. Shell percent operators are doubled in this spec for rpm's macro pass.
+json_version() {
+  json=$(tr -d ' \t\r\n' < "$1" 2>/dev/null) || return 0
+  case "$json" in
+    *'"version":"'*)
+      json=${json#*'"version":"'}
+      echo "${json%%%%\"*}"
+      ;;
+  esac
+}
+
 if [ -f %{INSTALL_DIR}/VERSION.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  INSTALLED_VER=$(json_version %{INSTALL_DIR}/VERSION.json)
 elif [ -f %{INSTALL_DIR}/VERSION ]; then
   INSTALLED_VER=$(cat %{INSTALL_DIR}/VERSION 2>/dev/null)
 elif [ -f %{INSTALL_DIR}/plugins/wazuh/package.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  INSTALLED_VER=$(json_version %{INSTALL_DIR}/plugins/wazuh/package.json)
 fi
 
 if [ -n "$INSTALLED_VER" ]; then
-  MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+  MAJOR=${INSTALLED_VER%%%%.*}
   if [ "$MAJOR" -lt 5 ]; then
     print_upgrade_error "$INSTALLED_VER"
     exit 1
@@ -159,7 +178,7 @@ if [ $1 = 2 ]; then
     systemctl --no-reload stop wazuh-dashboard.service > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   # Check for SysV
-  elif command -v service > /dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "is running" > /dev/null 2>&1; then
+  elif command -v service > /dev/null 2>&1 && case "$(service wazuh-dashboard status 2>/dev/null)" in *"is running"*) true ;; *) false ;; esac; then
     service wazuh-dashboard stop > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   fi
@@ -170,19 +189,19 @@ fi
 %post
 rm -f /usr/share/wazuh-dashboard/VERSION
 # Root reads the environment file at every start, so the service user must not own it
-if [ -f /etc/default/wazuh-dashboard ]; then
-  chown root:%{GROUP} /etc/default/wazuh-dashboard
+if [ -f /etc/default/wazuh-dashboard ] && [ ! -L /etc/default/wazuh-dashboard ]; then
+  chown -h root:%{GROUP} /etc/default/wazuh-dashboard
   chmod 640 /etc/default/wazuh-dashboard
 fi
 
 # Root owns the configuration directory; the service reads it through its group.
 # Runs before the resolver, which refuses a directory not owned by root.
 if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
-  chown root:%{GROUP} %{CONFIG_DIR}
+  chown -h root:%{GROUP} %{CONFIG_DIR}
   chmod 750 %{CONFIG_DIR}
   for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
     if [ -f "%{CONFIG_DIR}/$f" ] && [ ! -L "%{CONFIG_DIR}/$f" ]; then
-      chown root:%{GROUP} "%{CONFIG_DIR}/$f"
+      chown -h root:%{GROUP} "%{CONFIG_DIR}/$f"
       chmod 640 "%{CONFIG_DIR}/$f"
     fi
   done
@@ -200,7 +219,7 @@ if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
     fi
   done
   if [ -f %{CONFIG_DIR}/local.env ] && [ ! -L %{CONFIG_DIR}/local.env ]; then
-    chown root:root %{CONFIG_DIR}/local.env
+    chown -h root:root %{CONFIG_DIR}/local.env
     chmod 600 %{CONFIG_DIR}/local.env
   fi
 fi
@@ -218,7 +237,7 @@ else
 fi
 # The keystore holds secrets under an empty password
 if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ] && [ ! -L %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
-  chown root:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
+  chown -h root:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
   chmod 640 %{CONFIG_DIR}/opensearch_dashboards.keystore
 fi
 
@@ -286,10 +305,11 @@ fi
 
 # posttrans code is the last thing executed in a install/upgrade
 %posttrans
-if [ ! -d %{PID_DIR} ]; then
-    mkdir -p %{PID_DIR}
-    chown %{USER}:%{GROUP} %{PID_DIR}
-fi
+# Only root writes the pidfile, so root owns its directory, also when an older
+# package gave it to the service user
+mkdir -p %{PID_DIR}
+chown -h root:root %{PID_DIR}
+chmod 0755 %{PID_DIR}
 
 # Load the new unit even if the service is stopped, so its next start gets the capability
 if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
