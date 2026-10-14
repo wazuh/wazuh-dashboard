@@ -89,6 +89,8 @@ fi
 if [ -f "${CONFIG_DIR}/node.options" ]; then
   # Wazuh: read node.options with shell builtins only, so the packages need neither grep nor
   # xargs (findutils). Comment and blank lines are dropped and the rest joined with a space.
+  # Unlike xargs, quotes and backslashes are kept as written, so write one option per line
+  # without quoting it.
   # OSD_NODE_OPTS="$(grep -v ^# < ${CONFIG_DIR}/node.options | xargs)"
   OSD_NODE_OPTS=""
   while read -r OSD_NODE_OPTS_LINE || [ -n "$OSD_NODE_OPTS_LINE" ]; do
