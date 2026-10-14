@@ -105,7 +105,9 @@ stop() {
 }
 
 status() {
-  if [ -f "$pidfile" ] ; then
+  # Only a pidfile root wrote: an older package left the directory, and so any
+  # pidfile already in it, to the service user, who could fill in any PID.
+  if [ -f "$pidfile" ] && [ ! -L "$pidfile" ] && [ "$(stat -c %u "$pidfile" 2>/dev/null)" = 0 ] ; then
     pid=$(cat "$pidfile")
     # Only a PID above 1: kill -0 accepts 0 and negative values as process
     # groups, and 1 is init.
