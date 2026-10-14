@@ -1084,8 +1084,10 @@ case_declared_dependencies() {
   step "Declared dependencies"
   case "${FAMILY}" in
     deb)
-      info "Depends: $(dpkg-query -W -f='${Depends}' "${NAME}")"
-      check "Depends is passwd only" [ "$(dpkg-query -W -f='${Depends}' "${NAME}")" = "passwd" ]
+      # preinst creates the account, so passwd is a Pre-Depends
+      info "Pre-Depends: $(dpkg-query -W -f='${Pre-Depends}' "${NAME}"); Depends: $(dpkg-query -W -f='${Depends}' "${NAME}")"
+      check "Pre-Depends is passwd only and there is no Depends" \
+        [ "$(dpkg-query -W -f='${Pre-Depends}|${Depends}' "${NAME}")" = "passwd|" ]
       ;;
     rpm)
       local requires

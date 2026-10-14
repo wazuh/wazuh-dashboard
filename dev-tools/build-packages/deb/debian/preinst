@@ -29,16 +29,28 @@ Refer to the 5.x migration guide for more information.
 EOF
 }
 
+# Prints the first "version" value of a JSON file with tr and parameter expansion
+# only.
+json_version() {
+    json=$(tr -d ' \t\r\n' < "$1" 2>/dev/null) || return 0
+    case "$json" in
+        *'"version":"'*)
+            json=${json#*'"version":"'}
+            echo "${json%%\"*}"
+            ;;
+    esac
+}
+
 if [ -f /usr/share/wazuh-dashboard/VERSION.json ]; then
-    INSTALLED_VER=$(grep -m 1 '"version"' /usr/share/wazuh-dashboard/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+    INSTALLED_VER=$(json_version /usr/share/wazuh-dashboard/VERSION.json)
 elif [ -f /usr/share/wazuh-dashboard/VERSION ]; then
     INSTALLED_VER=$(cat /usr/share/wazuh-dashboard/VERSION 2>/dev/null)
 elif [ -f /usr/share/wazuh-dashboard/plugins/wazuh/package.json ]; then
-    INSTALLED_VER=$(grep -m 1 '"version"' /usr/share/wazuh-dashboard/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+    INSTALLED_VER=$(json_version /usr/share/wazuh-dashboard/plugins/wazuh/package.json)
 fi
 
 if [ -n "$INSTALLED_VER" ]; then
-    MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+    MAJOR=${INSTALLED_VER%%.*}
     if [ "$MAJOR" -lt 5 ]; then
         print_upgrade_error "$INSTALLED_VER"
         exit 1
@@ -95,7 +107,7 @@ upgrade)
         systemctl stop "${NAME}".service >/dev/null 2>&1
         touch "${INSTALLATION_DIR}"/"${NAME}".restart
     # Check for SysV
-    elif command -v service >/dev/null 2>&1 && service "${NAME}" status 2>/dev/null | grep "running" >/dev/null 2>&1; then
+    elif command -v service >/dev/null 2>&1 && case "$(service "${NAME}" status 2>/dev/null)" in *"is running"*) true ;; *) false ;; esac; then
         service "${NAME}" stop >/dev/null 2>&1
         touch "${INSTALLATION_DIR}"/"${NAME}".restart
     fi

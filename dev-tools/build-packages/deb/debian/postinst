@@ -76,7 +76,8 @@ configure)
         rm -f "${INSTALLATION_DIR}"/"${NAME}".restart
         if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
             systemctl restart wazuh-dashboard.service >/dev/null 2>&1
-        elif command -v service >/dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "running" >/dev/null 2>&1; then
+        # preinst stopped it and left the .restart marker, so it is not running here
+        elif command -v service >/dev/null 2>&1; then
             service wazuh-dashboard restart >/dev/null 2>&1
         fi
     fi
