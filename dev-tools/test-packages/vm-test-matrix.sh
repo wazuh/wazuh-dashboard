@@ -1071,11 +1071,33 @@ pkg_scripts() {
   esac | grep -v '^[[:space:]]*#'
 }
 
+# runs_tool <tool...>: stdin, without comment lines, runs one of the tools as a command: by name
+# or path, quoted or not, after ; & | ( or a backquote and before ; ) a quote, a space or the
+# line end. Matched on a variable: grep -q in a pipe can fail the pipe (pipefail) on a match.
+runs_tool() {
+  local tools text
+  tools=$(IFS='|'; echo "$*")
+  text=$(grep -v '^[[:space:]]*#')
+  grep -Eq "(^|[;&|(\`\"'/[:space:]])(${tools})([;)\"'[:space:]]|\$)" <<<"${text}"
+}
+
 # calls <tool...>: a package script runs one of the tools as a command.
 calls() {
-  local tools
-  tools=$(IFS='|'; echo "$*")
-  pkg_scripts | grep -Eq "(^|[;&|(\`[:space:]])(${tools})([[:space:]]|\$)"
+  local scripts
+  scripts=$(pkg_scripts)
+  runs_tool "$@" <<<"${scripts}"
+}
+
+# shipped_test_dirs: the listed paths that are a test/ or tests/ directory or lie inside one.
+# A file named test or tests does not count.
+shipped_test_dirs() {
+  local path
+  while IFS= read -r path; do
+    case "${path}" in
+      */test/* | */tests/*) echo "${path}" ;;
+      */test | */tests) if [ -d "${path}" ]; then echo "${path}"; fi ;;
+    esac
+  done
 }
 
 case_declared_dependencies() {
@@ -1098,31 +1120,46 @@ case_declared_dependencies() {
       ;;
   esac
   step "Package scripts run only builtins, coreutils and the declared tools"
+  # An empty or missing script would pass every check_not below
+  local script
+  case "${FAMILY}" in
+    deb)
+      for script in preinst postinst prerm postrm; do
+        check "dpkg keeps the ${script} script" test -s "/var/lib/dpkg/info/${NAME}.${script}"
+      done
+      ;;
+  esac
+  check "the package scripts are not empty" [ -n "$(pkg_scripts)" ]
   check_not "no script calls awk, ps, pgrep, openssl, curl, runuser or setcap" \
     calls awk ps pgrep openssl curl runuser setcap
+  # grep and sed are Essential on Debian, but no script uses them any more
+  check_not "no script calls grep, sed or find" calls grep sed find
   # The unit's launcher sources use_node, which reads node.options on every start
+  check "use_node exists" test -f "${INSTALL_DIR}/bin/use_node"
   check_not "use_node reads node.options without grep or xargs" \
-    grep -Eq "^[^#]*(^|[;&|(\`\$[:space:]])(grep|xargs)([[:space:]]|\$)" "${INSTALL_DIR}/bin/use_node"
+    runs_tool grep xargs <"${INSTALL_DIR}/bin/use_node"
   case "${FAMILY}" in
     deb)
       check_not "no script calls adduser or addgroup" calls adduser addgroup
-      check_not "the SysV script does not call ps" grep -Eq '(^|[[:space:]])ps[[:space:]]' \
-        "/usr/lib/systemd/system/${NAME}"
+      check "the SysV script exists" test -f "/usr/lib/systemd/system/${NAME}"
+      check_not "the SysV script does not call ps" runs_tool ps <"/usr/lib/systemd/system/${NAME}"
       check "the service user has no login shell" \
         [ "$(getent passwd "${NAME}" | cut -d: -f6-7)" = "/nonexistent:/usr/sbin/nologin" ]
       ;;
     rpm)
-      check_not "no scriptlet calls grep, sed or find" calls grep sed find
       check "the scriptlets keep the %% operators" pkg_scripts_have '${json%%' '${INSTALLED_VER%%.*}'
       ;;
   esac
   step "Payload"
-  local list
+  local list found
   case "${FAMILY}" in
     deb) list=$(dpkg -L "${NAME}") ;;
     rpm) list=$(rpm -ql "${NAME}") ;;
   esac
-  check_not "no test/ or tests/ directory is shipped" grep -Eq '/tests?(/|$)' <<<"${list}"
+  check "the package lists its files" [ -n "${list}" ]
+  found=$(shipped_test_dirs <<<"${list}")
+  if [ -n "${found}" ]; then info "first test path: ${found%%$'\n'*}"; fi
+  check "no test/ or tests/ directory is shipped" [ -z "${found}" ]
 }
 
 # pkg_scripts_have <text...>: every text is in the package scripts.
