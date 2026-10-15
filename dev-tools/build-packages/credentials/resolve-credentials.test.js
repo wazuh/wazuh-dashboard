@@ -34,7 +34,7 @@ function setup() {
     account: 'kibanaserver',
     entry: 'opensearch.password',
     username: { entry: 'opensearch.username', value: 'kibanaserver' },
-    caRequired: true,
+    required: true,
     caMissing: 'no indexer CA',
   };
   peers[1] = {
@@ -43,7 +43,7 @@ function setup() {
     alias: 'API_PASSWORD',
     account: 'wazuh-internal-client',
     entry: 'wazuh_core.hosts.default.password',
-    caRequired: false,
+    required: false,
     caMissing: 'no manager CA',
   };
   const ctx = r.createContext({
@@ -141,15 +141,12 @@ test('install resolves everything from the peers; a restart changes nothing', ()
     'wazuh_core.hosts:\n  default:\n    url: https://localhost\n'
   );
 
-  // The manager is not installed yet: its password is missing, its CA is only a warning.
+  // The manager is not installed yet: its password and CA are only warnings, so the dashboard
+  // starts and serves the indexer data.
   let problems = r.resolve(ctx, 'install');
-  assert.deepStrictEqual(problems, [
-    'MISSING WAZUH_MANAGER_WUI_PASSWORD (wazuh-internal-client)',
-    `        set it in ${path.join(
-      configDir,
-      'local.env'
-    )}, or install wazuh-manager on this host first`,
-  ]);
+  assert.deepStrictEqual(problems, []);
+  assert.deepStrictEqual(r.resolve(ctx, 'prestart'), []);
+  assert.ok(!store.has('wazuh_core.hosts.default.password'));
   assert.strictEqual(store.get('opensearch.password'), 'Kibana.Pass1');
   assert.strictEqual(store.get('opensearch.username'), 'kibanaserver');
   assert.strictEqual(store.get('wazuh_ai_assistant.encryptionKey').length, 44);
@@ -273,13 +270,40 @@ test('prestart checks local.env even when nothing is left to read from it', () =
   );
 });
 
-test('a group-readable local.env is UNSAFE and not read', () => {
+test('a world-readable local.env is read; only writable by others is UNSAFE', () => {
   const { configDir, ctx } = setup();
   const file = path.join(configDir, 'local.env');
   fs.writeFileSync(file, 'K=local\n');
-  fs.chmodSync(file, 0o640);
-  assert.strictEqual(r.lookup(ctx, 'K', null, null), null);
-  assert.ok(ctx.problems.includes(`UNSAFE ${file}: it is group- or world-readable`));
+  // What a umask of 022 leaves.
+  fs.chmodSync(file, 0o644);
+  assert.strictEqual(r.lookup(ctx, 'K', null, null).value, 'local');
+  assert.deepStrictEqual(ctx.problems, []);
+});
+
+test('--clear keeps a pair and keystore entries the resolver did not set', () => {
+  const { configDir, peers, ctx, store } = setup();
+  fs.writeFileSync(
+    path.join(peers[0].exportDir, 'credentials.env'),
+    'WAZUH_INDEXER_KIBANASERVER_PASSWORD=Kibana.Pass1\n'
+  );
+  // The operator's own entry and pair, from a PKI that is not the dashboard's.
+  store.set('opensearch.password', 'Operator.Pass1');
+  const certs = path.join(configDir, 'certs');
+  fs.mkdirSync(certs, { mode: 0o750 });
+  const external = caPair();
+  const pair = r.issueLeaf(forge, external.certPem, external.keyPem, 'x', r.parseSans('DNS:x'));
+  fs.writeFileSync(path.join(certs, 'dashboard.pem'), pair.certPem);
+  fs.writeFileSync(path.join(certs, 'dashboard-key.pem'), pair.keyPem);
+
+  r.resolve(ctx, 'install');
+  assert.strictEqual(store.get('opensearch.password'), 'Operator.Pass1');
+  assert.ok(store.has('wazuh_ai_assistant.encryptionKey'));
+
+  assert.strictEqual(r.clear(ctx), 0);
+  assert.deepStrictEqual([...store.keys()], ['opensearch.password']);
+  assert.strictEqual(fs.readFileSync(path.join(certs, 'dashboard.pem'), 'utf8'), pair.certPem);
+  assert.ok(fs.existsSync(path.join(certs, 'dashboard-key.pem')));
+  assert.ok(!fs.existsSync(path.join(configDir, '.resolved-keystore-entries')));
 });
 
 test('a staged dashboard CA without an RSA key is refused', () => {

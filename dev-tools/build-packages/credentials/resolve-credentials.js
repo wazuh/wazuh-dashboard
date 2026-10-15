@@ -50,8 +50,8 @@ const PEERS = [
     account: "the indexer's kibanaserver account",
     entry: 'opensearch.password',
     username: { entry: 'opensearch.username', value: 'kibanaserver' },
-    // Without the indexer CA the dashboard cannot work at all.
-    caRequired: true,
+    // Without the indexer's password and CA the dashboard cannot work at all.
+    required: true,
     caMissing: 'no CA to verify the indexer with',
   },
   {
@@ -63,7 +63,9 @@ const PEERS = [
     entry: 'wazuh_core.hosts.default.password',
     // Without a default host there is nothing to authenticate.
     neededIf: 'wazuh_core.hosts.default',
-    caRequired: false,
+    // Without the manager's password or CA the dashboard still serves the indexer data; only
+    // the Server API is refused, until a start finds them.
+    required: false,
     caMissing:
       'the Server API connection is refused until it is present; ' +
       'once wazuh-manager is installed, the next start imports it',
@@ -74,12 +76,8 @@ const peerCa = (peer) => `${peer.name}-ca.pem`;
 const peerMarker = (peer) => `.${peer.name}-ca.imported`;
 
 const AI_KEY_ENTRY = 'wazuh_ai_assistant.encryptionKey';
-const CLEARED_ENTRIES = [
-  'opensearch.username',
-  'opensearch.password',
-  'wazuh_core.hosts.default.password',
-  AI_KEY_ENTRY,
-];
+// The keystore entries the resolver set, one per line, so --clear removes those and no other.
+const ENTRIES_RECORD = '.resolved-keystore-entries';
 
 const log = (msg) => process.stdout.write(`resolve-credentials: ${msg}\n`);
 const err = (msg) => process.stderr.write(`resolve-credentials: ${msg}\n`);
@@ -130,8 +128,17 @@ function trustReason(ctx, stat, kind) {
   }
   if (stat.uid !== ctx.rootUid) return 'it is not owned by root';
   if (stat.mode & 0o022) return 'it is group- or world-writable';
-  if (kind === 'secret' && stat.mode & 0o044) return 'it is group- or world-readable';
   return null;
+}
+
+// A secret others can read is still trusted (nobody else can change it), but it is reported.
+function warnReadable(ctx, file, stat, kind) {
+  if (kind !== 'secret' || !(stat.mode & 0o044)) return;
+  const line = `warning: ${file} is group- or world-readable; it holds passwords: chmod 600 ${file}`;
+  if (!ctx.reported.has(line)) {
+    ctx.reported.add(line);
+    err(line);
+  }
 }
 
 function lstatOrNull(file) {
@@ -177,11 +184,13 @@ function readTrusted(ctx, file, kind = 'file') {
     return null;
   }
   try {
-    const reason = trustReason(ctx, fs.fstatSync(fd), kind);
+    const stat = fs.fstatSync(fd);
+    const reason = trustReason(ctx, stat, kind);
     if (reason) {
       unsafe(ctx, file, reason);
       return null;
     }
+    warnReadable(ctx, file, stat, kind);
     return fs.readFileSync(fd);
   } finally {
     fs.closeSync(fd);
@@ -294,7 +303,7 @@ function parseEnv(text) {
   return values;
 }
 
-// local.env holds passwords, so it must also be unreadable by anyone but root.
+// local.env holds passwords: readable by others is reported, not refused.
 function readEnvFile(ctx, file) {
   const kind = path.basename(file) === 'local.env' ? 'secret' : 'file';
   const data = readTrusted(ctx, file, kind);
@@ -417,10 +426,31 @@ function ensureKeystore(ctx) {
   return loadKeys(ctx) !== null;
 }
 
+function recordPath(ctx) {
+  return path.join(ctx.configDir, ENTRIES_RECORD);
+}
+
+// null when the record is unsafe (reported).
+function readRecord(ctx) {
+  const data = readTrusted(ctx, recordPath(ctx));
+  if (data === null) return null;
+  return new Set(data ? data.toString('utf8').split('\n').filter(Boolean) : []);
+}
+
 function keystoreAdd(ctx, entry, value) {
   const { ok } = ctx.runKeystore(['add', entry, '--stdin'], value);
   secureKeystore(ctx);
-  if (ok) ctx.keys.add(entry);
+  if (ok) {
+    ctx.keys.add(entry);
+    const record = readRecord(ctx);
+    if (record && !record.has(entry)) {
+      record.add(entry);
+      writeTrusted(ctx, recordPath(ctx), [...record].join('\n') + '\n', {
+        mode: 0o600,
+        gid: ctx.rootGid,
+      });
+    }
+  }
   return ok;
 }
 
@@ -778,7 +808,7 @@ function resolvePeerCa(ctx, peer) {
 // The files root relies on, checked at every start whether or not anything is left to resolve.
 function checkFiles(ctx) {
   const groups = {
-    '.': ['local.env'],
+    '.': ['local.env', ENTRIES_RECORD],
     certs: [CERT, KEY, ...ctx.peers.flatMap((p) => [peerCa(p), peerMarker(p)])],
     ca: ['root-ca.pem', 'root-ca.key', CA_MARKER],
     export: ['ca.pem'],
@@ -787,9 +817,13 @@ function checkFiles(ctx) {
     const dir = path.join(ctx.configDir, sub);
     if (trustedDir(ctx, dir) !== true) continue;
     for (const name of names) {
-      const stat = lstatOrNull(path.join(dir, name));
-      const reason = stat && trustReason(ctx, stat, name === 'local.env' ? 'secret' : 'file');
-      if (reason) unsafe(ctx, path.join(dir, name), reason);
+      const file = path.join(dir, name);
+      const stat = lstatOrNull(file);
+      if (!stat) continue;
+      const kind = name === 'local.env' ? 'secret' : 'file';
+      const reason = trustReason(ctx, stat, kind);
+      if (reason) unsafe(ctx, file, reason);
+      else warnReadable(ctx, file, stat, kind);
     }
   }
 }
@@ -863,8 +897,13 @@ function clear(ctx) {
   }
   if (trustedDir(ctx, ctx.configDir) !== true) return 1;
 
-  // Only imported peer CAs: a staged one (no marker) is the operator's.
-  const certs = [CERT, KEY];
+  // Only a pair issued from ca/, and only imported peer CAs: a pair from another CA, or a staged
+  // peer CA (no marker), is the operator's.
+  const issued = issuedFromOwnCa(ctx);
+  const certs = issued ? [CERT, KEY] : [];
+  if (!issued && lstatOrNull(path.join(certsDir(ctx), CERT))) {
+    log(`kept ${path.join(certsDir(ctx), CERT)} and its key: they were not issued from ca/`);
+  }
   for (const peer of ctx.peers) {
     if (lstatOrNull(path.join(certsDir(ctx), peerMarker(peer)))) {
       certs.push(peerCa(peer), peerMarker(peer));
@@ -880,25 +919,44 @@ function clear(ctx) {
   }
   ok = removeFrom(ctx, path.join(ctx.configDir, 'export'), ['ca.pem']) && ok;
 
-  if (lstatOrNull(keystorePath(ctx))) {
+  const record = readRecord(ctx);
+  if (record === null) return 1;
+  if (lstatOrNull(keystorePath(ctx)) && record.size) {
     if (!ensureKeystore(ctx)) return 1;
-    for (const entry of CLEARED_ENTRIES.filter((e) => ctx.keys.has(e))) {
-      ctx.runKeystore(['remove', entry]);
-    }
+    const entries = [...record].filter((e) => ctx.keys.has(e));
+    for (const entry of entries) ctx.runKeystore(['remove', entry]);
     secureKeystore(ctx);
     // Read back rather than trusted from exit codes: a keystore that still holds them is the
     // failure this path exists to prevent.
     const keys = loadKeys(ctx);
-    const left = keys ? CLEARED_ENTRIES.filter((e) => keys.has(e)) : CLEARED_ENTRIES;
+    const left = keys ? entries.filter((e) => keys.has(e)) : entries;
     if (left.length) {
       err(`could not remove from the keystore: ${left.join(' ')}`);
       return 1;
     }
-    log(`removed ${CLEARED_ENTRIES.join(' ')} from the keystore`);
+    if (entries.length) log(`removed ${entries.join(' ')} from the keystore`);
   }
+  fs.rmSync(recordPath(ctx), { force: true });
   if (!ok) return 1;
-  log('cleared; the next start resolves from nothing');
+  // A start never issues certificates (only --install does); it resolves everything else.
+  log(
+    issued
+      ? 'cleared; run resolve-credentials --install to issue a new certificate pair, then start'
+      : 'cleared; the next start resolves the passwords and the peer CAs again'
+  );
   return 0;
+}
+
+// Whether certs/dashboard.pem was issued from the CA in ca/.
+function issuedFromOwnCa(ctx) {
+  try {
+    const ca = readTrusted(ctx, path.join(ctx.configDir, 'ca', 'root-ca.pem'));
+    const leaf = readTrusted(ctx, path.join(certsDir(ctx), CERT));
+    if (!ca || !leaf) return false;
+    return new crypto.X509Certificate(leaf).verify(new crypto.X509Certificate(ca).publicKey);
+  } catch (e) {
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -937,11 +995,15 @@ function resolve(ctx, mode) {
         '        (it must not be JSON nor have surrounding whitespace)'
       );
     } else if (passwords[peer.key] === 'missing') {
-      ctx.problems.push(
-        `MISSING ${peer.key} (${peer.account})`,
+      const hint =
         `        set it in ${path.join(ctx.configDir, 'local.env')}, ` +
-          `or install wazuh-${peer.name} on this host first`
-      );
+        `or install wazuh-${peer.name} on this host first`;
+      if (peer.required) {
+        ctx.problems.push(`MISSING ${peer.key} (${peer.account})`, hint);
+      } else if (mode === 'prestart') {
+        err(`warning: MISSING ${peer.key} (${peer.account}): ${peer.caMissing}`);
+        err(hint);
+      }
     }
   }
   const dir = certsDir(ctx);
@@ -951,7 +1013,7 @@ function resolve(ctx, mode) {
     const state = cas[peer.name] || (lstatOrNull(file) ? 'ok' : 'missing');
     if (state === 'invalid') {
       ctx.problems.push(`INVALID ${file}: it is not a valid, current CA certificate`);
-    } else if (state === 'missing' && peer.caRequired) {
+    } else if (state === 'missing' && peer.required) {
       ctx.problems.push(`MISSING ${file}: ${peer.caMissing}`);
     } else if (state === 'missing' && mode === 'prestart') {
       err(`warning: MISSING ${file}: ${peer.caMissing}`);
