@@ -17,8 +17,11 @@ buildroot:   %{_tmppath}/%{name}-%{version}-%{release}-wazuh-dashboard-%(%{__id_
 Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
+Requires(postun): /usr/sbin/userdel /usr/sbin/groupdel
+# The bundled node needs glibc, libstdc++ and libgcc, which are not declared on purpose:
+# rpm needs glibc and libdnf needs all three, so any host that installs this package has them.
 AutoReqProv: no
-Requires: libcap, openssl, diffutils, util-linux
+Requires: /bin/sh
 ExclusiveOS: linux
 
 # -----------------------------------------------------------------------------
@@ -58,6 +61,10 @@ useradd -g %{GROUP} %{USER}
 tar -xf %{DASHBOARD_FILE}
 sed -i 's/OSD_NODE_OPTS_PREFIX/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_NODE_OPTS_PREFIX/g' "wazuh-dashboard-base/bin/opensearch-dashboards"
 sed -i 's/OSD_USE_NODE_JS_FILE_PATH/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_USE_NODE_JS_FILE_PATH/g' "wazuh-dashboard-base/bin/opensearch-dashboards-keystore"
+# The test suites of the bundled npm packages are not shipped. The plugins install their
+# node_modules after the OSD build, which cleans only its own. src/ and the plugins' own
+# code are left alone, in case one of their test/ directories is ever needed at runtime.
+find wazuh-dashboard-base -path '*/node_modules/*/*' -type d \( -name test -o -name tests \) -prune -exec rm -rf {} +
 
 
 # -----------------------------------------------------------------------------
@@ -89,7 +96,7 @@ chmod 640 %{buildroot}/etc/default/wazuh-dashboard
 rm -rf %{buildroot}%{INSTALL_DIR}/etc/
 
 find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
-find %{buildroot}%{CONFIG_DIR} -exec chown %{USER}:%{GROUP} {} \;
+find %{buildroot}%{CONFIG_DIR} -exec chown root:%{GROUP} {} \;
 
 chown root:root %{buildroot}/usr/lib/systemd/system/wazuh-dashboard.service
 
@@ -119,16 +126,28 @@ Refer to the 5.x migration guide for more information.
 EOF
 }
 
+# Prints the first "version" value of a JSON file with tr and parameter expansion
+# only. Shell percent operators are doubled in this spec for rpm's macro pass.
+json_version() {
+  json=$(tr -d ' \t\r\n' < "$1" 2>/dev/null) || return 0
+  case "$json" in
+    *'"version":"'*)
+      json=${json#*'"version":"'}
+      echo "${json%%%%\"*}"
+      ;;
+  esac
+}
+
 if [ -f %{INSTALL_DIR}/VERSION.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  INSTALLED_VER=$(json_version %{INSTALL_DIR}/VERSION.json)
 elif [ -f %{INSTALL_DIR}/VERSION ]; then
   INSTALLED_VER=$(cat %{INSTALL_DIR}/VERSION 2>/dev/null)
 elif [ -f %{INSTALL_DIR}/plugins/wazuh/package.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  INSTALLED_VER=$(json_version %{INSTALL_DIR}/plugins/wazuh/package.json)
 fi
 
 if [ -n "$INSTALLED_VER" ]; then
-  MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+  MAJOR=${INSTALLED_VER%%%%.*}
   if [ "$MAJOR" -lt 5 ]; then
     print_upgrade_error "$INSTALLED_VER"
     exit 1
@@ -159,7 +178,7 @@ if [ $1 = 2 ]; then
     systemctl --no-reload stop wazuh-dashboard.service > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   # Check for SysV
-  elif command -v service > /dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "is running" > /dev/null 2>&1; then
+  elif command -v service > /dev/null 2>&1 && case "$(service wazuh-dashboard status 2>/dev/null)" in *"is running"*) true ;; *) false ;; esac; then
     service wazuh-dashboard stop > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   fi
@@ -168,29 +187,41 @@ fi
 # -----------------------------------------------------------------------------
 
 %post
-setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
 rm -f /usr/share/wazuh-dashboard/VERSION
 # Root reads the environment file at every start, so the service user must not own it
-if [ -f /etc/default/wazuh-dashboard ]; then
-  chown root:%{GROUP} /etc/default/wazuh-dashboard
+if [ -f /etc/default/wazuh-dashboard ] && [ ! -L /etc/default/wazuh-dashboard ]; then
+  chown -h root:%{GROUP} /etc/default/wazuh-dashboard
   chmod 640 /etc/default/wazuh-dashboard
 fi
 
-# A certificate pair staged before the package was installed -- by the
-# installation assistant, or by an operator -- is root's: the service user did
-# not exist yet. The resolver keeps an existing pair exactly as it finds it, and
-# the service reads it after dropping privileges, so it must be the service
-# user's. DEB does the same for the whole configuration directory in its
-# postinst; the indexer and the manager do it in their packaging too. On an
-# upgrade this also repairs a host that was left unable to start. -P never
-# follows a symlink, and a certs/ that is itself one is left alone.
-if [ -d %{CONFIG_DIR}/certs ] && [ ! -L %{CONFIG_DIR}/certs ]; then
-  chown -R -P %{USER}:%{GROUP} %{CONFIG_DIR}/certs || true
-fi
-# Removing the package hands what it kept in the configuration directory over to
-# root before the service user goes, so a fresh install takes all of it back.
-if [ $1 = 1 ] && [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
-  chown -R -P %{USER}:%{GROUP} %{CONFIG_DIR} || true
+# Root owns the configuration directory; the service reads it through its group.
+# Runs before the resolver, which refuses a directory not owned by root.
+if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
+  chown -h root:%{GROUP} %{CONFIG_DIR}
+  chmod 750 %{CONFIG_DIR}
+  for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
+    if [ -f "%{CONFIG_DIR}/$f" ] && [ ! -L "%{CONFIG_DIR}/$f" ]; then
+      chown -h root:%{GROUP} "%{CONFIG_DIR}/$f"
+      chmod 640 "%{CONFIG_DIR}/$f"
+    fi
+  done
+  if [ -d %{CONFIG_DIR}/certs ] && [ ! -L %{CONFIG_DIR}/certs ]; then
+    chown -R -P root:%{GROUP} %{CONFIG_DIR}/certs
+    chmod 750 %{CONFIG_DIR}/certs
+    for f in %{CONFIG_DIR}/certs/* %{CONFIG_DIR}/certs/.[!.]*; do
+      if [ -f "$f" ] && [ ! -L "$f" ]; then chmod 640 "$f"; fi
+    done
+  fi
+  for d in ca export; do
+    if [ -d "%{CONFIG_DIR}/$d" ] && [ ! -L "%{CONFIG_DIR}/$d" ]; then
+      chown -R -P root:root "%{CONFIG_DIR}/$d"
+      chmod 700 "%{CONFIG_DIR}/$d"
+    fi
+  done
+  if [ -f %{CONFIG_DIR}/local.env ] && [ ! -L %{CONFIG_DIR}/local.env ]; then
+    chown -h root:root %{CONFIG_DIR}/local.env
+    chmod 600 %{CONFIG_DIR}/local.env
+  fi
 fi
 
 # Create the keystore if needed, resolve the consumed kibanaserver and
@@ -204,11 +235,10 @@ if [ $1 = 1 ]; then
 else
   %{INSTALL_DIR}/bin/resolve-credentials --upgrade || true
 fi
-# The keystore holds secrets under an empty password, so its mode must keep it private
-# on fresh installs and on upgrades of keystores created with a wider mode
-if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
-  chown %{USER}:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
-  chmod 600 %{CONFIG_DIR}/opensearch_dashboards.keystore
+# The keystore holds secrets under an empty password
+if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ] && [ ! -L %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
+  chown -h root:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
+  chmod 640 %{CONFIG_DIR}/opensearch_dashboards.keystore
 fi
 
 # -----------------------------------------------------------------------------
@@ -230,24 +260,13 @@ fi
 %postun
 if [ $1 = 0 ];then
   # If the package is been uninstalled
-  # rpm keeps the configuration directory: the certificates and their private
-  # keys, the keystore and any *.rpmsave. Hand every file the service account
-  # owns there over to root, with group and other access stripped, before the
-  # account goes. userdel frees the UID, and the next system account created
-  # would inherit it -- and with it the secrets left behind. Nothing is deleted:
-  # %post takes the directory back on a reinstall. find -P and chown -h act on
-  # links themselves and chmod never sees one, so a link the account planted
-  # cannot aim any of this at another file. Same as the Wazuh indexer package.
-  if getent passwd %{USER} > /dev/null 2>&1 && [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
-    config_dir_ok=true
-    find -P %{CONFIG_DIR} -user %{USER} \
-      \( -type l -o -exec chmod go-rwx {} + \) \
-      -exec chown -h root:root {} + 2>/dev/null || config_dir_ok=false
-    find -P %{CONFIG_DIR} -group %{GROUP} \
-      \( -type l -o -exec chmod g-rwx {} + \) \
-      -exec chgrp -h root {} + 2>/dev/null || config_dir_ok=false
-    if [ "${config_dir_ok}" = true ]; then
-      echo "Kept %{CONFIG_DIR}, now owned by root. Reinstalling %{name} takes it back."
+  # rpm keeps the config directory (certificates, keys, keystore, *.rpmsave).
+  # Drop the minted CA and export/, then hand the rest to root before userdel
+  # frees the UID. chown -h and chmod -R never follow a planted link.
+  if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
+    rm -rf %{CONFIG_DIR}/export %{CONFIG_DIR}/ca
+    if chown -R -h root:root %{CONFIG_DIR} 2>/dev/null && chmod -R go-rwx %{CONFIG_DIR} 2>/dev/null; then
+      echo "Kept %{CONFIG_DIR}, owned by root. Reinstalling %{name} takes it back."
     else
       echo "Some files under %{CONFIG_DIR} could not be handed over to root; they keep the ID of the removed %{name} user." >&2
     fi
@@ -270,17 +289,10 @@ if [ $1 = 0 ];then
     groupdel %{GROUP} >/dev/null 2>&1
   fi
 
-  # Remove /etc/wazuh-dashboard and /usr/share/wazuh-dashboard dirs
+  # Remove the installation and PID directories
   rm -rf %{INSTALL_DIR}
   if [ -d %{PID_DIR} ]; then
     rm -rf %{PID_DIR}
-  fi
-
-  # The dashboard owns no key in /etc/wazuh/credentials.env. The shared
-  # /etc/wazuh directory (credentials file and default CA directory) is only
-  # removed by the last Wazuh central component to leave the host.
-  if ! rpm -q --quiet wazuh-indexer && ! rpm -q --quiet wazuh-manager; then
-    rm -rf /etc/wazuh
   fi
 
   # Make systemd forget the unit, now that its file is gone
@@ -293,9 +305,15 @@ fi
 
 # posttrans code is the last thing executed in a install/upgrade
 %posttrans
-if [ ! -d %{PID_DIR} ]; then
-    mkdir -p %{PID_DIR}
-    chown %{USER}:%{GROUP} %{PID_DIR}
+# Only root writes the pidfile, so root owns its directory, also when an older
+# package gave it to the service user
+mkdir -p %{PID_DIR}
+chown -h root:root %{PID_DIR}
+chmod 0755 %{PID_DIR}
+
+# Load the new unit even if the service is stopped, so its next start gets the capability
+if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
+  systemctl daemon-reload > /dev/null 2>&1 || true
 fi
 
 if [ -f %{INSTALL_DIR}/wazuh-dashboard.restart ]; then
@@ -319,10 +337,10 @@ rm -fr %{buildroot}
 
 %files
 %defattr(-,%{USER},%{GROUP})
-%dir %attr(750, %{USER}, %{GROUP}) %{CONFIG_DIR}
+%dir %attr(750, root, %{GROUP}) %{CONFIG_DIR}
 
 %config(noreplace) %attr(0640, root, %{GROUP}) "/etc/default/wazuh-dashboard"
-%config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
+%config(noreplace) %attr(0640, root, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 
 %attr(444, root, root) %{INSTALL_DIR}/VERSION.json
 %dir %attr(755, root, root) %{INSTALL_DIR}
@@ -526,10 +544,9 @@ rm -fr %{buildroot}
 %attr(755, root, root) "%{INSTALL_DIR}/bin/opensearch-dashboards-plugin"
 %attr(755, root, root) "%{INSTALL_DIR}/bin/opensearch-dashboards-keystore"
 %attr(750, root, root) "%{INSTALL_DIR}/bin/resolve-credentials"
-%dir %attr(755, root, root) "%{INSTALL_DIR}/lib"
-%attr(644, root, root) "%{INSTALL_DIR}/lib/wazuh-credentials.sh"
+%attr(644, root, root) "%{INSTALL_DIR}/bin/resolve-credentials.js"
 %dir %attr(755, root, root) "%{INSTALL_DIR}/config"
-%attr(640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/node.options"
+%attr(640, root, %{GROUP}) "%{CONFIG_DIR}/node.options"
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
 
 %changelog
