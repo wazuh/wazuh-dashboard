@@ -16,8 +16,12 @@
 #        installed in different orders. Only the dashboard's behaviour is asserted; what the
 #        indexer and the manager do is recorded as [INFO]. With only --dashboard, no F case runs.
 #
+# Without the sibling packages, the cases stand in for them: they publish credentials.env and
+# ca.pem in /etc/wazuh-indexer/export and /etc/wazuh-manager/export, as the indexer and the
+# manager do.
+#
 # THE HOST IS WIPED AFTER EVERY CASE: the packages are purged and /etc/wazuh-dashboard,
-# /usr/share/wazuh-dashboard, /etc/wazuh (shared credentials file and CA) and the wazuh-dashboard
+# /usr/share/wazuh-dashboard, the peers' export/ directories, /etc/wazuh and the wazuh-dashboard
 # user are removed -- and, when their packages were given, everything of wazuh-manager and
 # wazuh-indexer. Run it only on a throwaway VM.
 #
@@ -56,10 +60,16 @@ readonly CERTS_DIR="${CONFIG_DIR}/certs"
 readonly CONFIG_FILE="${CONFIG_DIR}/opensearch_dashboards.yml"
 readonly RESOLVER="${INSTALL_DIR}/bin/resolve-credentials"
 readonly KEYSTORE_BIN="${INSTALL_DIR}/bin/opensearch-dashboards-keystore"
-readonly WAZUH_DIR="/etc/wazuh"
-readonly CREDENTIALS_FILE="${WAZUH_DIR}/credentials.env"
-readonly CA_DIR="${WAZUH_DIR}/ca"
+readonly LOCAL_ENV="${CONFIG_DIR}/local.env"
+readonly CA_DIR="${CONFIG_DIR}/ca"
+readonly EXPORT_DIR="${CONFIG_DIR}/export"
 readonly CA_MINT_MARKER=".wazuh-dashboard-bootstrap-ca"
+readonly INDEXER_CA_FILE="${CERTS_DIR}/indexer-ca.pem"
+# What the indexer and the manager publish for their peers.
+readonly INDEXER_EXPORT="/etc/wazuh-indexer/export"
+readonly MANAGER_EXPORT="/etc/wazuh-manager/export"
+# The pre-5.0 shared directory: no package of this build may create it.
+readonly LEGACY_WAZUH_DIR="/etc/wazuh"
 # Both packages ship the unit's environment file here; the unit also reads /etc/sysconfig.
 readonly ENV_FILE="/etc/default/${NAME}"
 
@@ -93,29 +103,28 @@ FAMILY=""
 CASES=(
   "D01|Fresh install on an empty host|case_fresh_install|dashboard"
   "D02|Start without credentials is refused|case_start_without_credentials|dashboard"
-  "D03|Credentials in credentials.env before install|case_credentials_before_install|dashboard"
+  "D03|Peers' exports published before install|case_credentials_before_install|dashboard"
   "D04|Credentials added after install|case_credentials_after_install|dashboard"
   "D05|Credentials from the unit environment (aliases)|case_credentials_env_aliases|dashboard"
-  "D06|Environment wins over credentials.env|case_env_beats_file|dashboard"
+  "D06|Environment wins over the peers' exports|case_env_beats_file|dashboard"
   "D07|Values the keystore would not store verbatim|case_invalid_values|dashboard"
-  "D08|Refused credentials file (bad mode)|case_refused_credentials_file|dashboard"
-  "D09|Keystore wins over credentials.env on restart|case_keystore_wins|dashboard"
+  "D08|Refused local.env (bad mode)|case_refused_credentials_file|dashboard"
+  "D09|Keystore wins over the peers' exports on restart|case_keystore_wins|dashboard"
   "D10|Password configured in opensearch_dashboards.yml|case_yml_password|dashboard"
-  "D11|Existing shared CA with key is reused|case_existing_ca|dashboard"
-  "D12|Anchor-only shared CA|case_anchor_only_ca|dashboard"
+  "D11|Operator-staged dashboard CA with key is reused|case_existing_ca|dashboard"
+  "D12|Operator-staged CA without its key|case_anchor_only_ca|dashboard"
   "D13|Operator-supplied certificate pair is kept|case_operator_pair|dashboard"
   "D14|Partial certificate pair is refused|case_partial_pair|dashboard"
-  "D15|Custom SANs and node name|case_custom_sans|dashboard"
+  "D15|Custom SANs|case_custom_sans|dashboard"
   "D16|resolve-credentials --clear|case_clear|dashboard"
   "D17|Package removal / purge cleans the host|case_remove|dashboard"
-  "D18|Reinstall after removal mints a new CA|case_reinstall|dashboard"
+  "D18|Reinstall after removal starts|case_reinstall|dashboard"
   "D19|Upgrade while running|case_upgrade_running|dashboard-previous"
   "D20|Upgrade while stopped|case_upgrade_stopped|dashboard-previous"
   "D21|No wazuh_core default host: wazuh-internal-client not needed|case_no_wazuh_host|dashboard"
   "D22|--clear refuses a certs/ symlink|case_clear_symlinked_certs|dashboard"
   "D23|Service-user children: no terminal, no root environment|case_children_isolated|dashboard"
-  "D24|Session cookie password is generated once and never rotated|case_cookie_password_stable|dashboard"
-  "D25|Session cookie password configured in opensearch_dashboards.yml|case_yml_cookie_password|dashboard"
+  "D24|Declared dependencies, package scripts and payload|case_declared_dependencies|dashboard"
   "F01|Install order: indexer, manager, dashboard|case_order_imd|full"
   "F02|Install order: indexer, dashboard, manager|case_order_idm|full"
   "F03|Install order: manager, indexer, dashboard|case_order_mid|full"
@@ -159,6 +168,15 @@ check_not() {
 
 contains() { grep -qF -- "$2" <<<"$1"; }
 perm_is() { [ "$(stat -c '%U:%G:%a' "$1" 2>/dev/null)" = "$2" ]; }
+# The configuration directory is root's; the service reads it through its group.
+check_config_dir_ownership() {
+  check "${CONFIG_DIR} is root:${NAME} 750" perm_is "${CONFIG_DIR}" "root:${NAME}:750"
+  local f
+  for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
+    check "${f} is root:${NAME} 640" perm_is "${CONFIG_DIR}/${f}" "root:${NAME}:640"
+  done
+  check "certs/ is root:${NAME} 750" perm_is "${CERTS_DIR}" "root:${NAME}:750"
+}
 absent() { [ ! -e "$1" ] && [ ! -L "$1" ]; }
 same_file() { cmp -s "$1" "$2"; }
 fingerprint() { openssl x509 -in "$1" -noout -fingerprint -sha256 2>/dev/null; }
@@ -335,8 +353,29 @@ wait_tls() {
   return 1
 }
 
+# Non-root, with only CAP_NET_BIND_SERVICE (0x400), granted by the unit (CapAmb) and bounded by it (CapBnd).
+proc_caps_ok() {
+  local pid
+  pid=$(systemctl show -p MainPID --value "${NAME}" 2>/dev/null)
+  [ -n "${pid}" ] && [ "${pid}" != 0 ] || return 1
+  awk -v want=0000000000000400 '/^Uid:/ { uid = $2 } /^Cap(Eff|Amb|Bnd):/ { cap[$1] = $2 }
+    END { exit !(uid != 0 && cap["CapEff:"] == want && cap["CapAmb:"] == want && cap["CapBnd:"] == want) }' \
+    "/proc/${pid}/status"
+}
+
+no_file_caps() {
+  local node="${INSTALL_DIR}/node/bin/node" caps
+  [ -e "${node}" ] || return 1
+  caps=$(getcap "${node}") || return 1
+  [ -z "${caps}" ]
+}
+
 check_running() {
   check "service is active and stable" wait_active
+  check "runs as non-root with only CAP_NET_BIND_SERVICE, from the unit" proc_caps_ok
+  if command -v getcap >/dev/null 2>&1; then
+    check "node binary has no file capability" no_file_caps
+  fi
   if [ "${SKIP_TLS}" -eq 0 ]; then
     check "HTTPS on port $(server_port) serves certs/dashboard.pem" wait_tls
   fi
@@ -362,32 +401,6 @@ ks_has() {
   return 1
 }
 
-# SHA-256 of the keystore file, for telling whether anything wrote to it. The keystore CLI has no
-# command that reads a value back, and it re-encrypts the whole file with a fresh salt on every
-# save, so an unchanged hash proves that no entry was added, replaced or removed: a generated
-# secret that never rotates leaves the file as it was.
-ks_file_sha() {
-  sha256sum "${CONFIG_DIR}/opensearch_dashboards.keystore" 2>/dev/null | awk '{print $1}' | grep .
-}
-
-# The cookie password exists once the new version has started, and a further restart leaves the
-# keystore as it was (compared by the hash of the file), so the value is not rotated.
-check_cookie_password_kept_across_restart() {
-  check "session cookie password generated" ks_has opensearch_security.cookie.password
-  local before
-  before=$(ks_file_sha) || before=""
-  check "keystore file is readable" test -n "${before}"
-  check "systemctl restart succeeds (cookie password stability)" \
-    timeout 120 systemctl restart "${NAME}"
-  check_running
-  check "keystore not rewritten by the restart" test "$(ks_file_sha)" = "${before}"
-}
-
-# Removes a keystore entry as the service user, e.g. to stand in for a host that never had it.
-ks_remove() {
-  (cd / && runuser -u "${NAME}" -- "${KEYSTORE_BIN}" remove "$1") </dev/null >/dev/null 2>&1
-}
-
 # Runs the pre-start step by hand; sets PRE_OUT and PRE_RC. Extra arguments are VAR=value pairs.
 PRE_OUT=""
 PRE_RC=0
@@ -400,16 +413,30 @@ prestart() {
 
 prestart_rc_is() { [ "${PRE_RC}" -eq "$1" ]; }
 
-# write_creds <kibanaserver> <wazuh-internal-client> [mode]; an empty value leaves the key out.
+# A test CA certificate for the peers to publish, made once per case.
+peer_ca() {
+  if [ ! -f "${WORK}/peer-ca.pem" ]; then
+    openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 30 -subj "/CN=Test Peer CA" \
+      -addext basicConstraints=critical,CA:TRUE -addext keyUsage=critical,keyCertSign \
+      -keyout "${WORK}/peer-ca.key" -out "${WORK}/peer-ca.pem" >/dev/null 2>&1
+  fi
+  echo "${WORK}/peer-ca.pem"
+}
+
+# write_creds <kibanaserver> <wazuh-internal-client>: publishes them, with a CA, in the indexer's
+# and the manager's export/ directories, as those packages do. An empty value leaves the key out.
 write_creds() {
-  install -d -m 0700 -o root -g root "${WAZUH_DIR}"
-  {
-    [ -n "$1" ] && printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\n' "$1"
-    [ -n "$2" ] && printf 'WAZUH_MANAGER_WUI_PASSWORD=%s\n' "$2"
-    true
-  } >"${CREDENTIALS_FILE}"
-  chown root:root "${CREDENTIALS_FILE}"
-  chmod "${3:-0600}" "${CREDENTIALS_FILE}"
+  local dir
+  install -d -m 0700 -o root -g root "${INDEXER_EXPORT}" "${MANAGER_EXPORT}"
+  [ -n "$1" ] && printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\n' "$1" >"${INDEXER_EXPORT}/credentials.env"
+  [ -n "$2" ] && printf 'WAZUH_MANAGER_WUI_PASSWORD=%s\n' "$2" >"${MANAGER_EXPORT}/credentials.env"
+  for dir in "${INDEXER_EXPORT}" "${MANAGER_EXPORT}"; do
+    install -m 0644 -o root -g root "$(peer_ca)" "${dir}/ca.pem"
+    if [ -f "${dir}/credentials.env" ]; then
+      chown root:root "${dir}/credentials.env"
+      chmod 0600 "${dir}/credentials.env"
+    fi
+  done
 }
 
 install_ok() {
@@ -431,9 +458,10 @@ has_all_consumed_entries() {
 }
 
 # Stages a self-signed CA and a leaf pair signed by it into certs/ (operator-supplied material).
-# $1: "pair" (dashboard.pem + key + root-ca.pem) or "cert-only" (dashboard.pem alone).
+# $1: "pair" (dashboard.pem + key + indexer-ca.pem, the CA the operator trusts the indexer with) or
+# "cert-only" (dashboard.pem alone).
 stage_operator_certs() {
-  local what="$1" d="${WORK}/operator" owner=root:root
+  local what="$1" d="${WORK}/operator"
   mkdir -p "${d}"
   openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 30 \
     -keyout "${d}/ca.key" -out "${d}/ca.pem" -subj "/CN=Test Operator CA" >/dev/null 2>&1
@@ -445,27 +473,31 @@ stage_operator_certs() {
   openssl x509 -req -sha256 -days 30 -in "${d}/leaf.csr" -CA "${d}/ca.pem" -CAkey "${d}/ca.key" \
     -CAcreateserial -extfile "${d}/leaf.ext" -out "${d}/leaf.pem" >/dev/null 2>&1
 
-  id "${NAME}" >/dev/null 2>&1 && owner="${NAME}:${NAME}"
-  install -d -m 0755 "${CONFIG_DIR}"
-  install -d -m 0700 "${CERTS_DIR}"
-  install -m 0400 "${d}/leaf.pem" "${CERTS_DIR}/dashboard.pem"
-  if [ "${what}" = pair ]; then
-    install -m 0400 "${d}/leaf.key" "${CERTS_DIR}/dashboard-key.pem"
-    install -m 0400 "${d}/ca.pem" "${CERTS_DIR}/root-ca.pem"
+  # The resolver only reads files owned by root, so they are root's; the service reads them through
+  # its group, as the package leaves certs/. Before an install there is no group yet: root only,
+  # and the package opens them to the group.
+  local group=root dir_mode=0700 file_mode=0400
+  if getent group "${NAME}" >/dev/null 2>&1; then
+    group="${NAME}" dir_mode=0750 file_mode=0640
   fi
-  chown -R "${owner}" "${CERTS_DIR}"
-  chmod 0500 "${CERTS_DIR}"
+  [ -d "${CONFIG_DIR}" ] || install -d -m 0755 "${CONFIG_DIR}"
+  install -d -m "${dir_mode}" -o root -g "${group}" "${CERTS_DIR}"
+  install -m "${file_mode}" -o root -g "${group}" "${d}/leaf.pem" "${CERTS_DIR}/dashboard.pem"
+  if [ "${what}" = pair ]; then
+    install -m "${file_mode}" -o root -g "${group}" "${d}/leaf.key" "${CERTS_DIR}/dashboard-key.pem"
+    install -m "${file_mode}" -o root -g "${group}" "${d}/ca.pem" "${INDEXER_CA_FILE}"
+  fi
 }
 
-# Saves the CA minted by an install into ${WORK}/saved-ca, with the modes of the directories and
-# files. The library requires root:root, which the restore sets explicitly rather than trusting the
+# Saves the CA minted by an install into ${WORK}/saved-ca, with the modes of the directory and
+# files. The resolver requires root:root, which the restore sets explicitly rather than trusting the
 # copy: a copy that went through a shared folder (vboxsf, 9p) comes back owned by someone else.
 save_minted_ca() {
   rm -rf "${WORK}/saved-ca"
   mkdir -m 0700 "${WORK}/saved-ca"
   cp -p "${CA_DIR}"/root-ca.* "${WORK}/saved-ca/"
   {
-    stat -c '%a %n' "${WAZUH_DIR}" "${CA_DIR}"
+    stat -c '%a %n' "${CA_DIR}"
     stat -c '%a %n' "${CA_DIR}"/root-ca.*
   } >"${WORK}/saved-ca.modes"
   cat "${WORK}/saved-ca.modes"
@@ -473,11 +505,12 @@ save_minted_ca() {
 
 saved_mode() { awk -v p="$1" '$2 == p { print $1 }' "${WORK}/saved-ca.modes"; }
 
-# restore_ca <file...>: recreates /etc/wazuh and its CA directory with the saved modes, root:root,
-# and puts back only the named files (root-ca.pem, root-ca.key, ...).
+# restore_ca <file...>: stages the saved CA directory in an empty ${CONFIG_DIR}, as an operator
+# would, with the saved modes, root:root, and puts back only the named files (root-ca.pem,
+# root-ca.key, ...). Without the mint marker, the CA is the operator's.
 restore_ca() {
   local f
-  install -d -m "$(saved_mode "${WAZUH_DIR}")" -o root -g root "${WAZUH_DIR}"
+  install -d -m 0755 -o root -g root "${CONFIG_DIR}"
   install -d -m "$(saved_mode "${CA_DIR}")" -o root -g root "${CA_DIR}"
   for f in "$@"; do
     install -m "$(saved_mode "${CA_DIR}/${f}")" -o root -g root "${WORK}/saved-ca/${f}" "${CA_DIR}/${f}"
@@ -492,8 +525,8 @@ restore_ca() {
 readonly MANAGER="wazuh-manager"
 readonly INDEXER="wazuh-indexer"
 readonly MANAGER_DIR="/var/wazuh-manager"
-readonly MANAGER_CA="${MANAGER_DIR}/etc/certs/root-ca.pem"
-readonly INDEXER_CA="/etc/wazuh-indexer/certs/root-ca.pem"
+# What the indexer installs with its demo certificates, for an operator to trust it with.
+readonly INDEXER_OWN_CA="/etc/wazuh-indexer/certs/root-ca.pem"
 readonly INDEXER_SECURITY_INIT="/usr/share/wazuh-indexer/bin/indexer-security-init.sh"
 
 # Purges the manager and the indexer and whatever their packages leave behind.
@@ -515,8 +548,8 @@ clean_siblings() {
     if id "${sib}" >/dev/null 2>&1; then userdel -f "${sib}" >/dev/null 2>&1 || true; fi
     if getent group "${sib}" >/dev/null 2>&1; then groupdel "${sib}" >/dev/null 2>&1 || true; fi
   done
-  rm -rf "${MANAGER_DIR}" /etc/wazuh-indexer /usr/share/wazuh-indexer /var/lib/wazuh-indexer \
-    /var/log/wazuh-indexer /run/wazuh-indexer
+  rm -rf "${MANAGER_DIR}" /etc/wazuh-manager /etc/wazuh-indexer /usr/share/wazuh-indexer \
+    /var/lib/wazuh-indexer /var/log/wazuh-indexer /run/wazuh-indexer
 }
 
 clean_host() {
@@ -535,8 +568,10 @@ clean_host() {
     fi
   fi
 
-  rm -rf "${CONFIG_DIR}" "${INSTALL_DIR}" "${WAZUH_DIR}" "/run/${NAME}" "/var/run/${NAME}" \
+  rm -rf "${CONFIG_DIR}" "${INSTALL_DIR}" "${LEGACY_WAZUH_DIR}" "/run/${NAME}" "/var/run/${NAME}" \
     "/var/log/${NAME}" "/var/lib/${NAME}"
+  # The stand-ins for the siblings' export/ directories (their packages are not installed here).
+  if [ "${SIBLINGS_MANAGED}" -eq 0 ]; then rm -rf /etc/wazuh-indexer /etc/wazuh-manager; fi
   rm -f "${ENV_FILE}" "/etc/sysconfig/${NAME}" "/etc/init.d/${NAME}" \
     "/etc/systemd/system/${NAME}.service" "/usr/lib/systemd/system/${NAME}.service" \
     "/lib/systemd/system/${NAME}.service"
@@ -548,7 +583,7 @@ clean_host() {
   # Self-check: the next case must start from a clean host.
   local dirty=""
   pkg_present && dirty="${dirty} package"
-  for p in "${CONFIG_DIR}" "${INSTALL_DIR}" "${WAZUH_DIR}"; do
+  for p in "${CONFIG_DIR}" "${INSTALL_DIR}" "${LEGACY_WAZUH_DIR}" "${INDEXER_EXPORT}" "${MANAGER_EXPORT}"; do
     absent "${p}" || dirty="${dirty} ${p}"
   done
   id "${NAME}" >/dev/null 2>&1 && dirty="${dirty} user"
@@ -559,7 +594,7 @@ clean_host() {
       pkgname_present "${sib}" && dirty="${dirty} ${sib}"
       id "${sib}" >/dev/null 2>&1 && dirty="${dirty} ${sib}-user"
     done
-    for p in "${MANAGER_DIR}" /etc/wazuh-indexer /usr/share/wazuh-indexer; do
+    for p in "${MANAGER_DIR}" /etc/wazuh-manager /etc/wazuh-indexer /usr/share/wazuh-indexer; do
       absent "${p}" || dirty="${dirty} ${p}"
     done
   fi
@@ -579,14 +614,13 @@ case_fresh_install() {
   WAZUH_DASHBOARD_VERBOSE=0 install_ok "${DASHBOARD_PKG}"
   check "user ${NAME} exists" id "${NAME}"
   check "resolver is root:root 750" perm_is "${RESOLVER}" root:root:750
-  check "lib/ is root:root 755" perm_is "${INSTALL_DIR}/lib" root:root:755
-  check "shared library is root:root 644" perm_is "${INSTALL_DIR}/lib/wazuh-credentials.sh" root:root:644
+  check "resolver program is root:root 644" perm_is "${RESOLVER}.js" root:root:644
+  check_not "no lib/ in ${INSTALL_DIR}" test -e "${INSTALL_DIR}/lib"
   check "${INSTALL_DIR} is root:root 755" perm_is "${INSTALL_DIR}" root:root:755
   check "data/ is ${NAME} 750" perm_is "${INSTALL_DIR}/data" "${NAME}:${NAME}:750"
   check "${ENV_FILE} is root:${NAME} 640" perm_is "${ENV_FILE}" "root:${NAME}:640"
-  check "${WAZUH_DIR} is root:root 700" perm_is "${WAZUH_DIR}" root:root:700
-  check "empty credentials.env is root:root 600" perm_is "${CREDENTIALS_FILE}" root:root:600
-  check "credentials.env is empty" test ! -s "${CREDENTIALS_FILE}"
+  check "${LEGACY_WAZUH_DIR} not created" absent "${LEGACY_WAZUH_DIR}"
+  check "no local.env created" absent "${LOCAL_ENV}"
 
   step "Install output says how to log in, without the certificate detail"
   local out
@@ -597,23 +631,26 @@ case_fresh_install() {
   check "says how to start and enable the service" contains "${out}" "systemctl enable --now ${NAME}"
   check_not "hides the certificate detail" contains "${out}" "SHA-256"
 
-  step "Certificates issued from a freshly minted shared CA"
-  check "shared CA certificate minted" test -f "${CA_DIR}/root-ca.pem"
-  check "shared CA key minted" test -f "${CA_DIR}/root-ca.key"
+  step "Certificates issued from a freshly minted dashboard CA, published in export/"
+  check "ca/ is root:root 700" perm_is "${CA_DIR}" root:root:700
+  check "CA certificate minted, root:root 644" perm_is "${CA_DIR}/root-ca.pem" root:root:644
+  check "CA key minted, root:root 400" perm_is "${CA_DIR}/root-ca.key" root:root:400
   check "mint recorded by the dashboard's marker" test -f "${CA_DIR}/${CA_MINT_MARKER}"
-  check "certs/ is ${NAME} 500" perm_is "${CERTS_DIR}" "${NAME}:${NAME}:500"
+  check "export/ is root:root 700" perm_is "${EXPORT_DIR}" root:root:700
+  check "export/ca.pem is the dashboard CA" same_file "${CA_DIR}/root-ca.pem" "${EXPORT_DIR}/ca.pem"
+  check "certs/ is root:${NAME} 750" perm_is "${CERTS_DIR}" "root:${NAME}:750"
   local f
-  for f in dashboard.pem dashboard-key.pem root-ca.pem; do
-    check "certs/${f} is ${NAME} 400" perm_is "${CERTS_DIR}/${f}" "${NAME}:${NAME}:400"
+  for f in dashboard.pem dashboard-key.pem; do
+    check "certs/${f} is root:${NAME} 640" perm_is "${CERTS_DIR}/${f}" "root:${NAME}:640"
   done
-  check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
-  check "dashboard.pem chains to the shared CA for server use" \
+  check "no indexer-ca.pem without an indexer" absent "${INDEXER_CA_FILE}"
+  check "dashboard.pem chains to the dashboard CA for server use" \
     openssl verify -purpose sslserver -CAfile "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/dashboard.pem"
 
   step "Keystore after install without credentials"
   check "keystore exists" test -f "${CONFIG_DIR}/opensearch_dashboards.keystore"
+  check_config_dir_ownership
   check "AI assistant encryption key generated" ks_has wazuh_ai_assistant.encryptionKey
-  check "session cookie password generated" ks_has opensearch_security.cookie.password
   check_not "opensearch.password not stored" ks_has opensearch.password
   check_not "wazuh_core.hosts.default.password not stored" ks_has wazuh_core.hosts.default.password
 }
@@ -621,7 +658,7 @@ case_fresh_install() {
 case_start_without_credentials() {
   install_ok "${DASHBOARD_PKG}"
   systemctl enable "${NAME}" >/dev/null 2>&1
-  step "Start without peer credentials"
+  step "Start without the peers' exports"
   check "systemctl start is refused" svc_start_refused
   prestart
   check "prestart exits 1" prestart_rc_is 1
@@ -629,17 +666,23 @@ case_start_without_credentials() {
     contains "${PRE_OUT}" "MISSING WAZUH_INDEXER_KIBANASERVER_PASSWORD"
   check "reports MISSING WAZUH_MANAGER_WUI_PASSWORD" \
     contains "${PRE_OUT}" "MISSING WAZUH_MANAGER_WUI_PASSWORD"
+  check "reports MISSING indexer-ca.pem" contains "${PRE_OUT}" "MISSING ${INDEXER_CA_FILE}"
+  check "a missing manager-ca.pem is only a warning" \
+    contains "${PRE_OUT}" "warning: MISSING ${CERTS_DIR}/manager-ca.pem"
 }
 
 case_credentials_before_install() {
-  step "Credentials published before the dashboard is installed"
+  step "The peers publish before the dashboard is installed"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   install_ok "${DASHBOARD_PKG}"
   check "install stored opensearch.password" ks_has opensearch.password
   check "install stored opensearch.username" ks_has opensearch.username
   check "install stored wazuh_core.hosts.default.password" ks_has wazuh_core.hosts.default.password
-  check "credentials.env was left untouched" \
-    grep -qx "WAZUH_INDEXER_KIBANASERVER_PASSWORD=${KIBANA_PASS}" "${CREDENTIALS_FILE}"
+  check "install imported the indexer CA" same_file "${INDEXER_EXPORT}/ca.pem" "${INDEXER_CA_FILE}"
+  check "the import is marked" test -f "${CERTS_DIR}/.indexer-ca.imported"
+  check "install imported the manager CA" same_file "${MANAGER_EXPORT}/ca.pem" "${CERTS_DIR}/manager-ca.pem"
+  check "the indexer's credentials.env was left untouched" \
+    grep -qx "WAZUH_INDEXER_KIBANASERVER_PASSWORD=${KIBANA_PASS}" "${INDEXER_EXPORT}/credentials.env"
   step "Start"
   systemctl enable "${NAME}" >/dev/null 2>&1
   check "systemctl start succeeds" svc_start
@@ -650,16 +693,19 @@ case_credentials_after_install() {
   install_ok "${DASHBOARD_PKG}"
   step "First start without credentials"
   check "systemctl start is refused" svc_start_refused
-  step "The indexer and the manager publish their credentials later"
+  step "The indexer and the manager publish their exports later"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   check "systemctl start succeeds" svc_start
   check_running
   check "keystore holds every consumed entry" has_all_consumed_entries
+  check "the start imported the indexer CA" same_file "${INDEXER_EXPORT}/ca.pem" "${INDEXER_CA_FILE}"
 }
 
 case_credentials_env_aliases() {
   install_ok "${DASHBOARD_PKG}"
   step "Credentials through the unit's EnvironmentFile, wazuh-docker aliases"
+  # Only the CAs are published; the passwords come from the environment.
+  write_creds "" ""
   printf 'INDEXER_PASSWORD=%s\nAPI_PASSWORD=%s\n' "${KIBANA_PASS}" "${WUI_PASS}" >>"${ENV_FILE}"
   local ts
   ts=$(date +%s)
@@ -680,7 +726,7 @@ case_credentials_env_aliases() {
 
 case_env_beats_file() {
   install_ok "${DASHBOARD_PKG}"
-  step "Valid values in the environment, an invalid one in credentials.env"
+  step "Valid values in the environment, an invalid one in the indexer's export"
   write_creds "123456789e10" "${WUI_PASS}"
   printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\n' "${KIBANA_PASS}" >>"${ENV_FILE}"
   check "systemctl start succeeds (the environment wins)" svc_start
@@ -705,7 +751,7 @@ case_invalid_values() {
     esac
   done
 
-  step "Invalid value in credentials.env blocks the service"
+  step "Invalid value in the indexer's export blocks the service"
   write_creds "123456789e10" "${WUI_PASS}"
   check "systemctl start is refused" svc_start_refused
   prestart
@@ -715,15 +761,21 @@ case_invalid_values() {
 
 case_refused_credentials_file() {
   install_ok "${DASHBOARD_PKG}"
-  step "credentials.env readable by everyone (0644)"
-  write_creds "${KIBANA_PASS}" "${WUI_PASS}" 0644
+  step "local.env readable by everyone (0644)"
+  # Only the CAs are published; the passwords come from the operator's local.env.
+  write_creds "" ""
+  printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\nWAZUH_MANAGER_WUI_PASSWORD=%s\n' \
+    "${KIBANA_PASS}" "${WUI_PASS}" >"${LOCAL_ENV}"
+  chown root:root "${LOCAL_ENV}"
+  chmod 0644 "${LOCAL_ENV}"
   check "systemctl start is refused" svc_start_refused
   prestart
   check "prestart exits 1" prestart_rc_is 1
-  check "reports the file as REFUSED" contains "${PRE_OUT}" "REFUSED ${CREDENTIALS_FILE}"
+  check "reports the file as UNSAFE" \
+    contains "${PRE_OUT}" "UNSAFE ${LOCAL_ENV}: it is group- or world-readable"
   check_not "opensearch.password was not stored" ks_has opensearch.password
   step "Fixing the mode lets it start"
-  chmod 0600 "${CREDENTIALS_FILE}"
+  chmod 0600 "${LOCAL_ENV}"
   check "systemctl start succeeds" svc_start
   check_running
 }
@@ -733,13 +785,13 @@ case_keystore_wins() {
   install_ok "${DASHBOARD_PKG}"
   check "systemctl start succeeds" svc_start
   check_running
-  step "credentials.env changes to a value that would be invalid; restart"
+  step "The indexer's export changes to a value that would be invalid; restart"
   write_creds "123456789e10" "${WUI_PASS}"
   check "systemctl restart succeeds" timeout 120 systemctl restart "${NAME}"
   check_running
   prestart
   check "prestart exits 0" prestart_rc_is 0
-  check "credentials.env is ignored once the keystore has the entry" \
+  check "the export is ignored once the keystore has the entry" \
     contains "${PRE_OUT}" "opensearch.password is already in the keystore"
 }
 
@@ -750,7 +802,7 @@ case_yml_password() {
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   prestart
   check "prestart exits 0" prestart_rc_is 0
-  check "reports the yml setting" contains "${PRE_OUT}" "opensearch.password is set in ${CONFIG_FILE}"
+  check "reports the yml setting" contains "${PRE_OUT}" "opensearch.password is set in opensearch_dashboards.yml"
   check_not "opensearch.password not written to the keystore" ks_has opensearch.password
   check_not "opensearch.username not written to the keystore" ks_has opensearch.username
   check "wazuh_core.hosts.default.password stored" ks_has wazuh_core.hosts.default.password
@@ -758,58 +810,8 @@ case_yml_password() {
   check_running
 }
 
-# The session cookie password is generated at install, and then never touched: a pre-start, a
-# restart and a second pre-start all leave the keystore as it was (compared by the hash of the file).
-case_cookie_password_stable() {
-  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
-  install_ok "${DASHBOARD_PKG}"
-  step "Generated by the install"
-  check "session cookie password generated" ks_has opensearch_security.cookie.password
-  local before
-  before=$(ks_file_sha) || before=""
-  check "keystore file is readable" test -n "${before}"
-  step "Pre-start twice by hand"
-  prestart
-  check "prestart exits 0" prestart_rc_is 0
-  check "reports the entry as already in the keystore" \
-    contains "${PRE_OUT}" "opensearch_security.cookie.password is already in the keystore"
-  prestart
-  check "prestart exits 0" prestart_rc_is 0
-  check "keystore not rewritten by the pre-starts" \
-    test "$(ks_file_sha)" = "${before}"
-  step "Start and restart"
-  check "systemctl start succeeds" svc_start
-  check_running
-  check "systemctl restart succeeds" timeout 120 systemctl restart "${NAME}"
-  check_running
-  check "keystore not rewritten by the restart" \
-    test "$(ks_file_sha)" = "${before}"
-}
-
-# An operator-supplied cookie password in the yml is theirs: nothing is generated over it. The
-# install has already generated one, so it is removed first, as on a host that never had one.
-case_yml_cookie_password() {
-  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
-  install_ok "${DASHBOARD_PKG}"
-  step "opensearch_security.cookie.password set by the operator in opensearch_dashboards.yml"
-  check "the install generated the entry" ks_has opensearch_security.cookie.password
-  check "entry removed to model a host without one" ks_remove opensearch_security.cookie.password
-  check_not "entry is gone" ks_has opensearch_security.cookie.password
-  printf '\nopensearch_security.cookie.password: %s\n' "YmlCookiePassword-0123456789abcdefgh" \
-    >>"${CONFIG_FILE}"
-  prestart
-  check "prestart exits 0" prestart_rc_is 0
-  check "reports the yml setting" \
-    contains "${PRE_OUT}" "opensearch_security.cookie.password is set in ${CONFIG_FILE}"
-  check_not "session cookie password not written to the keystore" \
-    ks_has opensearch_security.cookie.password
-  check "AI assistant encryption key still generated" ks_has wazuh_ai_assistant.encryptionKey
-  check "systemctl start succeeds" svc_start
-  check_running
-}
-
 case_existing_ca() {
-  step "Mint a CA with a first install, then wipe everything but the CA"
+  step "Mint a CA with a first install, then wipe everything and stage that CA as the operator's"
   install_ok "${DASHBOARD_PKG}"
   save_minted_ca
   local ca_fp
@@ -817,14 +819,14 @@ case_existing_ca() {
   clean_host
   restore_ca root-ca.pem root-ca.key
 
-  step "Install with the shared CA already present"
+  step "Install with a CA staged in ${CA_DIR}"
   install_ok "${DASHBOARD_PKG}"
-  check "install reuses the shared CA" contains "$(cat "${WORK}/install.out")" "reusing the shared root CA"
-  check "shared CA is unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
-  check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
-  check "dashboard.pem chains to the existing CA" \
+  check "install uses the staged CA" contains "$(cat "${WORK}/install.out")" "using the CA in ${CA_DIR}"
+  check "staged CA is unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
+  check "export/ca.pem is the staged CA" same_file "${CA_DIR}/root-ca.pem" "${EXPORT_DIR}/ca.pem"
+  check "dashboard.pem chains to the staged CA" \
     openssl verify -purpose sslserver -CAfile "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/dashboard.pem"
-  check "no mint marker for a reused CA" absent "${CA_DIR}/${CA_MINT_MARKER}"
+  check "no mint marker for a staged CA" absent "${CA_DIR}/${CA_MINT_MARKER}"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   check "systemctl start succeeds" svc_start
   check_running
@@ -836,57 +838,61 @@ case_existing_ca() {
   echo "${out}"
   check "--clear succeeds" test "${rc}" -eq 0
   check "explains why the CA is kept" contains "${out}" "this dashboard did not mint it"
-  check "shared CA key kept" test -f "${CA_DIR}/root-ca.key"
-  check "shared CA is unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
+  check "staged CA key kept" test -f "${CA_DIR}/root-ca.key"
+  check "staged CA is unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
   check "certs/dashboard.pem removed" absent "${CERTS_DIR}/dashboard.pem"
 }
 
 case_anchor_only_ca() {
-  step "Mint a CA, then keep only its certificate (a CA managed elsewhere)"
+  step "Mint a CA, then stage only its certificate (a CA managed elsewhere)"
   install_ok "${DASHBOARD_PKG}"
   save_minted_ca
   clean_host
   restore_ca root-ca.pem
 
-  step "Install with an anchor-only shared CA"
+  step "Install with a CA certificate but no key in ${CA_DIR}"
   check "package installs despite the missing CA key" pkg_install "${DASHBOARD_PKG}"
   local out
   out=$(cat "${WORK}/install.out")
-  check "install reports the CA cannot issue" contains "${out}" "has no private key"
+  check "install refuses to complete the CA" \
+    contains "${out}" "only one of root-ca.pem and root-ca.key exists in ${CA_DIR}"
   check "install warns the dashboard has no certificates" \
     contains "${out}" "the dashboard has no TLS certificates"
-  check "certs/root-ca.pem is the anchor" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
   check "no dashboard.pem issued" absent "${CERTS_DIR}/dashboard.pem"
   check "no dashboard-key.pem issued" absent "${CERTS_DIR}/dashboard-key.pem"
   check "no CA key was created" absent "${CA_DIR}/root-ca.key"
+  check "nothing published" absent "${EXPORT_DIR}/ca.pem"
 }
 
 case_operator_pair() {
-  step "Operator stages their own certificate pair before installing"
+  step "Operator stages their own certificate pair and indexer CA before installing"
   stage_operator_certs pair
   local cert_sha key_sha ca_sha
   cert_sha=$(sha "${CERTS_DIR}/dashboard.pem")
   key_sha=$(sha "${CERTS_DIR}/dashboard-key.pem")
-  ca_sha=$(sha "${CERTS_DIR}/root-ca.pem")
+  ca_sha=$(sha "${INDEXER_CA_FILE}")
   install_ok "${DASHBOARD_PKG}"
   check "install keeps the existing pair" \
     contains "$(cat "${WORK}/install.out")" "already holds a certificate pair"
   check "dashboard.pem unchanged" test "$(sha "${CERTS_DIR}/dashboard.pem")" = "${cert_sha}"
   check "dashboard-key.pem unchanged" test "$(sha "${CERTS_DIR}/dashboard-key.pem")" = "${key_sha}"
-  check "root-ca.pem unchanged" test "$(sha "${CERTS_DIR}/root-ca.pem")" = "${ca_sha}"
-  check "no shared CA minted over operator material" absent "${CA_DIR}/root-ca.pem"
+  check "no dashboard CA minted over operator material" absent "${CA_DIR}/root-ca.pem"
 
-  # Staged on a host without the service user, so root's until the package takes it over -- which
-  # is what the installation assistant does. The service reads the pair after dropping privileges.
-  step "The staged pair is the service user's and the dashboard starts with it"
+  step "The staged directory is opened to the service's group and the dashboard starts with it"
   local f
-  for f in dashboard.pem dashboard-key.pem root-ca.pem; do
-    check "certs/${f} is owned by ${NAME}" test "$(stat -c '%U:%G' "${CERTS_DIR}/${f}")" = "${NAME}:${NAME}"
+  for f in dashboard.pem dashboard-key.pem indexer-ca.pem; do
+    check "certs/${f} is root:${NAME} 640" perm_is "${CERTS_DIR}/${f}" "root:${NAME}:640"
   done
-  check "certs/ is owned by ${NAME}" test "$(stat -c '%U:%G' "${CERTS_DIR}")" = "${NAME}:${NAME}"
+  check_config_dir_ownership
+  # The indexer publishes another CA: the staged one (no import marker) must win.
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   check "systemctl start succeeds" svc_start
   check_running
+  check "staged indexer-ca.pem unchanged by the indexer's export" \
+    test "$(sha "${INDEXER_CA_FILE}")" = "${ca_sha}"
+  check "no import marker over the staged indexer-ca.pem" absent "${CERTS_DIR}/.indexer-ca.imported"
+  check "the running service owns nothing under ${CONFIG_DIR}" \
+    test -z "$(find "${CONFIG_DIR}" -user "${NAME}" -print -quit)"
 }
 
 case_partial_pair() {
@@ -896,22 +902,21 @@ case_partial_pair() {
   check "install refuses to complete the pair" \
     contains "$(cat "${WORK}/install.out")" "refusing to complete it"
   check "no dashboard-key.pem created" absent "${CERTS_DIR}/dashboard-key.pem"
-  check "no shared CA minted" absent "${CA_DIR}/root-ca.pem"
+  check "no dashboard CA minted" absent "${CA_DIR}/root-ca.pem"
 }
 
 case_custom_sans() {
-  step "Install with WAZUH_DASHBOARD_CERT_SANS and WAZUH_DASHBOARD_NODE_NAME"
+  step "Install with WAZUH_DASHBOARD_CERT_SANS"
   export WAZUH_DASHBOARD_CERT_SANS="DNS:dash.test,IP:10.9.8.7"
-  export WAZUH_DASHBOARD_NODE_NAME="dash-node"
   install_ok "${DASHBOARD_PKG}"
-  unset WAZUH_DASHBOARD_CERT_SANS WAZUH_DASHBOARD_NODE_NAME
+  unset WAZUH_DASHBOARD_CERT_SANS
   local sans subject count
   sans=$(openssl x509 -in "${CERTS_DIR}/dashboard.pem" -noout -text |
     sed -n '/X509v3 Subject Alternative Name:/{n;s/^ *//p;}')
   subject=$(openssl x509 -in "${CERTS_DIR}/dashboard.pem" -noout -subject)
   info "SANs: ${sans}"
   info "${subject}"
-  check "CN is the node name" contains "${subject}" "CN = dash-node"
+  check "CN is the short host name" contains "${subject}" "CN = $(hostname -s)"
   check "SAN DNS:dash.test" contains "${sans}" "DNS:dash.test"
   check "SAN IP 10.9.8.7" contains "${sans}" "IP Address:10.9.8.7"
   check "SAN DNS:localhost (always added)" contains "${sans}" "DNS:localhost"
@@ -934,26 +939,25 @@ case_clear() {
   check "keystore still holds the entries" has_all_consumed_entries
   step "--clear after stopping"
   svc_stop
-  # What a SIGKILL during an issue leaves behind: a root-only staging directory holding a key.
-  install -d -m 0700 -o root -g root "${CERTS_DIR}/.stage.test"
-  : >"${CERTS_DIR}/.stage.test/dashboard-key.pem"
   rc=0
   out=$("${RESOLVER}" --clear 2>&1) || rc=$?
   echo "${out}"
   check "--clear succeeds" test "${rc}" -eq 0
   local entry
   for entry in opensearch.username opensearch.password wazuh_core.hosts.default.password \
-    wazuh_ai_assistant.encryptionKey opensearch_security.cookie.password; do
+    wazuh_ai_assistant.encryptionKey; do
     check_not "${entry} removed" ks_has "${entry}"
   done
   local f
-  for f in dashboard.pem dashboard-key.pem root-ca.pem; do
+  for f in dashboard.pem dashboard-key.pem indexer-ca.pem .indexer-ca.imported manager-ca.pem \
+    .manager-ca.imported; do
     check "certs/${f} removed" absent "${CERTS_DIR}/${f}"
   done
-  check "leftover staging directory removed" absent "${CERTS_DIR}/.stage.test"
   check "minted CA removed" absent "${CA_DIR}/root-ca.key"
   check "mint marker removed" absent "${CA_DIR}/${CA_MINT_MARKER}"
-  check "credentials.env kept (owned by the siblings)" test -f "${CREDENTIALS_FILE}"
+  check "export/ca.pem removed" absent "${EXPORT_DIR}/ca.pem"
+  check "the indexer's export kept (the sibling's)" test -f "${INDEXER_EXPORT}/credentials.env"
+  check "the manager's export kept (the sibling's)" test -f "${MANAGER_EXPORT}/credentials.env"
 }
 
 case_remove() {
@@ -966,57 +970,68 @@ case_remove() {
   check_not "package no longer registered" pkg_present
   check_not "service no longer active" systemctl is-active --quiet "${NAME}"
   check "${INSTALL_DIR} removed" absent "${INSTALL_DIR}"
-  check "${WAZUH_DIR} removed (no other Wazuh component)" absent "${WAZUH_DIR}"
+  check "the indexer's export left alone" test -f "${INDEXER_EXPORT}/credentials.env"
+  check "the manager's export left alone" test -f "${MANAGER_EXPORT}/credentials.env"
+  check "${LEGACY_WAZUH_DIR} not created" absent "${LEGACY_WAZUH_DIR}"
   check_not "user ${NAME} removed" id "${NAME}"
   check_not "group ${NAME} removed" getent group "${NAME}"
   if [ "${FAMILY}" = deb ]; then
     check "${CONFIG_DIR} removed by purge" absent "${CONFIG_DIR}"
-  elif absent "${CONFIG_DIR}"; then
-    info "${CONFIG_DIR} removed"
   else
-    info "${CONFIG_DIR} left behind by rpm (not a failure):"
-    find "${CONFIG_DIR}" -maxdepth 2 | sed 's/^/         /'
+    check "${CONFIG_DIR} kept by erase" test -d "${CONFIG_DIR}"
+    check "${CA_DIR} removed" absent "${CA_DIR}"
+    check "${EXPORT_DIR} removed" absent "${EXPORT_DIR}"
+    check "${CONFIG_DIR} is root's, with no group or other access" \
+      test -z "$(find "${CONFIG_DIR}" \( ! -user root -o ! -group root -o -perm /077 \) ! -type l)"
   fi
 }
 
 case_reinstall() {
   install_ok "${DASHBOARD_PKG}"
-  local ca_fp
-  ca_fp=$(fingerprint "${CA_DIR}/root-ca.pem")
+  cp "${CA_DIR}/root-ca.pem" "${WORK}/ca-before-removal.pem"
   step "Remove with the package's own scripts, then reinstall"
   check "package removal succeeds" pkg_remove
-  check "${WAZUH_DIR} removed with the last component" absent "${WAZUH_DIR}"
-  # rpm may leave config files behind (.rpmsave); a reinstall must start from its own defaults.
-  [ "${FAMILY}" = rpm ] && rm -rf "${CONFIG_DIR}"
-  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  check "${LEGACY_WAZUH_DIR} not created" absent "${LEGACY_WAZUH_DIR}"
+  # rpm keeps ${CONFIG_DIR} without ca/; the reinstall must take it back and keep the pair.
   install_ok "${DASHBOARD_PKG}"
-  check "a new shared CA was minted" test "$(fingerprint "${CA_DIR}/root-ca.pem")" != "${ca_fp}"
-  check "dashboard.pem chains to the new CA" \
-    openssl verify -purpose sslserver -CAfile "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/dashboard.pem"
+  check "${CONFIG_DIR} readable by ${NAME} again" test "$(stat -c '%G:%a' "${CONFIG_DIR}")" = "${NAME}:750"
+  local ca_file="${CA_DIR}/root-ca.pem"
+  if [ "${FAMILY}" = rpm ]; then
+    ca_file="${WORK}/ca-before-removal.pem"
+    if [ -f "${EXPORT_DIR}/ca.pem" ]; then
+      info "export/ca.pem published again by the reinstall"
+    else
+      info "export/ca.pem not published again: the kept pair is reused, and its CA was removed"
+    fi
+  fi
+  check "dashboard.pem chains to the CA" \
+    openssl verify -purpose sslserver -CAfile "${ca_file}" "${CERTS_DIR}/dashboard.pem"
+  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   check "systemctl start succeeds" svc_start
   check_running
 }
 
 # Installs --dashboard-previous with credentials and makes sure it has certificates (an older 5.x build may
-# not issue them), leaving it stopped.
+# not issue them), leaving it stopped. The credentials are published both ways: in the peers'
+# export/ directories and in the pre-rework /etc/wazuh/credentials.env, which an older build reads.
 install_previous() {
   step "Install the previous package ($(pkg_file_version "${DASHBOARD_PREV_PKG}"))"
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  install -d -m 0700 -o root -g root "${LEGACY_WAZUH_DIR}"
+  install -m 0600 -o root -g root /dev/null "${LEGACY_WAZUH_DIR}/credentials.env"
+  printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\nWAZUH_MANAGER_WUI_PASSWORD=%s\n' \
+    "${KIBANA_PASS}" "${WUI_PASS}" >"${LEGACY_WAZUH_DIR}/credentials.env"
   install_ok "${DASHBOARD_PREV_PKG}"
   if [ ! -f "${CERTS_DIR}/dashboard.pem" ]; then
     info "the previous package issued no certificates; staging an operator pair"
     rm -rf "${CERTS_DIR}"
     stage_operator_certs pair
+    # A pre-rework build trusts the indexer with certs/root-ca.pem.
+    if grep -q 'certs/root-ca.pem' "${CONFIG_FILE}"; then
+      cp -p "${INDEXER_CA_FILE}" "${CERTS_DIR}/root-ca.pem"
+    fi
   fi
   systemctl enable "${NAME}" >/dev/null 2>&1
-  # The upgrade cases model a host whose previous version had no session cookie password. A build
-  # that already generates one gets it removed, so what the upgrade does about it is what is tested.
-  if ks_has opensearch_security.cookie.password >/dev/null 2>&1; then
-    info "the previous package generated opensearch_security.cookie.password; removing it"
-    check "the previous package's cookie password entry is removed" \
-      ks_remove opensearch_security.cookie.password
-    check_not "the entry is gone" ks_has opensearch_security.cookie.password
-  fi
 }
 
 case_upgrade_running() {
@@ -1034,12 +1049,9 @@ case_upgrade_running() {
   check "dashboard.pem unchanged by the upgrade" test "$(sha "${CERTS_DIR}/dashboard.pem")" = "${cert_sha}"
   check "dashboard-key.pem unchanged by the upgrade" test "$(sha "${CERTS_DIR}/dashboard-key.pem")" = "${key_sha}"
   check "keystore holds every consumed entry" has_all_consumed_entries
-  # The upgrade itself generates nothing; the start does. Restart once, in case the package manager
-  # left the old process running, so that a pre-start of the new version has certainly run.
-  step "The first start of the new version generates the session cookie password"
-  check "systemctl restart succeeds" timeout 120 systemctl restart "${NAME}"
-  check_running
-  check_cookie_password_kept_across_restart
+  check "indexer-ca.pem present after the upgrade" test -f "${INDEXER_CA_FILE}"
+  step "The upgrade takes the configuration directory back to root"
+  check_config_dir_ownership
 }
 
 case_upgrade_stopped() {
@@ -1051,12 +1063,8 @@ case_upgrade_stopped() {
   check "installed version is ${expected}" test "$(pkg_installed_version)" = "${expected}"
   sleep 5
   check_not "service was not started by the upgrade" systemctl is-active --quiet "${NAME}"
-  check_not "the upgrade did not generate the session cookie password" \
-    ks_has opensearch_security.cookie.password
   check "systemctl start succeeds" svc_start
   check_running
-  step "The first start of the new version generated the session cookie password"
-  check_cookie_password_kept_across_restart
 }
 
 case_no_wazuh_host() {
@@ -1081,31 +1089,33 @@ case_no_wazuh_host() {
 case_clear_symlinked_certs() {
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   install_ok "${DASHBOARD_PKG}"
-  step "The service user points certs/ at another directory, then root runs --clear"
+  step "The service user cannot replace certs/ any more"
+  check_not "${NAME} cannot move certs/ in the root-owned ${CONFIG_DIR}" \
+    runuser -u "${NAME}" -- sh -c "cd '${CONFIG_DIR}' && mv certs certs.moved"
+  step "certs/ replaced by a symlink anyway, then root runs --clear"
   # Files with the names --clear removes, in a directory the service user has no rights over.
   local decoy="${WORK}/decoy" f
   install -d -m 0700 -o root -g root "${decoy}"
-  for f in dashboard.pem dashboard-key.pem root-ca.pem; do echo "not the dashboard's" >"${decoy}/${f}"; done
-  check "${NAME} can replace certs/ with a symlink" \
-    runuser -u "${NAME}" -- sh -c "cd '${CONFIG_DIR}' && mv certs certs.moved && ln -s '${decoy}' certs"
+  for f in dashboard.pem dashboard-key.pem; do echo "not the dashboard's" >"${decoy}/${f}"; done
+  mv "${CERTS_DIR}" "${CONFIG_DIR}/certs.moved"
+  ln -s "${decoy}" "${CERTS_DIR}"
   local out rc=0
   out=$("${RESOLVER}" --clear 2>&1) || rc=$?
   echo "${out}"
   check "--clear fails rather than reporting a clear" test "${rc}" -ne 0
-  check "the refusal names certs/" contains "${out}" "refusing to clear ${CERTS_DIR}"
-  for f in dashboard.pem dashboard-key.pem root-ca.pem; do
+  check "the refusal names certs/" contains "${out}" "UNSAFE ${CERTS_DIR}: it is a symbolic link"
+  for f in dashboard.pem dashboard-key.pem; do
     check "${f} in the symlink's target is kept" test -f "${decoy}/${f}"
   done
-  check "the shared CA is kept" test -f "${CA_DIR}/root-ca.pem"
 }
 
 case_children_isolated() {
   write_creds "${KIBANA_PASS}" "${WUI_PASS}"
   install_ok "${DASHBOARD_PKG}"
   step "Run --prestart from a terminal, with a secret in root's environment"
-  # node.options is the service user's, and the keystore's Node loads what it names -- the probe
-  # records what a child of the resolver could reach. It lives in the configuration directory,
-  # which the service user can read and the host cleanup removes.
+  # node.options is read by every Node the package starts, and the keystore's Node loads what it
+  # names -- the probe records what a child of the resolver could reach. It lives in the
+  # configuration directory, which the host cleanup removes.
   local probe="${CONFIG_DIR}/probe.js" probe_log="${CONFIG_DIR}/probe.log"
   cat >"${probe}" <<'EOF'
 const fs = require('fs');
@@ -1129,17 +1139,143 @@ EOF
   check_not "no child saw root's environment" grep -q 'canary=true' "${probe_log}"
 }
 
+# The package scripts, without comment lines, as the package manager stored them.
+pkg_scripts() {
+  case "${FAMILY}" in
+    deb) cat /var/lib/dpkg/info/"${NAME}".{preinst,postinst,prerm,postrm} 2>/dev/null ;;
+    rpm) rpm -q --scripts "${NAME}" ;;
+  esac | grep -v '^[[:space:]]*#'
+}
+
+# runs_tool <tool...>: stdin, without comment lines, runs one of the tools as a command: by name
+# or path, quoted or not, after ; & | ( or a backquote and before ; ) a quote, a space or the
+# line end. Matched on a variable: grep -q in a pipe can fail the pipe (pipefail) on a match.
+runs_tool() {
+  local tools text
+  tools=$(IFS='|'; echo "$*")
+  text=$(grep -v '^[[:space:]]*#')
+  grep -Eq "(^|[;&|(\`\"'/[:space:]])(${tools})([;)\"'[:space:]]|\$)" <<<"${text}"
+}
+
+# calls <tool...>: a package script runs one of the tools as a command.
+calls() {
+  local scripts
+  scripts=$(pkg_scripts)
+  runs_tool "$@" <<<"${scripts}"
+}
+
+# shipped_test_dirs: the listed paths that are a test/ or tests/ directory of a bundled npm
+# package, or lie inside one. A file named test or tests does not count, and neither does a
+# test/ directory of src/ or of a plugin's own code, which the packages keep.
+shipped_test_dirs() {
+  local path
+  while IFS= read -r path; do
+    case "${path}" in
+      */node_modules/*/test/* | */node_modules/*/tests/*) echo "${path}" ;;
+      */node_modules/*/test | */node_modules/*/tests) if [ -d "${path}" ]; then echo "${path}"; fi ;;
+    esac
+  done
+}
+
+case_declared_dependencies() {
+  write_creds "${KIBANA_PASS}" "${WUI_PASS}"
+  install_ok "${DASHBOARD_PKG}"
+  step "Declared dependencies"
+  case "${FAMILY}" in
+    deb)
+      # preinst creates the account, so passwd is a Pre-Depends
+      info "Pre-Depends: $(dpkg-query -W -f='${Pre-Depends}' "${NAME}"); Depends: $(dpkg-query -W -f='${Depends}' "${NAME}")"
+      check "Pre-Depends is passwd only and there is no Depends" \
+        [ "$(dpkg-query -W -f='${Pre-Depends}|${Depends}' "${NAME}")" = "passwd|" ]
+      ;;
+    rpm)
+      local requires
+      requires=$(rpm -qR "${NAME}" | grep -v '^rpmlib(' | sed 's/[[:space:]]*$//' | sort -u | tr '\n' ' ')
+      info "Requires (without rpmlib): ${requires}"
+      check "Requires is /bin/sh and the account tools only" \
+        [ "${requires}" = "/bin/sh /usr/sbin/groupadd /usr/sbin/groupdel /usr/sbin/useradd /usr/sbin/userdel " ]
+      ;;
+  esac
+  step "Package scripts run only builtins, coreutils and the declared tools"
+  # An empty or missing script would pass every check_not below
+  local script
+  case "${FAMILY}" in
+    deb)
+      for script in preinst postinst prerm postrm; do
+        check "dpkg keeps the ${script} script" test -s "/var/lib/dpkg/info/${NAME}.${script}"
+      done
+      ;;
+  esac
+  check "the package scripts are not empty" [ -n "$(pkg_scripts)" ]
+  check_not "no script calls awk, ps, pgrep, openssl, curl, runuser or setcap" \
+    calls awk ps pgrep openssl curl runuser setcap
+  # grep and sed are Essential on Debian, but no script uses them any more
+  check_not "no script calls grep, sed or find" calls grep sed find
+  # The unit's launcher sources use_node, which reads node.options on every start
+  check "use_node exists" test -f "${INSTALL_DIR}/bin/use_node"
+  check_not "use_node reads node.options without grep or xargs" \
+    runs_tool grep xargs <"${INSTALL_DIR}/bin/use_node"
+  case "${FAMILY}" in
+    deb)
+      check_not "no script calls adduser or addgroup" calls adduser addgroup
+      check "the SysV script exists" test -f "/usr/lib/systemd/system/${NAME}"
+      check_not "the SysV script does not call ps" runs_tool ps <"/usr/lib/systemd/system/${NAME}"
+      check "the service user has no login shell" \
+        [ "$(getent passwd "${NAME}" | cut -d: -f6-7)" = "/nonexistent:/usr/sbin/nologin" ]
+      ;;
+    rpm)
+      check "the scriptlets keep the %% operators" pkg_scripts_have '${json%%' '${INSTALLED_VER%%.*}'
+      ;;
+  esac
+  step "Payload"
+  local list found
+  case "${FAMILY}" in
+    deb) list=$(dpkg -L "${NAME}") ;;
+    rpm) list=$(rpm -ql "${NAME}") ;;
+  esac
+  check "the package lists its files" [ -n "${list}" ]
+  found=$(shipped_test_dirs <<<"${list}")
+  if [ -n "${found}" ]; then info "first test path: ${found%%$'\n'*}"; fi
+  check "no test/ or tests/ directory of a bundled npm package is shipped" [ -z "${found}" ]
+}
+
+# pkg_scripts_have <text...>: every text is in the package scripts.
+pkg_scripts_have() {
+  local scripts text
+  scripts=$(pkg_scripts)
+  for text in "$@"; do
+    contains "${scripts}" "${text}" || return 1
+  done
+}
+
 # -----------------------------------------------------------------------------------------
 # FULL setup: the dashboard with the manager and the indexer
 #
 # Only the dashboard is asserted. The siblings are installed with a check (a case means nothing
 # without them), but whether they start is recorded as [INFO]: the manager does not start without
-# WAZUH_INDEXER_MANAGER_PASSWORD, and the indexer publishes no key and uses its own CA -- theirs to
-# fix. The dashboard is expected to follow credentials.env exactly: what is published there is
-# resolved, what is not is named, and it starts only when both of its keys are resolved.
+# WAZUH_INDEXER_MANAGER_PASSWORD, and the indexer may not publish everything -- theirs to fix. The
+# dashboard is expected to follow the peers' export/ directories exactly: what is published there
+# (or set by the operator in local.env) is resolved, what is not is named, and it starts only when
+# both of its keys and the indexer CA are resolved.
 # -----------------------------------------------------------------------------------------
 
-has_key() { [ -f "${CREDENTIALS_FILE}" ] && grep -Eq "^(export )?$1=" "${CREDENTIALS_FILE}"; }
+# published <key>: the sibling that owns the key publishes it in its export/credentials.env.
+published() {
+  local file="${MANAGER_EXPORT}/credentials.env"
+  case "$1" in WAZUH_INDEXER_*) file="${INDEXER_EXPORT}/credentials.env" ;; esac
+  [ -f "${file}" ] && grep -Eq "^(export )?$1=" "${file}"
+}
+
+# available <key>: published by its sibling, or set by the operator in local.env.
+available() {
+  published "$1" || { [ -f "${LOCAL_ENV}" ] && grep -Eq "^(export )?$1=" "${LOCAL_ENV}"; }
+}
+
+# indexer_ca_available: the indexer publishes its CA, or the operator staged indexer-ca.pem.
+indexer_ca_available() {
+  [ -f "${INDEXER_EXPORT}/ca.pem" ] ||
+    { [ -f "${INDEXER_CA_FILE}" ] && absent "${CERTS_DIR}/.indexer-ca.imported"; }
+}
 
 # sib_install <file> <name> [VAR=value...]: installs a sibling package. Its output goes to the log
 # and to ${WORK}/install-<name>.out; the dashboard's install.out is left alone.
@@ -1159,10 +1295,15 @@ sib_install() {
 indexer_up() {
   step "Install and start ${INDEXER}"
   check "${INDEXER} installs" sib_install "${INDEXER_PKG}" "${INDEXER}" GENERATE_CERTS=true
-  if has_key WAZUH_INDEXER_KIBANASERVER_PASSWORD; then
+  if published WAZUH_INDEXER_KIBANASERVER_PASSWORD; then
     info "${INDEXER} published WAZUH_INDEXER_KIBANASERVER_PASSWORD"
   else
     info "${INDEXER} did not publish WAZUH_INDEXER_KIBANASERVER_PASSWORD"
+  fi
+  if [ -f "${INDEXER_EXPORT}/ca.pem" ]; then
+    info "${INDEXER} published ${INDEXER_EXPORT}/ca.pem"
+  else
+    info "${INDEXER} did not publish ${INDEXER_EXPORT}/ca.pem"
   fi
   systemctl daemon-reload
   if timeout 200 systemctl enable --now "${INDEXER}" >/dev/null 2>&1; then
@@ -1190,7 +1331,7 @@ indexer_up() {
 manager_up() {
   step "Install and start ${MANAGER}"
   check "${MANAGER} installs" sib_install "${MANAGER_PKG}" "${MANAGER}"
-  if has_key WAZUH_MANAGER_WUI_PASSWORD; then
+  if published WAZUH_MANAGER_WUI_PASSWORD; then
     info "${MANAGER} published WAZUH_MANAGER_WUI_PASSWORD"
   else
     info "${MANAGER} did not publish WAZUH_MANAGER_WUI_PASSWORD"
@@ -1207,44 +1348,58 @@ manager_up() {
   fi
 }
 
-# Installs the dashboard. It must reuse a shared CA that has its key, and mint one otherwise.
-DASHBOARD_CA_EXPECTED=""
+# Installs the dashboard. It mints its own CA (the siblings no longer share one), unless rpm kept
+# the certificate pair of a previous install.
 dashboard_install() {
   step "Install ${NAME}"
-  if [ -f "${CA_DIR}/root-ca.pem" ] && [ -f "${CA_DIR}/root-ca.key" ]; then
-    DASHBOARD_CA_EXPECTED="reusing the shared root CA"
-  else
-    DASHBOARD_CA_EXPECTED="created the shared root CA"
-  fi
+  local kept_pair=0
+  [ -f "${CERTS_DIR}/dashboard.pem" ] && kept_pair=1
   install_ok "${DASHBOARD_PKG}"
-  check "the install log says: ${DASHBOARD_CA_EXPECTED}" \
-    contains "$(cat "${WORK}/install.out")" "${DASHBOARD_CA_EXPECTED}"
-  check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
+  if [ "${kept_pair}" -eq 1 ]; then
+    check "the install keeps the pair rpm kept" \
+      contains "$(cat "${WORK}/install.out")" "already holds a certificate pair"
+  else
+    check "the install log says: created the dashboard CA" \
+      contains "$(cat "${WORK}/install.out")" "created the dashboard CA in ${CA_DIR}"
+    check "export/ca.pem is the dashboard CA" same_file "${CA_DIR}/root-ca.pem" "${EXPORT_DIR}/ca.pem"
+  fi
+  check "${LEGACY_WAZUH_DIR} not created by ${NAME}" absent "${LEGACY_WAZUH_DIR}/ca"
   systemctl enable "${NAME}" >/dev/null 2>&1 || true
 }
 
-# expect_dashboard <label>: the pre-start verdict and the start outcome must match what
-# credentials.env holds at this moment.
+# expect_dashboard <label>: the pre-start verdict and the start outcome must match what the peers'
+# export/ directories and local.env hold at this moment.
 expect_dashboard() {
-  local label="$1" key missing=""
+  local label="$1" key missing="" ca_missing=0
   step "Dashboard ${label}"
   for key in WAZUH_INDEXER_KIBANASERVER_PASSWORD WAZUH_MANAGER_WUI_PASSWORD; do
-    if has_key "${key}"; then
-      info "${key} is in credentials.env: expected resolved"
+    if available "${key}"; then
+      info "${key} is published: expected resolved"
     else
-      info "${key} is not in credentials.env: expected MISSING"
+      info "${key} is not published: expected MISSING"
       missing="${missing} ${key}"
     fi
   done
+  if indexer_ca_available; then
+    info "the indexer CA is available: expected imported"
+  else
+    info "the indexer CA is not available: expected MISSING"
+    ca_missing=1
+  fi
   prestart
   check_not "no INVALID key" contains "${PRE_OUT}" "INVALID "
-  check_not "credentials file not REFUSED" contains "${PRE_OUT}" "REFUSED "
+  check_not "nothing UNSAFE" contains "${PRE_OUT}" "UNSAFE "
   for key in WAZUH_INDEXER_KIBANASERVER_PASSWORD WAZUH_MANAGER_WUI_PASSWORD; do
     case " ${missing} " in
       *" ${key} "*) check "reports MISSING ${key}" contains "${PRE_OUT}" "MISSING ${key}" ;;
       *) check_not "does not report MISSING ${key}" contains "${PRE_OUT}" "MISSING ${key}" ;;
     esac
   done
+  if [ "${ca_missing}" -eq 1 ]; then
+    check "reports MISSING indexer-ca.pem" contains "${PRE_OUT}" "MISSING ${INDEXER_CA_FILE}"
+  else
+    check "indexer-ca.pem is in place" test -f "${INDEXER_CA_FILE}"
+  fi
   case " ${missing} " in
     *" WAZUH_MANAGER_WUI_PASSWORD "*) ;;
     *) check "wazuh_core.hosts.default.password is in the keystore" ks_has wazuh_core.hosts.default.password ;;
@@ -1253,7 +1408,7 @@ expect_dashboard() {
     *" WAZUH_INDEXER_KIBANASERVER_PASSWORD "*) ;;
     *) check "opensearch.password is in the keystore" ks_has opensearch.password ;;
   esac
-  if [ -z "${missing}" ]; then
+  if [ -z "${missing}" ] && [ "${ca_missing}" -eq 0 ]; then
     check "prestart exits 0" prestart_rc_is 0
     check "systemctl start succeeds" svc_start
     check_running
@@ -1263,24 +1418,27 @@ expect_dashboard() {
   fi
 }
 
-# [INFO] only: which CA each component trusts, whether the dashboard can reach the indexer, and
+# [INFO] only: which CA each component publishes, whether the dashboard can reach the indexer, and
 # the state of the three services.
 full_info() {
   step "Setup state"
   local f conn
-  for f in "${MANAGER_CA}" "${INDEXER_CA}"; do
+  for f in "${INDEXER_EXPORT}/ca.pem" "${MANAGER_EXPORT}/ca.pem"; do
     if [ ! -f "${f}" ]; then
       info "${f}: absent"
-    elif same_file "${CA_DIR}/root-ca.pem" "${f}"; then
-      info "${f}: the shared CA"
     else
-      info "${f}: NOT the shared CA"
+      info "${f}: $(fingerprint "${f}")"
     fi
   done
-  if curl -s -o /dev/null --cacert "${CERTS_DIR}/root-ca.pem" https://127.0.0.1:9200 2>/dev/null; then
-    info "the indexer's TLS verifies against the dashboard's root-ca.pem"
+  if absent "${LEGACY_WAZUH_DIR}"; then
+    info "${LEGACY_WAZUH_DIR}: absent"
   else
-    info "the indexer's TLS does NOT verify against the dashboard's root-ca.pem (or it is down)"
+    info "${LEGACY_WAZUH_DIR} exists (created by a sibling): $(ls -A "${LEGACY_WAZUH_DIR}" | tr '\n' ' ')"
+  fi
+  if curl -s -o /dev/null --cacert "${INDEXER_CA_FILE}" https://127.0.0.1:9200 2>/dev/null; then
+    info "the indexer's TLS verifies against the dashboard's indexer-ca.pem"
+  else
+    info "the indexer's TLS does NOT verify against the dashboard's indexer-ca.pem (or it is down)"
   fi
   conn=$(journal_since "${CASE_STARTED}" | grep -cE 'ConnectionError|self.signed|unable to verify|certificate' || true)
   info "dashboard journal lines about the indexer connection or certificates: ${conn:-0}"
@@ -1292,6 +1450,14 @@ full_info() {
 # The kibanaserver password the indexer ships with, set the way an operator would when the indexer
 # did not publish it.
 readonly INDEXER_DEFAULT_KIBANA_PASS="kibanaserver"
+
+# local_env_add <key> <value>: what an operator does when a sibling did not publish the key.
+local_env_add() {
+  install -m 0600 -o root -g root /dev/null "${LOCAL_ENV}.new"
+  [ -f "${LOCAL_ENV}" ] && cat "${LOCAL_ENV}" >"${LOCAL_ENV}.new"
+  printf '%s=%s\n' "$1" "$2" >>"${LOCAL_ENV}.new"
+  mv "${LOCAL_ENV}.new" "${LOCAL_ENV}"
+}
 
 # run_order "<I|M|D> <I|M|D> <I|M|D>": installs the three in that order and checks the dashboard
 # after every step once it is installed; then supplies what is still missing as an operator would
@@ -1308,22 +1474,32 @@ run_order() {
   done
 
   step "Certificates"
-  check "certs/root-ca.pem is the shared CA" same_file "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/root-ca.pem"
-  check "dashboard.pem chains to the shared CA" \
+  check "dashboard.pem chains to the dashboard CA" \
     openssl verify -purpose sslserver -CAfile "${CA_DIR}/root-ca.pem" "${CERTS_DIR}/dashboard.pem"
-  if [ -f "${MANAGER_CA}" ]; then
-    check "the manager's root-ca.pem is the same shared CA" same_file "${CA_DIR}/root-ca.pem" "${MANAGER_CA}"
+  if [ -f "${INDEXER_EXPORT}/ca.pem" ]; then
+    check "indexer-ca.pem is the indexer's published CA" same_file "${INDEXER_EXPORT}/ca.pem" "${INDEXER_CA_FILE}"
   else
-    info "the manager has no ${MANAGER_CA}"
+    info "the indexer has no ${INDEXER_EXPORT}/ca.pem"
+  fi
+  if [ -f "${MANAGER_EXPORT}/ca.pem" ]; then
+    check "manager-ca.pem is the manager's published CA" \
+      same_file "${MANAGER_EXPORT}/ca.pem" "${CERTS_DIR}/manager-ca.pem"
+  else
+    info "the manager has no ${MANAGER_EXPORT}/ca.pem"
   fi
 
-  if ! has_key WAZUH_INDEXER_KIBANASERVER_PASSWORD; then
-    step "Operator supplies WAZUH_INDEXER_KIBANASERVER_PASSWORD (the indexer's default)"
-    printf 'WAZUH_INDEXER_KIBANASERVER_PASSWORD=%s\n' "${INDEXER_DEFAULT_KIBANA_PASS}" >>"${CREDENTIALS_FILE}"
+  if ! available WAZUH_INDEXER_KIBANASERVER_PASSWORD; then
+    step "Operator supplies WAZUH_INDEXER_KIBANASERVER_PASSWORD (the indexer's default) in local.env"
+    local_env_add WAZUH_INDEXER_KIBANASERVER_PASSWORD "${INDEXER_DEFAULT_KIBANA_PASS}"
   fi
-  if ! has_key WAZUH_MANAGER_WUI_PASSWORD; then
-    step "Operator supplies WAZUH_MANAGER_WUI_PASSWORD"
-    printf 'WAZUH_MANAGER_WUI_PASSWORD=%s\n' "${WUI_PASS}" >>"${CREDENTIALS_FILE}"
+  if ! available WAZUH_MANAGER_WUI_PASSWORD; then
+    step "Operator supplies WAZUH_MANAGER_WUI_PASSWORD in local.env"
+    local_env_add WAZUH_MANAGER_WUI_PASSWORD "${WUI_PASS}"
+  fi
+  if ! indexer_ca_available && [ -f "${INDEXER_OWN_CA}" ]; then
+    step "Operator stages the indexer's own CA as indexer-ca.pem"
+    rm -f "${CERTS_DIR}/.indexer-ca.imported"
+    install -m 0640 -o root -g "${NAME}" "${INDEXER_OWN_CA}" "${INDEXER_CA_FILE}"
   fi
   expect_dashboard "with every credential available"
   full_info
@@ -1346,51 +1522,39 @@ install_all_quiet() {
 
 case_full_remove() {
   install_all_quiet
-  local ca_fp wui_before=0
-  ca_fp=$(fingerprint "${CA_DIR}/root-ca.pem")
-  if has_key WAZUH_MANAGER_WUI_PASSWORD; then wui_before=1; fi
-  info "WAZUH_MANAGER_WUI_PASSWORD in credentials.env before the purge: ${wui_before}"
+  local f exported=()
+  for f in "${INDEXER_EXPORT}"/* "${MANAGER_EXPORT}"/*; do
+    [ -f "${f}" ] && exported+=("${f}")
+  done
+  info "files in the peers' export/ before the purge: ${exported[*]:-none}"
   step "Purge ${NAME}, the manager and the indexer still installed"
   check "${NAME} purge succeeds" pkg_remove
   check_not "${NAME} no longer registered" pkg_present
-  check "${WAZUH_DIR} kept" test -d "${WAZUH_DIR}"
-  check "credentials.env kept" test -f "${CREDENTIALS_FILE}"
-  check "shared CA kept" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
-  check "shared CA key kept" test -f "${CA_DIR}/root-ca.key"
-  if [ "${wui_before}" -eq 1 ]; then
-    check "the manager's WAZUH_MANAGER_WUI_PASSWORD kept" has_key WAZUH_MANAGER_WUI_PASSWORD
-  fi
-
-  step "Purge the manager, then the indexer ([INFO]: last-package-out across the three)"
-  pkgname_remove "${MANAGER}" >/dev/null 2>&1 || info "${MANAGER} purge failed"
-  if absent "${WAZUH_DIR}"; then
-    info "after the manager purge: ${WAZUH_DIR} absent"
+  for f in "${exported[@]}"; do
+    check "${f} kept" test -f "${f}"
+  done
+  if [ "${FAMILY}" = deb ]; then
+    check "${CONFIG_DIR} removed by purge" absent "${CONFIG_DIR}"
   else
-    info "after the manager purge, left in ${WAZUH_DIR}: $(ls -A "${WAZUH_DIR}" | tr '\n' ' ')"
-  fi
-  pkgname_remove "${INDEXER}" >/dev/null 2>&1 || info "${INDEXER} purge failed"
-  if absent "${WAZUH_DIR}"; then
-    info "after the indexer purge: ${WAZUH_DIR} absent"
-  else
-    info "after the indexer purge, left in ${WAZUH_DIR}: $(ls -A "${WAZUH_DIR}" | tr '\n' ' ')"
+    check "${EXPORT_DIR} removed by erase" absent "${EXPORT_DIR}"
   fi
 }
 
 case_full_reinstall() {
   install_all_quiet
-  local ca_fp
-  ca_fp=$(fingerprint "${CA_DIR}/root-ca.pem")
   step "Purge and reinstall ${NAME}"
   check "${NAME} purge succeeds" pkg_remove
   dashboard_install
-  check "the reinstall reused the shared root CA" \
-    contains "$(cat "${WORK}/install.out")" "reusing the shared root CA"
-  check "shared CA unchanged" test "$(fingerprint "${CA_DIR}/root-ca.pem")" = "${ca_fp}"
-  if has_key WAZUH_MANAGER_WUI_PASSWORD; then
-    check "wazuh-internal-client resolved again from credentials.env" \
-      contains "$(cat "${WORK}/install.out")" "stored wazuh_core.hosts.default.password in the keystore from ${CREDENTIALS_FILE}"
+  if published WAZUH_MANAGER_WUI_PASSWORD; then
+    # deb purged the keystore, so it is resolved again; rpm kept it.
+    check "wazuh-internal-client is in the keystore again" ks_has wazuh_core.hosts.default.password
   else
     info "the manager did not publish WAZUH_MANAGER_WUI_PASSWORD; nothing to resolve again"
+  fi
+  if [ -f "${INDEXER_EXPORT}/ca.pem" ]; then
+    check "the reinstall imported the indexer CA again" same_file "${INDEXER_EXPORT}/ca.pem" "${INDEXER_CA_FILE}"
+  else
+    info "the indexer did not publish ${INDEXER_EXPORT}/ca.pem; nothing to import again"
   fi
 }
 
@@ -1462,7 +1626,7 @@ run_case() {
       fi
       journalctl -u "${NAME}" --since "@${started_epoch}" --no-pager 2>/dev/null |
         grep -v 'agentkeepalive:deprecated' | tail -120
-      ls -la "${CERTS_DIR}" "${WAZUH_DIR}" "${CA_DIR}" 2>&1
+      ls -la "${CERTS_DIR}" "${CA_DIR}" "${EXPORT_DIR}" "${INDEXER_EXPORT}" "${MANAGER_EXPORT}" 2>&1
     } >>"${log}"
   fi
 
@@ -1563,7 +1727,7 @@ preflight_host() {
   [ "$(cat /proc/1/comm 2>/dev/null)" = systemd ] || die "PID 1 is not systemd"
 
   if sibling_installed && [ "${SIBLINGS_MANAGED}" -ne 1 ]; then
-    die "wazuh-indexer or wazuh-manager is installed but --manager/--indexer were not given; cleaning wipes ${WAZUH_DIR}. Use --force on a throwaway host"
+    die "wazuh-indexer or wazuh-manager is installed but --manager/--indexer were not given; cleaning purges them. Use --force on a throwaway host"
   fi
 }
 
@@ -1603,8 +1767,6 @@ preflight() {
   fi
 
   preflight_host
-  command -v setcap >/dev/null 2>&1 ||
-    echo "vm-test-matrix: warning: setcap not found (libcap2-bin / libcap); the install may fail" >&2
 
   local fstype
   fstype=$(stat -f -c '%T' "${LOG_DIR:-$(pwd)}" 2>/dev/null || echo unknown)

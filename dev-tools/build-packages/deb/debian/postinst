@@ -14,62 +14,88 @@ export CONFIG_DIR=/etc/"${NAME}"
 export INSTALLATION_DIR=/usr/share/"${NAME}"
 export PID_DIR=/run/"${NAME}"
 
-# Setting Owner and group of own folders
+# Only root writes the pidfile, so root owns its directory, also when an older
+# package gave it to the service user
 mkdir -p "${PID_DIR}"
-chown -R "${NAME}":"${NAME}" "${PID_DIR}"
+chown -h root:root "${PID_DIR}"
+chmod 0755 "${PID_DIR}"
 
 case "$1" in
 configure)
-    chmod 750 "${TARGET_DIR}""${CONFIG_DIR}"
-    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${CONFIG_DIR}"
     chmod 755 "${TARGET_DIR}""${INSTALLATION_DIR}"
-    chown -R root:root "${TARGET_DIR}""${INSTALLATION_DIR}"
-    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/data
-    # The resolver and its shared library run as root from ExecStartPre=+, so the
-    # service user must not own them. lib/ stays readable by the service user:
-    # the dashboard's i18n loader lists every top-level directory of the install root at
-    # startup and exits on EACCES
-    chown root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
+    chown -R -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"
+    chown -R -h "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/data
+    # The resolver runs as root from ExecStartPre=+, so the service user must not own it
+    chown -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
     chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
-    chown -R root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/lib
-    chmod 755 "${TARGET_DIR}""${INSTALLATION_DIR}"/lib
-    chmod 644 "${TARGET_DIR}""${INSTALLATION_DIR}"/lib/wazuh-credentials.sh
+    chown -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
+    chmod 644 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
     if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
         chmod 644 "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service
     fi
     # Root reads the environment file at every start, so the service user must not own it
-    if [ -f /etc/default/"${NAME}" ]; then
-        chown root:"${NAME}" /etc/default/"${NAME}"
+    if [ -f /etc/default/"${NAME}" ] && [ ! -L /etc/default/"${NAME}" ]; then
+        chown -h root:"${NAME}" /etc/default/"${NAME}"
         chmod 640 /etc/default/"${NAME}"
     fi
-    setcap 'cap_net_bind_service=+ep' "${INSTALLATION_DIR}"/node/bin/node
+    # Root owns the configuration directory; the service reads it through its group.
+    # Runs before the resolver, which refuses a directory not owned by root.
+    if [ -d "${CONFIG_DIR}" ] && [ ! -L "${CONFIG_DIR}" ]; then
+        chown -h root:"${NAME}" "${CONFIG_DIR}"
+        chmod 750 "${CONFIG_DIR}"
+        for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
+            if [ -f "${CONFIG_DIR}/$f" ] && [ ! -L "${CONFIG_DIR}/$f" ]; then
+                chown -h root:"${NAME}" "${CONFIG_DIR}/$f"
+                chmod 640 "${CONFIG_DIR}/$f"
+            fi
+        done
+        if [ -d "${CONFIG_DIR}/certs" ] && [ ! -L "${CONFIG_DIR}/certs" ]; then
+            chown -R -P root:"${NAME}" "${CONFIG_DIR}/certs"
+            chmod 750 "${CONFIG_DIR}/certs"
+            for f in "${CONFIG_DIR}"/certs/* "${CONFIG_DIR}"/certs/.[!.]*; do
+                if [ -f "$f" ] && [ ! -L "$f" ]; then chmod 640 "$f"; fi
+            done
+        fi
+        for d in ca export; do
+            if [ -d "${CONFIG_DIR}/$d" ] && [ ! -L "${CONFIG_DIR}/$d" ]; then
+                chown -R -P root:root "${CONFIG_DIR}/$d"
+                chmod 700 "${CONFIG_DIR}/$d"
+            fi
+        done
+        if [ -f "${CONFIG_DIR}/local.env" ] && [ ! -L "${CONFIG_DIR}/local.env" ]; then
+            chown -h root:root "${CONFIG_DIR}/local.env"
+            chmod 600 "${CONFIG_DIR}/local.env"
+        fi
+    fi
     rm -f /usr/share/wazuh-dashboard/VERSION
+    # Load the new unit even if the service is stopped, so its next start gets the capability
+    if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
+        systemctl daemon-reload >/dev/null 2>&1 || true
+    fi
     if [ -f "${INSTALLATION_DIR}"/"${NAME}".restart ]; then
         rm -f "${INSTALLATION_DIR}"/"${NAME}".restart
         if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
-            systemctl daemon-reload >/dev/null 2>&1
             systemctl restart wazuh-dashboard.service >/dev/null 2>&1
-        elif command -v service >/dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "running" >/dev/null 2>&1; then
+        # preinst stopped it and left the .restart marker, so it is not running here
+        elif command -v service >/dev/null 2>&1; then
             service wazuh-dashboard restart >/dev/null 2>&1
         fi
     fi
     # Create the keystore if needed, resolve the consumed kibanaserver and
     # wazuh-internal-client passwords into it and, on a fresh install,
-    # generate the AI assistant encryption key and the session cookie
-    # password. An unresolved credential is not an error at install time: the
-    # unit's pre-start step runs the resolver again and refuses to start if
-    # needed.
+    # generate the AI assistant encryption key. An unresolved credential is
+    # not an error at install time: the unit's pre-start step runs the
+    # resolver again and refuses to start if needed.
     # $2 is the previously configured version, empty on a fresh install.
     if [ -n "$2" ]; then
         "${INSTALLATION_DIR}"/bin/resolve-credentials --upgrade || true
     else
         "${INSTALLATION_DIR}"/bin/resolve-credentials --install || true
     fi
-    # The keystore holds secrets under an empty password, so its mode must keep it private
-    # on fresh installs and on upgrades of keystores created with a wider mode
-    if [ -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
-        chown "${NAME}":"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
-        chmod 600 "${CONFIG_DIR}"/opensearch_dashboards.keystore
+    # The keystore holds secrets under an empty password
+    if [ -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ] && [ ! -L "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
+        chown -h root:"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
+        chmod 640 "${CONFIG_DIR}"/opensearch_dashboards.keystore
     fi
     ;;
 
