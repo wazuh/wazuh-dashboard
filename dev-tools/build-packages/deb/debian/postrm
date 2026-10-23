@@ -72,6 +72,7 @@ if [ "$REMOVE_DIRS" = "true" ]; then
 
     # Delete the config directory if we are purging
     if [ "$REMOVE_CONFIG_DIRECTORY" = "true" ]; then
+        echo -n "Deleting configuration directory..."
         rm -rf "${CONFIG_DIR}"
         echo " OK"
 

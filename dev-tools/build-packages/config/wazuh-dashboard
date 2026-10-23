@@ -46,12 +46,27 @@ start() {
 
   # Setup any environmental stuff beforehand
 
-  # Ensure that the PID_DIR exists (it is cleaned at OS startup time)
-  if [ -n "$PID_DIR" ] && [ ! -e "$PID_DIR" ]; then
-      mkdir -p "$PID_DIR" && chown "$user":"$group" "$PID_DIR"
+  # Ensure that the PID_DIR exists (it is cleaned at OS startup time). Only
+  # root writes the pidfile, so root owns the directory, also when an older
+  # package left it to the service user.
+  if [ -n "$PID_DIR" ]; then
+      mkdir -p "$PID_DIR" && chown -h root:root "$PID_DIR" && chmod 0755 "$PID_DIR"
   fi
-  if [ -n "$pidfile" ] && [ ! -e "$pidfile" ]; then
-      touch "$pidfile" && chown "$user":"$group" "$pidfile"
+
+  # Resolve the kibanaserver and wazuh-internal-client passwords into the
+  # keystore, as the systemd unit's ExecStartPre does. It names every missing
+  # key on failure.
+  if ! /usr/share/wazuh-dashboard/bin/resolve-credentials --prestart; then
+    emit "$name not started: its credentials could not be resolved"
+    return 1
+  fi
+
+  # Resolve the kibanaserver and wazuh-internal-client passwords into the
+  # keystore, as the systemd unit's ExecStartPre does. It names every missing
+  # key on failure.
+  if ! /usr/share/wazuh-dashboard/bin/resolve-credentials --prestart; then
+    emit "$name not started: its credentials could not be resolved"
+    return 1
   fi
 
   # Resolve the kibanaserver and wazuh-internal-client passwords into the
@@ -72,7 +87,9 @@ start() {
   # Generate the pidfile from here. If we instead made the forked process
   # generate it there will be a race condition between the pidfile writing
   # and a process possibly asking for status.
-  echo $! > $pidfile
+  # Recreated, so an older pidfile of the service user is never written to.
+  rm -f "$pidfile"
+  echo $! > "$pidfile"
 
   emit "$name started"
   return 0
@@ -81,7 +98,6 @@ start() {
 stop() {
   # Try a few times to kill TERM the program
   if status ; then
-    pid=$(cat "$pidfile")
     trace "Killing $name (pid $pid) with SIGTERM"
     kill -TERM $pid
     # Wait for it to exit.
@@ -105,9 +121,18 @@ stop() {
 }
 
 status() {
-  if [ -f "$pidfile" ] ; then
+  # Only a pidfile root wrote: an older package left the directory, and so any
+  # pidfile already in it, to the service user, who could fill in any PID.
+  if [ -f "$pidfile" ] && [ ! -L "$pidfile" ] && [ "$(stat -c %u "$pidfile" 2>/dev/null)" = 0 ] ; then
     pid=$(cat "$pidfile")
-    if ps -p $pid > /dev/null 2> /dev/null ; then
+    # Only a PID above 1: kill -0 accepts 0 and negative values as process
+    # groups, and 1 is init.
+    case "$pid" in
+      ''|0*|1|*[!0-9]*) return 2 ;;
+    esac
+    # kill -0 fails with EPERM for a caller other than root and the service
+    # user; /proc still shows the process to them.
+    if kill -0 "$pid" > /dev/null 2> /dev/null || [ -d "/proc/$pid" ] ; then
       # process by this pid is running.
       # It may not be our pid, but that's what you get with just pidfiles.
       # TODO(sissel): Check if this process seems to be the same as the one we
@@ -125,7 +150,7 @@ status() {
 force_stop() {
   if status ; then
     stop
-    status && kill -KILL $(cat "$pidfile")
+    status && kill -KILL "$pid"
   fi
 }
 
