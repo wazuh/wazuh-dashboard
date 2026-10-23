@@ -39,6 +39,9 @@ export DASHBOARD_FILE=wazuh-dashboard.tar.gz
 
 # -----------------------------------------------------------------------------
 
+# The bundled node needs libc6, libstdc++6 and libgcc-s1, which are not declared on purpose:
+# dpkg pre-depends on libc6 and apt depends on all three, so any host that installs this
+# package has them.
 override_dh_shlibdeps:
 
 # -----------------------------------------------------------------------------
@@ -60,6 +63,10 @@ override_dh_install:
 	tar -xf $(DASHBOARD_FILE)
 	sed -i 's/OSD_NODE_OPTS_PREFIX/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_NODE_OPTS_PREFIX/g' "wazuh-dashboard-base/bin/opensearch-dashboards"
 	sed -i 's/OSD_USE_NODE_JS_FILE_PATH/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_USE_NODE_JS_FILE_PATH/g' "wazuh-dashboard-base/bin/opensearch-dashboards-keystore"
+	# The test suites of the bundled npm packages are not shipped. The plugins install their
+	# node_modules after the OSD build, which cleans only its own. src/ and the plugins' own
+	# code are left alone, in case one of their test/ directories is ever needed at runtime.
+	find wazuh-dashboard-base -path '*/node_modules/*/*' -type d \( -name test -o -name tests \) -prune -exec rm -rf {} +
 
 
 	mkdir -p $(TARGET_DIR)$(CONFIG_DIR)
@@ -80,13 +87,13 @@ override_dh_install:
 	rm -rf $(TARGET_DIR)$(INSTALLATION_DIR)/etc
 
 	chown -R root:root $(TARGET_DIR)$(INSTALLATION_DIR)
-	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(CONFIG_DIR)
+	chown -R root:$(GROUP) $(TARGET_DIR)$(CONFIG_DIR)
 
 # -----------------------------------------------------------------------------
 
 override_dh_fixperms:
 	chmod 750 $(TARGET_DIR)$(CONFIG_DIR)
-	chown -R $(USER):$(GROUP) $(TARGET_DIR)$(CONFIG_DIR)
+	chown -R root:$(GROUP) $(TARGET_DIR)$(CONFIG_DIR)
 	chmod 755 $(TARGET_DIR)$(INSTALLATION_DIR)
 	chown -R root:root $(TARGET_DIR)$(INSTALLATION_DIR)
 	chown root:root $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
@@ -103,9 +110,8 @@ override_dh_fixperms:
 	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -exec chmod go+rX,go-w {} \;
 	chown root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials
 	chmod 750 "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials
-	chown -R root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib
-	chmod 755 "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib
-	chmod 644 "$(TARGET_DIR)$(INSTALLATION_DIR)"/lib/wazuh-credentials.sh
+	chown root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials.js
+	chmod 644 "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials.js
 	chown -R $(USER):$(GROUP) "$(TARGET_DIR)$(INSTALLATION_DIR)"/data
 	chmod 750 "$(TARGET_DIR)$(INSTALLATION_DIR)"/data
 

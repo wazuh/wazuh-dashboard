@@ -51,7 +51,7 @@ For more context, see [this group issues of problems connected with read-only ro
 
 ### Usage
 
-1. Go to `Indexer management > Security > Internal users`
+1. Go to `Indexer management > Users and data access > Internal users`
 2. Create or select an already existing user
 3. Add a new `Backend role` called `kibana_read_only` (or use name used in `opensearch_security.readonly_mode.roles`)
 4. Save changes
@@ -63,9 +63,9 @@ Dashboards Security plugin recognizes the selection of read-only tenant after lo
 ### Usage
 
 1. Prepare tenant:
-   - Use an existing tenant or create a new one in `Indexer management > Security > Tenants`
+   - Use an existing tenant or create a new one in `Indexer management > Users and data access > Tenants`
 2. Prepare role:
-   - Go to `Indexer management > Security > Roles`
+   - Go to `Indexer management > Users and data access > Roles`
    - Use an existing role or create a new one
    - Fill **index permissions** with:
      - `indices:data/read/search`
