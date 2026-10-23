@@ -6,7 +6,7 @@ PACKAGE=""
 # Container name
 CONTAINER_NAME="wazuh-dashboard"
 # Files to check
-FILES="/etc/wazuh-dashboard/opensearch_dashboards.yml:wazuh-dashboard /usr/share/wazuh-dashboard:root"
+FILES="/etc/wazuh-dashboard/opensearch_dashboards.yml:root /usr/share/wazuh-dashboard:root"
 # Test mode flags
 NEGATIVE_TEST=false
 NEGATIVE_UNKNOWN_TEST=false
