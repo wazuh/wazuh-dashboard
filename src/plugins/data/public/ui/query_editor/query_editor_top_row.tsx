@@ -34,6 +34,7 @@ import {
 import { UI_SETTINGS } from '../../../common';
 import { getQueryLog, PersistedLog, QueryStatus } from '../../query';
 import { NoDataPopover } from './no_data_popover';
+import { toDatePickerLocale, translateQuickRangeLabel } from '../query_string_input/timepicker_i18n';
 import QueryEditorUI from './query_editor';
 import { useCancelButtonTiming } from '../hooks';
 
@@ -395,7 +396,7 @@ export default function QueryEditorTopRow(props: QueryEditorTopRowProps) {
         return {
           start: from,
           end: to,
-          label: display,
+          label: translateQuickRangeLabel(from, to, display),
         };
       });
 
@@ -423,6 +424,7 @@ export default function QueryEditorTopRow(props: QueryEditorTopRowProps) {
           className="osdQueryEditor__datePicker"
           data-test-subj="osdQueryEditorDatePicker"
           compressed={true}
+          locale={toDatePickerLocale()}
         />
       </EuiFlexItem>
     );

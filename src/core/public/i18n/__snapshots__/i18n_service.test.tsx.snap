@@ -5,6 +5,7 @@ exports[`#start() returns \`Context\` component 1`] = `
   <MockEuiContext
     i18n={
       Object {
+        "locale": "en",
         "mapping": Object {
           "euiBasicTable.selectAllRows": "Select all rows",
           "euiBasicTable.selectThisRow": "Select this row",

@@ -18,9 +18,11 @@ export interface TableOptionsDefaults {
 
 export const createTableConfig = (): VisualizationTypeOptions<TableOptionsDefaults> => ({
   name: 'table',
-  title: 'Table',
+  title: i18n.translate('visBuilder.table.visTitle', { defaultMessage: 'Table' }),
   icon: 'visTable',
-  description: 'Display table visualizations',
+  description: i18n.translate('visBuilder.table.visDescription', {
+    defaultMessage: 'Display table visualizations',
+  }),
   toExpression,
   ui: {
     containerConfig: {

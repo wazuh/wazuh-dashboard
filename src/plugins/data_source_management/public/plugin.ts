@@ -19,7 +19,6 @@ import { toMountPoint } from '../../../../src/plugins/opensearch_dashboards_reac
 import { DashboardDirectQuerySyncBanner } from './components/direct_query_data_sources_components/direct_query_sync/direct_query_sync_banner';
 import { parseUrlHash } from '../../opensearch_dashboards_utils/public';
 
-import { PLUGIN_NAME } from '../common';
 import { createDataSourceSelector } from './components/data_source_selector/create_data_source_selector';
 
 import { ManagementSetup } from '../../management/public';
@@ -148,9 +147,13 @@ export class DataSourceManagementPlugin
 
     this.featureFlagStatus = !!dataSource;
 
+    const dataSourcesTitle = i18n.translate('dataSourcesManagement.dataSources.listBreadcrumb', {
+      defaultMessage: 'Data sources',
+    });
+
     opensearchDashboardsSection.registerApp({
       id: DSM_APP_ID,
-      title: PLUGIN_NAME,
+      title: dataSourcesTitle,
       order: 1,
       // @ts-expect-error TS2322 TODO(ts-error): fixme
       mount: async (params: AppMountParameters) => {
@@ -169,7 +172,7 @@ export class DataSourceManagementPlugin
     if (core.chrome.navGroup.getNavGroupEnabled()) {
       core.application.register({
         id: DSM_APP_ID,
-        title: PLUGIN_NAME,
+        title: dataSourcesTitle,
         order: 100,
         description: i18n.translate('dataSourcesManagement.description', {
           defaultMessage: 'Create and manage data source connections.',

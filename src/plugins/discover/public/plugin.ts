@@ -263,9 +263,13 @@ export class DiscoverPlugin
       order: 2,
     });
 
+    const discoverAppTitle = i18n.translate('discover.applicationTitle', {
+      defaultMessage: 'Discover',
+    });
+
     core.application.register({
       id: PLUGIN_ID,
-      title: 'Discover',
+      title: discoverAppTitle,
       updater$: this.appStateUpdater.asObservable(),
       order: 100,
       workspaceAvailability: WorkspaceAvailability.insideWorkspace,
@@ -379,7 +383,7 @@ export class DiscoverPlugin
 
     plugins.dataExplorer.registerView<DiscoverState>({
       id: PLUGIN_ID,
-      title: 'Discover',
+      title: discoverAppTitle,
       defaultPath: '#/',
       appExtentions: {
         savedObject: {

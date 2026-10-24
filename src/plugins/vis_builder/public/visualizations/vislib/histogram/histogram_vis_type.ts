@@ -18,9 +18,11 @@ export interface HistogramOptionsDefaults extends BasicOptionsDefaults {
 
 export const createHistogramConfig = (): VisualizationTypeOptions<HistogramOptionsDefaults> => ({
   name: 'histogram',
-  title: 'Bar',
+  title: i18n.translate('visBuilder.histogram.visTitle', { defaultMessage: 'Bar' }),
   icon: 'visBarVertical',
-  description: 'Display histogram visualizations',
+  description: i18n.translate('visBuilder.histogram.visDescription', {
+    defaultMessage: 'Display histogram visualizations',
+  }),
   toExpression,
   ui: {
     containerConfig: {

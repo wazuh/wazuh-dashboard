@@ -53,7 +53,10 @@ export const createVegaTypeDefinition = (
 
   return {
     name: 'vega',
-    title: 'Vega',
+    title: i18n.translate('visTypeVega.type.vegaTitle', {
+      defaultMessage: 'Vega',
+      description: 'Vega is a product name and should not be translated',
+    }),
     description: i18n.translate('visTypeVega.type.vegaDescription', {
       defaultMessage: 'Create custom visualizations using Vega and Vega-Lite',
       description: 'Vega and Vega-Lite are product names and should not be translated',

@@ -29,10 +29,31 @@
  */
 
 import React from 'react';
+import moment from 'moment';
 import { EuiContext } from '@elastic/eui';
+import { i18n } from '@osd/i18n';
 import { I18nProvider } from '@osd/i18n/react';
 
+import 'moment/locale/ru';
+
 import { getEuiContextMapping } from './i18n_eui_mapping';
+
+function toMomentLocale(osdLocale: string): string {
+  const lower = (osdLocale || 'en').toLowerCase();
+  if (lower.startsWith('ru')) {
+    return 'ru';
+  }
+  if (lower === 'zh-cn' || lower.startsWith('zh-cn')) {
+    return 'zh-cn';
+  }
+  if (lower === 'zh-tw' || lower.startsWith('zh-tw')) {
+    return 'zh-tw';
+  }
+  if (lower.startsWith('pt')) {
+    return 'pt';
+  }
+  return osdLocale.split('-')[0] || 'en';
+}
 
 /**
  * Service that is responsible for i18n capabilities.
@@ -49,6 +70,8 @@ export class I18nService {
    */
   public getContext(): I18nStart {
     const euiContextMapping = getEuiContextMapping();
+    const locale = toMomentLocale(typeof i18n.getLocale === 'function' ? i18n.getLocale() : 'en');
+    moment.locale(locale);
 
     const mapping = {
       ...euiContextMapping,
@@ -57,7 +80,7 @@ export class I18nService {
       Context: function I18nContext({ children }) {
         return (
           <I18nProvider>
-            <EuiContext i18n={{ mapping }}>{children}</EuiContext>
+            <EuiContext i18n={{ mapping, locale }}>{children}</EuiContext>
           </I18nProvider>
         );
       },
