@@ -88,12 +88,15 @@ Issued by `--install` only:
   empty list is refused); `localhost`, `127.0.0.1` and `::1` are always added. The CA certificate
   is published as `export/ca.pem`.
 - Addresses, the manager's rule: every interface, whether or not it carries the default route or
-  is up. IPv4 from the interfaces and the `LOCAL` entries of `/proc/net/fib_trie`; IPv6 from
+  is up. For IPv6 that is in practice up only: on a down interface the kernel removes the
+  addresses or keeps them tentative, which are left out, as the manager does. IPv4 from the
+  interfaces and the `/32 host LOCAL` entries of `/proc/net/fib_trie`; IPv6 from
   `/proc/net/if_inet6`, without deprecated, tentative or DAD-failed ones. Loopback and link-local
-  are left out. Unlike the manager, an IPv4 address added with `scope link` or `scope host` is
-  named too: `fib_trie` does not record the scope. The default-route interfaces come first, the
-  preferred route's first, so the URL the install prints stays on them. When `fib_trie` cannot be
-  read, only the interfaces that are up are named, with a warning.
+  are left out. Unlike the manager, two kinds of IPv4 entries are named too, since `fib_trie`
+  records no scope and no interface: addresses added with `scope link` or `scope host`, and
+  single addresses routed to the host with `ip route add local <address>`. The default-route
+  interfaces come first, the preferred route's first, so the URL the install prints stays on them.
+  When `fib_trie` cannot be read, only the interfaces that are up are named, with a warning.
 - The certificate shows these addresses to every client, container bridges and Kubernetes service
   addresses included. To name others, or fewer, set `WAZUH_DASHBOARD_CERT_SANS` in `local.env`.
 - To re-issue: remove the pair and run `--install`. With no CA in `ca/`, a new one is minted, and

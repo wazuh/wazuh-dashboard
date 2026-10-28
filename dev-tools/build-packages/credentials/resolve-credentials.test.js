@@ -187,8 +187,18 @@ const IPV6_ROUTE = `00000000000000000000000000000000 00 000000000000000000000000
 const v4 = (address) => ({ address, family: 'IPv4', internal: false });
 const v6 = (address) => ({ address, family: 'IPv6', internal: false });
 
+// Read on a host with a VPN that splits the default route into 0.0.0.0/1 and 128.0.0.0/1.
+const SPLIT_ROUTE = `Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\t\tMTU\tWindow\tIRTT
+vpn0\t00000000\t00000000\t0001\t0\t0\t0\t00000080\t0\t0\t0
+eth0\t00000000\t010011AC\t0003\t0\t0\t0\t00000000\t0\t0\t0
+vpn0\t0000420A\t00000000\t0001\t0\t0\t0\t00FFFFFF\t0\t0\t0
+vpn0\t00000080\t00000000\t0001\t0\t0\t0\t00000080\t0\t0\t0
+eth0\t000011AC\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0
+`;
+
 test('reads the default-route interfaces, preferred first', () => {
   assert.deepStrictEqual(r.parseDefaultRoutes(ROUTE, IPV6_ROUTE), ['dA', 'eth0']);
+  assert.deepStrictEqual(r.parseDefaultRoutes(SPLIT_ROUTE, ''), ['eth0']);
   assert.deepStrictEqual(r.parseDefaultRoutes('', ''), []);
 });
 

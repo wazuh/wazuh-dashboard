@@ -545,8 +545,9 @@ function readProc(file) {
 function parseDefaultRoutes(route, ipv6Route) {
   const names = new Set();
   for (const line of route.split('\n').slice(1)) {
-    const [iface, destination] = line.trim().split(/\s+/);
-    if (destination === '00000000') names.add(iface);
+    // The mask too: a VPN's 0.0.0.0/1 and 128.0.0.0/1 are not the default route.
+    const [iface, destination, , , , , , mask] = line.trim().split(/\s+/);
+    if (destination === '00000000' && mask === '00000000') names.add(iface);
   }
   for (const line of ipv6Route.split('\n')) {
     const fields = line.trim().split(/\s+/);
