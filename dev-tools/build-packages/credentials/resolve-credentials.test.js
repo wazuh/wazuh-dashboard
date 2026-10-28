@@ -7,7 +7,7 @@
 //   node --test dev-tools/build-packages/credentials/resolve-credentials.test.js
 // The current user stands in for root.
 
-const { test } = require('node:test');
+const { test, mock } = require('node:test');
 const assert = require('node:assert');
 const crypto = require('crypto');
 const { execFileSync } = require('child_process');
@@ -88,8 +88,9 @@ test('parses and validates SANs', () => {
   assert.throws(() => r.parseSans('DNS:bad name'));
 });
 
-// Read on a host with eth1 up (two addresses), eth2 down, and a local range routed to lo.
-const FIB_TRIE = `Local:
+// Read on a host with eth0 and eth1 up (eth1 with two addresses), eth2 down, and a local range
+// routed to lo.
+const FIB_TRIE = `Main:
   +-- 0.0.0.0/0 3 0 4
      +-- 0.0.0.0/4 2 0 2
         |-- 0.0.0.0
@@ -107,6 +108,50 @@ const FIB_TRIE = `Local:
               /32 host LOCAL
         |-- 127.255.255.255
            /32 link BROADCAST
+     +-- 172.17.0.0/16 2 0 2
+        +-- 172.17.0.0/30 2 0 2
+           |-- 172.17.0.0
+              /16 link UNICAST
+           |-- 172.17.0.2
+              /32 host LOCAL
+        |-- 172.17.255.255
+           /32 link BROADCAST
+     +-- 192.168.56.0/24 2 0 1
+        |-- 192.168.56.0
+           /24 link UNICAST
+        +-- 192.168.56.126/31 1 0 0
+           |-- 192.168.56.126
+              /32 host LOCAL
+           |-- 192.168.56.127
+              /32 host LOCAL
+        |-- 192.168.56.255
+           /32 link BROADCAST
+Local:
+  +-- 0.0.0.0/0 3 0 4
+     +-- 0.0.0.0/4 2 0 2
+        |-- 0.0.0.0
+           /0 universe UNICAST
+        +-- 10.0.0.0/10 2 0 2
+           |-- 10.9.9.9
+              /32 host LOCAL
+           |-- 10.50.0.0
+              /24 host LOCAL
+     +-- 127.0.0.0/8 2 0 2
+        +-- 127.0.0.0/31 1 0 0
+           |-- 127.0.0.0
+              /8 host LOCAL
+           |-- 127.0.0.1
+              /32 host LOCAL
+        |-- 127.255.255.255
+           /32 link BROADCAST
+     +-- 172.17.0.0/16 2 0 2
+        +-- 172.17.0.0/30 2 0 2
+           |-- 172.17.0.0
+              /16 link UNICAST
+           |-- 172.17.0.2
+              /32 host LOCAL
+        |-- 172.17.255.255
+           /32 link BROADCAST
      +-- 192.168.56.0/24 2 0 1
         |-- 192.168.56.0
            /24 link UNICAST
@@ -119,7 +164,7 @@ const FIB_TRIE = `Local:
            /32 link BROADCAST
 `;
 
-// lo, a link-local, a usable, a deprecated, a tentative and a duplicated address.
+// lo, a link-local, a usable, a deprecated, a tentative and a DAD-failed address.
 const IF_INET6 = `00000000000000000000000000000001 01 80 10 80       lo
 fe8000000000000070d1a2fffe571b29 03 40 20 80     eth1
 fd000000000000000000000000000002 03 40 00 82     eth1
@@ -128,10 +173,30 @@ fd000000000000000000000000000003 03 40 00 c0     eth1
 fd000000000000000000000000000004 03 40 00 88     eth1
 `;
 
+// Read on a host with two default routes: dA (metric 100, added last) and eth0 (metric 700).
+const ROUTE = `Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\t\tMTU\tWindow\tIRTT
+dA\t00000000\t016433C6\t0003\t0\t0\t100\t00000000\t0\t0\t0
+eth0\t00000000\t010011AC\t0003\t0\t0\t700\t00000000\t0\t0\t0
+eth0\t000011AC\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0
+dA\t006433C6\t00000000\t0001\t0\t0\t0\t00FFFFFF\t0\t0\t0
+`;
+const IPV6_ROUTE = `00000000000000000000000000000000 00 00000000000000000000000000000000 00 20010db8000000000000000000000001 00000064 00000001 00000000 00000003       dA
+00000000000000000000000000000000 00 00000000000000000000000000000000 00 00000000000000000000000000000000 ffffffff 00000001 00000000 00200200       lo
+`;
+
+const v4 = (address) => ({ address, family: 'IPv4', internal: false });
+const v6 = (address) => ({ address, family: 'IPv6', internal: false });
+
+test('reads the default-route interfaces, preferred first', () => {
+  assert.deepStrictEqual(r.parseDefaultRoutes(ROUTE, IPV6_ROUTE), ['dA', 'eth0']);
+  assert.deepStrictEqual(r.parseDefaultRoutes('', ''), []);
+});
+
 test('reads the local IPv4 addresses from the kernel routing tables', () => {
   assert.deepStrictEqual(r.parseFibTrie(FIB_TRIE), [
     '10.9.9.9',
     '127.0.0.1',
+    '172.17.0.2',
     '192.168.56.126',
     '192.168.56.127',
   ]);
@@ -139,20 +204,21 @@ test('reads the local IPv4 addresses from the kernel routing tables', () => {
 });
 
 test('reads the usable global IPv6 addresses', () => {
-  assert.deepStrictEqual(r.parseIfInet6(IF_INET6), [{ name: 'eth1', address: 'fd00::2' }]);
+  assert.deepStrictEqual(r.parseIfInet6(IF_INET6), [
+    { name: 'eth1', index: 3, address: 'fd00::2' },
+  ]);
   assert.deepStrictEqual(r.parseIfInet6(''), []);
 });
 
 // The host of wazuh/wazuh-dashboard#1697: the default route on eth0, users on eth1.
 function twoInterfaces() {
-  const v4 = (address) => ({ address, family: 'IPv4', internal: false });
   return {
     interfaces: {
       lo: [{ address: '127.0.0.1', family: 'IPv4', internal: true }],
       eth1: [v4('192.168.56.126')],
-      eth0: [v4('10.0.2.15'), { address: 'fd17::1', family: 'IPv6', internal: false }],
+      eth0: [v4('10.0.2.15'), v6('fd17::1')],
     },
-    defaultRoute: new Set(['eth0']),
+    defaultRoute: ['eth0'],
     fibTrie: `Local:
   +-- 0.0.0.0/0 3 0 4
      |-- 10.0.2.15
@@ -172,16 +238,57 @@ test('discovers every interface, the default-route one first', () => {
   ]);
 });
 
+test('orders the default-route interfaces by route preference', () => {
+  const host = {
+    interfaces: { eth0: [v4('172.17.0.2')], dA: [v4('198.51.100.10')], 'eth1:1': [v4('10.1.1.1')] },
+    defaultRoute: ['dA', 'eth1', 'eth0'],
+  };
+  assert.deepStrictEqual(r.discoverAddresses(host), ['198.51.100.10', '10.1.1.1', '172.17.0.2']);
+});
+
+test('keeps the order of the IPv6 addresses of the interfaces that are up', () => {
+  // if_inet6 lists them in hash order; dX (index 5) is down.
+  const ifInet6 = [
+    '20010db8000000000000000000000030 05 40 00 80       dX',
+    '20010db8000000000000000000000020 04 40 00 80       d6',
+    '20010db8aaaa00000000000000000001 04 40 00 80       d6',
+    '20010db8000000000000000000000010 04 40 00 80       d6',
+    '20010db8000000000000000000000040 03 40 00 80       dY',
+  ].join('\n');
+  const host = {
+    interfaces: { d6: [v6('2001:db8:aaaa::1'), v6('2001:0db8::10'), v6('2001:db8::20')] },
+    defaultRoute: ['d6'],
+    fibTrie: '',
+    ifInet6,
+  };
+  assert.deepStrictEqual(r.discoverAddresses(host), [
+    '2001:db8:aaaa::1',
+    '2001:db8::10',
+    '2001:db8::20',
+    '2001:db8::40',
+    '2001:db8::30',
+  ]);
+});
+
 test('discovers the addresses of interfaces that are down', () => {
   const warnings = [];
   const addresses = r.discoverAddresses({
-    interfaces: { eth1: [{ address: '192.168.56.126', family: 'IPv4', internal: false }] },
+    interfaces: {
+      eth0: [v4('172.17.0.2')],
+      eth1: [v4('192.168.56.126'), v4('192.168.56.127'), v6('fd00::2'), v6('fd00::1')],
+    },
     fibTrie: FIB_TRIE,
     ifInet6: IF_INET6,
     warn: (msg) => warnings.push(msg),
   });
-  // Secondary and down ones included; loopback, the routed range and unusable IPv6 left out.
-  assert.deepStrictEqual(addresses, ['192.168.56.126', '10.9.9.9', '192.168.56.127', 'fd00::2']);
+  // Down ones included; loopback, the routed range and the deprecated IPv6 left out.
+  assert.deepStrictEqual(addresses, [
+    '172.17.0.2',
+    '192.168.56.126',
+    '192.168.56.127',
+    '10.9.9.9',
+    'fd00::2',
+  ]);
   assert.deepStrictEqual(warnings, []);
 });
 
@@ -196,9 +303,37 @@ test('keeps the up interfaces when the routing tables cannot be read', () => {
 
 test('takes the IPv6 addresses of the up interfaces when if_inet6 cannot be read', () => {
   const host = { ...twoInterfaces(), ifInet6: null };
-  host.interfaces.eth1.push({ address: 'fe80::1', family: 'IPv6', internal: false });
+  host.interfaces.eth1.push(v6('fe80::1'));
   assert.deepStrictEqual(r.discoverAddresses(host), ['10.0.2.15', 'fd17::1', '192.168.56.126']);
   assert.deepStrictEqual(r.discoverAddresses(), []);
+});
+
+test('issues the certificate when discovery finds nothing or fails', () => {
+  const { ctx } = setup();
+  // A host name nothing resolves, so no FQDN is added.
+  const host = 'resolver-test-1697';
+  const loopback = ['DNS:localhost', 'IP:127.0.0.1', 'IP:::1'];
+  const run = (discover) => {
+    const stderr = [];
+    mock.method(process.stderr, 'write', (line) => stderr.push(line));
+    try {
+      const names = r.leafSans(ctx, host, discover).map((s) => `${s.type}:${s.value}`);
+      return { names, stderr: stderr.join('') };
+    } finally {
+      mock.restoreAll();
+    }
+  };
+  const none = run(() => []);
+  assert.deepStrictEqual(none.names, [`DNS:${host}`, ...loopback]);
+  assert.match(none.stderr, /found no address of this host.*WAZUH_DASHBOARD_CERT_SANS/);
+  const failed = run(() => {
+    throw new Error('boom');
+  });
+  assert.deepStrictEqual(failed.names, [`DNS:${host}`, ...loopback]);
+  assert.match(failed.stderr, /could not discover the addresses of this host: boom/);
+  const found = run(() => ['192.168.56.126']);
+  assert.deepStrictEqual(found.names, [`DNS:${host}`, 'IP:192.168.56.126', ...loopback]);
+  assert.strictEqual(found.stderr, '');
 });
 
 test('issues a leaf the CA verifies, with the SANs asked for', () => {
