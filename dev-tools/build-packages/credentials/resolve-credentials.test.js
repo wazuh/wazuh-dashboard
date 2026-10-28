@@ -88,6 +88,119 @@ test('parses and validates SANs', () => {
   assert.throws(() => r.parseSans('DNS:bad name'));
 });
 
+// Read on a host with eth1 up (two addresses), eth2 down, and a local range routed to lo.
+const FIB_TRIE = `Local:
+  +-- 0.0.0.0/0 3 0 4
+     +-- 0.0.0.0/4 2 0 2
+        |-- 0.0.0.0
+           /0 universe UNICAST
+        +-- 10.0.0.0/10 2 0 2
+           |-- 10.9.9.9
+              /32 host LOCAL
+           |-- 10.50.0.0
+              /24 host LOCAL
+     +-- 127.0.0.0/8 2 0 2
+        +-- 127.0.0.0/31 1 0 0
+           |-- 127.0.0.0
+              /8 host LOCAL
+           |-- 127.0.0.1
+              /32 host LOCAL
+        |-- 127.255.255.255
+           /32 link BROADCAST
+     +-- 192.168.56.0/24 2 0 1
+        |-- 192.168.56.0
+           /24 link UNICAST
+        +-- 192.168.56.126/31 1 0 0
+           |-- 192.168.56.126
+              /32 host LOCAL
+           |-- 192.168.56.127
+              /32 host LOCAL
+        |-- 192.168.56.255
+           /32 link BROADCAST
+`;
+
+// lo, a link-local, a usable, a deprecated, a tentative and a duplicated address.
+const IF_INET6 = `00000000000000000000000000000001 01 80 10 80       lo
+fe8000000000000070d1a2fffe571b29 03 40 20 80     eth1
+fd000000000000000000000000000002 03 40 00 82     eth1
+fd000000000000000000000000000001 03 40 00 a0     eth1
+fd000000000000000000000000000003 03 40 00 c0     eth1
+fd000000000000000000000000000004 03 40 00 88     eth1
+`;
+
+test('reads the local IPv4 addresses from the kernel routing tables', () => {
+  assert.deepStrictEqual(r.parseFibTrie(FIB_TRIE), [
+    '10.9.9.9',
+    '127.0.0.1',
+    '192.168.56.126',
+    '192.168.56.127',
+  ]);
+  assert.deepStrictEqual(r.parseFibTrie(''), []);
+});
+
+test('reads the usable global IPv6 addresses', () => {
+  assert.deepStrictEqual(r.parseIfInet6(IF_INET6), [{ name: 'eth1', address: 'fd00::2' }]);
+  assert.deepStrictEqual(r.parseIfInet6(''), []);
+});
+
+// The host of wazuh/wazuh-dashboard#1697: the default route on eth0, users on eth1.
+function twoInterfaces() {
+  const v4 = (address) => ({ address, family: 'IPv4', internal: false });
+  return {
+    interfaces: {
+      lo: [{ address: '127.0.0.1', family: 'IPv4', internal: true }],
+      eth1: [v4('192.168.56.126')],
+      eth0: [v4('10.0.2.15'), { address: 'fd17::1', family: 'IPv6', internal: false }],
+    },
+    defaultRoute: new Set(['eth0']),
+    fibTrie: `Local:
+  +-- 0.0.0.0/0 3 0 4
+     |-- 10.0.2.15
+        /32 host LOCAL
+     |-- 192.168.56.126
+        /32 host LOCAL
+`,
+    ifInet6: 'fd170000000000000000000000000001 02 40 00 80     eth0\n',
+  };
+}
+
+test('discovers every interface, the default-route one first', () => {
+  assert.deepStrictEqual(r.discoverAddresses(twoInterfaces()), [
+    '10.0.2.15',
+    'fd17::1',
+    '192.168.56.126',
+  ]);
+});
+
+test('discovers the addresses of interfaces that are down', () => {
+  const warnings = [];
+  const addresses = r.discoverAddresses({
+    interfaces: { eth1: [{ address: '192.168.56.126', family: 'IPv4', internal: false }] },
+    fibTrie: FIB_TRIE,
+    ifInet6: IF_INET6,
+    warn: (msg) => warnings.push(msg),
+  });
+  // Secondary and down ones included; loopback, the routed range and unusable IPv6 left out.
+  assert.deepStrictEqual(addresses, ['192.168.56.126', '10.9.9.9', '192.168.56.127', 'fd00::2']);
+  assert.deepStrictEqual(warnings, []);
+});
+
+test('keeps the up interfaces when the routing tables cannot be read', () => {
+  for (const fibTrie of [null, 'a format this parser does not know']) {
+    const warnings = [];
+    const host = { ...twoInterfaces(), fibTrie, warn: (msg) => warnings.push(msg) };
+    assert.deepStrictEqual(r.discoverAddresses(host), ['10.0.2.15', 'fd17::1', '192.168.56.126']);
+    assert.strictEqual(warnings.length, 1);
+  }
+});
+
+test('takes the IPv6 addresses of the up interfaces when if_inet6 cannot be read', () => {
+  const host = { ...twoInterfaces(), ifInet6: null };
+  host.interfaces.eth1.push({ address: 'fe80::1', family: 'IPv6', internal: false });
+  assert.deepStrictEqual(r.discoverAddresses(host), ['10.0.2.15', 'fd17::1', '192.168.56.126']);
+  assert.deepStrictEqual(r.discoverAddresses(), []);
+});
+
 test('issues a leaf the CA verifies, with the SANs asked for', () => {
   const ca = caPair();
   assert.ok(r.validCa(ca.certPem, ca.keyPem));
