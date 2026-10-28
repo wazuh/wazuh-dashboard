@@ -88,10 +88,11 @@ Issued by `--install` only:
   empty list is refused); `localhost`, `127.0.0.1` and `::1` are always added. The CA certificate
   is published as `export/ca.pem`.
 - Addresses, the manager's rule: every interface, whether or not it carries the default route or
-  is up. For IPv6 that is in practice up only: on a down interface the kernel removes the
-  addresses or keeps them tentative, which are left out, as the manager does. IPv4 from the
-  interfaces and the `/32 host LOCAL` entries of `/proc/net/fib_trie`; IPv6 from
-  `/proc/net/if_inet6`, without deprecated, tentative or DAD-failed ones. Loopback and link-local
+  is up. For IPv6 that is usually up only: on a down interface the kernel removes the addresses
+  or keeps them tentative, which are left out, as the manager does. Interfaces with no address
+  check, such as dummy ones, keep them, and they are named. IPv4 from the interfaces and the
+  `/32 host LOCAL` entries of `/proc/net/fib_trie`; IPv6 from `/proc/net/if_inet6`, without
+  deprecated, tentative or DAD-failed ones. Loopback and link-local
   are left out. Unlike the manager, two kinds of IPv4 entries are named too, since `fib_trie`
   records no scope and no interface: addresses added with `scope link` or `scope host`, and
   single addresses routed to the host with `ip route add local <address>`. The default-route
