@@ -127,6 +127,24 @@ test('stops services on "shutdown" an calls `onShutdown` with error passed to `s
   expect(mockServer.stop).toHaveBeenCalledTimes(1);
 });
 
+// Wazuh: SIGTERM received while the server is still starting
+test('calls `onShutdown` on "shutdown" even if the server fails to stop', async () => {
+  const mockOnShutdown = jest.fn();
+  const root = new Root(rawConfigService, env, mockOnShutdown);
+
+  await root.setup();
+
+  const stopError = new Error('Cannot stop server while in stopping phase');
+  mockServer.stop.mockRejectedValue(stopError);
+
+  await expect(root.shutdown()).resolves.toBeUndefined();
+
+  expect(mockServer.stop).toHaveBeenCalledTimes(1);
+  expect(logger.stop).toHaveBeenCalledTimes(1);
+  expect(mockOnShutdown).toHaveBeenCalledTimes(1);
+  expect(mockOnShutdown).toHaveBeenCalledWith(undefined);
+});
+
 test('fails and stops services if server setup fails', async () => {
   const mockOnShutdown = jest.fn();
   const root = new Root(rawConfigService, env, mockOnShutdown);

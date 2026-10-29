@@ -91,7 +91,13 @@ export class Root {
       this.log.fatal(reason);
     }
 
-    await this.server.stop();
+    // Wazuh: keep shutting down if a service fails to stop (e.g. SIGTERM received while the server
+    // is still starting), otherwise `onShutdown` is never called and the process does not exit.
+    try {
+      await this.server.stop();
+    } catch (error) {
+      this.log.error(error);
+    }
 
     if (this.loggingConfigSubscription !== undefined) {
       this.loggingConfigSubscription.unsubscribe();
