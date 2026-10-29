@@ -75,6 +75,8 @@ const fakeHapiServer = {
   start: noop,
   stop: noop,
   route: noop,
+  // Wazuh: the NotReady server tracks its sockets through the listener
+  listener: { on: jest.fn() },
 };
 
 afterEach(() => {
@@ -121,6 +123,8 @@ test('spins up notReady server until started if configured with `autoListen:true
     start: jest.fn(),
     stop: jest.fn(),
     route: jest.fn(),
+    // Wazuh: the NotReady server tracks its sockets through the listener
+    listener: { on: jest.fn() },
   };
 
   const notReadyBasePath = {};
@@ -227,6 +231,8 @@ test('stops not ready server if it is running', async () => {
     start: jest.fn(),
     stop: jest.fn(),
     route: jest.fn(),
+    // Wazuh: the NotReady server tracks its sockets through the listener
+    listener: { on: jest.fn() },
   };
   const httpServer = {
     isListening: () => false,
@@ -243,6 +249,104 @@ test('stops not ready server if it is running', async () => {
   await service.stop();
 
   expect(mockHapiServer.stop).toHaveBeenCalledTimes(1);
+});
+
+// Wazuh: SIGTERM received while `start()` is stopping the not ready server
+test('waits for the in-progress not ready server stop when stopped during start', async () => {
+  const configService = createConfigService();
+  let resolveNotReadyStop: () => void = noop;
+  const notReadyHapiServer = {
+    start: jest.fn(),
+    stop: jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveNotReadyStop = resolve;
+        })
+    ),
+    route: jest.fn(),
+    listener: { on: jest.fn() },
+  };
+  const httpServer = {
+    isListening: () => false,
+    setup: jest.fn().mockReturnValue({}),
+    start: jest.fn(),
+    stop: jest.fn(),
+  };
+  mockHttpServer
+    .mockImplementationOnce(() => httpServer)
+    .mockImplementationOnce(() => ({
+      setup: () => ({ server: notReadyHapiServer, basePath: {} }),
+    }));
+
+  const service = new HttpService({ coreId, configService, env, logger, dynamicConfigService });
+
+  await service.setup(setupDeps);
+
+  const startPromise = service.start({ dynamicConfigService: dynamicConfigServiceStart });
+  // Let `start()` reach the not ready server stop
+  await new Promise((resolve) => setImmediate(resolve));
+  const stopPromise = service.stop();
+
+  resolveNotReadyStop();
+  await Promise.all([startPromise, stopPromise]);
+
+  expect(notReadyHapiServer.stop).toHaveBeenCalledTimes(1);
+  expect(httpServer.stop).toHaveBeenCalledTimes(1);
+});
+
+// Wazuh: hapi does not track sockets still in the TLS handshake, which can block the stop
+test('destroys the not ready server sockets if it does not stop within the timeout', async () => {
+  const configService = createConfigService();
+  let resolveNotReadyStop: () => void = noop;
+  const notReadyHapiServer = {
+    start: jest.fn(),
+    stop: jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveNotReadyStop = resolve;
+        })
+    ),
+    route: jest.fn(),
+    listener: { on: jest.fn() },
+  };
+  const httpServer = {
+    isListening: () => false,
+    setup: jest.fn().mockReturnValue({ server: notReadyHapiServer }),
+    start: noop,
+    stop: jest.fn(),
+  };
+  mockHttpServer.mockImplementation(() => httpServer);
+
+  const service = new HttpService({ coreId, configService, env, logger, dynamicConfigService });
+
+  await service.setup(setupDeps);
+
+  expect(notReadyHapiServer.listener.on).toHaveBeenCalledWith('connection', expect.any(Function));
+  const onConnection = notReadyHapiServer.listener.on.mock.calls[0][1];
+  const socket = {
+    once: jest.fn(),
+    destroy: jest.fn(() => resolveNotReadyStop()),
+  };
+  onConnection(socket);
+
+  jest.useFakeTimers();
+  try {
+    const stopPromise = service.stop();
+
+    jest.advanceTimersByTime(4999);
+    expect(socket.destroy).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(1);
+    expect(socket.destroy).toHaveBeenCalledTimes(1);
+
+    await stopPromise;
+  } finally {
+    jest.useRealTimers();
+  }
+
+  expect(notReadyHapiServer.stop).toHaveBeenCalledTimes(1);
+  expect(notReadyHapiServer.stop).toHaveBeenCalledWith({ timeout: 5000 });
+  expect(httpServer.stop).toHaveBeenCalledTimes(1);
 });
 
 test('register route handler', async () => {
