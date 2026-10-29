@@ -59,6 +59,7 @@
 | [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Fixed the browser tab title to read `<app> - Wazuh`, and its fallback to read Wazuh instead of OpenSearch Dashboards   |
 | [#1653](https://github.com/wazuh/wazuh-dashboard/issues/1653)                                | Fixed the RPM package removal leaving the wazuh-dashboard service enabled with a dangling systemd link                 |
 | [#1697](https://github.com/wazuh/wazuh-dashboard/issues/1697)                                | Fixed the dashboard certificate leaving out the addresses of interfaces that do not hold the default route             |
+| [#1714](https://github.com/wazuh/wazuh-dashboard/issues/1714)                                | Fixed the dashboard not stopping on a stop request received during startup, leaving the service failed                 |
 
 ## Prior versions
 
