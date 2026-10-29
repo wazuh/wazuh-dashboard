@@ -531,27 +531,31 @@ function fqdn(host) {
   return out.status === 0 && name ? name : null;
 }
 
-// Interfaces that carry a default route, from the kernel's routing tables.
-function defaultRouteInterfaces() {
-  const names = new Set();
-  const read = (file) => {
-    try {
-      return fs.readFileSync(file, 'utf8').split('\n');
-    } catch (e) {
-      return [];
-    }
-  };
-  for (const line of read('/proc/net/route').slice(1)) {
-    const [iface, destination] = line.trim().split(/\s+/);
-    if (destination === '00000000') names.add(iface);
+// A file under /proc, or null when it cannot be read.
+function readProc(file) {
+  try {
+    return fs.readFileSync(file, 'utf8');
+  } catch (e) {
+    return null;
   }
-  for (const line of read('/proc/net/ipv6_route')) {
+}
+
+// Interfaces that carry a default route, preferred first: the kernel lists the routes to one
+// destination by metric.
+function parseDefaultRoutes(route, ipv6Route) {
+  const names = new Set();
+  for (const line of route.split('\n').slice(1)) {
+    // The mask too: a VPN's 0.0.0.0/1 and 128.0.0.0/1 are not the default route.
+    const [iface, destination, , , , , , mask] = line.trim().split(/\s+/);
+    if (destination === '00000000' && mask === '00000000') names.add(iface);
+  }
+  for (const line of ipv6Route.split('\n')) {
     const fields = line.trim().split(/\s+/);
     if (fields[0] === '0'.repeat(32) && fields[1] === '00' && fields[9] !== 'lo') {
       names.add(fields[9]);
     }
   }
-  return names;
+  return [...names];
 }
 
 function isGlobalAddress(address) {
@@ -559,15 +563,124 @@ function isGlobalAddress(address) {
   return !(a.startsWith('127.') || a.startsWith('169.254.') || a === '::1' || /^fe[89ab]/.test(a));
 }
 
-function discoverAddresses() {
-  const interfaces = os.networkInterfaces();
+// The IPv4 addresses of every interface, up or down: the kernel keeps a `/32 host LOCAL` entry
+// for each, under the `|-- <address>` line of its key.
+function parseFibTrie(text) {
   const addresses = [];
-  for (const name of defaultRouteInterfaces()) {
-    for (const { address, internal } of interfaces[name] || []) {
-      if (!internal && isGlobalAddress(address)) addresses.push(address);
+  let key = null;
+  for (const line of text.split('\n')) {
+    const leaf = line.match(/\|-- (\S+)$/);
+    if (leaf) key = leaf[1];
+    else if (/^\s*\/32 host LOCAL\b/.test(line) && net.isIPv4(key || '')) {
+      // Each table (Main, Local, a VRF's) lists it again.
+      if (!addresses.includes(key)) addresses.push(key);
     }
   }
   return addresses;
+}
+
+// IFA_F_DADFAILED, IFA_F_DEPRECATED and IFA_F_TENTATIVE: addresses a certificate must not name.
+const IFA_F_UNUSABLE = 0x08 | 0x20 | 0x40;
+
+// The usable global IPv6 addresses, with their interface: one `<hex> <index> <prefix> <scope>
+// <flags> <name>` line per address.
+function parseIfInet6(text) {
+  const addresses = [];
+  for (const line of text.split('\n')) {
+    const [hex, index, , scope, flags, name] = line.trim().split(/\s+/);
+    if (!/^[0-9a-f]{32}$/i.test(hex || '') || scope !== '00') continue;
+    if (parseInt(flags, 16) & IFA_F_UNUSABLE) continue;
+    const address = shortIpv6(hex.match(/.{4}/g).join(':'));
+    addresses.push({ name, index: parseInt(index, 16), address });
+  }
+  return addresses;
+}
+
+// The short form of an IPv6 address, so the kernel's and Node's spellings compare equal.
+function shortIpv6(address) {
+  try {
+    return new URL(`http://[${address}]`).hostname.slice(1, -1);
+  } catch (e) {
+    return address;
+  }
+}
+
+// Every global address of the host, as the manager discovers them: every interface, whether or
+// not it carries the default route or is up. The default-route interfaces come first, in route
+// order, IPv4 before IPv6, so the first address stays the one the install prints.
+function discoverAddresses({
+  interfaces = {},
+  defaultRoute = [],
+  fibTrie = null,
+  ifInet6 = null,
+  warn = () => {},
+} = {}) {
+  const up = [];
+  for (const [name, list] of Object.entries(interfaces)) {
+    for (const { address, family, internal } of list) {
+      if (internal) continue;
+      const v4 = family === 'IPv4';
+      up.push({ name, address: v4 ? address : shortIpv6(address), v4 });
+    }
+  }
+  const found = up.filter((a) => a.v4);
+  const local = fibTrie === null ? null : parseFibTrie(fibTrie);
+  // Every address of an interface that is up has an entry, so a missing one means the format is
+  // not the one parsed here.
+  if (local && found.every((a) => !isGlobalAddress(a.address) || local.includes(a.address))) {
+    found.push(...local.map((address) => ({ name: null, address, v4: true })));
+  } else {
+    warn(
+      'could not read the addresses in /proc/net/fib_trie; ' +
+        'those of interfaces that are down are left out'
+    );
+  }
+  const upV6 = up.filter((a) => !a.v4);
+  if (ifInet6 === null) {
+    found.push(...upV6);
+  } else {
+    // if_inet6 is in hash order: keep Node's order for the interfaces that are up, then the rest
+    // by interface index.
+    const usable = parseIfInet6(ifInet6);
+    const isUp = (a) => upV6.some((u) => u.address === a.address);
+    found.push(...upV6.filter((u) => usable.some((a) => a.address === u.address)));
+    found.push(
+      ...usable
+        .filter((a) => !isUp(a))
+        .sort((a, b) => a.index - b.index)
+        .map((a) => ({ ...a, v4: false }))
+    );
+  }
+  const routeRank = (name) => {
+    const i = defaultRoute.indexOf((name || '').split(':')[0]);
+    return i === -1 ? defaultRoute.length : i;
+  };
+  const rank = (a) => routeRank(a.name) * 2 + (a.v4 ? 0 : 1);
+  const addresses = [];
+  for (const { address } of found.sort((a, b) => rank(a) - rank(b))) {
+    if (isGlobalAddress(address) && !addresses.includes(address)) addresses.push(address);
+  }
+  return addresses;
+}
+
+function hostAddresses(warn) {
+  let interfaces = {};
+  try {
+    interfaces = os.networkInterfaces();
+  } catch (e) {
+    warn(`could not list the network interfaces: ${e.message}`);
+  }
+  return discoverAddresses({
+    interfaces,
+    defaultRoute: parseDefaultRoutes(
+      readProc('/proc/net/route') || '',
+      readProc('/proc/net/ipv6_route') || ''
+    ),
+    fibTrie: readProc('/proc/net/fib_trie'),
+    // Absent when IPv6 is disabled at boot (ipv6.disable=1); then no interface has one either.
+    ifInet6: readProc('/proc/net/if_inet6'),
+    warn,
+  });
 }
 
 const DNS_NAME = /^(?!-)[A-Za-z0-9*-]+(?<!-)(\.(?!-)[A-Za-z0-9-]+(?<!-))*$/;
@@ -596,7 +709,7 @@ function parseSans(list) {
 }
 
 // Throws on an invalid or empty WAZUH_DASHBOARD_CERT_SANS.
-function leafSans(ctx, host) {
+function leafSans(ctx, host, discover = hostAddresses) {
   const override = lookup(ctx, 'WAZUH_DASHBOARD_CERT_SANS', null, null, { allowEmpty: true });
   let list;
   if (override) {
@@ -610,7 +723,19 @@ function leafSans(ctx, host) {
     // Untyped, so a host named by its address becomes an IP SAN.
     list = [host];
     if (full && full !== host && DNS_NAME.test(full)) list.push(`DNS:${full}`);
-    list.push(...discoverAddresses().map((a) => `IP:${a}`));
+    let addresses = [];
+    try {
+      addresses = discover((msg) => err(`warning: ${msg}`));
+    } catch (e) {
+      err(`warning: could not discover the addresses of this host: ${e.message}`);
+    }
+    if (addresses.length === 0) {
+      err(
+        'warning: found no address of this host, so the certificate names only the host name and ' +
+          `loopback; set WAZUH_DASHBOARD_CERT_SANS in ${path.join(ctx.configDir, 'local.env')}`
+      );
+    }
+    list.push(...addresses.map((a) => `IP:${a}`));
   }
   list.push('DNS:localhost', 'IP:127.0.0.1', 'IP:::1');
   return parseSans(list.join(','));
@@ -1070,6 +1195,11 @@ module.exports = {
   storesVerbatim,
   ymlHas,
   parseSans,
+  parseDefaultRoutes,
+  parseFibTrie,
+  parseIfInet6,
+  discoverAddresses,
+  leafSans,
   mintCa,
   issueLeaf,
   validCa,
