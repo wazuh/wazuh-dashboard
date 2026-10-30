@@ -153,13 +153,13 @@ export const CheckFlyout = ({
               )}
             </>
           )}
-          {description && (
+          {description && (result === 'yellow' || result === 'red') && (
             <>
               <EuiFlexItem>
                 <EuiText size="m">
                   <FormattedMessage
                     id="healthcheck.check.details.remediation"
-                    defaultMessage="If it fails:"
+                    defaultMessage="What to check:"
                   />
                 </EuiText>
                 <EuiSpacer size="s" />

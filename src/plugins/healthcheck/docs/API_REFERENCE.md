@@ -43,7 +43,8 @@ core.healthCheck.describe('server-api:run-as', {
 ```
 
 The table, the check flyout and the header popover show the title, and keep the check name as a
-reference. A check with no description shows its name.
+reference. The flyout shows the remediation under **What to check** only when the check is yellow
+or red. A check with no description shows its name.
 
 #### getCore()
 
