@@ -10,6 +10,7 @@ import { HealthCheckStatus } from './service';
 export const healthCheckServiceMock = {
   createSetupContract: (): HealthCheckServiceSetup => ({
     status$: new BehaviorSubject({ status: 'gray', checks: [] } as HealthCheckStatus),
+    describe: jest.fn(),
   }),
   createStartContract: (): HealthCheckServiceStart => ({
     status$: new BehaviorSubject({ status: 'gray', checks: [] } as HealthCheckStatus),
@@ -20,5 +21,6 @@ export const healthCheckServiceMock = {
       },
     },
     getConfig: jest.fn(),
+    getDescription: jest.fn(),
   }),
 };

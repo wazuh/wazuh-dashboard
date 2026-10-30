@@ -12,6 +12,7 @@ import {
   EuiHorizontalRule,
   EuiButtonEmpty,
   EuiLink,
+  EuiText,
 } from '@elastic/eui';
 import useObservable from 'react-use/lib/useObservable';
 import { useMount } from 'react-use';
@@ -86,6 +87,14 @@ export const HealthCheckContent = () => {
           </EuiFlexGroup>
         </EuiFlexItem>
       </EuiFlexGroup>
+      <EuiText size="s" color="subdued">
+        <p>
+          <FormattedMessage
+            id="healthcheck.intro"
+            defaultMessage="These checks cover what the dashboard needs to work: its connection to the server API, the manager certificates, and the objects it creates in the indexer. They do not report the overall health of the manager or the indexer."
+          />
+        </p>
+      </EuiText>
       <EuiHorizontalRule margin="xs" />
       <ChecksTable checks={checks} />
     </div>

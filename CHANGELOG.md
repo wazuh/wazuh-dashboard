@@ -15,6 +15,7 @@
 | [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Added support for health check tasks to report their own result status                                                                                                                                                            |
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Added the issuance of the dashboard TLS certificates on a fresh install, from the dashboard CA in `/etc/wazuh-dashboard/ca`, minting it when none exists                                                                          |
 | [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Added a skip to main content link before the header for keyboard users                                                                                                                                                            |
+| [wazuh-dashboard-plugins#9457](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9457) | Added an introduction to the health check page, and the plugins can register a title, a description and a fix for each check                                                                                                      |
 
 ### Changed
 
