@@ -18,6 +18,7 @@ import {
   EuiDescriptionListDescription,
 } from '@elastic/eui';
 import { FormattedMessage } from 'react-intl';
+import { HealthCheckDescription } from 'opensearch-dashboards/public/healthcheck';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
 import { mapTaskStatusToHealthColor } from '../services/health';
 import { BadgeResults } from '../utils/badge_results';
@@ -45,11 +46,17 @@ function formatDuration(ms: number) {
 
 interface CheckFlyoutProps {
   check: TaskInfo;
+  description?: HealthCheckDescription;
   formatDate: (date: string) => string;
   setIsFlyoutVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyoutProps) => {
+export const CheckFlyout = ({
+  check,
+  description,
+  formatDate,
+  setIsFlyoutVisible,
+}: CheckFlyoutProps) => {
   const { name, duration, startedAt, finishedAt, error, result, status, enabled, critical } = check;
 
   const callOut = !enabled && (
@@ -80,15 +87,34 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
     >
       <EuiFlyoutHeader hasBorder>
         <EuiTitle size="m">
-          <FormattedMessage
-            id="healthcheck.check.details.title"
-            defaultMessage="Check details for {name}"
-            values={{ name }}
-          />
+          {description ? (
+            <h2>{description.title}</h2>
+          ) : (
+            <FormattedMessage
+              id="healthcheck.check.details.title"
+              defaultMessage="Check details for {name}"
+              values={{ name }}
+            />
+          )}
         </EuiTitle>
+        {description && (
+          <EuiText size="xs" color="subdued">
+            <code>{name}</code>
+          </EuiText>
+        )}
       </EuiFlyoutHeader>
       <EuiFlyoutBody banner={callOut}>
         <EuiFlexGroup direction="column">
+          {description && (
+            <>
+              <EuiFlexItem>
+                <EuiText size="s">
+                  <p>{description.description}</p>
+                </EuiText>
+              </EuiFlexItem>
+              <EuiSpacer size="s" />
+            </>
+          )}
           {error && (
             <>
               {result === 'red' && (
@@ -125,6 +151,23 @@ export const CheckFlyout = ({ check, formatDate, setIsFlyoutVisible }: CheckFlyo
                   <EuiSpacer />
                 </>
               )}
+            </>
+          )}
+          {description && (result === 'yellow' || result === 'red') && (
+            <>
+              <EuiFlexItem>
+                <EuiText size="m">
+                  <FormattedMessage
+                    id="healthcheck.check.details.remediation"
+                    defaultMessage="What to check:"
+                  />
+                </EuiText>
+                <EuiSpacer size="s" />
+                <EuiText size="s">
+                  <p>{description.remediation}</p>
+                </EuiText>
+              </EuiFlexItem>
+              <EuiSpacer />
             </>
           )}
           <EuiFlexItem>

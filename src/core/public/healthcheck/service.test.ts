@@ -86,6 +86,27 @@ describe('HealthcheckService', () => {
     expect(service.computeOverallStatus(checks)).toBe(status);
   });
 
+  it('returns the description a plugin registered for a check', () => {
+    const service = new HealthcheckService();
+    const description = {
+      title: 'Index patterns',
+      description: 'Creates the index patterns.',
+      remediation: 'Restart the dashboard.',
+    };
+
+    service.setup().describe('saved-objects:index-patterns', description);
+    const start = service.start({
+      http: httpServiceMock.createStartContract(),
+      notifications: notificationServiceMock.createStartContract(),
+      chrome: chromeServiceMock.createStartContract(),
+      uiSettings: uiSettingsServiceMock.createStartContract(),
+      healthCheckConfig: {} as HealthCheckConfig,
+    });
+
+    expect(start.getDescription('saved-objects:index-patterns')).toEqual(description);
+    expect(start.getDescription('server-api:run-as')).toBeUndefined();
+  });
+
   it('generateNextState computes the status and sorts the checks by name', async () => {
     const service = new HealthcheckService();
     const checks = [check('task:2', { result: 'red' }), check('task:1', { result: 'green' })];

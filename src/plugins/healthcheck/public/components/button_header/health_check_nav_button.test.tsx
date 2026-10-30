@@ -53,12 +53,17 @@ const buildStatus = (
   checks,
 });
 
-const renderButton = (status: HealthCheckStatus['status'], checks: TaskInfo[] = []) => {
+const renderButton = (
+  status: HealthCheckStatus['status'],
+  checks: TaskInfo[] = [],
+  getDescription: HealthCheckNavButtonProps['getDescription'] = () => undefined
+) => {
   const props: HealthCheckNavButtonProps = {
     coreStart,
     status$: new BehaviorSubject<HealthCheckStatus>(buildStatus(status, checks)),
     fetch: jest.fn().mockResolvedValue(undefined),
     getConfig: jest.fn().mockResolvedValue({ interval: 0 }),
+    getDescription,
   };
   return render(<HealthCheckNavButton {...props} />);
 };
@@ -142,6 +147,19 @@ describe('HealthCheckNavButton', () => {
 
       fireEvent.click(getByText('For more details, go to the', { exact: false }));
       expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('lists a described check by its title', () => {
+      const { getByTestId, getByText, queryByText } = renderButton('yellow', checks, (name) =>
+        name === 'server-api:run-as'
+          ? { title: 'Server API run as', description: 'Checks run_as.', remediation: 'Fix it.' }
+          : undefined
+      );
+
+      fireEvent.click(getByTestId('healthcheckNavButton'));
+
+      expect(getByText('Server API run as')).toBeInTheDocument();
+      expect(queryByText('run-as')).toBeNull();
     });
 
     it('closes the popover when the Health Check link is clicked', async () => {

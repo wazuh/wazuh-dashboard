@@ -21,7 +21,10 @@ import {
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { HealthCheckConfig, HealthCheckStatus } from 'src/core/common/healthcheck';
-import { HealthCheckServiceStart } from 'opensearch-dashboards/public/healthcheck';
+import {
+  HealthCheckDescription,
+  HealthCheckServiceStart,
+} from 'opensearch-dashboards/public/healthcheck';
 import { CoreStart } from 'opensearch-dashboards/public';
 import { mapTaskStatusToHealthColor } from '../services/health';
 import { RedirectAppLinks } from '../../../../opensearch_dashboards_react/public';
@@ -34,9 +37,11 @@ export interface HealthCheckNavButtonProps {
   status$: BehaviorSubject<HealthCheckStatus>;
   fetch: HealthCheckServiceStart['client']['internal']['fetch'];
   getConfig: () => Promise<HealthCheckConfig>;
+  getDescription: (name: string) => HealthCheckDescription | undefined;
 }
 export const HealthCheckNavButton = ({
   getConfig,
+  getDescription,
   fetch,
   coreStart,
   status$,
@@ -132,6 +137,7 @@ export const HealthCheckNavButton = ({
           )
           .map((check) => {
             const [category, name] = check.name.split(':');
+            const title = getDescription(check.name)?.title;
             return (
               <OuiDescriptionListTitle key={check.name}>
                 <EuiToolTip position="left" title="Check result" content={check.error || ''}>
@@ -140,7 +146,11 @@ export const HealthCheckNavButton = ({
                     style={{ cursor: 'default' }}
                   >
                     <span style={{ whiteSpace: 'nowrap' }}>
-                      {category}: <b>{name}</b>
+                      {title ?? (
+                        <>
+                          {category}: <b>{name}</b>
+                        </>
+                      )}
                     </span>
                   </EuiHealth>
                 </EuiToolTip>
