@@ -1,13 +1,13 @@
 # Usage:
 # docker build \
-#         --build-arg NODE_VERSION=18.19.0 \
+#         --build-arg NODE_VERSION=22.23.4 \
 #         --build-arg WAZUH_DASHBOARD_BRANCH=4.14.8 \
 #         --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=4.14.8 \
 #         --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=4.14.8 \
 #         -t quay.io/wazuh/osd-dev:4.14.8 \
 #         -f wzd.dockerfile .
 
-ARG NODE_VERSION=18.19.0
+ARG NODE_VERSION=22.23.4
 FROM node:${NODE_VERSION} AS base
 ARG WAZUH_DASHBOARD_BRANCH
 ARG WAZUH_DASHBOARD_SECURITY_BRANCH
