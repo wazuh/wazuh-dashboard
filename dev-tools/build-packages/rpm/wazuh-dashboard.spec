@@ -33,11 +33,17 @@ ExclusiveOS: linux
 %global INSTALL_DIR /usr/share/%{name}
 %global DASHBOARD_FILE wazuh-dashboard.tar.gz
 %define _source_payload w9.gzdio
-%define _binary_payload w9.gzdio
+%define _binary_payload w6.gzdio
 # Disable creation of /usr/lib/.build-id/* links
 %define _build_id_links none
 # Optional: don’t fail the build if build-ids are missing
 %undefine _missing_build_ids_terminate_build
+# The brp-strip scripts run file once per packaged file to strip debug info from unstripped ELF
+# files. Here the only one is the node binary, which the install section strips itself.
+# The rest of __os_install_post still runs.
+%global __brp_strip %{nil}
+%global __brp_strip_comment_note %{nil}
+%global __brp_strip_static_archive %{nil}
 
 # -----------------------------------------------------------------------------
 
@@ -50,9 +56,6 @@ Wazuh dashboard is a user interface and visualization tool for security-related 
 %prep
 
 cp /tmp/%{DASHBOARD_FILE} ./
-
-groupadd %{GROUP}
-useradd -g %{GROUP} %{USER}
 
 # -----------------------------------------------------------------------------
 
@@ -95,13 +98,11 @@ chmod 640 %{buildroot}/etc/default/wazuh-dashboard
 
 rm -rf %{buildroot}%{INSTALL_DIR}/etc/
 
-find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
-find %{buildroot}%{CONFIG_DIR} -exec chown root:%{GROUP} {} \;
+# The files section sets every owner, so only the modes of the buildroot reach the package.
+find %{buildroot}%{INSTALL_DIR} -type f -exec chmod go+rX,go-w {} +
+find %{buildroot}%{INSTALL_DIR} -type d -exec chmod 755 {} +
 
-chown root:root %{buildroot}/usr/lib/systemd/system/wazuh-dashboard.service
-
-find %{buildroot}%{INSTALL_DIR} -type f -exec chmod go+rX,go-w {} \;
-find %{buildroot}%{INSTALL_DIR} -type d -exec chmod 755 {} \;
+%{__strip} --strip-unneeded %{buildroot}%{INSTALL_DIR}/node/bin/node
 
 # -----------------------------------------------------------------------------
 
