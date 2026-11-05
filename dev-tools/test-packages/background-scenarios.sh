@@ -31,7 +31,8 @@ case "$ACTION" in
     cat >"$SCRIPT"
     # setsid gives the chain its own process group, so stop can kill its children too.
     # The redirections detach it from the step, so the step ends right away.
-    setsid bash -c 'bash -e "$1" >"$2" 2>&1; echo $? >"$3"' _ "$SCRIPT" "$LOG" "$STATUS" </dev/null >/dev/null 2>&1 &
+    # The status is renamed into place, so wait never reads a half-written file.
+    setsid bash -c 'bash -e "$1" >"$2" 2>&1; echo $? >"$3.tmp"; mv "$3.tmp" "$3"' _ "$SCRIPT" "$LOG" "$STATUS" </dev/null >/dev/null 2>&1 &
     echo $! >"$PID"
     echo "Started ${NAME} in the background"
     ;;
@@ -63,6 +64,7 @@ case "$ACTION" in
     if [ -f "$PID" ] && [ ! -f "$STATUS" ]; then
       echo "Stopping ${NAME}"
       kill -- "-$(cat "$PID")" 2>/dev/null || true
+      cat "$LOG"
     fi
     ;;
   *)

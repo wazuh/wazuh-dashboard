@@ -716,7 +716,6 @@ jobs:
 
       - name: Wait for the VM or systemd scenarios
         if: ${{ !cancelled() }}
-        timeout-minutes: 30
         run: |
           if [ "${{ inputs.system }}" = "rpm" ]; then
             bash dev-tools/test-packages/background-scenarios.sh wait vm-scenarios
