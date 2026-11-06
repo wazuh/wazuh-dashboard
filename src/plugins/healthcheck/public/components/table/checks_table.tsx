@@ -17,7 +17,7 @@ import {
 import { isEqual } from 'lodash';
 import { TaskInfo } from '../../../../../core/common/healthcheck';
 import { CheckFlyout } from './check_flyout';
-import { getCore } from '../../dashboards_services';
+import { getCore, getHealthCheck } from '../../dashboards_services';
 import { formatDate } from '../services/time';
 import { tableColumns } from './columns';
 import { TASK } from '../../constants';
@@ -136,7 +136,7 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
       />
       <EuiSpacer size="s" />
       <EuiBasicTable
-        columns={tableColumns(openFlyout)}
+        columns={tableColumns(openFlyout, getHealthCheck().getDescription)}
         items={filteredChecks}
         tableLayout="fixed"
         cellProps={getCellProps}
@@ -144,6 +144,7 @@ export const ChecksTable: FunctionComponent<ChecksTableProps> = ({ checks }) => 
       {flyoutVisible && check && (
         <CheckFlyout
           check={check}
+          description={getHealthCheck().getDescription(check.name)}
           formatDate={(date) => formatDate(core.uiSettings, date)}
           setIsFlyoutVisible={setFlyoutVisible}
         />

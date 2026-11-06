@@ -20,6 +20,7 @@ export const mountButton = (core: CoreStart) => {
           status$={core.healthCheck.status$}
           fetch={core.healthCheck.client.internal.fetch}
           getConfig={core.healthCheck.getConfig}
+          getDescription={core.healthCheck.getDescription}
         />,
         el
       );

@@ -28,6 +28,8 @@
  * under the License.
  */
 
+// Wazuh: socket type to track the NotReady server connections
+import type { Socket } from 'net';
 import { Observable, Subscription, combineLatest } from 'rxjs';
 import { first, map } from 'rxjs/operators';
 import { Server } from '@hapi/hapi';
@@ -57,6 +59,9 @@ import {
 import { BasePath, RequestHandlerContext } from '../../server';
 import { registerCoreHandlers } from './lifecycle_handlers';
 
+// Wazuh: time to wait for the NotReady server to stop before destroying its remaining sockets
+const NOT_READY_SERVER_STOP_TIMEOUT_MS = 5000;
+
 export interface SetupDeps {
   context: ContextSetup;
   // Wazuh
@@ -79,6 +84,10 @@ export class HttpService
   private readonly log: Logger;
   private readonly env: Env;
   private notReadyServer?: Server;
+  // Wazuh: in-flight stop of the NotReady server
+  private notReadyServerStop?: Promise<void>;
+  // Wazuh: raw sockets of the NotReady server, including those still in the TLS handshake
+  private readonly notReadyServerSockets = new Set<Socket>();
   private internalSetup?: InternalHttpServiceSetup;
   private requestHandlerContext?: RequestHandlerContextContainer;
 
@@ -152,11 +161,8 @@ export class HttpService
   public async start(deps: StartDeps) {
     const config = await this.config$.pipe(first()).toPromise();
     if (this.shouldListen(config)) {
-      if (this.notReadyServer) {
-        this.log.debug('stopping NotReady server');
-        await this.notReadyServer.stop();
-        this.notReadyServer = undefined;
-      }
+      // Wazuh: shared with `stop()`, which can run concurrently on shutdown during startup
+      await this.stopNotReadyServer();
       // If a redirect port is specified, we start an HTTP server at this port and
       // redirect all requests to the SSL port.
       if (config.ssl.enabled && config.ssl.redirectHttpFromPort !== undefined) {
@@ -189,11 +195,36 @@ export class HttpService
     this.configSubscription.unsubscribe();
     this.configSubscription = undefined;
 
-    if (this.notReadyServer) {
-      await this.notReadyServer.stop();
-    }
+    // Wazuh: shared with `start()` to avoid stopping the hapi server twice
+    await this.stopNotReadyServer();
     await this.httpServer.stop();
     await this.httpsRedirectServer.stop();
+  }
+
+  // Wazuh: hapi rejects `stop()` while a previous `stop()` is in progress, so the NotReady server is
+  // stopped once and later callers wait for that same stop to finish.
+  private async stopNotReadyServer() {
+    if (this.notReadyServer) {
+      this.log.debug('stopping NotReady server');
+      const notReadyServer = this.notReadyServer;
+      this.notReadyServer = undefined;
+      // Wazuh: hapi only tracks sockets after the TLS handshake completes, so a socket stuck in the
+      // handshake blocks the stop until Node's 120 s handshake timeout. Destroy every remaining
+      // socket once the stop timeout elapses.
+      const destroyTimer = setTimeout(() => {
+        this.log.debug(`destroying ${this.notReadyServerSockets.size} NotReady server sockets`);
+        this.notReadyServerSockets.forEach((socket) => socket.destroy());
+      }, NOT_READY_SERVER_STOP_TIMEOUT_MS);
+      this.notReadyServerStop = (async () => {
+        try {
+          await notReadyServer.stop({ timeout: NOT_READY_SERVER_STOP_TIMEOUT_MS });
+        } finally {
+          clearTimeout(destroyTimer);
+          this.notReadyServerSockets.clear();
+        }
+      })();
+    }
+    await this.notReadyServerStop;
   }
 
   // Wazuh: inject dependencies
@@ -223,6 +254,11 @@ export class HttpService
     //       .header('Retry-After', '30');
     //   },
     // });
+    // Wazuh: track raw sockets so the NotReady server stop can destroy them if it hangs
+    this.notReadyServer.listener.on('connection', (socket: Socket) => {
+      this.notReadyServerSockets.add(socket);
+      socket.once('close', () => this.notReadyServerSockets.delete(socket));
+    });
     await this.notReadyServer.start();
   }
 }
