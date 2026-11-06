@@ -516,6 +516,181 @@ jobs:
         run: |
           aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.build-package.outputs.PACKAGE_NAME }} ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}/
 
+      - name: RPM - Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        if: ${{ inputs.system == 'rpm' }}
+        with:
+          aws-region: 'us-east-1'
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          role-session-name: 'Dashboard-smoke-test'
+
+      # The VM scenarios run in the background while the Docker scenarios below run.
+      # The "Wait for the VM or systemd scenarios" step prints their log and fails if they fail.
+      - name: RPM - Start the VM scenarios in the background
+        if: ${{ inputs.system == 'rpm' }}
+        env:
+          AUTOMATION_USER: 'wazuh-devel-xdrsiem-dashboard'
+          AUTOMATION_TOKEN: ${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}
+          ARCHITECTURE: ${{ inputs.architecture }}
+          PACKAGE_NAME: ${{ needs.build-package.outputs.PACKAGE_NAME }}
+          VERSION: ${{ needs.setup-variables.outputs.VERSION }}
+          PREVIOUS: ${{ needs.setup-variables.outputs.PREVIOUS }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          bash dev-tools/test-packages/background-scenarios.sh start vm-scenarios <<'SCRIPT'
+          cd "$GITHUB_WORKSPACE"
+
+          echo "=== Clone automation repo"
+          # The automation branch matching the product version keeps the deployability layout used below
+          git clone "https://${AUTOMATION_USER}:${AUTOMATION_TOKEN}@github.com/wazuh/wazuh-automation.git" -b "$(bash dev-tools/product_version.sh)"
+          # Workaround: AWS CodeBuild ARM runners do not have pip3 or openssh-client pre-installed
+          if ! command -v pip3 &>/dev/null || ! command -v ssh &>/dev/null; then
+            sudo apt-get update
+            command -v pip3 &>/dev/null || sudo apt-get install -y python3-pip
+            command -v ssh &>/dev/null || sudo apt-get install -y openssh-client
+          fi
+          (cd wazuh-automation && pip3 install --retries 3 -r deployability/deps/requirements.txt)
+
+          echo "=== Create the VM"
+          if [ "$ARCHITECTURE" = "x86_64" ]; then
+            INSTANCE_NAME="centos_9_amd_large_aws"
+            COMPOSITE_NAME="centos_stream-9-amd64"
+          else
+            INSTANCE_NAME="centos_8_arm_large_aws"
+            COMPOSITE_NAME="centos_stream-8-arm64"
+          fi
+          python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name "${COMPOSITE_NAME}" --instance-name "${INSTANCE_NAME}" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --label-creator github-actions --working-dir /tmp/dashboard --custom-tags "Product:wazuh-dashboard,Purpose:package-build,ExecutionId:${RUN_ID},Stage:ci"
+          ansible_host=$(grep 'ansible_host:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_port=$(grep 'ansible_port:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_user=$(grep 'ansible_user:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ansible_ssh_private_key_file=$(grep 'ansible_ssh_private_key_file:' /tmp/inventory.yaml | sed 's/.*: *//')
+          ssh_command="ssh -o StrictHostKeyChecking=no -i $ansible_ssh_private_key_file -p $ansible_port $ansible_user@$ansible_host"
+          scp_command="scp -o StrictHostKeyChecking=no -i $ansible_ssh_private_key_file -P $ansible_port"
+
+          echo "=== Test package install/uninstall"
+          # echo 'Installing package...' is necessary to init the ssh connection prior to running scp
+          $ssh_command "echo 'Installing package...'"
+          $scp_command \
+            dev-tools/test-packages/rpm/${PACKAGE_NAME} \
+            dev-tools/test-packages/rpm-test-install-uninstall.sh \
+            dev-tools/test-packages/check-service-bind.sh \
+            ${ansible_user}@${ansible_host}:/home/${ansible_user}/
+          $ssh_command "sudo bash ./rpm-test-install-uninstall.sh './${PACKAGE_NAME}'"
+
+          if [ -z "$PREVIOUS" ]; then
+            exit 0
+          fi
+
+          echo "=== Test package upgrade"
+          # Skip when previous and current major differ (pre-install guard blocks cross-major upgrades)
+          VERSION_MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          PREVIOUS_MAJOR=$(echo "$PREVIOUS" | cut -d. -f1)
+          if [ "$VERSION_MAJOR" != "$PREVIOUS_MAJOR" ]; then
+            echo "Skipping upgrade test — different major ($PREVIOUS_MAJOR -> $VERSION_MAJOR)"
+          else
+            $ssh_command "sudo yum install libcap; \
+              sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
+              sudo echo -e '[wazuh]\ngpgcheck=1\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\nenabled=1\nname=EL-$releasever - Wazuh\nbaseurl=https://packages.wazuh.com/4.x/yum/\nprotect=1' | sudo tee /etc/yum.repos.d/wazuh.repo; \
+              sudo yum install -y wazuh-dashboard-${PREVIOUS}; \
+              sudo  systemctl daemon-reload; \
+              sudo  systemctl enable wazuh-dashboard; \
+              sudo  systemctl start wazuh-dashboard; \
+              sudo yum install -y ${PACKAGE_NAME}; \
+              sudo systemctl restart wazuh-dashboard; \
+              if rpm -q wazuh-dashboard | grep -q '${VERSION}'; then \
+                echo 'Package upgraded'; \
+              else \
+                echo 'Package not upgraded'; \
+                exit 1; \
+              fi; \
+              if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
+                echo 'Service running'; \
+              else \
+                echo 'Service not running'; \
+                exit 1; \
+              fi; \
+              sudo bash ./check-service-bind.sh
+              "
+          fi
+
+          echo "=== Verify cross-major upgrade is blocked"
+          $ssh_command "sudo yum install libcap; \
+            sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
+            sudo echo -e '[wazuh]\ngpgcheck=1\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\nenabled=1\nname=EL-$releasever - Wazuh\nbaseurl=https://packages.wazuh.com/4.x/yum/\nprotect=1' | sudo tee /etc/yum.repos.d/wazuh.repo; \
+            sudo yum install -y wazuh-dashboard-${PREVIOUS}; \
+            sudo systemctl daemon-reload; \
+            sudo systemctl enable wazuh-dashboard; \
+            sudo systemctl start wazuh-dashboard; \
+            if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
+              echo 'Service running'; \
+            else \
+              echo 'ERROR: Service not running'; \
+              exit 1; \
+            fi"
+
+          set +e
+          OUTPUT=$($ssh_command "sudo yum install -y ${PACKAGE_NAME} 2>&1")
+          EXIT_CODE=$?
+          set -e
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "ERROR: Installation should have been blocked but succeeded"
+            exit 1
+          fi
+
+          if echo "$OUTPUT" | grep -F -q "ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported."; then
+            echo "TEST: Cross-major upgrade correctly blocked"
+            echo "$OUTPUT"
+          else
+            echo "ERROR: Expected block message not found"
+            echo "$OUTPUT"
+            exit 1
+          fi
+          SCRIPT
+
+      # The systemd scenarios run in the background while the Docker scenarios below run.
+      - name: DEB - Start the systemd scenarios in the background
+        if: ${{ inputs.system == 'deb' }}
+        env:
+          PACKAGE_NAME: ${{ needs.build-package.outputs.PACKAGE_NAME }}
+          VERSION: ${{ needs.setup-variables.outputs.VERSION }}
+          PREVIOUS: ${{ needs.setup-variables.outputs.PREVIOUS }}
+        run: |
+          bash dev-tools/test-packages/background-scenarios.sh start systemd-scenarios <<'SCRIPT'
+          cd "$GITHUB_WORKSPACE"
+
+          echo "=== Test package install/uninstall"
+          bash dev-tools/test-packages/run_in_systemd_container.sh \
+            "$GITHUB_WORKSPACE" \
+            "bash /test-packages/deb-test-install-uninstall.sh '${PACKAGE_NAME}'"
+
+          if [ -z "$PREVIOUS" ]; then
+            exit 0
+          fi
+
+          echo "=== Test package upgrade"
+          # Skip when previous and current major differ (pre-install guard blocks cross-major upgrades)
+          VERSION_MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          PREVIOUS_MAJOR=$(echo "$PREVIOUS" | cut -d. -f1)
+          if [ "$VERSION_MAJOR" != "$PREVIOUS_MAJOR" ]; then
+            echo "Skipping upgrade test — different major ($PREVIOUS_MAJOR -> $VERSION_MAJOR)"
+          else
+            bash dev-tools/test-packages/run_in_systemd_container.sh \
+              "$GITHUB_WORKSPACE" \
+              "bash /test-packages/deb-test-upgrade.sh \
+                '${PACKAGE_NAME}' \
+                '${PREVIOUS}' \
+                '${VERSION}'"
+          fi
+
+          echo "=== Verify cross-major upgrade is blocked"
+          bash dev-tools/test-packages/run_in_systemd_container.sh \
+            "$GITHUB_WORKSPACE" \
+            "bash /test-packages/deb-test-cross-major-blocked.sh \
+              '${PACKAGE_NAME}' \
+              '${PREVIOUS}'"
+          SCRIPT
+
       - name: Test package integrity
         run: |
           cd ${{ github.workspace }}/dev-tools/test-packages
@@ -540,168 +715,13 @@ jobs:
           bash ./test-packages.sh --allow-same-major-reinstall \
             -p ${{needs.build-package.outputs.PACKAGE_NAME}}
 
-      - name: DEB - Test package install/uninstall
-        if: ${{ inputs.system == 'deb' }}
+      - name: Wait for the VM or systemd scenarios
+        if: ${{ !cancelled() }}
         run: |
-          bash ${{ github.workspace }}/dev-tools/test-packages/run_in_systemd_container.sh \
-            "${{ github.workspace }}" \
-            "bash /test-packages/deb-test-install-uninstall.sh '${{needs.build-package.outputs.PACKAGE_NAME}}'"
-
-      - name: DEB - Test package upgrade
-        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
-        run: |
-          # Skip when previous and current major differ (pre-install guard blocks cross-major upgrades)
-          VERSION_MAJOR=$(echo "${{needs.setup-variables.outputs.VERSION}}" | cut -d. -f1)
-          PREVIOUS_MAJOR=$(echo "${{needs.setup-variables.outputs.PREVIOUS}}" | cut -d. -f1)
-          if [ "$VERSION_MAJOR" != "$PREVIOUS_MAJOR" ]; then
-            echo "Skipping upgrade test — different major ($PREVIOUS_MAJOR -> $VERSION_MAJOR)"
-            exit 0
-          fi
-          bash ${{ github.workspace }}/dev-tools/test-packages/run_in_systemd_container.sh \
-            "${{ github.workspace }}" \
-            "bash /test-packages/deb-test-upgrade.sh \
-              '${{needs.build-package.outputs.PACKAGE_NAME}}' \
-              '${{needs.setup-variables.outputs.PREVIOUS}}' \
-              '${{needs.setup-variables.outputs.VERSION}}'"
-
-      - name: DEB - Verify cross-major upgrade is blocked
-        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'deb' }}
-        run: |
-          bash ${{ github.workspace }}/dev-tools/test-packages/run_in_systemd_container.sh \
-            "${{ github.workspace }}" \
-            "bash /test-packages/deb-test-cross-major-blocked.sh \
-              '${{needs.build-package.outputs.PACKAGE_NAME}}' \
-              '${{needs.setup-variables.outputs.PREVIOUS}}'"
-
-      - name: RPM - Clone automation repo
-        if: ${{ inputs.system == 'rpm' }}
-        env:
-          username: 'wazuh-devel-xdrsiem-dashboard'
-        run: |
-          git clone https://${{ env.username }}:${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}@github.com/wazuh/wazuh-automation.git
-          # Workaround: AWS CodeBuild ARM runners do not have pip3 or openssh-client pre-installed
-          if ! command -v pip3 &>/dev/null || ! command -v ssh &>/dev/null; then
-            sudo apt-get update
-            command -v pip3 &>/dev/null || sudo apt-get install -y python3-pip
-            command -v ssh &>/dev/null || sudo apt-get install -y openssh-client
-          fi
-          cd wazuh-automation
-          pip3 install --retries 3 -r deployability/deps/requirements.txt
-
-      - name: RPM - Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        if: ${{ inputs.system == 'rpm' }}
-        with:
-          aws-region: 'us-east-1'
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          role-session-name: 'Dashboard-smoke-test'
-
-      - name: RPM - Setup environment
-        if: ${{ inputs.system == 'rpm' }}
-        run: |
-          if [ "${{ inputs.architecture }}" = "x86_64" ]; then
-            INSTANCE_NAME="centos_9_amd_large_aws"
-            COMPOSITE_NAME="centos_stream-9-amd64"
+          if [ "${{ inputs.system }}" = "rpm" ]; then
+            bash dev-tools/test-packages/background-scenarios.sh wait vm-scenarios
           else
-            INSTANCE_NAME="centos_8_arm_large_aws"
-            COMPOSITE_NAME="centos_stream-8-arm64"
-          fi
-          python3 wazuh-automation/deployability/modules/allocation/main.py --action create --provider aws --size large --composite-name "${COMPOSITE_NAME}" --instance-name "${INSTANCE_NAME}" --inventory-output "/tmp/inventory.yaml" --track-output "/tmp/track.yaml" --label-team dashboard --label-termination-date 1d --label-creator github-actions --working-dir /tmp/dashboard --custom-tags "Product:wazuh-dashboard,Purpose:package-build,ExecutionId:${{ github.run_id }},Stage:ci"
-          ansible_host=$(grep 'ansible_host:' /tmp/inventory.yaml | sed 's/.*: *//')
-          ansible_port=$(grep 'ansible_port:' /tmp/inventory.yaml | sed 's/.*: *//')
-          ansible_user=$(grep 'ansible_user:' /tmp/inventory.yaml | sed 's/.*: *//')
-          ansible_ssh_private_key_file=$(grep 'ansible_ssh_private_key_file:' /tmp/inventory.yaml | sed 's/.*: *//')
-          ssh_command="ssh -o StrictHostKeyChecking=no -i $ansible_ssh_private_key_file -p $ansible_port $ansible_user@$ansible_host"
-          scp_command="scp -o StrictHostKeyChecking=no -i $ansible_ssh_private_key_file -P $ansible_port"
-          echo "ansible_host=$ansible_host" >> $GITHUB_OUTPUT
-          echo "ansible_port=$ansible_port" >> $GITHUB_OUTPUT
-          echo "ansible_user=$ansible_user" >> $GITHUB_OUTPUT
-          echo "ansible_ssh_private_key_file=$ansible_ssh_private_key_file" >> $GITHUB_OUTPUT
-          echo "ssh_command=$ssh_command" >> $GITHUB_OUTPUT
-          echo "scp_command=$scp_command" >> $GITHUB_OUTPUT
-        id: setup_rpm_env
-
-      - name: RPM - Test package install/uninstall
-        if: ${{ inputs.system == 'rpm' }}
-        run: |
-          # echo 'Installing package...' is necessary to init the ssh connection prior to running scp
-          ${{ steps.setup_rpm_env.outputs.ssh_command }} "echo 'Installing package...'"
-          ${{ steps.setup_rpm_env.outputs.scp_command }} \
-            ${{ github.workspace }}/dev-tools/test-packages/rpm/${{needs.build-package.outputs.PACKAGE_NAME}} \
-            ${{ github.workspace }}/dev-tools/test-packages/rpm-test-install-uninstall.sh \
-            ${{ github.workspace }}/dev-tools/test-packages/check-service-bind.sh \
-            ${{ steps.setup_rpm_env.outputs.ansible_user }}@${{ steps.setup_rpm_env.outputs.ansible_host }}:/home/${{ steps.setup_rpm_env.outputs.ansible_user }}/
-
-          ${{ steps.setup_rpm_env.outputs.ssh_command }} \
-            "sudo bash ./rpm-test-install-uninstall.sh './${{needs.build-package.outputs.PACKAGE_NAME}}'"
-
-      - name: RPM - Test package upgrade
-        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'rpm' }}
-        run: |
-          # Skip when previous and current major differ (pre-install guard blocks cross-major upgrades)
-          VERSION_MAJOR=$(echo "${{needs.setup-variables.outputs.VERSION}}" | cut -d. -f1)
-          PREVIOUS_MAJOR=$(echo "${{needs.setup-variables.outputs.PREVIOUS}}" | cut -d. -f1)
-          if [ "$VERSION_MAJOR" != "$PREVIOUS_MAJOR" ]; then
-            echo "Skipping upgrade test — different major ($PREVIOUS_MAJOR -> $VERSION_MAJOR)"
-            exit 0
-          fi
-          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install libcap; \
-            sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
-            sudo echo -e '[wazuh]\ngpgcheck=1\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\nenabled=1\nname=EL-$releasever - Wazuh\nbaseurl=https://packages.wazuh.com/4.x/yum/\nprotect=1' | sudo tee /etc/yum.repos.d/wazuh.repo; \
-            sudo yum install -y wazuh-dashboard-${{needs.setup-variables.outputs.PREVIOUS}}; \
-            sudo  systemctl daemon-reload; \
-            sudo  systemctl enable wazuh-dashboard; \
-            sudo  systemctl start wazuh-dashboard; \
-            sudo yum install -y ${{needs.build-package.outputs.PACKAGE_NAME}}; \
-            sudo systemctl restart wazuh-dashboard; \
-            if rpm -q wazuh-dashboard | grep -q '${{needs.setup-variables.outputs.VERSION}}'; then \
-              echo 'Package upgraded'; \
-            else \
-              echo 'Package not upgraded'; \
-              exit 1; \
-            fi; \
-            if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
-              echo 'Service running'; \
-            else \
-              echo 'Service not running'; \
-              exit 1; \
-            fi; \
-            sudo bash ./check-service-bind.sh
-            "
-      - name: RPM - Verify cross-major upgrade is blocked
-        if: ${{ needs.setup-variables.outputs.PREVIOUS != '' && inputs.system == 'rpm' }}
-        run: |
-          ${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install libcap; \
-            sudo rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH; \
-            sudo echo -e '[wazuh]\ngpgcheck=1\ngpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH\nenabled=1\nname=EL-$releasever - Wazuh\nbaseurl=https://packages.wazuh.com/4.x/yum/\nprotect=1' | sudo tee /etc/yum.repos.d/wazuh.repo; \
-            sudo yum install -y wazuh-dashboard-${{needs.setup-variables.outputs.PREVIOUS}}; \
-            sudo systemctl daemon-reload; \
-            sudo systemctl enable wazuh-dashboard; \
-            sudo systemctl start wazuh-dashboard; \
-            if sudo systemctl status wazuh-dashboard | grep -q 'active (running)'; then \
-              echo 'Service running'; \
-            else \
-              echo 'ERROR: Service not running'; \
-              exit 1; \
-            fi"
-
-          set +e
-          OUTPUT=$(${{ steps.setup_rpm_env.outputs.ssh_command }} "sudo yum install -y ${{needs.build-package.outputs.PACKAGE_NAME}} 2>&1")
-          EXIT_CODE=$?
-          set -e
-
-          if [ "$EXIT_CODE" -eq 0 ]; then
-            echo "ERROR: Installation should have been blocked but succeeded"
-            exit 1
-          fi
-
-          if echo "$OUTPUT" | grep -F -q "ERROR: Upgrade from Wazuh dashboard versions prior to 5.x is not supported."; then
-            echo "TEST: Cross-major upgrade correctly blocked"
-            echo "$OUTPUT"
-          else
-            echo "ERROR: Expected block message not found"
-            echo "$OUTPUT"
-            exit 1
+            bash dev-tools/test-packages/background-scenarios.sh wait systemd-scenarios
           fi
 
       - name: Destroy Allocator Machine
@@ -710,6 +730,8 @@ jobs:
         ########################################
         run: |
           if [ "${{ inputs.system }}" = "rpm" ]; then
+            # A cancelled job skips the wait step, so stop the VM scenarios before deleting the VM.
+            bash dev-tools/test-packages/background-scenarios.sh stop vm-scenarios
             echo "Destroying Allocator Machine"
             cd wazuh-automation/deployability
             python3 modules/allocation/main.py --action delete --track-output "/tmp/track.yaml"
