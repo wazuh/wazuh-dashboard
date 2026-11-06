@@ -19,8 +19,17 @@ export interface HealthCheckServiceStartDeps {
   healthCheckConfig: HealthCheckConfig;
 }
 
+/** Plain-language text for a check, shown instead of its technical name. */
+export interface HealthCheckDescription {
+  title: string;
+  description: string;
+  // What to do when the check fails.
+  remediation: string;
+}
+
 export interface HealthCheckServiceSetup {
   status$: BehaviorSubject<{ status: TaskInfo['result']; checks: TaskInfo[] }>;
+  describe: (name: string, description: HealthCheckDescription) => void;
 }
 
 export interface HealthCheckServiceStart {
@@ -32,4 +41,5 @@ export interface HealthCheckServiceStart {
     };
   };
   getConfig: () => Promise<HealthCheckConfig>;
+  getDescription: (name: string) => HealthCheckDescription | undefined;
 }
