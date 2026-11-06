@@ -104,7 +104,7 @@ prepare_builder_image() {
   local image="$1"
   local ref="$2"
   log "Pulling builder image ${ref}..."
-  if RETRY_MAX_ATTEMPTS=2 run_with_retry docker pull "${ref}"; then
+  if RETRY_MAX_ATTEMPTS=2 RETRY_DELAY_SECONDS=5 run_with_retry docker pull "${ref}"; then
     log "Using the published builder image ${ref}"
     return 0
   fi
@@ -129,10 +129,10 @@ build_tar() {
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
-    -v "${current_path}/base/base-builder.sh:/usr/local/bin/builder:ro,Z" \
-    -v "${current_path}/base/plugins:/usr/local/bin/plugins:ro,Z" \
-    -v "${root_dir}/VERSION.json:/usr/local/bin/VERSION.json:ro,Z" \
-    -v "${current_path}/common/run-with-retry.sh:/usr/local/lib/wazuh/run-with-retry.sh:ro,Z" \
+    -v "${current_path}/base/base-builder.sh:/usr/local/bin/builder:ro,z" \
+    -v "${current_path}/base/plugins:/usr/local/bin/plugins:ro,z" \
+    -v "${root_dir}/VERSION.json:/usr/local/bin/VERSION.json:ro,z" \
+    -v "${current_path}/common/run-with-retry.sh:/usr/local/lib/wazuh/run-with-retry.sh:ro,z" \
     "${builder_image}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
   cd ..
 }
@@ -147,8 +147,8 @@ build_rpm() {
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
-    -v "${current_path}/rpm/rpm-builder.sh:/usr/local/bin/builder:ro,Z" \
-    -v "${current_path}/rpm/wazuh-dashboard.spec:/usr/local/src/wazuh-dashboard.spec:ro,Z" \
+    -v "${current_path}/rpm/rpm-builder.sh:/usr/local/bin/builder:ro,z" \
+    -v "${current_path}/rpm/wazuh-dashboard.spec:/usr/local/src/wazuh-dashboard.spec:ro,z" \
     "${builder_image}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
   cd ../
@@ -165,8 +165,8 @@ build_deb() {
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
-    -v "${current_path}/deb/deb-builder.sh:/usr/local/bin/builder:ro,Z" \
-    -v "${current_path}/deb/debian:/usr/local/src/debian:ro,Z" \
+    -v "${current_path}/deb/deb-builder.sh:/usr/local/bin/builder:ro,z" \
+    -v "${current_path}/deb/debian:/usr/local/src/debian:ro,z" \
     "${builder_image}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
   cd ..
