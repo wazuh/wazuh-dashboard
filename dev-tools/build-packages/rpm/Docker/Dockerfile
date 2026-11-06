@@ -13,10 +13,6 @@ RUN yum update -y && yum install -y python3
 
 RUN ln -fs /usr/bin/python3.6 /usr/bin/python
 
-# Add the scripts to build the RPM package
-ADD rpm-builder.sh /usr/local/bin/builder
-ADD wazuh-dashboard.spec /usr/local/src/wazuh-dashboard.spec
-RUN chmod +x /usr/local/bin/builder
-
-# Set the entrypoint
-ENTRYPOINT ["/usr/local/bin/builder"]
+# The builder script and its inputs are mounted at run time by
+# build-packages.sh, so this Dockerfile is the only input of the image.
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/builder"]
