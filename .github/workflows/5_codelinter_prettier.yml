@@ -14,6 +14,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # The check compares against the point the branch left its base, which
+          # needs the history both share. A shallow checkout does not have it.
+          fetch-depth: 0
 
       - name: Install NodeJS
         uses: actions/setup-node@v4
@@ -39,4 +43,23 @@ jobs:
           echo "Installing dependencies"
           yarn install --ignore-scripts
           echo "Running prettier on the changed files"
-          npx prettier ${CHANGED_FILES} --check --ignore-unknown
+          # A scheduled upward merge carries lines written on the branch being
+          # merged. Those were written there, not here, so that branch counts as
+          # a second base and the merge is checked only on lines that exist in
+          # neither parent.
+          BASES="--base ${REMOTE_NAME}/${GITHUB_BASE_REF}"
+          case "${GITHUB_HEAD_REF}" in
+            merge-*-into-*)
+              SOURCE_BRANCH=${GITHUB_HEAD_REF#merge-}
+              SOURCE_BRANCH=${SOURCE_BRANCH%-into-*}
+              echo "Merge branch detected, adding ${SOURCE_BRANCH} as a base"
+              if git fetch origin "${SOURCE_BRANCH}"; then
+                BASES="${BASES} --base ${REMOTE_NAME}/${SOURCE_BRANCH}"
+              else
+                echo "Could not fetch ${SOURCE_BRANCH}, falling back to the base branch alone"
+              fi
+              ;;
+          esac
+
+          echo "Checking the lines this change writes"
+          node dev-tools/prettier-check-changed.js ${BASES} ${CHANGED_FILES}

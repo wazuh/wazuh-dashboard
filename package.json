@@ -20,8 +20,8 @@
     "sha": "6cb7fec4e154faa0a4a3fee4b33dfef91b9870d9"
   },
   "wazuh": {
-    "version": "5.0.0",
-    "revision": "05"
+    "version": "5.0.1",
+    "revision": "00"
   },
   "homepage": "https://opensearch.org",
   "bugs": {
@@ -313,12 +313,14 @@
     "mustache": "^2.3.2",
     "ndjson": "^2.0.0",
     "node-fetch": "^2.6.7",
+    "node-forge": "^1.2.1",
     "p-map": "^4.0.0",
     "papaparse": "^5.5.2",
     "pegjs": "0.10.0",
     "performance-now": "^2.1.0",
     "proxy-from-env": "1.0.0",
     "query-string": "^6.13.2",
+    "re2js": "^2.8.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "3.1.4",

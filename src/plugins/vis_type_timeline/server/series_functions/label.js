@@ -31,6 +31,7 @@
 import { i18n } from '@osd/i18n';
 import alter from '../lib/alter.js';
 import Chainable from '../lib/classes/chainable';
+import { RE2JS } from 're2js';
 
 export default new Chainable('label', {
   args: [
@@ -62,8 +63,10 @@ export default new Chainable('label', {
     const config = args.byName;
     return alter(args, function (eachSeries) {
       if (config.regex) {
-        const regex = new RegExp(config.regex);
-        eachSeries.label = eachSeries.label.replace(regex, config.label);
+        // RE2 runs in linear time, so a user pattern can't hang the server
+        eachSeries.label = RE2JS.compile(config.regex)
+          .matcher(eachSeries.label)
+          .replaceFirst(config.label);
       } else {
         eachSeries.label = config.label;
       }

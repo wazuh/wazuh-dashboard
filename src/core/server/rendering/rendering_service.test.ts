@@ -121,6 +121,26 @@ describe('RenderingService', () => {
         expect(data).toMatchSnapshot(INJECTED_METADATA);
       });
 
+      // Wazuh
+      it('falls back to the Wazuh title when applicationTitle is invalid', async () => {
+        configService.atPath.mockImplementationOnce(
+          () =>
+            new BehaviorSubject(
+              RawOpenSearchDashboardsConfig.schema.validate({ branding: { applicationTitle: '' } })
+            )
+        );
+        const { render: renderInvalidTitle } = await service.setup(mockRenderingSetupDeps);
+
+        const content = await renderInvalidTitle(createOpenSearchDashboardsRequest(), uiSettings, {
+          nonce: 'test-nonce',
+        });
+        const dom = load(content);
+        const data = JSON.parse(dom('osd-injected-metadata').attr('data') || '');
+
+        expect(data.branding.applicationTitle).toBe('Wazuh');
+        expect(dom('title').text()).toBe('Wazuh');
+      });
+
       it('renders "core" page for blank basepath', async () => {
         mockRenderingSetupDeps.http.basePath.get.mockReturnValueOnce('');
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import useObservable from 'react-use/lib/useObservable';
 import { BehaviorSubject } from 'rxjs';
 import classNames from 'classnames';
@@ -57,6 +57,33 @@ export const Sidecar = ({ sidecarConfig$, options, setSidecarConfig, i18n, mount
     [sidecarConfig]
   );
 
+  // WAZUH
+  // Other overlays (e.g. EuiFlyout) are rendered outside this component's DOM
+  // subtree, so they can't be shifted via a padding/width style the way the
+  // app-wrapper is. Expose the docked side and size on `document.body` so
+  // global CSS can displace them instead of letting the sidecar cover them.
+  useEffect(() => {
+    const { body } = document;
+    const isSideDocked =
+      sidecarConfig &&
+      !sidecarConfig.isHidden &&
+      (sidecarConfig.dockedMode === SIDECAR_DOCKED_MODE.LEFT ||
+        sidecarConfig.dockedMode === SIDECAR_DOCKED_MODE.RIGHT);
+
+    if (isSideDocked) {
+      body.dataset.osdSidecarDockedMode = sidecarConfig!.dockedMode;
+      body.style.setProperty('--osd-sidecar-size', `${sidecarConfig!.paddingSize}px`);
+    } else {
+      delete body.dataset.osdSidecarDockedMode;
+      body.style.removeProperty('--osd-sidecar-size');
+    }
+
+    return () => {
+      delete body.dataset.osdSidecarDockedMode;
+      body.style.removeProperty('--osd-sidecar-size');
+    };
+  }, [sidecarConfig]);
+
   return (
     <i18n.Context>
       <div data-test-subj={options['data-test-subj']} style={flyoutSizeStyle} className={classes}>
@@ -64,6 +91,7 @@ export const Sidecar = ({ sidecarConfig$, options, setSidecarConfig, i18n, mount
           onResize={handleResize}
           dockedMode={sidecarConfig?.dockedMode}
           flyoutSize={sidecarConfig?.paddingSize ?? 0}
+          className={options.classNameButton}
         />
         <MountWrapper mount={mount} className="osdSidecarMountWrapper" />
       </div>

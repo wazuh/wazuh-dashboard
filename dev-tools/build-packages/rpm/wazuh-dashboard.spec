@@ -17,8 +17,11 @@ buildroot:   %{_tmppath}/%{name}-%{version}-%{release}-wazuh-dashboard-%(%{__id_
 Vendor:      Wazuh, Inc <info@wazuh.com>
 Packager:    Wazuh, Inc <info@wazuh.com>
 Requires(pre):    /usr/sbin/groupadd /usr/sbin/useradd
+Requires(postun): /usr/sbin/userdel /usr/sbin/groupdel
+# The bundled node needs glibc, libstdc++ and libgcc, which are not declared on purpose:
+# rpm needs glibc and libdnf needs all three, so any host that installs this package has them.
 AutoReqProv: no
-Requires: libcap
+Requires: /bin/sh
 ExclusiveOS: linux
 
 # -----------------------------------------------------------------------------
@@ -58,6 +61,10 @@ useradd -g %{GROUP} %{USER}
 tar -xf %{DASHBOARD_FILE}
 sed -i 's/OSD_NODE_OPTS_PREFIX/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_NODE_OPTS_PREFIX/g' "wazuh-dashboard-base/bin/opensearch-dashboards"
 sed -i 's/OSD_USE_NODE_JS_FILE_PATH/OSD_PATH_CONF="\/etc\/wazuh-dashboard" OSD_USE_NODE_JS_FILE_PATH/g' "wazuh-dashboard-base/bin/opensearch-dashboards-keystore"
+# The test suites of the bundled npm packages are not shipped. The plugins install their
+# node_modules after the OSD build, which cleans only its own. src/ and the plugins' own
+# code are left alone, in case one of their test/ directories is ever needed at runtime.
+find wazuh-dashboard-base -path '*/node_modules/*/*' -type d \( -name test -o -name tests \) -prune -exec rm -rf {} +
 
 
 # -----------------------------------------------------------------------------
@@ -89,15 +96,12 @@ chmod 640 %{buildroot}/etc/default/wazuh-dashboard
 rm -rf %{buildroot}%{INSTALL_DIR}/etc/
 
 find %{buildroot}%{INSTALL_DIR} -exec chown %{USER}:%{GROUP} {} \;
-find %{buildroot}%{CONFIG_DIR} -exec chown %{USER}:%{GROUP} {} \;
+find %{buildroot}%{CONFIG_DIR} -exec chown root:%{GROUP} {} \;
 
 chown root:root %{buildroot}/usr/lib/systemd/system/wazuh-dashboard.service
 
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -exec chown %{USER}:%{GROUP} {} \;
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 644 -exec chmod 640 {} \;
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 755 -exec chmod 750 {} \;
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type d -exec chmod 750 {} \;
-find %{buildroot}%{INSTALL_DIR}/plugins/wazuh/ -type f -perm 744 -exec chmod 740 {} \;
+find %{buildroot}%{INSTALL_DIR} -type f -exec chmod go+rX,go-w {} \;
+find %{buildroot}%{INSTALL_DIR} -type d -exec chmod 755 {} \;
 
 # -----------------------------------------------------------------------------
 
@@ -122,16 +126,28 @@ Refer to the 5.x migration guide for more information.
 EOF
 }
 
+# Prints the first "version" value of a JSON file with tr and parameter expansion
+# only. Shell percent operators are doubled in this spec for rpm's macro pass.
+json_version() {
+  json=$(tr -d ' \t\r\n' < "$1" 2>/dev/null) || return 0
+  case "$json" in
+    *'"version":"'*)
+      json=${json#*'"version":"'}
+      echo "${json%%%%\"*}"
+      ;;
+  esac
+}
+
 if [ -f %{INSTALL_DIR}/VERSION.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/VERSION.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  INSTALLED_VER=$(json_version %{INSTALL_DIR}/VERSION.json)
 elif [ -f %{INSTALL_DIR}/VERSION ]; then
   INSTALLED_VER=$(cat %{INSTALL_DIR}/VERSION 2>/dev/null)
 elif [ -f %{INSTALL_DIR}/plugins/wazuh/package.json ]; then
-  INSTALLED_VER=$(grep -m 1 '"version"' %{INSTALL_DIR}/plugins/wazuh/package.json 2>/dev/null | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  INSTALLED_VER=$(json_version %{INSTALL_DIR}/plugins/wazuh/package.json)
 fi
 
 if [ -n "$INSTALLED_VER" ]; then
-  MAJOR=$(echo "$INSTALLED_VER" | cut -d. -f1)
+  MAJOR=${INSTALLED_VER%%%%.*}
   if [ "$MAJOR" -lt 5 ]; then
     print_upgrade_error "$INSTALLED_VER"
     exit 1
@@ -159,10 +175,10 @@ fi
 # Stop the services to upgrade the package
 if [ $1 = 2 ]; then
   if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1 && systemctl is-active --quiet wazuh-dashboard > /dev/null 2>&1; then
-    systemctl stop wazuh-dashboard.service > /dev/null 2>&1
+    systemctl --no-reload stop wazuh-dashboard.service > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   # Check for SysV
-  elif command -v service > /dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "is running" > /dev/null 2>&1; then
+  elif command -v service > /dev/null 2>&1 && case "$(service wazuh-dashboard status 2>/dev/null)" in *"is running"*) true ;; *) false ;; esac; then
     service wazuh-dashboard stop > /dev/null 2>&1
     touch %{INSTALL_DIR}/wazuh-dashboard.restart
   fi
@@ -171,35 +187,58 @@ fi
 # -----------------------------------------------------------------------------
 
 %post
-setcap 'cap_net_bind_service=+ep' %{INSTALL_DIR}/node/bin/node
 rm -f /usr/share/wazuh-dashboard/VERSION
+# Root reads the environment file at every start, so the service user must not own it
+if [ -f /etc/default/wazuh-dashboard ] && [ ! -L /etc/default/wazuh-dashboard ]; then
+  chown -h root:%{GROUP} /etc/default/wazuh-dashboard
+  chmod 640 /etc/default/wazuh-dashboard
+fi
 
-if [ ! -f %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
-  runuser %{USER} --shell="/bin/bash" --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore create" > /dev/null 2>&1
-  runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" > /dev/null 2>&1
-  runuser %{USER} --shell="/bin/bash" --command="echo kibanaserver | %{INSTALL_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" > /dev/null 2>&1
-  WD_ENC_KEY=""
-  if command -v openssl > /dev/null 2>&1; then
-    WD_ENC_KEY=$(openssl rand -base64 32 2>/dev/null | tr -d '\n') || WD_ENC_KEY=""
+# Root owns the configuration directory; the service reads it through its group.
+# Runs before the resolver, which refuses a directory not owned by root.
+if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
+  chown -h root:%{GROUP} %{CONFIG_DIR}
+  chmod 750 %{CONFIG_DIR}
+  for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
+    if [ -f "%{CONFIG_DIR}/$f" ] && [ ! -L "%{CONFIG_DIR}/$f" ]; then
+      chown -h root:%{GROUP} "%{CONFIG_DIR}/$f"
+      chmod 640 "%{CONFIG_DIR}/$f"
+    fi
+  done
+  if [ -d %{CONFIG_DIR}/certs ] && [ ! -L %{CONFIG_DIR}/certs ]; then
+    chown -R -P root:%{GROUP} %{CONFIG_DIR}/certs
+    chmod 750 %{CONFIG_DIR}/certs
+    for f in %{CONFIG_DIR}/certs/* %{CONFIG_DIR}/certs/.[!.]*; do
+      if [ -f "$f" ] && [ ! -L "$f" ]; then chmod 640 "$f"; fi
+    done
   fi
-  if [ -z "${WD_ENC_KEY}" ] && [ -r /dev/urandom ] && command -v base64 > /dev/null 2>&1; then
-    WD_ENC_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '\n') || WD_ENC_KEY=""
+  for d in ca export; do
+    if [ -d "%{CONFIG_DIR}/$d" ] && [ ! -L "%{CONFIG_DIR}/$d" ]; then
+      chown -R -P root:root "%{CONFIG_DIR}/$d"
+      chmod 700 "%{CONFIG_DIR}/$d"
+    fi
+  done
+  if [ -f %{CONFIG_DIR}/local.env ] && [ ! -L %{CONFIG_DIR}/local.env ]; then
+    chown -h root:root %{CONFIG_DIR}/local.env
+    chmod 600 %{CONFIG_DIR}/local.env
   fi
-  if [ -z "${WD_ENC_KEY}" ] && [ -x %{INSTALL_DIR}/node/bin/node ]; then
-    WD_ENC_KEY=$(%{INSTALL_DIR}/node/bin/node -e \
-      "process.stdout.write(require('crypto').randomBytes(32).toString('base64'))" 2>/dev/null) || WD_ENC_KEY=""
-  fi
-  # base64 of exactly 32 raw bytes is always 44 characters (with one '=' pad)
-  if [ ${#WD_ENC_KEY} -eq 44 ]; then
-    echo "${WD_ENC_KEY}" | runuser %{USER} --shell="/bin/bash" \
-      --command="%{INSTALL_DIR}/bin/opensearch-dashboards-keystore add wazuh_ai_assistant.encryptionKey --stdin" \
-      > /dev/null 2>&1 \
-      || echo "wazuh-dashboard: warning: failed to store wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
-  else
-    echo "wazuh-dashboard: warning: unable to generate wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
-  fi
-  unset WD_ENC_KEY
-  true
+fi
+
+# Create the keystore if needed, resolve the consumed kibanaserver and
+# wazuh-internal-client passwords into it and, on a fresh install, generate
+# the AI assistant encryption key. An unresolved credential is not an error
+# at install time: the unit's pre-start step runs the resolver again and
+# refuses to start if needed.
+# $1 is 1 on a fresh install and 2 or more on an upgrade.
+if [ $1 = 1 ]; then
+  %{INSTALL_DIR}/bin/resolve-credentials --install || true
+else
+  %{INSTALL_DIR}/bin/resolve-credentials --upgrade || true
+fi
+# The keystore holds secrets under an empty password
+if [ -f %{CONFIG_DIR}/opensearch_dashboards.keystore ] && [ ! -L %{CONFIG_DIR}/opensearch_dashboards.keystore ]; then
+  chown -h root:%{GROUP} %{CONFIG_DIR}/opensearch_dashboards.keystore
+  chmod 640 %{CONFIG_DIR}/opensearch_dashboards.keystore
 fi
 
 # -----------------------------------------------------------------------------
@@ -208,7 +247,8 @@ fi
 if [ $1 = 0 ];then # Remove
   echo -n "Stopping wazuh-dashboard service..."
   if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
-      systemctl stop wazuh-dashboard.service > /dev/null 2>&1
+      systemctl --no-reload stop wazuh-dashboard.service > /dev/null 2>&1
+      systemctl --no-reload disable wazuh-dashboard.service > /dev/null 2>&1 || true
   # Check for SysV
   elif command -v service > /dev/null 2>&1; then
     service wazuh-dashboard stop > /dev/null 2>&1
@@ -220,6 +260,24 @@ fi
 %postun
 if [ $1 = 0 ];then
   # If the package is been uninstalled
+  # rpm keeps the config directory (certificates, keys, keystore, *.rpmsave).
+  # Drop the minted CA and export/, then hand the rest to root before userdel
+  # frees the UID. chown -h and chmod -R never follow a planted link.
+  if [ -d %{CONFIG_DIR} ] && [ ! -L %{CONFIG_DIR} ]; then
+    rm -rf %{CONFIG_DIR}/export %{CONFIG_DIR}/ca
+    if chown -R -h root:root %{CONFIG_DIR} 2>/dev/null && chmod -R go-rwx %{CONFIG_DIR} 2>/dev/null; then
+      echo "Kept %{CONFIG_DIR}, owned by root. Reinstalling %{name} takes it back."
+    else
+      echo "Some files under %{CONFIG_DIR} could not be handed over to root; they keep the ID of the removed %{name} user." >&2
+    fi
+  fi
+  # A modified environment file is kept as .rpmsave with its root:%{GROUP}
+  # ownership. The group goes too, so it becomes root's as well.
+  if [ -f /etc/default/%{name}.rpmsave ] && [ ! -L /etc/default/%{name}.rpmsave ]; then
+    chgrp root /etc/default/%{name}.rpmsave > /dev/null 2>&1 || true
+    chmod g-rwx /etc/default/%{name}.rpmsave > /dev/null 2>&1 || true
+  fi
+
   # Remove the wazuh-dashboard user if it exists
   if getent passwd %{USER} > /dev/null 2>&1; then
     userdel %{USER} >/dev/null 2>&1
@@ -231,10 +289,15 @@ if [ $1 = 0 ];then
     groupdel %{GROUP} >/dev/null 2>&1
   fi
 
-  # Remove /etc/wazuh-dashboard and /usr/share/wazuh-dashboard dirs
+  # Remove the installation and PID directories
   rm -rf %{INSTALL_DIR}
   if [ -d %{PID_DIR} ]; then
     rm -rf %{PID_DIR}
+  fi
+
+  # Make systemd forget the unit, now that its file is gone
+  if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
+    systemctl daemon-reload > /dev/null 2>&1 || true
   fi
 fi
 
@@ -242,9 +305,15 @@ fi
 
 # posttrans code is the last thing executed in a install/upgrade
 %posttrans
-if [ ! -d %{PID_DIR} ]; then
-    mkdir -p %{PID_DIR}
-    chown %{USER}:%{GROUP} %{PID_DIR}
+# Only root writes the pidfile, so root owns its directory, also when an older
+# package gave it to the service user
+mkdir -p %{PID_DIR}
+chown -h root:root %{PID_DIR}
+chmod 0755 %{PID_DIR}
+
+# Load the new unit even if the service is stopped, so its next start gets the capability
+if command -v systemctl > /dev/null 2>&1 && systemctl > /dev/null 2>&1; then
+  systemctl daemon-reload > /dev/null 2>&1 || true
 fi
 
 if [ -f %{INSTALL_DIR}/wazuh-dashboard.restart ]; then
@@ -268,225 +337,233 @@ rm -fr %{buildroot}
 
 %files
 %defattr(-,%{USER},%{GROUP})
-%dir %attr(750, %{USER}, %{GROUP}) %{CONFIG_DIR}
+%dir %attr(750, root, %{GROUP}) %{CONFIG_DIR}
 
-%config(noreplace) %attr(0750, %{USER}, %{GROUP}) "/etc/default/wazuh-dashboard"
-%config(noreplace) %attr(0640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
+%config(noreplace) %attr(0640, root, %{GROUP}) "/etc/default/wazuh-dashboard"
+%config(noreplace) %attr(0640, root, %{GROUP}) "%{CONFIG_DIR}/opensearch_dashboards.yml"
 
-%attr(440, %{USER}, %{GROUP}) %{INSTALL_DIR}/VERSION.json
-%dir %attr(750, %{USER}, %{GROUP}) %{INSTALL_DIR}
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/core"
-%attr(-, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/core/*"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/remove"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/list"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/lib"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/downloaders"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/utils"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/root"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/harden"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__/plugin"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__/plugin/foo"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/plugins"
-%attr(-, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/plugins/*
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/integration_tests"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/reload_logging_config"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/utils"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/rotate"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/core"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/i18n"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/i18n/localization"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/warnings"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/http"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/config"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/keystore"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/apm"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/docs"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules"
-%attr(-, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules/*"
-%attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules/.yarn-integrity"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node"
-%attr(-, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node/*"
+%attr(444, root, root) %{INSTALL_DIR}/VERSION.json
+%dir %attr(755, root, root) %{INSTALL_DIR}
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/core"
+%attr(-, root, root) "%{INSTALL_DIR}/src/core/*"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_plugin"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_plugin/remove"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_plugin/list"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_plugin/lib"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_plugin/install"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/downloaders"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_keystore"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli_keystore/utils"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/setup_node_env"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/setup_node_env/root"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/setup_node_env/harden"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/optimize"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__/plugin"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__/plugin/foo"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/plugins"
+%attr(-, root, root) "%{INSTALL_DIR}/src/plugins/*
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli/serve"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli/serve/integration_tests"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/reload_logging_config"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/utils"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/logging"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/rotate"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/core"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/i18n"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/i18n/localization"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/warnings"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/http"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/config"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/server/keystore"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/ui"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/legacy/ui/apm"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/docs"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/src/translations"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/node_modules"
+%attr(-, root, root) "%{INSTALL_DIR}/node_modules/*"
+%attr(644, root, root) "%{INSTALL_DIR}/node_modules/.yarn-integrity"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/node"
+%attr(-, root, root) "%{INSTALL_DIR}/node/*"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/data"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/plugins"
-%attr(-, %{USER}, %{GROUP}) "%{INSTALL_DIR}/plugins/*"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/remove/settings.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/remove/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/remove/remove.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/dev.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/list/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/list/list.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/lib/logger.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/lib/errors.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/lib/log_warnings.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/opensearch_dashboards.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/downloaders/file.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/downloaders/http.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/zip.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/download.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/install.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/settings.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/rename.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/invalid_name.zip"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/test_plugin_different_version.zip"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/banana.jpg"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/test_plugin_no_opensearch_dashboards.zip"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/test_plugin.zip"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/corrupt.zip"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/test_plugin_many.zip"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/cleanup.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/pack.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/install/progress.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/cli.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_plugin/dist.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/cli_keystore.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/add.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/create.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/utils/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/utils/prompt.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/dev.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/get_keystore.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/remove.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/dist.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli_keystore/list.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/apm.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/root/force.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/root/is_root.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/root/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/polyfill.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/node_version_validator.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/harden/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/harden/child_process.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/no_transpilation.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/exit_on_warning.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/setup_node_env/dist.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/np_ui_plugin_public_dirs.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/optimize_mixin.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/proxy_bundles_route.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/file_hash.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/file_hash_cache.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__/plugin/foo/plugin.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__/outside_output.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/bundles_route.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/optimize/bundles_route/dynamic_asset_response.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/command.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/help.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/cli.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/serve.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/read_keystore.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/invalid_config.yml"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/reload_logging_config/opensearch_dashboards_log_file.test.yml"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/reload_logging_config/opensearch_dashboards_log_console.test.yml"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/reload_logging_config/opensearch_dashboards.test.yml"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/cli/dist.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/utils/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/utils/unset.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/utils/version.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/utils/artifact_type.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/utils/deep_clone_with_buffers.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/rotate/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/rotate/log_rotator.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/apply_filters_to_keys.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/log_format.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/log_reporter.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/log_format_json.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/log_with_metadata.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/configuration.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/log_interceptor.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/logging/log_format_string.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/core/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/i18n/localization/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/i18n/localization/telemetry_localization_collector.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/i18n/localization/file_integrity.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/i18n/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/i18n/get_translations_path.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/i18n/constants.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/osd_server.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/warnings/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/http/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/http/register_hapi_plugins.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/http/setup_base_path_provider.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/config/override.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/config/complete.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/config/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/config/schema.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/config/config.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/keystore/keystore.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/keystore/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/server/keystore/errors.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_mixin.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/ui_render_mixin.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/utils.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/osd_bundles_loader_source.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/startup.js.hbs"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/bootstrap.js.hbs"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/app_bootstrap.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/legacy/ui/apm/index.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/docs/docs_repo.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/docs/cli.js"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/de-DE.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/es-419.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/es-ES.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/fr-CA.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/fr-FR.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/id-ID.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/it-IT.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/ja-JP.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/ko-KR.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/pt-PT.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/tr-TR.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/zh-CN.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/zh-TW.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/translations/pt-BR.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/package.json"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/LICENSE.txt"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/NOTICE.txt"
-%attr(640, %{USER}, %{GROUP}) "%{INSTALL_DIR}/README.txt"
-%attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/use_node"
-%attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards"
-%attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards-plugin"
-%attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/bin/opensearch-dashboards-keystore"
-%dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/config"
-%attr(640, %{USER}, %{GROUP}) "%{CONFIG_DIR}/node.options"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/plugins"
+%attr(-, root, root) "%{INSTALL_DIR}/plugins/*"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/bin"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/remove/settings.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/remove/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/remove/remove.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/dev.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/list/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/list/list.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/lib/logger.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/lib/errors.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/lib/log_warnings.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/opensearch_dashboards.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/downloaders/file.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/downloaders/http.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/zip.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/download.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/install.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/settings.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/rename.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/invalid_name.zip"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/test_plugin_different_version.zip"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/banana.jpg"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/test_plugin_no_opensearch_dashboards.zip"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/test_plugin.zip"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/corrupt.zip"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/__fixtures__/replies/test_plugin_many.zip"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/cleanup.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/pack.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/install/progress.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/cli.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_plugin/dist.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/cli_keystore.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/add.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/create.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/utils/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/utils/prompt.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/dev.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/get_keystore.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/remove.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/dist.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli_keystore/list.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/apm.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/root/force.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/root/is_root.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/root/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/polyfill.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/node_version_validator.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/harden/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/harden/child_process.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/no_transpilation.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/exit_on_warning.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/setup_node_env/dist.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/np_ui_plugin_public_dirs.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/optimize_mixin.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/proxy_bundles_route.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/file_hash.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/file_hash_cache.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__/plugin/foo/plugin.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/__fixtures__/outside_output.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/bundles_route.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/optimize/bundles_route/dynamic_asset_response.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/command.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/help.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/cli.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/serve/serve.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/serve/read_keystore.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/invalid_config.yml"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/reload_logging_config/opensearch_dashboards_log_file.test.yml"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/reload_logging_config/opensearch_dashboards_log_console.test.yml"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/serve/integration_tests/__fixtures__/reload_logging_config/opensearch_dashboards.test.yml"
+%attr(644, root, root) "%{INSTALL_DIR}/src/cli/dist.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/utils/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/utils/unset.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/utils/version.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/utils/artifact_type.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/utils/deep_clone_with_buffers.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/rotate/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/rotate/log_rotator.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/apply_filters_to_keys.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/log_format.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/log_reporter.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/log_format_json.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/log_with_metadata.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/configuration.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/log_interceptor.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/logging/log_format_string.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/core/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/i18n/localization/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/i18n/localization/telemetry_localization_collector.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/i18n/localization/file_integrity.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/i18n/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/i18n/get_translations_path.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/i18n/constants.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/osd_server.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/warnings/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/http/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/http/register_hapi_plugins.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/http/setup_base_path_provider.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/config/override.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/config/complete.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/config/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/config/schema.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/config/config.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/keystore/keystore.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/keystore/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/server/keystore/errors.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_mixin.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/ui_render_mixin.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/utils.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/osd_bundles_loader_source.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/startup.js.hbs"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/bootstrap.js.hbs"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/ui_render/bootstrap/app_bootstrap.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/legacy/ui/apm/index.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/docs/docs_repo.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/docs/cli.js"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/de-DE.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/es-419.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/es-ES.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/fr-CA.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/fr-FR.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/id-ID.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/it-IT.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/ja-JP.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/ko-KR.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/pt-PT.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/tr-TR.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/zh-CN.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/zh-TW.json"
+%attr(644, root, root) "%{INSTALL_DIR}/src/translations/pt-BR.json"
+%attr(644, root, root) "%{INSTALL_DIR}/package.json"
+%attr(644, root, root) "%{INSTALL_DIR}/LICENSE.txt"
+%attr(644, root, root) "%{INSTALL_DIR}/NOTICE.txt"
+%attr(644, root, root) "%{INSTALL_DIR}/README.txt"
+%attr(755, root, root) "%{INSTALL_DIR}/bin/use_node"
+%attr(755, root, root) "%{INSTALL_DIR}/bin/opensearch-dashboards"
+%attr(755, root, root) "%{INSTALL_DIR}/bin/opensearch-dashboards-plugin"
+%attr(755, root, root) "%{INSTALL_DIR}/bin/opensearch-dashboards-keystore"
+%attr(750, root, root) "%{INSTALL_DIR}/bin/resolve-credentials"
+%attr(644, root, root) "%{INSTALL_DIR}/bin/resolve-credentials.js"
+%dir %attr(755, root, root) "%{INSTALL_DIR}/config"
+%attr(640, root, %{GROUP}) "%{CONFIG_DIR}/node.options"
 %attr(644, root, root) "/usr/lib/systemd/system/wazuh-dashboard.service"
 
 %changelog
-* Wed Sep 16 2026 support <info@wazuh.com> - 4.14.9
+* Wed Nov 11 2026 support <info@wazuh.com> - 4.14.11
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-14-11.html
+* Wed Oct 28 2026 support <info@wazuh.com> - 4.14.10
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-14-10.html
+* Wed Oct 14 2026 support <info@wazuh.com> - 5.0.0
+- More info: https://documentation.wazuh.com/current/release-notes/release-5-0-0.html
+* Wed Oct 14 2026 support <info@wazuh.com> - 4.14.9
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-9.html
+* Wed Sep 23 2026 support <info@wazuh.com> - 4.14.8
+- More info: https://documentation.wazuh.com/current/release-notes/release-4-14-8.html
+* Wed Sep 09 2026 support <info@wazuh.com> - 5.0.1
+- More info: https://documentation.wazuh.com/current/release-notes/release-5-0-1.html
 * Thu Sep 03 2026 support <info@wazuh.com> - 4.10.5
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-10-5.html
-* Wed Sep 02 2026 support <info@wazuh.com> - 4.14.8
-- More info: https://documentation.wazuh.com/current/release-notes/release-4-14-8.html
-* Tue Aug 04 2026 support <info@wazuh.com> - 5.0.0
-- More info: https://documentation.wazuh.com/current/release-notes/release-5-0-0.html
 * Wed Jul 29 2026 support <info@wazuh.com> - 4.14.7
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-7.html
 * Wed Jul 01 2026 support <info@wazuh.com> - 4.14.6

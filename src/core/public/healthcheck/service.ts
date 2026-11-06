@@ -116,41 +116,22 @@ export class HealthcheckService {
   stop() {}
 
   computeOverallStatus(checks: HealthCheckStatus['checks']): HealthCheckStatus['status'] {
-    let overallStatus = 'green';
+    const finishedChecks = checks.filter(({ status }) => status === TASK.RUN_STATUS.FINISHED);
 
     if (
-      checks.some(
-        ({
-          result,
-          critical,
-          status,
-        }: {
-          result: TaskInfo['result'];
-          critical: TaskInfo['critical'];
-          status: TaskInfo['status'];
-        }) => !critical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
+      finishedChecks.some(
+        ({ result, critical }) =>
+          result === TASK.RUN_RESULT.RED || (critical && result !== TASK.RUN_RESULT.GREEN)
       )
     ) {
-      overallStatus = 'yellow';
+      return TASK.RUN_RESULT.RED;
     }
 
-    if (
-      checks.some(
-        ({
-          result,
-          critical,
-          status,
-        }: {
-          result: TaskInfo['result'];
-          critical: TaskInfo['critical'];
-          status: TaskInfo['status'];
-        }) => critical && status === 'finished' && result !== TASK.RUN_RESULT.GREEN
-      )
-    ) {
-      overallStatus = 'red';
+    if (finishedChecks.some(({ result }) => result !== TASK.RUN_RESULT.GREEN)) {
+      return TASK.RUN_RESULT.YELLOW;
     }
 
-    return overallStatus as HealthCheckStatus['status'];
+    return TASK.RUN_RESULT.GREEN;
   }
 
   generateNextState({ checks }: { checks: HealthCheckStatus['checks'] }): HealthCheckStatus {

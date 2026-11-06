@@ -62,10 +62,11 @@ jest.mock('fs', () => ({
     );
   }),
   writeFileSync: jest.fn(),
+  chmodSync: jest.fn(), // Wazuh
 }));
 
 import sinon from 'sinon';
-import { readFileSync } from 'fs';
+import { chmodSync, readFileSync, writeFileSync } from 'fs'; // Wazuh
 
 import { Keystore } from './keystore';
 
@@ -103,6 +104,35 @@ describe('Keystore', () => {
       expect(version).toEqual('1');
       expect(data.length).toBeGreaterThan(100);
     });
+
+    // Wazuh start
+    it('creates keystore readable only by its owner', () => {
+      const path = '/data/nonexistent.keystore';
+      chmodSync.mockClear();
+      writeFileSync.mockClear();
+
+      const keystore = new Keystore(path);
+      keystore.save();
+
+      expect(chmodSync).not.toHaveBeenCalled();
+      expect(writeFileSync).toHaveBeenCalledWith(path, expect.any(String), { mode: 0o600 });
+    });
+
+    it('restricts the mode of an existing keystore before writing to it', () => {
+      const path = '/data/unprotected.keystore';
+      chmodSync.mockClear();
+      writeFileSync.mockClear();
+
+      const keystore = new Keystore(path);
+      keystore.save();
+
+      expect(chmodSync).toHaveBeenCalledWith(path, 0o600);
+      expect(writeFileSync).toHaveBeenCalledWith(path, expect.any(String), { mode: 0o600 });
+      expect(chmodSync.mock.invocationCallOrder[0]).toBeLessThan(
+        writeFileSync.mock.invocationCallOrder[0]
+      );
+    });
+    // Wazuh end
   });
 
   describe('load', () => {

@@ -132,9 +132,15 @@ export function getWebpackConfig(bundle: Bundle, bundleRefs: BundleRefs, worker:
       minimizer: [
         new rspack.SwcJsMinimizerRspackPlugin({
           extractComments: false,
+          // Wazuh: compress and mangle the production bundles. Keep class and function names
+          // because code reads constructor.name, and Babel compiles classes to functions.
+          // minimizerOptions: {
+          //   compress: false,
+          //   mangle: false,
+          // },
           minimizerOptions: {
-            compress: false,
-            mangle: false,
+            compress: { keep_classnames: true, keep_fnames: true },
+            mangle: { keep_classnames: true, keep_fnames: true },
           },
         }),
         new rspack.LightningCssMinimizerRspackPlugin(),

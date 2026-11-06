@@ -5,7 +5,7 @@ ARG BLOCK_UNKNOWN_INSTALL
 ARG ALLOW_SAME_MAJOR_REINSTALL
 RUN mkdir -p /tmp
 RUN apt-get update --fix-missing
-RUN apt-get install -y curl libcap2-bin
+RUN apt-get install -y curl
 
 # If BLOCK_4X_INSTALL is set, simulate a 4.x installation via the plugin's package.json
 # (the preinst guard falls through VERSION.json -> VERSION -> plugin package.json)

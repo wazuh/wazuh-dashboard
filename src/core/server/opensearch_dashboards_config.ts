@@ -82,6 +82,24 @@ export const config = {
       applicationTitle: schema.string({
         defaultValue: 'Wazuh',
       }),
+      // Wazuh: display-only override for the version shown in the About
+      // page and the persistent help menu badge. Falls back to the real
+      // dashboard build version when unset.
+      applicationVersion: schema.maybe(schema.string()),
+      // Wazuh: overrides the links shown in the persistent help menu
+      // (rendered regardless of the active app). Leaving it unset keeps
+      // the built-in Documentation/Slack/GitHub/Google Group list;
+      // setting it replaces that list entirely.
+      helpMenuLinks: schema.maybe(
+        schema.arrayOf(
+          schema.object({
+            label: schema.string(),
+            link: schema.string(),
+            icon: schema.maybe(schema.string()),
+            darkModeIcon: schema.maybe(schema.string()),
+          })
+        )
+      ),
       useExpandedHeader: schema.boolean({
         defaultValue: false,
       }),

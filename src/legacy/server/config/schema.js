@@ -247,6 +247,17 @@ export default () =>
         }),
         faviconUrl: Joi.any().default('/'),
         applicationTitle: Joi.any().default(''),
+        // Wazuh
+        applicationVersion: Joi.string(),
+        // Wazuh
+        helpMenuLinks: Joi.array().items(
+          Joi.object({
+            label: Joi.string(),
+            link: Joi.string(),
+            icon: Joi.string(),
+            darkModeIcon: Joi.string(),
+          })
+        ),
         useExpandedHeader: Joi.boolean().default(false),
       }),
       survey: Joi.object({

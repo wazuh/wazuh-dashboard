@@ -28,6 +28,8 @@
  * under the License.
  */
 
+import type { HelpMenuLinkItem } from './help_menu';
+
 /**
  * A type definition for custom branding configurations from yml file
  * @public
@@ -57,6 +59,12 @@ export interface Branding {
   faviconUrl?: string;
   /** Application title that will replace the default opensearch dashboard string */
   applicationTitle?: string;
+  /** Wazuh: display-only override for the version shown in the UI. Falls
+   * back to the real dashboard build version when unset. */
+  applicationVersion?: string;
+  /** Wazuh: overrides the links shown in the persistent help menu, always
+   * visible regardless of the active app. */
+  helpMenuLinks?: HelpMenuLinkItem[];
   /** Whether to use expanded menu (true) or condensed menu (false) */
   useExpandedHeader?: boolean;
 }

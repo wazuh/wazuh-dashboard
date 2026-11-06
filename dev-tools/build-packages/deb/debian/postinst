@@ -14,55 +14,88 @@ export CONFIG_DIR=/etc/"${NAME}"
 export INSTALLATION_DIR=/usr/share/"${NAME}"
 export PID_DIR=/run/"${NAME}"
 
-# Setting Owner and group of own folders
+# Only root writes the pidfile, so root owns its directory, also when an older
+# package gave it to the service user
 mkdir -p "${PID_DIR}"
-chown -R "${NAME}":"${NAME}" "${PID_DIR}"
+chown -h root:root "${PID_DIR}"
+chmod 0755 "${PID_DIR}"
 
 case "$1" in
 configure)
-    chmod 750 "${TARGET_DIR}""${CONFIG_DIR}"
-    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${CONFIG_DIR}"
-    chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"
-    chown -R "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"
+    chmod 755 "${TARGET_DIR}""${INSTALLATION_DIR}"
+    chown -R -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"
+    chown -R -h "${NAME}":"${NAME}" "${TARGET_DIR}""${INSTALLATION_DIR}"/data
+    # The resolver runs as root from ExecStartPre=+, so the service user must not own it
+    chown -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
+    chmod 750 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials
+    chown -h root:root "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
+    chmod 644 "${TARGET_DIR}""${INSTALLATION_DIR}"/bin/resolve-credentials.js
     if [ -f "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service ]; then
         chmod 644 "${TARGET_DIR}"/usr/lib/systemd/system/wazuh-dashboard.service
     fi
-    setcap 'cap_net_bind_service=+ep' "${INSTALLATION_DIR}"/node/bin/node
+    # Root reads the environment file at every start, so the service user must not own it
+    if [ -f /etc/default/"${NAME}" ] && [ ! -L /etc/default/"${NAME}" ]; then
+        chown -h root:"${NAME}" /etc/default/"${NAME}"
+        chmod 640 /etc/default/"${NAME}"
+    fi
+    # Root owns the configuration directory; the service reads it through its group.
+    # Runs before the resolver, which refuses a directory not owned by root.
+    if [ -d "${CONFIG_DIR}" ] && [ ! -L "${CONFIG_DIR}" ]; then
+        chown -h root:"${NAME}" "${CONFIG_DIR}"
+        chmod 750 "${CONFIG_DIR}"
+        for f in opensearch_dashboards.yml node.options opensearch_dashboards.keystore; do
+            if [ -f "${CONFIG_DIR}/$f" ] && [ ! -L "${CONFIG_DIR}/$f" ]; then
+                chown -h root:"${NAME}" "${CONFIG_DIR}/$f"
+                chmod 640 "${CONFIG_DIR}/$f"
+            fi
+        done
+        if [ -d "${CONFIG_DIR}/certs" ] && [ ! -L "${CONFIG_DIR}/certs" ]; then
+            chown -R -P root:"${NAME}" "${CONFIG_DIR}/certs"
+            chmod 750 "${CONFIG_DIR}/certs"
+            for f in "${CONFIG_DIR}"/certs/* "${CONFIG_DIR}"/certs/.[!.]*; do
+                if [ -f "$f" ] && [ ! -L "$f" ]; then chmod 640 "$f"; fi
+            done
+        fi
+        for d in ca export; do
+            if [ -d "${CONFIG_DIR}/$d" ] && [ ! -L "${CONFIG_DIR}/$d" ]; then
+                chown -R -P root:root "${CONFIG_DIR}/$d"
+                chmod 700 "${CONFIG_DIR}/$d"
+            fi
+        done
+        if [ -f "${CONFIG_DIR}/local.env" ] && [ ! -L "${CONFIG_DIR}/local.env" ]; then
+            chown -h root:root "${CONFIG_DIR}/local.env"
+            chmod 600 "${CONFIG_DIR}/local.env"
+        fi
+    fi
     rm -f /usr/share/wazuh-dashboard/VERSION
+    # Load the new unit even if the service is stopped, so its next start gets the capability
+    if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
+        systemctl daemon-reload >/dev/null 2>&1 || true
+    fi
     if [ -f "${INSTALLATION_DIR}"/"${NAME}".restart ]; then
         rm -f "${INSTALLATION_DIR}"/"${NAME}".restart
         if command -v systemctl >/dev/null 2>&1 && systemctl >/dev/null 2>&1; then
-            systemctl daemon-reload >/dev/null 2>&1
             systemctl restart wazuh-dashboard.service >/dev/null 2>&1
-        elif command -v service >/dev/null 2>&1 && service wazuh-dashboard status 2>/dev/null | grep "running" >/dev/null 2>&1; then
+        # preinst stopped it and left the .restart marker, so it is not running here
+        elif command -v service >/dev/null 2>&1; then
             service wazuh-dashboard restart >/dev/null 2>&1
         fi
     fi
-    if [ ! -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
-        runuser "${NAME}" --shell="/bin/bash" --command="${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore create" >/dev/null 2>&1
-        runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.username --stdin" >/dev/null 2>&1
-        runuser "${NAME}" --shell="/bin/bash" --command="echo kibanaserver | ${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add opensearch.password --stdin" >/dev/null 2>&1
-        WD_ENC_KEY=""
-        if command -v openssl >/dev/null 2>&1; then
-            WD_ENC_KEY=$(openssl rand -base64 32 2>/dev/null | tr -d '\n') || WD_ENC_KEY=""
-        fi
-        if [ -z "${WD_ENC_KEY}" ] && [ -r /dev/urandom ] && command -v base64 >/dev/null 2>&1; then
-            WD_ENC_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '\n') || WD_ENC_KEY=""
-        fi
-        if [ -z "${WD_ENC_KEY}" ] && [ -x "${INSTALLATION_DIR}"/node/bin/node ]; then
-            WD_ENC_KEY=$("${INSTALLATION_DIR}"/node/bin/node -e \
-                "process.stdout.write(require('crypto').randomBytes(32).toString('base64'))" 2>/dev/null) || WD_ENC_KEY=""
-        fi
-        # base64 of exactly 32 raw bytes is always 44 characters (with one '=' pad)
-        if [ ${#WD_ENC_KEY} -eq 44 ]; then
-            echo "${WD_ENC_KEY}" | runuser "${NAME}" --shell="/bin/bash" \
-                --command="${INSTALLATION_DIR}/bin/opensearch-dashboards-keystore add wazuh_ai_assistant.encryptionKey --stdin" \
-                >/dev/null 2>&1 \
-                || echo "wazuh-dashboard: warning: failed to store wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
-        else
-            echo "wazuh-dashboard: warning: unable to generate wazuh_ai_assistant.encryptionKey; configure it manually to enable the AI assistant." >&2
-        fi
-        unset WD_ENC_KEY
+    # Create the keystore if needed, resolve the consumed kibanaserver and
+    # wazuh-internal-client passwords into it and, on a fresh install,
+    # generate the AI assistant encryption key. An unresolved credential is
+    # not an error at install time: the unit's pre-start step runs the
+    # resolver again and refuses to start if needed.
+    # $2 is the previously configured version, empty on a fresh install.
+    if [ -n "$2" ]; then
+        "${INSTALLATION_DIR}"/bin/resolve-credentials --upgrade || true
+    else
+        "${INSTALLATION_DIR}"/bin/resolve-credentials --install || true
+    fi
+    # The keystore holds secrets under an empty password
+    if [ -f "${CONFIG_DIR}"/opensearch_dashboards.keystore ] && [ ! -L "${CONFIG_DIR}"/opensearch_dashboards.keystore ]; then
+        chown -h root:"${NAME}" "${CONFIG_DIR}"/opensearch_dashboards.keystore
+        chmod 640 "${CONFIG_DIR}"/opensearch_dashboards.keystore
     fi
     ;;
 

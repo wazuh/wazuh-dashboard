@@ -14,17 +14,22 @@ interface Props {
   onResize: (size: number) => void;
   flyoutSize: number;
   dockedMode: ISidecarConfig['dockedMode'] | undefined;
+  className?: string;
 }
 
 const RESIZE_DEBOUNCE_DELAY = 50;
 
-export const ResizableButton = ({ dockedMode, onResize, flyoutSize }: Props) => {
+export const ResizableButton = ({ dockedMode, onResize, flyoutSize, className }: Props) => {
   const isHorizontal = dockedMode !== SIDECAR_DOCKED_MODE.TAKEOVER;
 
-  const classes = classNames('sidecar-resizableButton', {
-    'resizableButton--vertical': !isHorizontal,
-    'resizableButton--horizontal': isHorizontal,
-  });
+  const classes = classNames(
+    'sidecar-resizableButton',
+    {
+      'resizableButton--vertical': !isHorizontal,
+      'resizableButton--horizontal': isHorizontal,
+    },
+    className
+  );
 
   const initialMouseXorY = useRef(0);
   const initialFlyoutSize = useRef(flyoutSize);

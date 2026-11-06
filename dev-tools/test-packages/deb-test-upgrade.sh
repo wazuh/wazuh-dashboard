@@ -40,3 +40,4 @@ else
   echo "Service not running"
   exit 1
 fi
+bash /test-packages/check-service-bind.sh

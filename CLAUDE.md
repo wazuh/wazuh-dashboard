@@ -25,12 +25,12 @@ external `./plugins/` directory.
 Four top-level code areas — the #1 source of confusion is `src/plugins/` vs
 `./plugins/`:
 
-| Path            | Role                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------- |
-| `src/core/`     | The platform itself: HTTP, plugin system, saved objects, config, logging. Exposes `setup`/`start` contracts. Has `public/` + `server/`. |
-| `src/plugins/`  | ~68 **built-in** OSD plugins, part of the main bundle (data, dashboard, discover, …).                    |
-| `packages/`     | Internal `@osd/*` workspace packages (optimizer, dev-utils, plugin-helpers, i18n, …).                    |
-| `./plugins/`    | **External plugins install target** — where `wazuh-dashboard-plugins` (and other Wazuh dashboard plugins) are placed and bootstrapped. |
+| Path           | Role                                                                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/core/`    | The platform itself: HTTP, plugin system, saved objects, config, logging. Exposes `setup`/`start` contracts. Has `public/` + `server/`. |
+| `src/plugins/` | ~68 **built-in** OSD plugins, part of the main bundle (data, dashboard, discover, …).                                                   |
+| `packages/`    | Internal `@osd/*` workspace packages (optimizer, dev-utils, plugin-helpers, i18n, …).                                                   |
+| `./plugins/`   | **External plugins install target** — where `wazuh-dashboard-plugins` (and other Wazuh dashboard plugins) are placed and bootstrapped.  |
 
 **Do NOT confuse `src/plugins/` (built-in) with `./plugins/` (external Wazuh
 plugins).** `packages/osd-agents/` is an unrelated experimental Bedrock agent —

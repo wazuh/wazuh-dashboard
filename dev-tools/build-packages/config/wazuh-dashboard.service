@@ -1,12 +1,20 @@
 [Unit]
 Description=wazuh-dashboard
+StartLimitBurst=3
+StartLimitIntervalSec=60
 
 [Service]
 Type=simple
 User=wazuh-dashboard
 Group=wazuh-dashboard
+# Port 443 as an unprivileged user: this one capability, granted by the unit, instead of a file
+# capability set on the node binary by the package scripts. Processes node starts (e.g. the
+# reporting Chromium) inherit it. Starting node any other way (SysV script, by hand) can't bind 443.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 EnvironmentFile=-/etc/default/wazuh-dashboard
 EnvironmentFile=-/etc/sysconfig/wazuh-dashboard
+ExecStartPre=+/usr/share/wazuh-dashboard/bin/resolve-credentials --prestart
 ExecStart=/usr/share/wazuh-dashboard/bin/opensearch-dashboards
 WorkingDirectory=/usr/share/wazuh-dashboard
 Restart=always

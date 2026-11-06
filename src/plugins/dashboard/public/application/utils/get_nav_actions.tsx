@@ -450,7 +450,7 @@ export const getNavActions = (
           defaultMessage: `Dashboard '{dashTitle}' was not saved. Error: {errorMessage}`,
           values: {
             dashTitle: savedDashboard.title,
-            errorMessage: savedDashboard.message,
+            errorMessage: error.message,
           },
         }),
         'data-test-subj': 'saveDashboardFailure',

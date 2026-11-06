@@ -1,0 +1,10 @@
+{
+  "id": "about",
+  "version": "opensearchDashboards",
+  "opensearchDashboardsVersion": "opensearchDashboards",
+  "configPath": ["about"],
+  "server": true,
+  "ui": true,
+  "requiredPlugins": [],
+  "optionalPlugins": []
+}

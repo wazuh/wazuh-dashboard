@@ -557,7 +557,8 @@ describe('start', () => {
       const helpExtensionPromise = chrome.getHelpExtension$().pipe(toArray()).toPromise();
       const breadcrumbsPromise = chrome.getBreadcrumbs$().pipe(toArray()).toPromise();
       const badgePromise = chrome.getBadge$().pipe(toArray()).toPromise();
-      const docTitleResetSpy = jest.spyOn(chrome.docTitle, 'reset');
+      // Wazuh: the tab is named after the app instead of reset
+      const docTitleChangeSpy = jest.spyOn(chrome.docTitle, 'change');
 
       const promises = Promise.all([helpExtensionPromise, breadcrumbsPromise, badgePromise]);
 
@@ -569,7 +570,9 @@ describe('start', () => {
 
       service.stop();
 
-      expect(docTitleResetSpy).toBeCalledTimes(1);
+      // Wazuh
+      expect(docTitleChangeSpy).toHaveBeenCalledTimes(1);
+      expect(docTitleChangeSpy).toHaveBeenCalledWith('alpha App');
       await expect(promises).resolves.toMatchInlineSnapshot(`
         Array [
           Array [
@@ -598,6 +601,38 @@ describe('start', () => {
           ],
         ]
       `);
+    });
+
+    // Wazuh
+    it('names the tab after the app the user switches to', async () => {
+      const startDeps = defaultStartDeps([new FakeApp('alpha'), new FakeApp('beta')]);
+      const { navigateToApp } = startDeps.application;
+      const { service } = await start({ startDeps });
+      const baseTitle = document.title;
+
+      navigateToApp('alpha');
+      expect(document.title).toBe(['alpha App', baseTitle].filter(Boolean).join(' - '));
+
+      navigateToApp('beta');
+      expect(document.title).toBe(['beta App', baseTitle].filter(Boolean).join(' - '));
+
+      service.stop();
+    });
+
+    // Wazuh
+    it('resets the tab title when the app is not registered', async () => {
+      const startDeps = defaultStartDeps([new FakeApp('alpha')]);
+      const { navigateToApp } = startDeps.application;
+      const { chrome, service } = await start({ startDeps });
+      const docTitleChangeSpy = jest.spyOn(chrome.docTitle, 'change');
+      const docTitleResetSpy = jest.spyOn(chrome.docTitle, 'reset');
+
+      navigateToApp('unknown');
+
+      service.stop();
+
+      expect(docTitleChangeSpy).not.toHaveBeenCalled();
+      expect(docTitleResetSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

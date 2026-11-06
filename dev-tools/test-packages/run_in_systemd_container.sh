@@ -32,7 +32,9 @@ if ! docker image inspect "$SYSTEMD_IMAGE" >/dev/null 2>&1; then
     "${SCRIPT_DIR}/builder"
 fi
 
+# Docker lets any user bind ports below 1024; restore the default so the unit grant is what binds 443.
 cid=$(docker run -d --rm \
+  --sysctl net.ipv4.ip_unprivileged_port_start=1024 \
   --privileged \
   --cgroupns=host \
   -v /sys/fs/cgroup:/sys/fs/cgroup:rw \

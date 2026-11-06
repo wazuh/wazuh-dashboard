@@ -118,6 +118,22 @@ describe('RenderingService#start', () => {
     expect(targetDomElement.querySelector('div.app-wrapper-pannel')).toBeDefined();
   });
 
+  // Wazuh
+  it('renders the skip link before the header while the chrome is visible', async () => {
+    chrome.getIsVisible$.mockReturnValue(new BehaviorSubject(true));
+    await act(async () => {
+      startService();
+    });
+
+    const skipLink = targetDomElement.querySelector('[data-test-subj="skipToMainContent"]');
+    expect(skipLink).not.toBeNull();
+    expect(skipLink!.getAttribute('href')).toBe('#app-wrapper');
+    const chromeContent = targetDomElement.querySelector(
+      '[data-test-subj="opensearchDashboardsChrome"]'
+    )!;
+    expect(chromeContent.textContent).toMatch(/^Skip to main content.*Hello chrome!/);
+  });
+
   it('renders the banner UI', () => {
     startService();
     expect(targetDomElement.querySelector('#globalBannerList')).toMatchInlineSnapshot(`null`);

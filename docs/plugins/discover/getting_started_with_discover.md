@@ -33,7 +33,7 @@ If you're using the release distribution of OpenSearch Dashboards instead of bui
 
 ```bash
 ./bin/opensearch-dashboards \
-  --uiSettings.overrides['query:enhancements:enabled']=true \ 
+  --uiSettings.overrides['query:enhancements:enabled']=true \
   --uiSettings.overrides['home:useNewHomePage']=true
 ```
 
@@ -50,15 +50,15 @@ yarn start:enhancements \
 4. Configure your OpenSearch connection by adding these settings to your `opensearch_dashboards.yml` file:
 
 ```yaml
-opensearch.hosts: ["${OPENSEARCH_URL}"]  # Your OpenSearch cluster URL
-opensearch.username: '${USERNAME}'       # Username for authentication
-opensearch.password: '${PASSWORD}'       # Password for authentication
-opensearch.ignoreVersionMismatch: true   # Ignore version mismatches between OSD and OpenSearch
-opensearchDashboards.branding.useExpandedHeader: false  # Use compact header design
-opensearch.ssl.verificationMode: none    # Disable SSL verification (use 'full' in production)
-opensearch.requestHeadersWhitelist: [authorization]  # Allow authorization headers
-opensearch_security.multitenancy.enabled: false  # Disable multi-tenancy features
-opensearch_security.readonly_mode.roles: [kibana_read_only]  # Define read-only roles
+opensearch.hosts: ['${OPENSEARCH_URL}'] # Your OpenSearch cluster URL
+opensearch.username: '${USERNAME}' # Username for authentication
+opensearch.password: '${PASSWORD}' # Password for authentication
+opensearch.ignoreVersionMismatch: true # Ignore version mismatches between OSD and OpenSearch
+opensearchDashboards.branding.useExpandedHeader: false # Use compact header design
+opensearch.ssl.verificationMode: none # Disable SSL verification (use 'full' in production)
+opensearch.requestHeadersWhitelist: [authorization] # Allow authorization headers
+opensearch_security.multitenancy.enabled: false # Disable multi-tenancy features
+opensearch_security.readonly_mode.roles: [kibana_read_only] # Define read-only roles
 ```
 
 > Note: The configuration above is a sample. You should customize it based on your environment's specific requirements.
@@ -82,14 +82,16 @@ Since you're starting with data sources and workspaces enabled, you'll need to s
 
 First, you'll need to add a data source that connects to your OpenSearch cluster:
 
-1. Navigate to **Stack Management** from the left sidebar.
-2. Select **Data Sources** under the Data section.
+1. Navigate to **Menu > Dashboard management > Dashboards Management**.
+2. Select **Data sources**.
 3. Click **Create data source**.
 4. Fill in the required information:
    - **Name**: A descriptive name for your data source (e.g., "Local OpenSearch")
    - **Endpoint**: The URL of your OpenSearch cluster (e.g., "https://localhost:9200")
    - **Authentication**: Choose the appropriate method and provide credentials
 5. Click **Create** to save your data source.
+
+> Note: The Wazuh dashboard keeps `home:useNewHomePage` disabled and ignores the `uiSettings.overrides` entry shown above, so the classic navigation always applies and **Data sources** is reached through **Dashboards Management**.
 
 #### 2. Create a workspace
 
@@ -103,9 +105,10 @@ Next, create a workspace to organize your data exploration:
 #### 3. Associate the data source with your workspace
 
 Now connect your data source to the workspace:
+
 1. Go to your newly created workspace.
 2. Click **Settings** in the workspace navigation.
-3. Select the **Data Sources** tab.
+3. Select the **Data sources** tab.
 4. Click **Add data source**.
 5. Select the data source you created earlier.
 6. Click **Add** to associate the data source with your workspace.
@@ -120,13 +123,13 @@ Now that your environment is set up, you can start exploring data across differe
 2. Select your workspace
 3. Navigate to **Discover** from the left sidebar.
 4. Use the data selector to choose your data source:
-   a. Click on the data selector from the sidebar
-   b. Choose "View all available data" to open the advanced selector.
-   c. Browse through available data sources, which might include:
+   1. Click on the data selector from the sidebar.
+   2. Choose "View all available data" to open the advanced selector.
+   3. Browse through available data sources, which might include:
       - Index Patterns: Configured patterns that match multiple indices
       - Indexes: Direct access to specific indices
       - S3: If you've configured S3 connections
-   d. After selecting a data source, you'll be prompted to configure:
+   4. After selecting a data source, you'll be prompted to configure:
       - Time field: Which field to use for time-based operations (if no time field is selected, the histogram visualization will not appear)
       - Query language: Your preferred language for this data type
 5. Write a query using PPL (Pipe Processing Language):
@@ -155,7 +158,7 @@ Once your search results appear, Discover provides several ways to interact with
    - Document fields as columns
    - Expand/collapse buttons to view complete documents
 4. **Field Actions**: (Features vary by language) Click the dropdown next to any field value to:
-   - Add it as a filter 
+   - Add it as a filter
    - Remove it from the results
    - Create a filter that excludes it
    - View field statistics
@@ -170,8 +173,8 @@ Once your search results appear, Discover provides several ways to interact with
 
 1. Click the Save button in the top navigation.
 2. Enter a name for your saved search.
-4. Click "Save" to store your search.
-5. You can now access this saved search for later access
+3. Click "Save" to store your search.
+4. You can now access this saved search for later access
 
 Note: Saved searches using languages other than DQL or Lucene cannot be added to a Dashboard. If you plan to use your search as the basis for a dashboard panel, make sure to use DQL or Lucene as your query language.
 
@@ -184,6 +187,7 @@ We're actively working to improve Discover 2.0. Here are some known issues we're
 ## Next steps
 
 Now that you've explored Discover 2.0's multi-data type capabilities, you might want to:
+
 - Connect additional data sources like S3
 - Explore query assist features for more efficient data exploration
 - Learn different query languages (SQL, DQL, Lucene) for various data exploration needs

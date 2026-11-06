@@ -141,6 +141,14 @@ cp -f $config_path/opensearch_dashboards.prod.yml config/opensearch_dashboards.y
 cp -f $config_path/node.options.prod config/node.options
 
 log
+log "Adding credentials resolver"
+log
+
+# The credentials resolver: a launcher and the program it runs on the bundled Node.
+install -m 750 "${tmp_dir}/credentials/resolve-credentials" bin/resolve-credentials
+install -m 644 "${tmp_dir}/credentials/resolve-credentials.js" bin/resolve-credentials.js
+
+log
 log "Fixing shebangs"
 log
 # TODO: investigate to remove this if possible
