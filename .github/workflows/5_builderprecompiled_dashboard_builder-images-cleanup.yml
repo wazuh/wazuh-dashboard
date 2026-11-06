@@ -1,0 +1,48 @@
+# Keeps the 3 latest versions of each dashboard package builder image in ghcr
+# and deletes the untagged ones.
+#
+# A branch whose image tag was deleted still works: build-packages.sh can't
+# pull the tag and builds the image locally.
+
+run-name: Clean up dashboard builder images
+name: (5.x) Clean up dashboard package builder images
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+jobs:
+  cleanup:
+    name: Clean up ${{ matrix.package }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - pkg_dashboard_base_builder_amd64
+          - pkg_dashboard_base_builder_arm64
+          - pkg_dashboard_rpm_builder_amd64
+          - pkg_dashboard_rpm_builder_arm64
+          - pkg_dashboard_deb_builder_amd64
+          - pkg_dashboard_deb_builder_arm64
+    steps:
+      # With delete-only-untagged-versions, min-versions-to-keep counts
+      # untagged versions only, so the two rules need two steps.
+      - name: Delete untagged versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ matrix.package }}
+          package-type: container
+          min-versions-to-keep: 0
+          delete-only-untagged-versions: 'true'
+
+      - name: Keep the 3 latest versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ matrix.package }}
+          package-type: container
+          min-versions-to-keep: 3
