@@ -350,6 +350,12 @@ jobs:
     needs: [setup-variables, get-outputs-plugins, build-dashboard, build-plugins]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
     name: Generate packages
+    # Job-level permissions replace the workflow ones: keep those and add
+    # packages: read to pull the prebuilt builder images from ghcr.
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
     outputs:
       PACKAGE_NAME: ${{ steps.get-package-name.outputs.PACKAGE_NAME }}
     steps:
@@ -437,6 +443,14 @@ jobs:
         run: |
           sudo nohup dockerd --storage-driver vfs > /var/log/dockerd.log 2>&1 &
           timeout 60 bash -c 'until docker info &>/dev/null 2>&1; do sleep 1; done'
+
+      # build-packages.sh builds the builder images locally when it can't pull
+      # them, so a failed login must not stop the job.
+      - name: Login to GitHub Container Registry
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
       - name: Build package
         run: |
