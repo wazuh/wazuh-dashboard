@@ -541,7 +541,8 @@ jobs:
           cd "$GITHUB_WORKSPACE"
 
           echo "=== Clone automation repo"
-          git clone "https://${AUTOMATION_USER}:${AUTOMATION_TOKEN}@github.com/wazuh/wazuh-automation.git"
+          # The automation branch matching the product version keeps the deployability layout used below
+          git clone "https://${AUTOMATION_USER}:${AUTOMATION_TOKEN}@github.com/wazuh/wazuh-automation.git" -b "$(bash dev-tools/product_version.sh)"
           # Workaround: AWS CodeBuild ARM runners do not have pip3 or openssh-client pre-installed
           if ! command -v pip3 &>/dev/null || ! command -v ssh &>/dev/null; then
             sudo apt-get update
