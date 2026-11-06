@@ -118,6 +118,10 @@ jobs:
           SYSTEM: ${{ inputs.system }}
           ARCHITECTURE: ${{ inputs.architecture }}
         run: |
+          if [[ ! "$SYSTEM" =~ ^(deb|rpm|both)$ ]] || [[ ! "$ARCHITECTURE" =~ ^(amd64|x86_64|aarch64|arm64)$ ]]; then
+            echo "Invalid system or architecture"
+            exit 1
+          fi
           if [[ "$ARCHITECTURE" == "amd64" || "$ARCHITECTURE" == "arm64" ]] && [[ "$SYSTEM" == "rpm" ]]; then
             echo "Invalid combination of architecture and system"
             exit 1
@@ -376,7 +380,6 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.validate-job.outputs.MATRIX) }}
     outputs:
-      PACKAGE_NAME: ${{ steps.get-package-name.outputs.PACKAGE_NAME }}
       # One output per system: matrix outputs are merged and empty values don't override
       PACKAGE_NAME_deb: ${{ steps.get-package-name.outputs.PACKAGE_NAME_deb }}
       PACKAGE_NAME_rpm: ${{ steps.get-package-name.outputs.PACKAGE_NAME_rpm }}
