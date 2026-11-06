@@ -51,9 +51,12 @@ import { mockRenderingSetupDeps } from './__mocks__/params';
 import { InternalRenderingServiceSetup } from './types';
 import { RenderingService } from './rendering_service';
 import { configServiceMock } from '../config/mocks';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { config as RawOpenSearchDashboardsConfig } from '../opensearch_dashboards_config';
 import { mockCoreContext } from '../core_context.mock';
+import { pluginServiceMock } from '../plugins/plugins_service.mock';
+import { dynamicConfigServiceMock } from '../config/dynamic_config_service.mock';
+import { DiscoveredPlugin } from '../plugins';
 
 const INJECTED_METADATA = {
   version: expect.any(String),
@@ -242,6 +245,31 @@ describe('RenderingService', () => {
 
         expect(i18nLoader.isRegisteredLocale).toHaveBeenCalledWith('xx-XX');
         expect($elStyle.attr('lang')).toBe('en');
+      });
+
+      // Wazuh
+      it('renders only the exposeToBrowser config of the plugins', async () => {
+        context.dynamicConfigService.hasDefaultConfigs.mockReturnValue(true);
+        const dynamicConfig = dynamicConfigServiceMock.createInternalSetupContract();
+        dynamicConfig.getStartService.mockResolvedValue(
+          dynamicConfigServiceMock.createInternalStartContract({
+            getConfig: { uiProp: 'value', serverOnlyProp: 'value' },
+            bulkGetConfigs: new Map(),
+            listConfigs: new Map(),
+          })
+        );
+        const uiPlugins = pluginServiceMock.createUiPlugins();
+        uiPlugins.public.set('testPlugin', { id: 'testPlugin' } as DiscoveredPlugin);
+        uiPlugins.browserConfigs.set('testPlugin', of({ uiProp: 'value' }));
+
+        render = (await service.setup({ ...mockRenderingSetupDeps, dynamicConfig, uiPlugins }))
+          .render;
+        const content = await render(createOpenSearchDashboardsRequest(), uiSettings, {
+          nonce: 'test-nonce',
+        });
+        const data = JSON.parse(load(content)('osd-injected-metadata').attr('data') || '');
+
+        expect(data.uiPlugins[0].config).toEqual({ uiProp: 'value' });
       });
     });
   });
