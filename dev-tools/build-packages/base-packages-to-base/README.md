@@ -31,7 +31,7 @@ bash run-docker-compose.sh \
     --base 4.14.11 \
     --security 4.14.11 \
     --arm \
-    --node-version 18.19.0
+    --node-version 22.23.4
 ```
 
 
