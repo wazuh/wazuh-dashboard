@@ -15,6 +15,7 @@
 | [wazuh-dashboard-plugins#9173](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9173) | Added support for health check tasks to report their own result status                                                                                                                                                            |
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Added the issuance of the dashboard TLS certificates on a fresh install, from the dashboard CA in `/etc/wazuh-dashboard/ca`, minting it when none exists                                                                          |
 | [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Added a skip to main content link before the header for keyboard users                                                                                                                                                            |
+| [wazuh-dashboard-plugins#9457](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9457) | Added an introduction to the health check page, and the plugins can register a title, a description and a fix for each check                                                                                                      |
 
 ### Changed
 
@@ -58,9 +59,12 @@
 | [#1638](https://github.com/wazuh/wazuh-dashboard/issues/1638)                                | Fixed the not ready page claiming success before the health checks ran, and the indexer error log losing the cause     |
 | [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Fixed the browser tab title to read `<app> - Wazuh`, and its fallback to read Wazuh instead of OpenSearch Dashboards   |
 | [#1653](https://github.com/wazuh/wazuh-dashboard/issues/1653)                                | Fixed the RPM package removal leaving the wazuh-dashboard service enabled with a dangling systemd link                 |
+| [#1697](https://github.com/wazuh/wazuh-dashboard/issues/1697)                                | Fixed the dashboard certificate leaving out the addresses of interfaces that do not hold the default route             |
+| [#1714](https://github.com/wazuh/wazuh-dashboard/issues/1714)                                | Fixed the dashboard not stopping on a stop request received during startup, leaving the service failed                 |
 
 ## Prior versions
 
+- [v4.14.9](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.9/CHANGELOG.md)
 - [v4.14.8](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.8/CHANGELOG.md)
 - [v4.14.7](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.7/CHANGELOG.md)
 - [v4.14.6](https://github.com/wazuh/wazuh-dashboard/blob/v4.14.6/CHANGELOG.md)
