@@ -10,7 +10,8 @@
 #   validated before the final packaging.
 #
 # - Allows customization of:
-#   - Operating system (`deb` or `rpm`)
+#   - Operating system (`deb`, `rpm`, or `both`: one dashboard and plugins
+#     build, packaged as DEB and RPM for the architecture family)
 #   - Architecture (`amd64`, `x86_64`, `aarch64`, `arm64`)
 #   - Package revision
 #   - Plugin references (branches, tags, or commits)
@@ -29,6 +30,7 @@ on:
         options:
           - deb
           - rpm
+          - both
         default: 'deb'
       architecture:
         type: choice
@@ -106,17 +108,35 @@ jobs:
   validate-job:
     runs-on: codebuild-github-actions-codebuild-runner-dashboard-amd-${{ github.run_id }}-${{ github.run_attempt }}
     name: Validate inputs
+    outputs:
+      # JSON list of the {system, architecture} pairs to package
+      MATRIX: ${{ steps.validate.outputs.MATRIX }}
     steps:
       - name: Validate inputs
+        id: validate
+        env:
+          SYSTEM: ${{ inputs.system }}
+          ARCHITECTURE: ${{ inputs.architecture }}
         run: |
-          if [[ "${{ inputs.architecture }}" == "amd64" || "${{ inputs.architecture }}" == "arm64" ]] && [[ "${{ inputs.system }}" == "rpm" ]]; then
+          if [[ "$ARCHITECTURE" == "amd64" || "$ARCHITECTURE" == "arm64" ]] && [[ "$SYSTEM" == "rpm" ]]; then
             echo "Invalid combination of architecture and system"
             exit 1
           fi
-          if [[ "${{ inputs.architecture }}" == "x86_64" || "${{ inputs.architecture }}" == "aarch64" ]] && [[ "${{ inputs.system }}" == "deb" ]]; then
+          if [[ "$ARCHITECTURE" == "x86_64" || "$ARCHITECTURE" == "aarch64" ]] && [[ "$SYSTEM" == "deb" ]]; then
             echo "Invalid combination of architecture and system"
             exit 1
           fi
+          if [[ "$SYSTEM" == "both" ]]; then
+            if [[ "$ARCHITECTURE" == "amd64" || "$ARCHITECTURE" == "x86_64" ]]; then
+              MATRIX='[{"system":"deb","architecture":"amd64"},{"system":"rpm","architecture":"x86_64"}]'
+            else
+              MATRIX='[{"system":"deb","architecture":"arm64"},{"system":"rpm","architecture":"aarch64"}]'
+            fi
+          else
+            MATRIX="[{\"system\":\"$SYSTEM\",\"architecture\":\"$ARCHITECTURE\"}]"
+          fi
+          echo "MATRIX=$MATRIX"
+          echo "MATRIX=$MATRIX" >> "$GITHUB_OUTPUT"
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v6
@@ -347,11 +367,19 @@ jobs:
     secrets: inherit
 
   build-package:
-    needs: [setup-variables, get-outputs-plugins, build-dashboard, build-plugins]
+    needs: [validate-job, setup-variables, get-outputs-plugins, build-dashboard, build-plugins]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
-    name: Generate packages
+    # The name references the matrix so single-system runs keep their name without a suffix
+    name: ${{ inputs.system == 'both' && format('Generate packages ({0}, {1})', matrix.system, matrix.architecture) || 'Generate packages' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.validate-job.outputs.MATRIX) }}
     outputs:
       PACKAGE_NAME: ${{ steps.get-package-name.outputs.PACKAGE_NAME }}
+      # One output per system: matrix outputs are merged and empty values don't override
+      PACKAGE_NAME_deb: ${{ steps.get-package-name.outputs.PACKAGE_NAME_deb }}
+      PACKAGE_NAME_rpm: ${{ steps.get-package-name.outputs.PACKAGE_NAME_rpm }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -451,26 +479,27 @@ jobs:
             -al file://${{ github.workspace }}/artifacts/alerting-package.zip \
             -no file://${{ github.workspace }}/artifacts/notifications-package.zip \
             --commit-sha ${{steps.get-all-commit-shas.outputs.ALL_COMMIT_SHAS}} \
-            --${{ inputs.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
+            --${{ matrix.system }} ${{ needs.setup-variables.outputs.PRODUCTION }} --debug
 
       - name: Get package name
         id: get-package-name
         run: |
           VERSION=${{ needs.setup-variables.outputs.VERSION }}
-          if [ "${{ inputs.system }}" = "deb" ]; then
+          if [ "${{ matrix.system }}" = "deb" ]; then
             if [ "${{ inputs.is_stage }}" = "true" ]; then
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}.deb
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ matrix.architecture }}.deb
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${{ steps.get-all-commit-shas.outputs.ALL_COMMIT_SHAS }}.deb
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ matrix.architecture }}_${{ steps.get-all-commit-shas.outputs.ALL_COMMIT_SHAS }}.deb
             fi
           else
             if [ "${{ inputs.is_stage }}" = "true" ]; then
-              PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ inputs.architecture }}.rpm
+              PACKAGE_NAME=wazuh-dashboard-${VERSION}-${{ inputs.revision }}.${{ matrix.architecture }}.rpm
             else
-              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ inputs.architecture }}_${{ steps.get-all-commit-shas.outputs.ALL_COMMIT_SHAS }}.rpm
+              PACKAGE_NAME=wazuh-dashboard_${VERSION}-${{ inputs.revision }}_${{ matrix.architecture }}_${{ steps.get-all-commit-shas.outputs.ALL_COMMIT_SHAS }}.rpm
             fi
           fi
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME_${{ matrix.system }}=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME_PATH=${{ github.workspace }}/dev-tools/build-packages/output/${PACKAGE_NAME}" >> $GITHUB_OUTPUT
 
       - name: Upload package to S3
@@ -482,13 +511,22 @@ jobs:
           fi
 
   test-package:
-    needs: [setup-variables, build-package]
+    needs: [validate-job, setup-variables, build-package]
+    # With system=both, test the package that was generated even if the other system failed
+    if: ${{ !cancelled() && needs.setup-variables.result == 'success' && (needs.build-package.result == 'success' || (inputs.system == 'both' && needs.build-package.result == 'failure')) }}
     runs-on: ${{ needs.setup-variables.outputs.ARCHITECTURE_FLAG == '--arm' && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
     strategy:
       fail-fast: false
-    name: Test package
+      matrix:
+        include: ${{ fromJson(needs.validate-job.outputs.MATRIX) }}
+    name: ${{ inputs.system == 'both' && format('Test package ({0}, {1})', matrix.system, matrix.architecture) || 'Test package' }}
     permissions:
       id-token: write
+    env:
+      PACKAGE_NAME: ${{ needs.build-package.outputs[format('PACKAGE_NAME_{0}', matrix.system)] }}
+    outputs:
+      PACKAGE_NAME_deb: ${{ steps.tested.outputs.PACKAGE_NAME_deb }}
+      PACKAGE_NAME_rpm: ${{ steps.tested.outputs.PACKAGE_NAME_rpm }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -514,11 +552,15 @@ jobs:
 
       - name: Download artifact from S3
         run: |
-          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.build-package.outputs.PACKAGE_NAME }} ${{ github.workspace }}/dev-tools/test-packages/${{ inputs.system }}/
+          if [ -z "$PACKAGE_NAME" ]; then
+            echo "::error::The ${{ matrix.system }} package was not generated"
+            exit 1
+          fi
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ env.PACKAGE_NAME }} ${{ github.workspace }}/dev-tools/test-packages/${{ matrix.system }}/
 
       - name: RPM - Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
-        if: ${{ inputs.system == 'rpm' }}
+        if: ${{ matrix.system == 'rpm' }}
         with:
           aws-region: 'us-east-1'
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
@@ -527,12 +569,12 @@ jobs:
       # The VM scenarios run in the background while the Docker scenarios below run.
       # The "Wait for the VM or systemd scenarios" step prints their log and fails if they fail.
       - name: RPM - Start the VM scenarios in the background
-        if: ${{ inputs.system == 'rpm' }}
+        if: ${{ matrix.system == 'rpm' }}
         env:
           AUTOMATION_USER: 'wazuh-devel-xdrsiem-dashboard'
           AUTOMATION_TOKEN: ${{ secrets.DASHBOARD_BOT_SMOKE_TEST_TOKEN }}
-          ARCHITECTURE: ${{ inputs.architecture }}
-          PACKAGE_NAME: ${{ needs.build-package.outputs.PACKAGE_NAME }}
+          ARCHITECTURE: ${{ matrix.architecture }}
+          PACKAGE_NAME: ${{ env.PACKAGE_NAME }}
           VERSION: ${{ needs.setup-variables.outputs.VERSION }}
           PREVIOUS: ${{ needs.setup-variables.outputs.PREVIOUS }}
           RUN_ID: ${{ github.run_id }}
@@ -650,9 +692,9 @@ jobs:
 
       # The systemd scenarios run in the background while the Docker scenarios below run.
       - name: DEB - Start the systemd scenarios in the background
-        if: ${{ inputs.system == 'deb' }}
+        if: ${{ matrix.system == 'deb' }}
         env:
-          PACKAGE_NAME: ${{ needs.build-package.outputs.PACKAGE_NAME }}
+          PACKAGE_NAME: ${{ env.PACKAGE_NAME }}
           VERSION: ${{ needs.setup-variables.outputs.VERSION }}
           PREVIOUS: ${{ needs.setup-variables.outputs.PREVIOUS }}
         run: |
@@ -695,30 +737,30 @@ jobs:
         run: |
           cd ${{ github.workspace }}/dev-tools/test-packages
           bash ./test-packages.sh \
-            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
+            -p ${{ env.PACKAGE_NAME }}
 
       - name: Test package negative (5.x install blocked when 4.x present)
         run: |
           cd ${{ github.workspace }}/dev-tools/test-packages
           bash ./test-packages.sh --block-4x-install \
-            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
+            -p ${{ env.PACKAGE_NAME }}
 
       - name: Test package negative (5.x install blocked when remnants exist but version unknown)
         run: |
           cd ${{ github.workspace }}/dev-tools/test-packages
           bash ./test-packages.sh --block-unknown-install \
-            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
+            -p ${{ env.PACKAGE_NAME }}
 
       - name: Test package reinstall (5.x install over 5.x succeeds)
         run: |
           cd ${{ github.workspace }}/dev-tools/test-packages
           bash ./test-packages.sh --allow-same-major-reinstall \
-            -p ${{needs.build-package.outputs.PACKAGE_NAME}}
+            -p ${{ env.PACKAGE_NAME }}
 
       - name: Wait for the VM or systemd scenarios
         if: ${{ !cancelled() }}
         run: |
-          if [ "${{ inputs.system }}" = "rpm" ]; then
+          if [ "${{ matrix.system }}" = "rpm" ]; then
             bash dev-tools/test-packages/background-scenarios.sh wait vm-scenarios
           else
             bash dev-tools/test-packages/background-scenarios.sh wait systemd-scenarios
@@ -729,7 +771,7 @@ jobs:
         if: ${{ always() }}
         ########################################
         run: |
-          if [ "${{ inputs.system }}" = "rpm" ]; then
+          if [ "${{ matrix.system }}" = "rpm" ]; then
             # A cancelled job skips the wait step, so stop the VM scenarios before deleting the VM.
             bash dev-tools/test-packages/background-scenarios.sh stop vm-scenarios
             echo "Destroying Allocator Machine"
@@ -737,10 +779,23 @@ jobs:
             python3 modules/allocation/main.py --action delete --track-output "/tmp/track.yaml"
           fi
 
+      # Lets the upload job know this system's package passed its tests
+      - name: Mark package as tested
+        id: tested
+        run: echo "PACKAGE_NAME_${{ matrix.system }}=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+
   upload-package:
-    needs: [build-package, test-package]
+    needs: [validate-job, build-package, test-package]
+    # With system=both, upload the package that passed its tests even if the other system failed
+    if: ${{ !cancelled() && ((needs.build-package.result == 'success' && needs.test-package.result == 'success') || (inputs.system == 'both' && needs.test-package.result == 'failure')) }}
     runs-on: ${{ inputs.architecture == 'arm64' && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
-    name: Upload package
+    name: ${{ inputs.system == 'both' && format('Upload package ({0}, {1})', matrix.system, matrix.architecture) || 'Upload package' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.validate-job.outputs.MATRIX) }}
+    env:
+      PACKAGE_NAME: ${{ needs.test-package.outputs[format('PACKAGE_NAME_{0}', matrix.system)] }}
     steps:
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v6
@@ -750,22 +805,26 @@ jobs:
 
       - name: Download artifacts from S3
         run: |
-          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.build-package.outputs.PACKAGE_NAME }} ./
+          if [ -z "$PACKAGE_NAME" ]; then
+            echo "::error::The ${{ matrix.system }} package was not generated or did not pass its tests"
+            exit 1
+          fi
+          aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ env.PACKAGE_NAME }} ./
           if [ "${{ inputs.checksum }}" = "true" ]; then
-            aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ needs.build-package.outputs.PACKAGE_NAME }}.sha512 ./
+            aws s3 cp ${{ env.CI_DEV_INTERNAL_BUCKET }}/${{ env.EXECUTION_REPOSITORY }}/${{ github.run_id }}/${{ env.PACKAGE_NAME }}.sha512 ./
           fi
 
       - name: Upload package
         run: |
           echo "Uploading package"
-          aws s3 cp ./${{needs.build-package.outputs.PACKAGE_NAME}} s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
-          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{needs.build-package.outputs.PACKAGE_NAME}}"
+          aws s3 cp ./${{ env.PACKAGE_NAME }} s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
+          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{ env.PACKAGE_NAME }}"
           echo "S3 URI: ${s3uri}"
 
       - name: Upload SHA512
         if: ${{ inputs.checksum }}
         run: |
           echo "Uploading checksum"
-          aws s3 cp ./${{needs.build-package.outputs.PACKAGE_NAME}}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
-          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{needs.build-package.outputs.PACKAGE_NAME}}.sha512"
+          aws s3 cp ./${{ env.PACKAGE_NAME }}.sha512 s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/
+          s3uri="s3://xdrsiem-packages-dev-internal/development/wazuh/5.x/main/packages/${{ env.PACKAGE_NAME }}.sha512"
           echo "S3 sha512 URI: ${s3uri}"
