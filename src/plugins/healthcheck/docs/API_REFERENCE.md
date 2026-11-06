@@ -23,6 +23,28 @@ const { status$, client, getConfig } = getHealthCheck();
 - `status$`: Current status observable
 - `client`: HTTP client for backend communication
 - `getConfig`: Function to get configuration
+- `getDescription`: Returns the title, description and fix registered for a check, if any
+
+#### Describe a check
+
+A plugin gives a check a plain title, a one-line description and what to do when it fails. Call
+it in the plugin's public `setup`, with translated text:
+
+```typescript
+core.healthCheck.describe('server-api:run-as', {
+  title: i18n.translate('myPlugin.healthCheck.runAs.title', { defaultMessage: 'Run as' }),
+  description: i18n.translate('myPlugin.healthCheck.runAs.description', {
+    defaultMessage: 'Checks that the API user can use run_as.',
+  }),
+  remediation: i18n.translate('myPlugin.healthCheck.runAs.remediation', {
+    defaultMessage: 'Allow run_as for the API user.',
+  }),
+});
+```
+
+The table, the check flyout and the header popover show the title, and keep the check name as a
+reference. The flyout shows the remediation under **What to check** only when the check is yellow
+or red. A check with no description shows its name.
 
 #### getCore()
 

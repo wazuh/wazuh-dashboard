@@ -67,7 +67,6 @@ export class RenderingService {
     http,
     status,
     uiPlugins,
-    dynamicConfig,
     // Wazuh
     healthCheck,
   }: RenderingSetupDeps): Promise<InternalRenderingServiceSetup> {
@@ -112,8 +111,6 @@ export class RenderingService {
           }
         }
 
-        const dynamicConfigStartServices = await dynamicConfig.getStartService();
-
         const metadata: RenderingMetadata = {
           strictCsp: http.csp.strict,
           uiPublicUrl,
@@ -144,15 +141,8 @@ export class RenderingService {
               [...uiPlugins.public].map(async ([id, plugin]) => ({
                 id,
                 plugin,
-                // TODO Scope the client so that only exposedToBrowser configs are exposed
-                config: this.coreContext.dynamicConfigService.hasDefaultConfigs({ name: id })
-                  ? await dynamicConfigStartServices.getClient().getConfig(
-                      { name: id },
-                      {
-                        asyncLocalStorageContext: dynamicConfigStartServices.getAsyncLocalStore()!,
-                      }
-                    )
-                  : await this.getUiConfig(uiPlugins, id),
+                // Wazuh: only send the exposeToBrowser keys
+                config: await this.getUiConfig(uiPlugins, id),
               }))
             ),
             legacyMetadata: {

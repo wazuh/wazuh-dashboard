@@ -6,7 +6,7 @@
 import { BehaviorSubject } from 'rxjs';
 import { get } from 'lodash';
 import { TaskInfo } from 'src/core/common/healthcheck';
-import { HealthCheckServiceStartDeps } from './types';
+import { HealthCheckDescription, HealthCheckServiceStartDeps } from './types';
 import { TASK } from './constants';
 
 export function mergeArraysOfByProp<T>(arr1: T[], arr2: T[], prop: string) {
@@ -25,10 +25,14 @@ export class HealthcheckService {
     status: 'gray',
     checks: [],
   } as HealthCheckStatus);
+  private readonly descriptions = new Map<string, HealthCheckDescription>();
   constructor() {}
   setup() {
     const deps = {
       status$: this.status$,
+      describe: (name: string, description: HealthCheckDescription) => {
+        this.descriptions.set(name, description);
+      },
     };
     return deps;
   }
@@ -36,6 +40,7 @@ export class HealthcheckService {
     const status$ = this.status$;
     const deps = {
       status$: this.status$,
+      getDescription: (name: string) => this.descriptions.get(name),
       client: {
         internal: {
           fetch: async (taskNames?: string[]) => {
