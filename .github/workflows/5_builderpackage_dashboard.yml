@@ -97,6 +97,8 @@ on:
 permissions:
   id-token: write
   contents: read
+  # Pull the prebuilt builder images from ghcr in Generate packages
+  packages: read
 
 env:
   CI_DEV_INTERNAL_BUCKET: ${{ secrets.CI_DEV_INTERNAL_BUCKET }}
@@ -350,12 +352,6 @@ jobs:
     needs: [setup-variables, get-outputs-plugins, build-dashboard, build-plugins]
     runs-on: ${{ (inputs.architecture == 'arm64' || inputs.architecture == 'aarch64') && format('codebuild-github-actions-codebuild-runner-dashboard-arm-{0}-{1}', github.run_id, github.run_attempt) || format('codebuild-github-actions-codebuild-runner-dashboard-amd-{0}-{1}', github.run_id, github.run_attempt) }}
     name: Generate packages
-    # Job-level permissions replace the workflow ones: keep those and add
-    # packages: read to pull the prebuilt builder images from ghcr.
-    permissions:
-      id-token: write
-      contents: read
-      packages: read
     outputs:
       PACKAGE_NAME: ${{ steps.get-package-name.outputs.PACKAGE_NAME }}
     steps:
