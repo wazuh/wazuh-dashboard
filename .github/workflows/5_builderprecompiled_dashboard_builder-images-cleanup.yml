@@ -1,48 +1,103 @@
-# Keeps the 3 latest versions of each dashboard package builder image in ghcr
-# and deletes the untagged ones.
+# Deletes the old versions of the dashboard package builder images in ghcr.
 #
-# A branch whose image tag was deleted still works: build-packages.sh can't
-# pull the tag and builds the image locally.
+# Rule (dev-tools/build-packages/common/builder-image-retention.jq): untagged
+# versions are deleted, and a tagged version is deleted only when all its tags
+# are <version>-<Dockerfile hash> and none is the newest tag of its <version>.
+# So the current image of every version branch is kept, and versions with any
+# other tag are never touched.
+#
+# A branch whose tag is deleted anyway (e.g. a Dockerfile reverted to an older
+# content) still works: build-packages.sh can't pull the tag and builds the
+# image locally.
 
-run-name: Clean up dashboard builder images
+run-name: Clean up dashboard builder images${{ inputs.dry_run && ' (dry run)' || '' }}
 name: (5.x) Clean up dashboard package builder images
 
 on:
   schedule:
     - cron: '0 3 * * 1'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only list the versions that would be deleted'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
-  packages: write
+  contents: read
 
 jobs:
   cleanup:
-    name: Clean up ${{ matrix.package }}
+    name: Clean up the builder images
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        package:
-          - pkg_dashboard_base_builder_amd64
-          - pkg_dashboard_base_builder_arm64
-          - pkg_dashboard_rpm_builder_amd64
-          - pkg_dashboard_rpm_builder_arm64
-          - pkg_dashboard_deb_builder_amd64
-          - pkg_dashboard_deb_builder_arm64
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
     steps:
-      # With delete-only-untagged-versions, min-versions-to-keep counts
-      # untagged versions only, so the two rules need two steps.
-      - name: Delete untagged versions
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ${{ matrix.package }}
-          package-type: container
-          min-versions-to-keep: 0
-          delete-only-untagged-versions: 'true'
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Keep the 3 latest versions
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ${{ matrix.package }}
-          package-type: container
-          min-versions-to-keep: 3
+      - name: Test the retention filter
+        run: bash dev-tools/build-packages/common/test-builder-image-retention.sh
+
+      - name: Delete old versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          # Scheduled runs have no inputs: they delete.
+          DRY_RUN: ${{ inputs.dry_run || false }}
+          FILTER: dev-tools/build-packages/common/builder-image-retention.jq
+        run: |
+          set -euo pipefail
+          packages=()
+          for image in base rpm deb; do
+            for arch in amd64 arm64; do
+              packages+=("pkg_dashboard_${image}_builder_${arch}")
+            done
+          done
+          for package in "${packages[@]}"; do
+            if [[ ! "${package}" =~ ^pkg_dashboard_(base|rpm|deb)_builder_(amd64|arm64)$ ]]; then
+              echo "::error::Invalid package name '${package}': nothing deleted"
+              exit 1
+            fi
+          done
+          echo "Deleting old builder image versions (dry run: ${DRY_RUN})"
+
+          err="${RUNNER_TEMP:-/tmp}/gh.err"
+          failed=0
+          for package in "${packages[@]}"; do
+            api="/orgs/${OWNER}/packages/container/${package}/versions"
+            if ! versions="$(gh api --paginate --slurp "${api}?per_page=100" 2>"${err}" | jq -c '[.[][]]')"; then
+              if grep -q 'HTTP 404' "${err}"; then
+                echo "::notice::${package} does not exist yet: nothing to delete"
+                continue
+              fi
+              cat "${err}"
+              echo "::error::Could not list the versions of ${package}"
+              failed=1
+              continue
+            fi
+            if ! delete="$(jq -r -f "${FILTER}" <<<"${versions}")"; then
+              echo "::error::Could not select the versions of ${package} to delete"
+              failed=1
+              continue
+            fi
+            echo "${package}: $(jq length <<<"${versions}") versions, $(grep -c . <<<"${delete}" || true) to delete"
+            while IFS=$'\t' read -r id reason; do
+              [ -n "${id}" ] || continue
+              if [[ ! "${id}" =~ ^[0-9]+$ ]]; then
+                echo "::error::Invalid version id '${id}' for ${package}"
+                failed=1
+                continue
+              fi
+              echo "Delete ${package} version ${id} (${reason})"
+              [ "${DRY_RUN}" = true ] && continue
+              if ! gh api -X DELETE "${api}/${id}" >/dev/null; then
+                echo "::error::Could not delete ${package} version ${id}"
+                failed=1
+              fi
+            done <<<"${delete}"
+          done
+          exit "${failed}"

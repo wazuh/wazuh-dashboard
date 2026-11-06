@@ -97,16 +97,21 @@ builder_arch() {
 }
 
 # Pulls the published builder image and builds it locally when the pull fails
-# (tag not published yet, no registry access, ...). Never pushes.
+# (tag not published yet, no registry access, ...). Never pushes. The pull is
+# tried twice only: a missing tag fails every attempt, and the local build is
+# the fallback anyway.
 prepare_builder_image() {
   local image="$1"
   local ref="$2"
   log "Pulling builder image ${ref}..."
-  if docker pull "${ref}"; then
+  if RETRY_MAX_ATTEMPTS=2 run_with_retry docker pull "${ref}"; then
     log "Using the published builder image ${ref}"
     return 0
   fi
   echo "Notice: could not pull ${ref}. Building it locally."
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    echo "::warning::${ref} was not found in ghcr or couldn't be pulled; building it locally"
+  fi
   run_with_retry docker build -t "${ref}" "${current_path}/${image}/Docker"
 }
 

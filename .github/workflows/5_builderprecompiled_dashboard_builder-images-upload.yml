@@ -14,6 +14,8 @@ on:
       - 'main'
       - '[0-9]+.[0-9]+.[0-9]+'
     paths:
+      # The tag holds the version, so a version bump needs new tags too.
+      - 'VERSION.json'
       - 'dev-tools/build-packages/base/Docker/Dockerfile'
       - 'dev-tools/build-packages/rpm/Docker/Dockerfile'
       - 'dev-tools/build-packages/deb/Docker/Dockerfile'
