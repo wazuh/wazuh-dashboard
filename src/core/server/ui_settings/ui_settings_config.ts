@@ -64,9 +64,7 @@ const deprecations: ConfigDeprecationProvider = ({ unused, renameFromRoot }) => 
   ignoreUseNewHomePageOverride,
 ];
 
-/* Wazuh BEGIN */
-export const DEFAULT_THEME_VERSION = 'v9';
-/* Wazuh END */
+export const DEFAULT_THEME_VERSION = 'v7';
 
 /* There are 4 levels of uiSettings:
  *   1) defaults hardcoded in code
