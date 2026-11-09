@@ -564,6 +564,98 @@ test('--clear keeps a pair and keystore entries the resolver did not set', () =>
   assert.ok(!fs.existsSync(path.join(configDir, '.resolved-keystore-entries')));
 });
 
+const COOKIE = 'opensearch_security.cookie.password';
+
+// Everything the resolver writes to stdout and stderr while fn runs.
+function captureOutput(fn) {
+  const out = [];
+  const writes = [process.stdout.write, process.stderr.write];
+  process.stdout.write = process.stderr.write = (chunk) => out.push(String(chunk)) > 0;
+  try {
+    fn();
+  } finally {
+    [process.stdout.write, process.stderr.write] = writes;
+  }
+  return out.join('');
+}
+
+test('install generates the cookie password; later starts never rotate it', () => {
+  const { ctx, store } = setup();
+  r.resolve(ctx, 'install');
+  const generated = store.get(COOKIE);
+  assert.strictEqual(generated.length, 44);
+  assert.strictEqual(Buffer.from(generated, 'base64').length, 32);
+  r.resolve(ctx, 'prestart');
+  r.resolve(ctx, 'prestart');
+  assert.strictEqual(store.get(COOKIE), generated);
+});
+
+test('an upgrade generates no owned secret; the first start does', () => {
+  const { ctx, store } = setup();
+  r.resolve(ctx, 'upgrade');
+  assert.ok(!store.has(COOKIE));
+  assert.ok(!store.has('wazuh_ai_assistant.encryptionKey'));
+  r.resolve(ctx, 'prestart');
+  assert.strictEqual(store.get(COOKIE).length, 44);
+});
+
+test('a cookie password already in the keystore or the yml is never replaced', () => {
+  const inKeystore = setup();
+  inKeystore.store.set(COOKIE, 'Operator-Cookie-Password-0123456789');
+  r.resolve(inKeystore.ctx, 'install');
+  r.resolve(inKeystore.ctx, 'prestart');
+  assert.strictEqual(inKeystore.store.get(COOKIE), 'Operator-Cookie-Password-0123456789');
+
+  const inYml = setup();
+  fs.writeFileSync(
+    path.join(inYml.configDir, 'opensearch_dashboards.yml'),
+    `${COOKIE}: Yml-Cookie-Password-0123456789abcdef\n`
+  );
+  r.resolve(inYml.ctx, 'install');
+  r.resolve(inYml.ctx, 'prestart');
+  assert.ok(!inYml.store.has(COOKIE));
+});
+
+test('--clear removes a generated cookie password and keeps an operator one', () => {
+  const generated = setup();
+  r.resolve(generated.ctx, 'install');
+  assert.ok(generated.store.has(COOKIE));
+  assert.strictEqual(r.clear(generated.ctx), 0);
+  assert.ok(!generated.store.has(COOKIE));
+
+  const operator = setup();
+  operator.store.set(COOKIE, 'Operator-Cookie-Password-0123456789');
+  r.resolve(operator.ctx, 'install');
+  assert.strictEqual(r.clear(operator.ctx), 0);
+  assert.strictEqual(operator.store.get(COOKIE), 'Operator-Cookie-Password-0123456789');
+});
+
+test('the cookie password is never printed', () => {
+  const { ctx, store } = setup();
+  ctx.verbose = true;
+  const output = captureOutput(() => {
+    r.resolve(ctx, 'install');
+    r.resolve(ctx, 'prestart');
+  });
+  assert.match(output, new RegExp(`generated ${COOKIE}`));
+  assert.ok(!output.includes(store.get(COOKIE)));
+});
+
+test('failing to generate the cookie password is a warning; the start goes on', () => {
+  const { ctx, store } = setup();
+  const runKeystore = ctx.runKeystore;
+  ctx.runKeystore = (args, input) =>
+    args[0] === 'add' && args[1] === COOKIE ? { ok: false, stdout: '' } : runKeystore(args, input);
+  let problems;
+  const output = captureOutput(() => {
+    problems = r.resolve(ctx, 'prestart');
+  });
+  assert.ok(!store.has(COOKIE));
+  assert.match(output, new RegExp(`warning: could not generate ${COOKIE}`));
+  assert.ok(!problems.some((p) => p.includes(COOKIE)));
+  assert.ok(store.has('wazuh_ai_assistant.encryptionKey'));
+});
+
 test('a staged dashboard CA without an RSA key is refused', () => {
   const { configDir, ctx } = setup();
   const ca = path.join(configDir, 'ca');

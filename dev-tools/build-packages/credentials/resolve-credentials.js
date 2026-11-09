@@ -75,7 +75,24 @@ const PEERS = [
 const peerCa = (peer) => `${peer.name}-ca.pem`;
 const peerMarker = (peer) => `.${peer.name}-ca.imported`;
 
-const AI_KEY_ENTRY = 'wazuh_ai_assistant.encryptionKey';
+// Secrets the dashboard owns. Nobody else reads them, so each is generated straight into the
+// keystore and never read from an env file nor published. The warning follows
+// "warning: could not generate <entry>;".
+const OWNED_SECRETS = [
+  {
+    // The AI assistant encrypts the provider keys it stores with it. The assistant is optional.
+    entry: 'wazuh_ai_assistant.encryptionKey',
+    warning: 'configure it to enable the AI assistant',
+  },
+  {
+    // The security plugin seals the session cookie with it, and falls back to a built-in
+    // default, the same on every install, when none is configured.
+    entry: 'opensearch_security.cookie.password',
+    warning:
+      'the dashboard keeps the built-in default; set it (32 or more characters) in the ' +
+      'keystore or in opensearch_dashboards.yml',
+  },
+];
 // The keystore entries the resolver set, one per line, so --clear removes those and no other.
 const ENTRIES_RECORD = '.resolved-keystore-entries';
 
@@ -496,14 +513,24 @@ function resolvePassword(ctx, yml, peer) {
   return 'stored';
 }
 
-// The AI assistant encrypts the provider keys it stores with it, so an existing key is never
-// replaced. The assistant is optional: failing here is a warning only.
-function resolveAiKey(ctx, yml) {
-  if (ctx.keys.has(AI_KEY_ENTRY) || ymlHas(yml, AI_KEY_ENTRY)) return;
-  if (keystoreAdd(ctx, AI_KEY_ENTRY, crypto.randomBytes(32).toString('base64'))) {
-    log(`generated ${AI_KEY_ENTRY}`);
+// An existing value is never replaced: the provider keys the AI assistant stored could no longer
+// be decrypted, and a new cookie password would end every session, which a restart must never do.
+// Failing here is a warning only: the dashboard starts either way. The value is never printed.
+function resolveOwnedSecret(ctx, yml, { entry, warning }) {
+  if (ctx.keys.has(entry)) {
+    detail(ctx, `${entry} is already in the keystore`);
+    return;
+  }
+  if (ymlHas(yml, entry)) {
+    detail(ctx, `${entry} is set in opensearch_dashboards.yml; not generated`);
+    return;
+  }
+  // base64 of 32 bytes is 44 characters ending in '=': never JSON, and long enough for the
+  // cookie password's 32-character minimum.
+  if (keystoreAdd(ctx, entry, crypto.randomBytes(32).toString('base64'))) {
+    log(`generated ${entry}`);
   } else {
-    err(`warning: could not generate ${AI_KEY_ENTRY}; configure it to enable the AI assistant`);
+    err(`warning: could not generate ${entry}; ${warning}`);
   }
 }
 
@@ -1098,7 +1125,11 @@ function resolve(ctx, mode) {
   const passwords = {};
   if (ensureKeystore(ctx)) {
     for (const peer of ctx.peers) passwords[peer.key] = resolvePassword(ctx, yml, peer);
-    if (mode !== 'upgrade') resolveAiKey(ctx, yml);
+    // An upgrade adds no secret the operator did not have; the next start generates what is
+    // missing, so a host upgraded from a version without a cookie password logs users out once.
+    if (mode !== 'upgrade') {
+      for (const secret of OWNED_SECRETS) resolveOwnedSecret(ctx, yml, secret);
+    }
   } else {
     ctx.problems.push(`MISSING keystore: ${keystorePath(ctx)} could not be created or read`);
   }
