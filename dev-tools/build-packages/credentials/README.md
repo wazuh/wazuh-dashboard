@@ -73,7 +73,9 @@ Each is generated (32 random bytes, base64) straight into the keystore by `--ins
 from the environment or an env file, published, or printed.
 
 `--clear` removes them when the resolver generated them, so containers started from an image built
-with the package do not share one session key: each one generates its own at its first start.
+with the package do not share one session key: each one generates its own at its first start. It
+also removes a value that replaced a generated one with `add --force`: the record lists the entry,
+not who set its value. After `--clear`, set a shared value again on each instance.
 
 ### Upgrades
 
@@ -115,14 +117,15 @@ pre-start sets it back to `root:wazuh-dashboard 0640`.
   systemctl restart wazuh-dashboard
   ```
 
-- **Upgrading existing nodes.** Set the shared value on every node **before** upgrading it, either
-  with the same `add` command as above but without `--force` (the entry does not exist yet) or in
-  `opensearch_dashboards.yml`. Generation then skips it (an entry in the keystore or the yml counts
-  as already set), on every start. Without it, each node generates its own random value at its first
-  start after the upgrade, and a load balancer without sticky sessions will log users out whenever
-  it moves them to another node. The sessions of nodes that were running with the built-in default
-  end once, when the new value takes effect; nodes that were already restarted with the shared value
-  before the upgrade keep their sessions.
+- **Upgrading existing nodes.** Set the shared value on every node **before** upgrading it, with the
+  same `add --force` command as above. `--force` also covers a node that already has a generated
+  entry, where `add` without it changes nothing and still exits `0`. The yml works too, but only on
+  a node with no entry in the keystore, because the keystore wins. Generation then skips it (an
+  entry in the keystore or the yml counts as already set), on every start. Without it, each node
+  generates its own random value at its first start after the upgrade, and a load balancer without
+  sticky sessions will log users out whenever it moves them to another node. The sessions of nodes
+  that were running with the built-in default end once, when the new value takes effect; nodes that
+  were already restarted with the shared value before the upgrade keep their sessions.
 
 ## Trust rules
 
