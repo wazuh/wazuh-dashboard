@@ -92,6 +92,16 @@ sed -i "s:VERSION:${version}:g" ${source_dir}/debian/changelog
 sed -i "s:RELEASE:${revision}:g" ${source_dir}/debian/changelog
 sed -i "s:export INSTALLATION_DIR=.*:export INSTALLATION_DIR=${directory_base}:g" ${source_dir}/debian/rules
 
+# dpkg-buildpackage names the package after the first changelog entry. If it is
+# not the version being built, the .deb gets another name and the build fails
+# later on a missing file. Fail here with a clear message instead.
+changelog_version=$(sed -n '1s/^[^(]*(\([^)]*\)).*/\1/p' ${source_dir}/debian/changelog)
+if [ "${changelog_version}" != "${version}-${revision}" ]; then
+  echo "ERROR: the first entry of debian/changelog is '${changelog_version}', expected '${version}-${revision}'." >&2
+  echo "Move the ${version} entry to the top of dev-tools/build-packages/deb/debian/changelog." >&2
+  exit 1
+fi
+
 # Installing build dependencies
 cd ${source_dir}
 mk-build-deps -ir -t "apt-get -o Debug::pkgProblemResolver=yes -y"
