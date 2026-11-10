@@ -139,6 +139,7 @@ export default {
     '@elastic/eui/lib/(.*)?': '<rootDir>/node_modules/@elastic/eui/test-env/$1',
     '@opensearch-project/opensearch-next/aws':
       '<rootDir>/node_modules/@opensearch-project/opensearch-next/lib/aws',
+    '@hapi/hoek/(?!lib/)(.*)': '<rootDir>/node_modules/@hapi/hoek/lib/$1',
     '@opensearch-project/opensearch/lib/(.*)':
       '<rootDir>/node_modules/@opensearch-project/opensearch/lib/$1',
     '^src/plugins/(.*)': '<rootDir>/src/plugins/$1',
