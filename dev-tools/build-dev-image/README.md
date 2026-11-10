@@ -44,7 +44,7 @@ chmod +x build-multiarch.sh
 
 ```bash
 docker build \
-  --build-arg NODE_VERSION=18.19.0 \
+  --build-arg NODE_VERSION=22.23.4 \
   --build-arg WAZUH_DASHBOARD_BRANCH=4.14.8 \
   --build-arg WAZUH_DASHBOARD_SECURITY_BRANCH=4.14.8 \
   --build-arg WAZUH_DASHBOARD_PLUGINS_BRANCH=4.14.8 \
@@ -60,7 +60,7 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 
 | Option              | Short | Description                      | Default                   |
 | ------------------- | ----- | --------------------------------- | -------------------------- |
-| `--node-version`    | `-n`  | Node.js version                   | `18.19.0`                  |
+| `--node-version`    | `-n`  | Node.js version                   | `22.23.4`                  |
 | `--wazuh-branch`    | `-w`  | Wazuh Dashboard branch            | `4.14.8`                   |
 | `--security-branch` | `-s`  | Wazuh Dashboard Security branch   | `4.14.8`                   |
 | `--plugins-branch`  | `-p`  | Wazuh Dashboard Plugins branch    | `4.14.8`                   |
@@ -79,7 +79,7 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 ./build-multiarch.sh -w feature/my-feature -s feature/my-feature -p feature/my-feature --tag feature-test
 
 # Specific version build and push
-./build-multiarch.sh --node-version 18.19.0 --tag 4.14.8 --push
+./build-multiarch.sh --node-version 22.23.4 --tag 4.14.8 --push
 ```
 
 ## Manual Docker Commands
@@ -89,14 +89,14 @@ The `build-multiarch.sh` script simplifies building images for both AMD64 and AR
 ```bash
 # For ARM64 (if you're on AMD64)
 docker build --platform linux/arm64 \
-  --build-arg NODE_VERSION=18.19.0 \
+  --build-arg NODE_VERSION=22.23.4 \
   --build-arg WAZUH_DASHBOARD_BRANCH=4.14.8 \
   -t quay.io/wazuh/osd-dev:4.14.8-arm64 \
   -f wzd.dockerfile .
 
 # For AMD64 (if you're on ARM64)
 docker build --platform linux/amd64 \
-  --build-arg NODE_VERSION=18.19.0 \
+  --build-arg NODE_VERSION=22.23.4 \
   --build-arg WAZUH_DASHBOARD_BRANCH=4.14.8 \
   -t quay.io/wazuh/osd-dev:4.14.8-amd64 \
   -f wzd.dockerfile .
@@ -111,7 +111,7 @@ docker buildx create --use --name multiarch
 # Build for multiple platforms
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  --build-arg NODE_VERSION=18.19.0 \
+  --build-arg NODE_VERSION=22.23.4 \
   --build-arg WAZUH_DASHBOARD_BRANCH=4.14.8 \
   -t quay.io/wazuh/osd-dev:4.14.8 \
   -f wzd.dockerfile \
