@@ -1,0 +1,98 @@
+# Publishes the dashboard package builder images (base, rpm, deb on amd64 and
+# arm64) to ghcr, so `Generate packages` pulls them instead of building them.
+#
+# Tags are immutable: <version>-<short sha256 of the Dockerfile>, computed by
+# dev-tools/build-packages/common/builder-image.sh. A tag that already exists
+# is never pushed again.
+
+run-name: Upload dashboard builder images from ${{ github.ref_name }}
+name: (5.x) Upload dashboard package builder images
+
+on:
+  push:
+    branches:
+      - 'main'
+      - '[0-9]+.[0-9]+.[0-9]+'
+    paths:
+      # The tag holds the version, so a version bump needs new tags too.
+      - 'VERSION.json'
+      - 'dev-tools/build-packages/base/Docker/Dockerfile'
+      - 'dev-tools/build-packages/rpm/Docker/Dockerfile'
+      - 'dev-tools/build-packages/deb/Docker/Dockerfile'
+      - 'dev-tools/build-packages/common/builder-image.sh'
+      - '.github/workflows/5_builderprecompiled_dashboard_builder-images-upload.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # Computes every image reference first so the upload jobs can use it as
+  # their concurrency group.
+  get-references:
+    name: Get image references
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.references.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compute image references
+        id: references
+        run: |
+          entries=()
+          for image in base rpm deb; do
+            for arch in amd64 arm64; do
+              ref="$(bash dev-tools/build-packages/common/builder-image.sh "${image}" "${arch}")"
+              echo "${image} ${arch}: ${ref}"
+              entries+=("$(jq -nc --arg image "${image}" --arg arch "${arch}" --arg ref "${ref}" \
+                '{image: $image, arch: $arch, ref: $ref}')")
+            done
+          done
+          echo "matrix=$(printf '%s\n' "${entries[@]}" | jq -sc '{include: .}')" >> "$GITHUB_OUTPUT"
+
+  upload:
+    needs: get-references
+    name: Upload ${{ matrix.image }} builder image (${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    concurrency:
+      group: builder-image-${{ matrix.ref }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.get-references.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and push the image
+        env:
+          IMAGE_REF: ${{ matrix.ref }}
+          CONTEXT_DIR: dev-tools/build-packages/${{ matrix.image }}/Docker
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          if output="$(docker manifest inspect "${IMAGE_REF}" 2>&1)"; then
+            echo "${IMAGE_REF} already exists. Tags are immutable: nothing to push."
+            exit 0
+          fi
+          # ghcr answers "denied" for a package that doesn't exist yet. Any
+          # other error could hide an existing tag, so don't overwrite it.
+          if ! grep -qiE 'no such manifest|manifest unknown|name unknown|not found|denied' <<< "${output}"; then
+            echo "::error::Could not check whether ${IMAGE_REF} exists: ${output}"
+            exit 1
+          fi
+          echo "${IMAGE_REF} doesn't exist yet. Building and pushing it."
+          # The source label links the package to this repository. No
+          # provenance: an attestation adds untagged versions that the
+          # cleanup workflow would delete.
+          docker build --provenance=false \
+            --label "org.opencontainers.image.source=${SOURCE_URL}" \
+            -t "${IMAGE_REF}" "${CONTEXT_DIR}"
+          docker push "${IMAGE_REF}"
