@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default values
-NODE_VERSION="18.19.0"
+NODE_VERSION="22.23.4"
 WAZUH_DASHBOARD_BRANCH="4.14.8"
 WAZUH_DASHBOARD_SECURITY_BRANCH="4.14.8"
 WAZUH_DASHBOARD_PLUGINS_BRANCH="4.14.8"
@@ -27,7 +27,7 @@ OPTIONS:
 EXAMPLES:
     $0 --wazuh-branch 4.14.8 --tag latest
     $0 -w 4.14.8 -s 4.14.8 -p 4.14.8 --push
-    $0 --node-version 18.19.0 --tag 4.14.8 --push
+    $0 --node-version 22.23.4 --tag 4.14.8 --push
 EOF
 }
 
