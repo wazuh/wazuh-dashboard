@@ -106,8 +106,8 @@ override_dh_fixperms:
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/opensearch_dashboards.yml
 	chmod 640 "$(TARGET_DIR)$(CONFIG_DIR)"/node.options
 	chmod 644 $(TARGET_DIR)/usr/lib/systemd/system/wazuh-dashboard.service
-	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type d -exec chmod 755 {} \;
-	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -exec chmod go+rX,go-w {} \;
+	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type d -exec chmod 755 {} +
+	find "$(TARGET_DIR)$(INSTALLATION_DIR)" -type f -exec chmod go+rX,go-w {} +
 	chown root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials
 	chmod 750 "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials
 	chown root:root "$(TARGET_DIR)$(INSTALLATION_DIR)"/bin/resolve-credentials.js
@@ -119,6 +119,12 @@ override_dh_fixperms:
 
 override_dh_strip:
 	dh_strip --no-automatic-dbgsym -XlibGLESv2.so -XlibEGL.so
+
+# -----------------------------------------------------------------------------
+
+# The package is not built to be reproducible, and the RPM has no equivalent step. Here it only
+# rewrites the timestamps of the precompressed bundles, the PNG images and the zip fixtures.
+override_dh_strip_nondeterminism:
 
 # -----------------------------------------------------------------------------
 
