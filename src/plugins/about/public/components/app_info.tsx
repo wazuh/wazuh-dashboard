@@ -24,7 +24,7 @@ export const AboutAppInfo = ({
       >
         <EuiFlexItem>
           <EuiText>
-            App build: <b>{build}</b>
+            App build: <b>{build ? build : <EuiTextColor color="subdued">-</EuiTextColor>}</b>
           </EuiText>
         </EuiFlexItem>
         <EuiFlexItem>

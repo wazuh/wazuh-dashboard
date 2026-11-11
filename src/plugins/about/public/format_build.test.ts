@@ -34,24 +34,28 @@ describe('formatBuild', () => {
     expect(formatBuild({ version: '5.0.0' })).toBe('5.0.0');
   });
 
-  it('concatenates the custom version with the default revision with no separator', () => {
-    expect(formatBuild({ ...build, versionOverride: 'v' })).toBe('vrc3-11');
+  it('uses only the custom version when the revision is not defined', () => {
+    expect(formatBuild({ ...build, versionOverride: 'v' })).toBe('v');
   });
 
-  it('concatenates the default version with the custom revision with no separator', () => {
-    expect(formatBuild({ ...build, revisionOverride: '-custom' })).toBe('5.0.0-custom');
-    expect(formatBuild({ ...build, revisionOverride: 'custom' })).toBe('5.0.0custom');
+  it('uses only the custom revision when the version is not defined', () => {
+    expect(formatBuild({ ...build, revisionOverride: '-custom' })).toBe('-custom');
+    expect(formatBuild({ ...build, revisionOverride: 'custom' })).toBe('custom');
   });
 
   it('accepts an empty custom revision', () => {
-    expect(formatBuild({ ...build, revisionOverride: '' })).toBe('5.0.0');
+    expect(formatBuild({ ...build, revisionOverride: '' })).toBe('');
+    expect(formatBuild({ ...build, versionOverride: '6.0', revisionOverride: '' })).toBe('6.0');
   });
 
   it('accepts an empty custom version', () => {
-    expect(formatBuild({ ...build, versionOverride: '' })).toBe('rc3-11');
+    expect(formatBuild({ ...build, versionOverride: '' })).toBe('');
+    expect(formatBuild({ ...build, versionOverride: '', revisionOverride: 'custom' })).toBe(
+      'custom'
+    );
   });
 
-  it('concatenates both custom values', () => {
+  it('concatenates both custom values with no separator', () => {
     expect(formatBuild({ ...build, versionOverride: '6.0', revisionOverride: ' (beta)' })).toBe(
       '6.0 (beta)'
     );

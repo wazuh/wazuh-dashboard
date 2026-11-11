@@ -31,8 +31,9 @@ interface FormatBuildParams {
  * Builds the build label shown in the About page.
  *
  * - Nothing overridden: `<version>-<stage>-<revision>`.
- * - Any override defined (empty strings are valid): `<version><revision>` concatenated with no
- *   separator, where the part that is not overridden uses its built-in value.
+ * - Any override defined (empty strings are valid): only the defined settings are used, concatenated
+ *   with no separator as `<applicationVersion><applicationRevision>`. The built-in values are not
+ *   used, so a setting that is not defined contributes an empty string.
  */
 export const formatBuild = ({
   version,
@@ -41,12 +42,9 @@ export const formatBuild = ({
   versionOverride,
   revisionOverride,
 }: FormatBuildParams): string => {
-  const versionPart = versionOverride ?? version;
-  const revisionPart = revisionOverride ?? formatRevision(stage, revision);
-
   if (versionOverride !== undefined || revisionOverride !== undefined) {
-    return `${versionPart}${revisionPart}`;
+    return `${versionOverride ?? ''}${revisionOverride ?? ''}`;
   }
 
-  return [versionPart, revisionPart].filter(Boolean).join('-');
+  return [version, formatRevision(stage, revision)].filter(Boolean).join('-');
 };

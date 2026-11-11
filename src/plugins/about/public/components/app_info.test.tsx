@@ -20,4 +20,11 @@ describe('AboutAppInfo', () => {
 
     expect(screen.getByText('-')).toBeInTheDocument();
   });
+
+  it('shows a placeholder when the build is empty', () => {
+    render(<AboutAppInfo build="" clusterUuid="abc" />);
+
+    expect(screen.getByText(/App build:/)).toBeInTheDocument();
+    expect(screen.getByText('-')).toBeInTheDocument();
+  });
 });
