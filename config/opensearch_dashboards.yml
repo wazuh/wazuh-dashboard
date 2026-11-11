@@ -256,7 +256,6 @@
 #   faviconUrl: ""
 #   applicationTitle: ""
 #   applicationVersion: ""
-#   applicationRevision: ""
 #   useExpandedHeader: false
 
 # Set the value of this setting to true to capture region denied warnings and errors

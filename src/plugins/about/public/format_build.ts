@@ -23,27 +23,22 @@ interface FormatBuildParams {
   revision?: string;
   /** `opensearchDashboards.branding.applicationVersion`, when defined. */
   versionOverride?: string;
-  /** `opensearchDashboards.branding.applicationRevision`, when defined. */
-  revisionOverride?: string;
 }
 
 /**
  * Builds the build label shown in the About page.
  *
- * - Nothing overridden: `<version>-<stage>-<revision>`.
- * - Any override defined (empty strings are valid): only the defined settings are used, concatenated
- *   with no separator as `<applicationVersion><applicationRevision>`. The built-in values are not
- *   used, so a setting that is not defined contributes an empty string.
+ * - `applicationVersion` defined (an empty string is valid): it is used as the build, as is.
+ * - Otherwise: `<version>-<stage>-<revision>`.
  */
 export const formatBuild = ({
   version,
   stage,
   revision,
   versionOverride,
-  revisionOverride,
 }: FormatBuildParams): string => {
-  if (versionOverride !== undefined || revisionOverride !== undefined) {
-    return `${versionOverride ?? ''}${revisionOverride ?? ''}`;
+  if (versionOverride !== undefined) {
+    return versionOverride;
   }
 
   return [version, formatRevision(stage, revision)].filter(Boolean).join('-');

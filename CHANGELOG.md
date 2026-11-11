@@ -15,7 +15,6 @@
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Added the issuance of the dashboard TLS certificates on a fresh install, from the dashboard CA in `/etc/wazuh-dashboard/ca`, minting it when none exists                                                                          |
 | [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Added a skip to main content link before the header for keyboard users                                                                                                                                                            |
 | [wazuh-dashboard-plugins#9457](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9457) | Added an introduction to the health check page, and the plugins can register a title, a description and a fix for each check                                                                                                      |
-| [#1698](https://github.com/wazuh/wazuh-dashboard/issues/1698)                                | Added the `opensearchDashboards.branding.applicationRevision` setting to customize the app build shown on the About page, which is then composed only from the defined settings                                                   |
 
 ### Changed
 

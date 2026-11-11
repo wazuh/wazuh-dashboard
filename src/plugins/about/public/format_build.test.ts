@@ -34,31 +34,11 @@ describe('formatBuild', () => {
     expect(formatBuild({ version: '5.0.0' })).toBe('5.0.0');
   });
 
-  it('uses only the custom version when the revision is not defined', () => {
-    expect(formatBuild({ ...build, versionOverride: 'v' })).toBe('v');
-  });
-
-  it('uses only the custom revision when the version is not defined', () => {
-    expect(formatBuild({ ...build, revisionOverride: '-custom' })).toBe('-custom');
-    expect(formatBuild({ ...build, revisionOverride: 'custom' })).toBe('custom');
-  });
-
-  it('accepts an empty custom revision', () => {
-    expect(formatBuild({ ...build, revisionOverride: '' })).toBe('');
-    expect(formatBuild({ ...build, versionOverride: '6.0', revisionOverride: '' })).toBe('6.0');
+  it('uses the custom version as the build, without the stage and the revision', () => {
+    expect(formatBuild({ ...build, versionOverride: '6.0.0-custom' })).toBe('6.0.0-custom');
   });
 
   it('accepts an empty custom version', () => {
     expect(formatBuild({ ...build, versionOverride: '' })).toBe('');
-    expect(formatBuild({ ...build, versionOverride: '', revisionOverride: 'custom' })).toBe(
-      'custom'
-    );
-  });
-
-  it('concatenates both custom values with no separator', () => {
-    expect(formatBuild({ ...build, versionOverride: '6.0', revisionOverride: ' (beta)' })).toBe(
-      '6.0 (beta)'
-    );
-    expect(formatBuild({ ...build, versionOverride: '', revisionOverride: '' })).toBe('');
   });
 });

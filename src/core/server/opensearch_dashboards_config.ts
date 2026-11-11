@@ -86,9 +86,6 @@ export const config = {
       // page and the persistent help menu badge. Falls back to the real
       // dashboard build version when unset.
       applicationVersion: schema.maybe(schema.string()),
-      // Wazuh: display-only override for the revision shown in the About
-      // page. Falls back to the stage of the build (VERSION.json) when unset.
-      applicationRevision: schema.maybe(schema.string()),
       // Wazuh: overrides the links shown in the persistent help menu
       // (rendered regardless of the active app). Leaving it unset keeps
       // the built-in Documentation/Slack/GitHub/Google Group list;

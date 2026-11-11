@@ -167,8 +167,6 @@ export class RenderingService {
               // Wazuh
               applicationVersion: opensearchDashboardsConfig.branding.applicationVersion,
               // Wazuh
-              applicationRevision: opensearchDashboardsConfig.branding.applicationRevision,
-              // Wazuh
               helpMenuLinks: opensearchDashboardsConfig.branding.helpMenuLinks,
               useExpandedHeader: brandingAssignment.useExpandedHeader,
             },

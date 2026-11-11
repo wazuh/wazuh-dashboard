@@ -41,7 +41,7 @@ describe('Config schema', function () {
 
   // Wazuh
   describe('opensearchDashboards.branding', function () {
-    for (const setting of ['applicationVersion', 'applicationRevision']) {
+    for (const setting of ['applicationVersion']) {
       describe(setting, function () {
         it('accepts empty strings', function () {
           const { error, value } = validate({

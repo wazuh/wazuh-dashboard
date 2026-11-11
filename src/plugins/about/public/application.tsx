@@ -40,7 +40,6 @@ const AboutApp = ({ core, config }: AboutAppProps) => {
     stage: buildInfo.stage,
     revision: buildInfo.revision,
     versionOverride: branding.applicationVersion,
-    revisionOverride: branding.applicationRevision,
   });
   const communityLinks = config.communityLinks;
   const pluginAppName = branding.applicationTitle || 'Wazuh dashboard';
