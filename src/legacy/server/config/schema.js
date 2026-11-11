@@ -248,9 +248,9 @@ export default () =>
         faviconUrl: Joi.any().default('/'),
         applicationTitle: Joi.any().default(''),
         // Wazuh
-        applicationVersion: Joi.string(),
+        applicationVersion: Joi.string().allow(''),
         // Wazuh
-        applicationRevision: Joi.string(),
+        applicationRevision: Joi.string().allow(''),
         // Wazuh
         helpMenuLinks: Joi.array().items(
           Joi.object({

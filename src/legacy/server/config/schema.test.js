@@ -39,6 +39,38 @@ describe('Config schema', function () {
     return Joi.validate(data, schema, options);
   }
 
+  // Wazuh
+  describe('opensearchDashboards.branding', function () {
+    for (const setting of ['applicationVersion', 'applicationRevision']) {
+      describe(setting, function () {
+        it('accepts empty strings', function () {
+          const { error, value } = validate({
+            opensearchDashboards: { branding: { [setting]: '' } },
+          });
+          expect(error).toBe(null);
+          expect(value.opensearchDashboards.branding[setting]).toBe('');
+        });
+
+        it('accepts non-empty strings', function () {
+          const { error, value } = validate({
+            opensearchDashboards: { branding: { [setting]: 'custom' } },
+          });
+          expect(error).toBe(null);
+          expect(value.opensearchDashboards.branding[setting]).toBe('custom');
+        });
+
+        it('rejects things that are not strings', function () {
+          for (const value of [1, true, {}, []]) {
+            const { error } = validate({
+              opensearchDashboards: { branding: { [setting]: value } },
+            });
+            expect(error).toHaveProperty('details');
+          }
+        });
+      });
+    }
+  });
+
   describe('server', function () {
     it('everything is optional', function () {
       const { error } = validate({});
