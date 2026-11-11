@@ -47,19 +47,20 @@
 
 ### Fixed
 
-| Issue                                                                                        | Comment                                                                                                                |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| [#1277](https://github.com/wazuh/wazuh-dashboard/issues/1277)                                | Fixed health check padding styles                                                                                      |
-| [#1399](https://github.com/wazuh/wazuh-dashboard/issues/1399)                                | Prevent infinite remount loop when navigating from an app before its bundle finishes loading                           |
-| [#1569](https://github.com/wazuh/wazuh-dashboard/issues/1569)                                | Fixed the error toast full error modal to show the root cause of the failure instead of an unrelated backend exception |
-| [#1568](https://github.com/wazuh/wazuh-dashboard/issues/1568)                                | Fixed the empty error message in the dashboard save failure toast                                                      |
-| [#1619](https://github.com/wazuh/wazuh-dashboard/issues/1619)                                | Fixed the dashboard keystore being created readable by every user                                                      |
-| [wazuh-dashboard-plugins#9257](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9257) | Fixed the RPM package removal leaving the kept configuration files owned by the removed `wazuh-dashboard` user         |
-| [#1638](https://github.com/wazuh/wazuh-dashboard/issues/1638)                                | Fixed the not ready page claiming success before the health checks ran, and the indexer error log losing the cause     |
-| [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Fixed the browser tab title to read `<app> - Wazuh`, and its fallback to read Wazuh instead of OpenSearch Dashboards   |
-| [#1653](https://github.com/wazuh/wazuh-dashboard/issues/1653)                                | Fixed the RPM package removal leaving the wazuh-dashboard service enabled with a dangling systemd link                 |
-| [#1697](https://github.com/wazuh/wazuh-dashboard/issues/1697)                                | Fixed the dashboard certificate leaving out the addresses of interfaces that do not hold the default route             |
-| [#1714](https://github.com/wazuh/wazuh-dashboard/issues/1714)                                | Fixed the dashboard not stopping on a stop request received during startup, leaving the service failed                 |
+| Issue                                                                                        | Comment                                                                                                                        |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [#1277](https://github.com/wazuh/wazuh-dashboard/issues/1277)                                | Fixed health check padding styles                                                                                              |
+| [#1399](https://github.com/wazuh/wazuh-dashboard/issues/1399)                                | Prevent infinite remount loop when navigating from an app before its bundle finishes loading                                   |
+| [#1569](https://github.com/wazuh/wazuh-dashboard/issues/1569)                                | Fixed the error toast full error modal to show the root cause of the failure instead of an unrelated backend exception         |
+| [#1568](https://github.com/wazuh/wazuh-dashboard/issues/1568)                                | Fixed the empty error message in the dashboard save failure toast                                                              |
+| [#1619](https://github.com/wazuh/wazuh-dashboard/issues/1619)                                | Fixed the dashboard keystore being created readable by every user                                                              |
+| [wazuh-dashboard-plugins#9257](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9257) | Fixed the RPM package removal leaving the kept configuration files owned by the removed `wazuh-dashboard` user                 |
+| [#1638](https://github.com/wazuh/wazuh-dashboard/issues/1638)                                | Fixed the not ready page claiming success before the health checks ran, and the indexer error log losing the cause             |
+| [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Fixed the browser tab title to read `<app> - Wazuh`, and its fallback to read Wazuh instead of OpenSearch Dashboards           |
+| [#1653](https://github.com/wazuh/wazuh-dashboard/issues/1653)                                | Fixed the RPM package removal leaving the wazuh-dashboard service enabled with a dangling systemd link                         |
+| [#1697](https://github.com/wazuh/wazuh-dashboard/issues/1697)                                | Fixed the dashboard certificate leaving out the addresses of interfaces that do not hold the default route                     |
+| [#1714](https://github.com/wazuh/wazuh-dashboard/issues/1714)                                | Fixed the dashboard not stopping on a stop request received during startup, leaving the service failed                         |
+| [#1736](https://github.com/wazuh/wazuh-dashboard/issues/1736)                                | Fixed the export button of table visualizations on dashboards being covered by the panel header when the panel title is hidden |
 
 ## Prior versions
 
