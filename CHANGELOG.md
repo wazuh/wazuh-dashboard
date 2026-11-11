@@ -15,6 +15,7 @@
 | [#1594](https://github.com/wazuh/wazuh-dashboard/issues/1594)                                | Added the issuance of the dashboard TLS certificates on a fresh install, from the dashboard CA in `/etc/wazuh-dashboard/ca`, minting it when none exists                                                                          |
 | [wazuh-dashboard-plugins#9283](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9283) | Added a skip to main content link before the header for keyboard users                                                                                                                                                            |
 | [wazuh-dashboard-plugins#9457](https://github.com/wazuh/wazuh-dashboard-plugins/issues/9457) | Added an introduction to the health check page, and the plugins can register a title, a description and a fix for each check                                                                                                      |
+| [#1698](https://github.com/wazuh/wazuh-dashboard/issues/1698)                                | Added the `opensearchDashboards.branding.applicationRevision` setting to override the stage and revision part of the app build shown on the About page, which is concatenated to the version with no separator                    |
 
 ### Changed
 
@@ -60,6 +61,7 @@
 | [#1653](https://github.com/wazuh/wazuh-dashboard/issues/1653)                                | Fixed the RPM package removal leaving the wazuh-dashboard service enabled with a dangling systemd link                 |
 | [#1697](https://github.com/wazuh/wazuh-dashboard/issues/1697)                                | Fixed the dashboard certificate leaving out the addresses of interfaces that do not hold the default route             |
 | [#1714](https://github.com/wazuh/wazuh-dashboard/issues/1714)                                | Fixed the dashboard not stopping on a stop request received during startup, leaving the service failed                 |
+| [#1698](https://github.com/wazuh/wazuh-dashboard/issues/1698)                                | Fixed the About page heading and description, and replaced the app version with the app build                          |
 
 ## Prior versions
 

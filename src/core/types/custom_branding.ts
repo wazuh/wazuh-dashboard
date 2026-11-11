@@ -62,6 +62,9 @@ export interface Branding {
   /** Wazuh: display-only override for the version shown in the UI. Falls
    * back to the real dashboard build version when unset. */
   applicationVersion?: string;
+  /** Wazuh: display-only override for the revision shown in the About page.
+   * Falls back to the stage of the build when unset. */
+  applicationRevision?: string;
   /** Wazuh: overrides the links shown in the persistent help menu, always
    * visible regardless of the active app. */
   helpMenuLinks?: HelpMenuLinkItem[];

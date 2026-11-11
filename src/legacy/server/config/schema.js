@@ -250,6 +250,8 @@ export default () =>
         // Wazuh
         applicationVersion: Joi.string(),
         // Wazuh
+        applicationRevision: Joi.string(),
+        // Wazuh
         helpMenuLinks: Joi.array().items(
           Joi.object({
             label: Joi.string(),

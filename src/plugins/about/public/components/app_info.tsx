@@ -7,24 +7,24 @@ import React from 'react';
 import { EuiCallOut, EuiFlexGroup, EuiFlexItem, EuiText, EuiTextColor } from '@elastic/eui';
 
 export const AboutAppInfo = ({
-  version,
+  build,
   clusterUuid,
 }: {
-  version: string;
+  build: string;
   clusterUuid?: string | null;
 }) => {
   return (
     <EuiCallOut>
       <EuiFlexGroup
         direction="row"
-        alignItems="flexStart"
+        alignItems="center"
         justifyContent="flexStart"
         gutterSize="l"
         responsive
       >
         <EuiFlexItem>
           <EuiText>
-            App version: <b>{version}</b>
+            App build: <b>{build}</b>
           </EuiText>
         </EuiFlexItem>
         <EuiFlexItem>

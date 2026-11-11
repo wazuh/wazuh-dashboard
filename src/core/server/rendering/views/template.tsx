@@ -68,7 +68,7 @@ export const Template: FunctionComponent<Props> = ({
 
   const favicon = injectedMetadata.branding.faviconUrl;
   // Wazuh: fall back to the Wazuh brand
-  const applicationTitle = injectedMetadata.branding.applicationTitle || 'Wazuh';
+  const applicationTitle = injectedMetadata.branding.applicationTitle || 'Wazuh dashboard';
 
   return (
     <html lang={locale}>

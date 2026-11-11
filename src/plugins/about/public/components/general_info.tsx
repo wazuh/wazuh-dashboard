@@ -43,8 +43,8 @@ export const AboutGeneralInfo = ({
         content={
           <EuiText size="m">
             <p>
-              Dashboard provides management and monitoring capabilities, giving users control over
-              the infrastructure. You can monitor your agents status and configuration, query and
+              It provides management and monitoring capabilities, giving users control over the
+              infrastructure. You can monitor your agents status and configuration, query and
               visualize your alert data and monitor manager rules and configuration.
             </p>
           </EuiText>

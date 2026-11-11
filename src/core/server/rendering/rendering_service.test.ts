@@ -140,8 +140,28 @@ describe('RenderingService', () => {
         const dom = load(content);
         const data = JSON.parse(dom('osd-injected-metadata').attr('data') || '');
 
-        expect(data.branding.applicationTitle).toBe('Wazuh');
-        expect(dom('title').text()).toBe('Wazuh');
+        expect(data.branding.applicationTitle).toBe('Wazuh dashboard');
+        expect(dom('title').text()).toBe('Wazuh dashboard');
+      });
+
+      // Wazuh
+      it('injects the applicationRevision branding when set', async () => {
+        configService.atPath.mockImplementationOnce(
+          () =>
+            new BehaviorSubject(
+              RawOpenSearchDashboardsConfig.schema.validate({
+                branding: { applicationRevision: 'custom-revision' },
+              })
+            )
+        );
+        const { render: renderWithRevision } = await service.setup(mockRenderingSetupDeps);
+
+        const content = await renderWithRevision(createOpenSearchDashboardsRequest(), uiSettings, {
+          nonce: 'test-nonce',
+        });
+        const data = JSON.parse(load(content)('osd-injected-metadata').attr('data') || '');
+
+        expect(data.branding.applicationRevision).toBe('custom-revision');
       });
 
       it('renders "core" page for blank basepath', async () => {
