@@ -37,7 +37,7 @@ bash run-docker-compose.sh \
     --alerting 5.0.0 \
     --notifications 5.0.0 \
     --arm \
-    --node-version 22.22.0
+    --node-version 22.23.4
 ```
 
 This example will create a packages folder that inside will have the packages divided by repository of the 5.0.0 git reference of each one.
