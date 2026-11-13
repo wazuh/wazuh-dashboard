@@ -2,7 +2,7 @@
 set -e
 
 current_path="$( cd $(dirname $0) ; pwd -P )"
-root_dir="${current_path}/../.."
+root_dir="$( cd "${current_path}/../.." ; pwd -P )"
 app=""
 base=""
 revision="1"
@@ -30,6 +30,7 @@ RETRY_DELAY_SECONDS="${RETRY_DELAY_SECONDS:-15}"
 export RETRY_MAX_ATTEMPTS RETRY_DELAY_SECONDS
 
 source "${current_path}/common/run-with-retry.sh"
+source "${current_path}/common/builder-image.sh"
 
 trap clean INT
 trap clean EXIT
@@ -47,13 +48,6 @@ clean() {
     echo
     # Clean the files
     rm -rf ${tmp_dir}
-    rm -f ${current_path}/base/Docker/base-builder.sh
-    rm -f ${current_path}/base/Docker/plugins
-    rm -f ${current_path}/base/Docker/run-with-retry.sh
-    rm -f ${current_path}/rpm/Docker/rpm-builder.sh
-    rm -f ${current_path}/rpm/Docker/wazuh-dashboard.spec
-    rm -f ${current_path}/deb/Docker/deb-builder.sh
-    rm -rf ${current_path}/deb/Docker/debian
     trap '' EXIT
     exit ${exit_code}
 }
@@ -94,6 +88,33 @@ get_packages(){
   cd ..
 }
 
+builder_arch() {
+  if [ "${architecture}" = "arm64" ]; then
+    echo "arm64"
+  else
+    echo "amd64"
+  fi
+}
+
+# Pulls the published builder image and builds it locally when the pull fails
+# (tag not published yet, no registry access, ...). Never pushes. The pull is
+# tried twice only: a missing tag fails every attempt, and the local build is
+# the fallback anyway.
+prepare_builder_image() {
+  local image="$1"
+  local ref="$2"
+  log "Pulling builder image ${ref}..."
+  if RETRY_MAX_ATTEMPTS=2 RETRY_DELAY_SECONDS=5 run_with_retry docker pull "${ref}"; then
+    log "Using the published builder image ${ref}"
+    return 0
+  fi
+  echo "Notice: could not pull ${ref}. Building it locally."
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    echo "::warning::${ref} was not found in ghcr or couldn't be pulled; building it locally"
+  fi
+  run_with_retry docker build -t "${ref}" "${current_path}/${image}/Docker"
+}
+
 build_tar() {
   log
   log "Building base package..."
@@ -102,35 +123,33 @@ build_tar() {
   cp -r ${config_dir} ${tmp_dir}
   cp -r ${current_path}/credentials ${tmp_dir}
   cd ./base
-  dockerfile_path="${current_path}/base/Docker"
-  container_name="dashboard-base-builder"
-  cp ./base-builder.sh ${dockerfile_path}
-  cp ./plugins ${dockerfile_path}
-  cp ${root_dir}/VERSION.json ${dockerfile_path}
-  cp ${current_path}/common/run-with-retry.sh ${dockerfile_path}
-  run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
+  builder_image="$(builder_image_ref base "$(builder_arch)")" || return 1
+  prepare_builder_image base "${builder_image}" || return 1
   run_with_retry docker run -t --rm \
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
-    "${container_name}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
+    -v "${current_path}/base/base-builder.sh:/usr/local/bin/builder:ro,z" \
+    -v "${current_path}/base/plugins:/usr/local/bin/plugins:ro,z" \
+    -v "${root_dir}/VERSION.json:/usr/local/bin/VERSION.json:ro,z" \
+    -v "${current_path}/common/run-with-retry.sh:/usr/local/lib/wazuh/run-with-retry.sh:ro,z" \
+    "${builder_image}" "${version}" "${revision}" "${architecture}" "${verbose}" || return 1
   cd ..
 }
 
 build_rpm() {
   log "Building rpm package..."
   cd ./rpm
-  dockerfile_path="${current_path}/rpm/Docker"
-  container_name="dashboard-rpm-builder"
   cp -r ${package_config_dir} ${tmp_dir}
-  cp ./rpm-builder.sh ${dockerfile_path}
-  cp ./wazuh-dashboard.spec ${dockerfile_path}
-  run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
+  builder_image="$(builder_image_ref rpm "$(builder_arch)")" || return 1
+  prepare_builder_image rpm "${builder_image}" || return 1
   run_with_retry docker run -t --rm \
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
-    "${container_name}" "${version}" "${revision}" "${architecture}" \
+    -v "${current_path}/rpm/rpm-builder.sh:/usr/local/bin/builder:ro,z" \
+    -v "${current_path}/rpm/wazuh-dashboard.spec:/usr/local/src/wazuh-dashboard.spec:ro,z" \
+    "${builder_image}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
   cd ../
 }
@@ -139,17 +158,16 @@ build_rpm() {
 build_deb() {
   log "Building deb package..."
   cd ./deb
-  dockerfile_path="${current_path}/deb/Docker"
-  container_name="dashboard-deb-builder"
   cp -r ${package_config_dir} ${tmp_dir}
-  cp ./deb-builder.sh ${dockerfile_path}
-  cp -r ./debian ${dockerfile_path}
-  run_with_retry docker build -t "${container_name}" "${dockerfile_path}" || return 1
+  builder_image="$(builder_image_ref deb "$(builder_arch)")" || return 1
+  prepare_builder_image deb "${builder_image}" || return 1
   run_with_retry docker run -t --rm \
     -e "RETRY_MAX_ATTEMPTS=${RETRY_MAX_ATTEMPTS}" \
     -e "RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS}" \
     -v "${tmp_dir}/:/tmp:Z" -v "${output_dir}/:/output:Z" \
-    "${container_name}" "${version}" "${revision}" "${architecture}" \
+    -v "${current_path}/deb/deb-builder.sh:/usr/local/bin/builder:ro,z" \
+    -v "${current_path}/deb/debian:/usr/local/src/debian:ro,z" \
+    "${builder_image}" "${version}" "${revision}" "${architecture}" \
     "${commit_sha}" "${production}" "${verbose}" || return 1
   cd ..
 }

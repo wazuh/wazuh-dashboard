@@ -8,10 +8,6 @@ RUN apt-get update && apt-get install -y --allow-change-held-packages apt-utils 
     curl sudo wget expect gnupg build-essential \
     devscripts equivs selinux-basics procps gawk jq
 
-# Add the script to build the Debian package
-ADD deb-builder.sh /usr/local/bin/builder
-ADD debian /usr/local/src/debian
-RUN chmod +x /usr/local/bin/builder
-
-# Set the entrypoint
-ENTRYPOINT ["/usr/local/bin/builder"]
+# The builder script and its inputs are mounted at run time by
+# build-packages.sh, so this Dockerfile is the only input of the image.
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/builder"]
