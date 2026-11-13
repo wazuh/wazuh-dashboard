@@ -86,6 +86,15 @@
   top: 0;
   left: 0;
   z-index: $euiZLevel1;
+
+  // Wazuh: the floater spans the full panel width, so let clicks reach the panel
+  // content underneath (e.g. the table visualization export button) and only
+  // keep its own children (the options menu) clickable.
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
 }
 
 // OPTIONS MENU

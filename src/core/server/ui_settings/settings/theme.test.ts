@@ -55,6 +55,10 @@ describe('theme settings', () => {
   describe('theme:version', () => {
     const validate = getValidationFn(themeSettings['theme:version']);
 
+    it('should default to v7', () => {
+      expect(themeSettings['theme:version'].value).toBe('v7');
+    });
+
     it('should only accept valid values', () => {
       expect(() => validate('v7')).not.toThrow();
       expect(() => validate('v8')).not.toThrow();
