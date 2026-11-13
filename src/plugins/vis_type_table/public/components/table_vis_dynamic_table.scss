@@ -1,7 +1,13 @@
+// Wazuh: force 14px font size and line height in cells (upstream inherits 16px)
+$tableVisCellFontSize: 14px;
+$tableVisCellLineHeight: 14px;
+
 .tableVisHeaderField {
   position: relative;
   user-select: none;
   padding: $euiSizeS;
+  font-size: $tableVisCellFontSize;
+  line-height: $tableVisCellLineHeight;
   text-align: left;
 
   &-isSorted {
@@ -92,6 +98,8 @@
 
   td {
     padding: $euiSizeS;
+    font-size: $tableVisCellFontSize;
+    line-height: $tableVisCellLineHeight;
     vertical-align: top;
     word-break: break-word;
     position: relative;

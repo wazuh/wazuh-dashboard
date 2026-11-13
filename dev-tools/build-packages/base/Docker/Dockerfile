@@ -28,12 +28,6 @@ RUN cd brotli && chmod +x ./bootstrap && ./bootstrap && ./configure --prefix=/us
 
 RUN mkdir -p /usr/local/lib/wazuh
 
-# Add the scripts to build the RPM package
-ADD base-builder.sh /usr/local/bin/builder
-ADD VERSION.json /usr/local/bin/VERSION.json
-ADD plugins /usr/local/bin/plugins
-ADD run-with-retry.sh /usr/local/lib/wazuh/run-with-retry.sh
-RUN chmod +x /usr/local/bin/builder
-
-# Set the entrypoint
-ENTRYPOINT ["/usr/local/bin/builder"]
+# The builder script and its inputs are mounted at run time by
+# build-packages.sh, so this Dockerfile is the only input of the image.
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/builder"]
