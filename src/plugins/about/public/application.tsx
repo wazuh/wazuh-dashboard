@@ -11,6 +11,7 @@ import { EuiPage, EuiPageBody, EuiSpacer, EuiProgress } from '@elastic/eui';
 import { CoreStart } from 'opensearch-dashboards/public';
 import { AboutAppInfo } from './components/app_info';
 import { AboutGeneralInfo } from './components/general_info';
+import { formatBuild } from './format_build';
 import { ABOUT_API_ROUTE } from '../common/constants';
 import type { AboutConfigType } from '../common/config';
 
@@ -32,10 +33,16 @@ const AboutApp = ({ core, config }: AboutAppProps) => {
   }, [core.http]);
 
   const branding = core.injectedMetadata.getBranding();
-  // Wazuh: same value shown in the help menu badge, and the same fallback.
-  const version = branding.applicationVersion || core.injectedMetadata.getWazuhBuildInfo().version;
+  // Wazuh: the build is composed from the version, the stage and the revision number.
+  const buildInfo = core.injectedMetadata.getWazuhBuildInfo();
+  const build = formatBuild({
+    version: buildInfo.version,
+    stage: buildInfo.stage,
+    revision: buildInfo.revision,
+    versionOverride: branding.applicationVersion,
+  });
   const communityLinks = config.communityLinks;
-  const pluginAppName = branding.applicationTitle || 'Wazuh';
+  const pluginAppName = branding.applicationTitle || 'Wazuh dashboard';
   const darkMode = core.uiSettings.get('theme:darkMode');
 
   return (
@@ -48,7 +55,7 @@ const AboutApp = ({ core, config }: AboutAppProps) => {
           </>
         ) : (
           <>
-            <AboutAppInfo version={version} clusterUuid={clusterUuid} />
+            <AboutAppInfo build={build} clusterUuid={clusterUuid} />
             <EuiSpacer size="l" />
           </>
         )}
