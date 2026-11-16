@@ -85,7 +85,7 @@ export const config = {
       // Wazuh: display-only override for the version shown in the persistent
       // help menu badge and, as is, in the About page build. Falls back to the
       // real dashboard build version when unset (the About page then shows
-      // <version>-<stage>-<revision>). An empty string is accepted and behaves as unset.
+      // <version>-<stage>-<revision>).
       applicationVersion: schema.maybe(schema.string()),
       // Wazuh: overrides the links shown in the persistent help menu
       // (rendered regardless of the active app). Leaving it unset keeps

@@ -29,7 +29,7 @@ interface FormatBuildParams {
  * Builds the build label shown in the About page.
  *
  * - `applicationVersion` defined and not empty: it is used as the build, as is.
- * - Otherwise (unset or empty, as in the help menu): `<version>-<stage>-<revision>`.
+ * - Otherwise (unset, or empty as in the help menu): `<version>-<stage>-<revision>`.
  */
 export const formatBuild = ({
   version,

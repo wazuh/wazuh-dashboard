@@ -255,7 +255,7 @@
 #     darkModeUrl: ""
 #   faviconUrl: ""
 #   applicationTitle: ""
-#   applicationVersion: ""
+#   applicationVersion: "6.0.0-custom"
 #   useExpandedHeader: false
 
 # Set the value of this setting to true to capture region denied warnings and errors
