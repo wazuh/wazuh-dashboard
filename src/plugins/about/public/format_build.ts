@@ -28,8 +28,8 @@ interface FormatBuildParams {
 /**
  * Builds the build label shown in the About page.
  *
- * - `applicationVersion` defined (an empty string is valid): it is used as the build, as is.
- * - Otherwise: `<version>-<stage>-<revision>`.
+ * - `applicationVersion` defined and not empty: it is used as the build, as is.
+ * - Otherwise (unset or empty, as in the help menu): `<version>-<stage>-<revision>`.
  */
 export const formatBuild = ({
   version,
@@ -37,7 +37,7 @@ export const formatBuild = ({
   revision,
   versionOverride,
 }: FormatBuildParams): string => {
-  if (versionOverride !== undefined) {
+  if (versionOverride) {
     return versionOverride;
   }
 

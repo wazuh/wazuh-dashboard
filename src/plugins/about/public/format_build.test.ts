@@ -38,7 +38,7 @@ describe('formatBuild', () => {
     expect(formatBuild({ ...build, versionOverride: '6.0.0-custom' })).toBe('6.0.0-custom');
   });
 
-  it('accepts an empty custom version', () => {
-    expect(formatBuild({ ...build, versionOverride: '' })).toBe('');
+  it('falls back to the composed build when the custom version is empty', () => {
+    expect(formatBuild({ ...build, versionOverride: '' })).toBe('5.0.0-rc3-11');
   });
 });
