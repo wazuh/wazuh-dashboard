@@ -140,8 +140,8 @@ describe('RenderingService', () => {
         const dom = load(content);
         const data = JSON.parse(dom('osd-injected-metadata').attr('data') || '');
 
-        expect(data.branding.applicationTitle).toBe('Wazuh');
-        expect(dom('title').text()).toBe('Wazuh');
+        expect(data.branding.applicationTitle).toBe('Wazuh dashboard');
+        expect(dom('title').text()).toBe('Wazuh dashboard');
       });
 
       it('renders "core" page for blank basepath', async () => {
