@@ -38,6 +38,7 @@
 | [#1667](https://github.com/wazuh/wazuh-dashboard/issues/1667)                                | Changed the service to bind port 443 with a capability granted by its systemd unit instead of one set on `node`, dropping `libcap2-bin` and `libcap`                                                |
 | [#1668](https://github.com/wazuh/wazuh-dashboard/issues/1668)                                | Changed the packages to declare only `passwd` (DEB) and `/bin/sh` with the account tools (RPM), and their scripts and the service launcher to no longer call `grep`, `sed`, `cut`, `xargs` or `ps`  |
 | [#1752](https://github.com/wazuh/wazuh-dashboard/issues/1752)                                | Changed the bundled Node.js runtime from `22.22.0` to `22.23.4` to fix the October 2026 Node.js security vulnerabilities                                                                            |
+| [#1770](https://github.com/wazuh/wazuh-dashboard/issues/1770)                                | Changed the `axios` dependency from `1.13.5` to `1.18.1`, removing the unused `wait-on` dependency                                                                                                  |
 
 ### Removed
 
