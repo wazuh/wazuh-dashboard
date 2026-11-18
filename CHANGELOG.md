@@ -8,6 +8,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.10.6
 
+### Changed
+
+- Bumped Node.js to 22.23.4 [#1757](https://github.com/wazuh/wazuh-dashboard/issues/1757)
+
 ## Wazuh dashboard v4.10.5 - OpenSearch Dashboards 2.19.6 - Revision 01
 
 ### Added
