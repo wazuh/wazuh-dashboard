@@ -16,20 +16,22 @@ type ResponseType = (params: any) => Lifecycle.ReturnValue;
 interface InjectedProps {
   healthcheck: HealthCheck;
   logger: Logger;
-  // The not-ready server answers without authentication, so it must not expose task details
+  // The not-ready server answers without authentication, so it also hides non-critical errors
   redactForNotReadyServer?: boolean;
 }
 
 const REDACTED_TASK_ERROR =
   'Check reported a problem. Log in, or check the server logs, for details.';
 
-// Drop the task data and keep the error only for enabled critical tasks, which the
+// Tasks gather their data with the service account, so no route returns it to the caller.
+// The not-ready server keeps the error only for enabled critical tasks, which the
 // troubleshooting page needs to explain why the dashboard cannot start.
-const redactForNotReadyServer = (tasks: TaskInfo[]) =>
-  tasks.map(({ data, ...task }) => ({
-    ...task,
-    error: task.error && !(task.enabled && task.critical) ? REDACTED_TASK_ERROR : task.error,
-  }));
+const toResponseTasks = (tasks: TaskInfo[], redactErrors?: boolean) =>
+  tasks.map(({ data, ...task }) =>
+    redactErrors && task.error && !(task.enabled && task.critical)
+      ? { ...task, error: REDACTED_TASK_ERROR }
+      : task
+  );
 
 interface ResponseHandler {
   ok: ResponseType;
@@ -118,7 +120,7 @@ async function handlerGetTasks(
     return response.ok({
       body: {
         message: 'Task information was returned.',
-        tasks: this.redactForNotReadyServer ? redactForNotReadyServer(tasksData) : tasksData,
+        tasks: toResponseTasks(tasksData, this.redactForNotReadyServer),
       },
     });
   } catch (error) {
@@ -156,7 +158,7 @@ async function handlerRunTasks(
     return response.ok({
       body: {
         message: 'Task information was returned.',
-        tasks: this.redactForNotReadyServer ? redactForNotReadyServer(tasks) : tasks,
+        tasks: toResponseTasks(tasks, this.redactForNotReadyServer),
       },
     });
   } catch (error) {
