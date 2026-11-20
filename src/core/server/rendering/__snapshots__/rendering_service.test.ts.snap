@@ -6,7 +6,7 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "Wazuh",
+    "applicationTitle": "Wazuh dashboard",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
@@ -77,7 +77,7 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "Wazuh",
+    "applicationTitle": "Wazuh dashboard",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
@@ -148,7 +148,7 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "Wazuh",
+    "applicationTitle": "Wazuh dashboard",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
@@ -219,7 +219,7 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "Wazuh",
+    "applicationTitle": "Wazuh dashboard",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
@@ -294,7 +294,7 @@ Object {
   "basePath": "",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "Wazuh",
+    "applicationTitle": "Wazuh dashboard",
     "assetFolderUrl": "/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
@@ -365,7 +365,7 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "Wazuh",
+    "applicationTitle": "Wazuh dashboard",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},
@@ -436,7 +436,7 @@ Object {
   "basePath": "/mock-server-basepath",
   "branch": Any<String>,
   "branding": Object {
-    "applicationTitle": "Wazuh",
+    "applicationTitle": "Wazuh dashboard",
     "assetFolderUrl": "/mock-server-basepath/ui/default_branding",
     "loadingLogo": Object {},
     "logo": Object {},

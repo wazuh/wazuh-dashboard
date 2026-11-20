@@ -59,8 +59,10 @@ export interface Branding {
   faviconUrl?: string;
   /** Application title that will replace the default opensearch dashboard string */
   applicationTitle?: string;
-  /** Wazuh: display-only override for the version shown in the UI. Falls
-   * back to the real dashboard build version when unset. */
+  /** Wazuh: display-only override for the version shown in the UI (the help
+   * menu badge and the About page build, as is). Falls back to the real
+   * dashboard build version when unset; the About page then shows
+   * `<version>-<stage>-<revision>`. */
   applicationVersion?: string;
   /** Wazuh: overrides the links shown in the persistent help menu, always
    * visible regardless of the active app. */

@@ -145,7 +145,8 @@ ctx.taskResult.error(message, data?)   // red
 ```
 
 `message` becomes the task `error` field and is what the UI shows. `data` is
-stored as the task `data` field for diagnostics.
+stored as the task `data` field for diagnostics on the server. The API routes
+never return it, so log anything an administrator needs from it.
 
 A task that throws is still handled: the thrown message becomes `error`, and the
 result is `red` when the task is `critical` and `yellow` when it is not. Throwing
@@ -223,7 +224,7 @@ interface InitializationTaskRunData {
   startedAt: string | null;
   finishedAt: string | null;
   duration: number | null; // milliseconds
-  data: any;
+  data: any; // kept on the server, not returned by the API routes
   error: string | null;
   enabled: boolean;
   critical: boolean;
@@ -236,7 +237,7 @@ The backend service registers routes to manage the related data:
 
 - `GET /api/healthcheck/config`: allow to retrieve the health check configuration.
 
-- `GET /api/healthcheck/internal`: allow to retrieve the run info of the checks. This allows to use the `name` query parameter to get specific checks.
+- `GET /api/healthcheck/internal`: allow to retrieve the run info of the checks, without their `data`. This allows to use the `name` query parameter to get specific checks.
 
 - `POST /api/healthcheck/internal`: allow to run info of the checks. This allows to use the `name` query parameter to get specific checks.
 
