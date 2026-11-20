@@ -5,7 +5,9 @@
 
 import { schema } from '@osd/config-schema';
 import { i18n } from '@osd/i18n';
-import { UiSettingScope, UiSettingsParams } from '../types';
+// Wazuh: UiSettingScope is not used while the scope below is commented out
+// import { UiSettingScope, UiSettingsParams } from '../types';
+import { UiSettingsParams } from '../types';
 import { ENABLE_AI_FEATURES } from '../../../../core/utils/constants';
 
 export const getAIFeaturesSetting = (): Record<string, UiSettingsParams> => {
@@ -19,7 +21,11 @@ export const getAIFeaturesSetting = (): Record<string, UiSettingsParams> => {
         defaultMessage: 'The setting to enable all AI-powered features in OpenSearch Dashboards.',
       }),
       requiresPageReload: true,
-      scope: UiSettingScope.DASHBOARD_ADMIN,
+      // Wazuh: commented out by Wazuh. Scoped to dashboard admins, nobody could change it on a
+      // default installation because opensearchDashboards.dashboardAdmin is empty.
+      // scope: UiSettingScope.DASHBOARD_ADMIN,
+      // Wazuh: hidden until the UI settings service finds the ML Commons plugin in the indexer.
+      readonly: true,
       schema: schema.boolean(),
     },
   };

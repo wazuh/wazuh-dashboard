@@ -57,12 +57,23 @@ import {
   PERMISSION_CONTROLLED_UI_SETTINGS_WRAPPER_ID,
   PERMISSION_CONTROLLED_UI_SETTINGS_WRAPPER_PRIORITY,
 } from './utils';
-// Wazuh: commented out by Wazuh, the AI features setting is not registered.
-// import { getAIFeaturesSetting } from './settings/ai_features';
+import { getAIFeaturesSetting } from './settings/ai_features';
+// Wazuh: used to show the AI features setting only when the indexer has ML Commons
+import { InternalOpenSearchServiceStart } from '../opensearch';
+import { ENABLE_AI_FEATURES } from '../../utils/constants';
+
+// Wazuh: component name of the ML Commons plugin in the indexer
+const ML_COMMONS_PLUGIN = 'opensearch-ml';
+const ML_COMMONS_CHECK_RETRY_MS = 30000;
 
 export interface SetupDeps {
   http: InternalHttpServiceSetup;
   savedObjects: InternalSavedObjectsServiceSetup;
+}
+
+// Wazuh
+export interface StartDeps {
+  opensearch?: InternalOpenSearchServiceStart;
 }
 
 /** @internal */
@@ -72,6 +83,8 @@ export class UiSettingsService
   private readonly config$: Observable<[UiSettingsConfigType, SavedObjectsConfigType]>;
   private readonly uiSettingsDefaults = new Map<string, UiSettingsParams>();
   private overrides: Record<string, any> = {};
+  // Wazuh: pending retry of the ML Commons check
+  private mlCommonsCheckTimer?: NodeJS.Timeout;
 
   constructor(private readonly coreContext: CoreContext) {
     this.log = coreContext.logger.get('ui-settings-service');
@@ -112,26 +125,56 @@ export class UiSettingsService
       permissionControlledUiSettingsWrapper.wrapperFactory
     );
 
-    // Wazuh: commented out by Wazuh. The "Enable AI features" setting is not registered because
-    // it only controls the query assist feature, which requires the ML Commons plugin that the
-    // Wazuh indexer does not include.
-    // this.register(getAIFeaturesSetting());
+    this.register(getAIFeaturesSetting());
 
     return {
       register: this.register.bind(this),
     };
   }
 
-  public async start(): Promise<InternalUiSettingsServiceStart> {
+  public async start({ opensearch }: StartDeps = {}): Promise<InternalUiSettingsServiceStart> {
     this.validatesDefinitions();
     this.validatesOverrides();
+
+    // Wazuh: the check runs in the background so the start does not wait for the indexer
+    if (opensearch) {
+      this.showAIFeaturesSettingWithMLCommons(opensearch);
+    }
 
     return {
       asScopedToClient: this.getScopedClientFactory(),
     };
   }
 
-  public async stop() {}
+  public async stop() {
+    // Wazuh
+    clearTimeout(this.mlCommonsCheckTimer);
+  }
+
+  /**
+   * Wazuh: the AI features setting only controls features that need the ML Commons plugin in the
+   * indexer, which the Wazuh indexer does not include. The setting is registered as read-only, so
+   * Advanced settings hides it, and is shown when the indexer has ML Commons. The check retries
+   * until the indexer answers. Installing ML Commons later requires restarting the dashboard.
+   */
+  private async showAIFeaturesSettingWithMLCommons(opensearch: InternalOpenSearchServiceStart) {
+    try {
+      const { body } = await opensearch.client.asInternalUser.cat.plugins<
+        Array<{ component: string }>
+      >({ format: 'json' });
+      const definition = this.uiSettingsDefaults.get(ENABLE_AI_FEATURES);
+      if (definition && body.some(({ component }) => component === ML_COMMONS_PLUGIN)) {
+        this.uiSettingsDefaults.set(ENABLE_AI_FEATURES, { ...definition, readonly: false });
+        this.log.debug('ML Commons found in the indexer, showing the AI features setting');
+      }
+    } catch (error) {
+      this.log.debug(`Could not check the ML Commons plugin, retrying: ${error.message}`);
+      this.mlCommonsCheckTimer = setTimeout(
+        () => this.showAIFeaturesSettingWithMLCommons(opensearch),
+        ML_COMMONS_CHECK_RETRY_MS
+      );
+    }
+  }
 
   private getScopedClientFactory(): (
     savedObjectsClient: SavedObjectsClientContract

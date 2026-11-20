@@ -4,9 +4,7 @@
  */
 
 import { i18n } from '@osd/i18n';
-// Wazuh: commented out by Wazuh, the AI features setting is not registered.
-// import { ENABLE_AI_FEATURES, HttpSetup } from 'opensearch-dashboards/public';
-import { HttpSetup } from 'opensearch-dashboards/public';
+import { ENABLE_AI_FEATURES, HttpSetup } from 'opensearch-dashboards/public';
 import React, { useCallback, useEffect, useState } from 'react';
 import { BehaviorSubject, of } from 'rxjs';
 import { useObservable } from 'react-use';
@@ -110,11 +108,10 @@ export const createQueryAssistExtension = (
   });
 
   const assistantEnabled$ = new BehaviorSubject<boolean>(true);
-  // Wazuh: commented out by Wazuh, the AI features setting is not registered.
-  // core.getStartServices().then(([coreStart, depsStart]) => {
-  //   const enabled = coreStart.uiSettings.get(ENABLE_AI_FEATURES);
-  //   assistantEnabled$.next(enabled);
-  // });
+  core.getStartServices().then(([coreStart, depsStart]) => {
+    const enabled = coreStart.uiSettings.get(ENABLE_AI_FEATURES);
+    assistantEnabled$.next(enabled);
+  });
 
   return {
     id: 'query-assist',
