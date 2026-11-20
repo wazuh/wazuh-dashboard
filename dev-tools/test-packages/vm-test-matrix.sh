@@ -109,7 +109,7 @@ CASES=(
   "D06|Environment wins over the peers' exports|case_env_beats_file|dashboard"
   "D07|Values the keystore would not store verbatim|case_invalid_values|dashboard"
   "D08|Refused local.env (bad mode)|case_refused_credentials_file|dashboard"
-  "D09|Keystore wins over the peers' exports on restart|case_keystore_wins|dashboard"
+  "D09|A peer's changed export replaces the stored password on restart|case_keystore_wins|dashboard"
   "D10|Password configured in opensearch_dashboards.yml|case_yml_password|dashboard"
   "D11|Operator-staged dashboard CA with key is reused|case_existing_ca|dashboard"
   "D12|Operator-staged CA without its key|case_anchor_only_ca|dashboard"
@@ -817,14 +817,21 @@ case_keystore_wins() {
   install_ok "${DASHBOARD_PKG}"
   check "systemctl start succeeds" svc_start
   check_running
-  step "The indexer's export changes to a value that would be invalid; restart"
-  write_creds "123456789e10" "${WUI_PASS}"
+  step "The peers were reinstalled: their exports hold new passwords; restart"
+  sleep 1
+  write_creds "${KIBANA_PASS}New1" "${WUI_PASS}New1"
   check "systemctl restart succeeds" timeout 120 systemctl restart "${NAME}"
   check_running
   prestart
   check "prestart exits 0" prestart_rc_is 0
-  check "the export is ignored once the keystore has the entry" \
-    contains "${PRE_OUT}" "opensearch.password is already in the keystore"
+  check "the start logged the replacement of both passwords" \
+    contains "$(journalctl -u "${NAME}" --no-pager 2>&1)" "replaced wazuh_core.hosts.default.password in the keystore"
+  step "An export that would not be stored as text is refused, not left to fail with 401"
+  sleep 1
+  write_creds "123456789e10" "${WUI_PASS}New1"
+  prestart
+  check "prestart exits 1" prestart_rc_is 1
+  check "reports INVALID" contains "${PRE_OUT}" "INVALID WAZUH_INDEXER_KIBANASERVER_PASSWORD"
 }
 
 case_yml_password() {

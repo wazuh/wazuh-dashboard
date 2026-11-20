@@ -64,6 +64,7 @@
 | [#1698](https://github.com/wazuh/wazuh-dashboard/issues/1698)                                | Fixed the About page heading and description, and replaced the app version with the app build                                  |
 | [#1714](https://github.com/wazuh/wazuh-dashboard/issues/1714)                                | Fixed the dashboard not stopping on a stop request received during startup, leaving the service failed                         |
 | [#1736](https://github.com/wazuh/wazuh-dashboard/issues/1736)                                | Fixed the export button of table visualizations on dashboards being covered by the panel header when the panel title is hidden |
+| [#1726](https://github.com/wazuh/wazuh-dashboard/issues/1726)                                | Fixed the credential resolver keeping the old indexer and Server API passwords after those components are reinstalled          |
 
 ## Prior versions
 
