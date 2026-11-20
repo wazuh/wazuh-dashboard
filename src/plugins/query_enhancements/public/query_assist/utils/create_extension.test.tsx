@@ -129,7 +129,8 @@ describe('CreateExtension', () => {
     });
   });
 
-  it('should be disabled when AI features are disabled', async () => {
+  // Wazuh: skipped by Wazuh, the AI features setting is not registered.
+  it.skip('should be disabled when AI features are disabled', async () => {
     const mockCoreSetup = {
       ...coreSetupMock,
       getStartServices: jest.fn().mockResolvedValue([

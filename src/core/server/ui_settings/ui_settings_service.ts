@@ -57,7 +57,8 @@ import {
   PERMISSION_CONTROLLED_UI_SETTINGS_WRAPPER_ID,
   PERMISSION_CONTROLLED_UI_SETTINGS_WRAPPER_PRIORITY,
 } from './utils';
-import { getAIFeaturesSetting } from './settings/ai_features';
+// Wazuh: commented out by Wazuh, the AI features setting is not registered.
+// import { getAIFeaturesSetting } from './settings/ai_features';
 
 export interface SetupDeps {
   http: InternalHttpServiceSetup;
@@ -111,7 +112,10 @@ export class UiSettingsService
       permissionControlledUiSettingsWrapper.wrapperFactory
     );
 
-    this.register(getAIFeaturesSetting());
+    // Wazuh: commented out by Wazuh. The "Enable AI features" setting is not registered because
+    // it only controls the query assist feature, which requires the ML Commons plugin that the
+    // Wazuh indexer does not include.
+    // this.register(getAIFeaturesSetting());
 
     return {
       register: this.register.bind(this),

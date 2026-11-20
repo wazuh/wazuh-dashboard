@@ -42,10 +42,11 @@
 
 ### Removed
 
-| Issue                                                         | Comment                                                                                                                                                 |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [#699](https://github.com/wazuh/wazuh-dashboard/issues/699)   | Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system |
-| [#1381](https://github.com/wazuh/wazuh-dashboard/issues/1381) | Removed the Anomaly Detection plugin from the default Wazuh dashboard package                                                                           |
+| Issue                                                         | Comment                                                                                                                                                            |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [#699](https://github.com/wazuh/wazuh-dashboard/issues/699)   | Removed creation of /usr/lib/.build-id/\* links to prevent conflicts when installing Wazuh Dashboard alongside OpenSearch Dashboards on the same system            |
+| [#1381](https://github.com/wazuh/wazuh-dashboard/issues/1381) | Removed the Anomaly Detection plugin from the default Wazuh dashboard package                                                                                      |
+| [#1777](https://github.com/wazuh/wazuh-dashboard/issues/1777) | Removed the "Enable AI features" advanced setting, which no user could change and only controlled the query assist feature that the Wazuh indexer does not support |
 
 ### Fixed
 
