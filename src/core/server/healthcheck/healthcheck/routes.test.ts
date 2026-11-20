@@ -6,7 +6,8 @@
 import { Server } from '@hapi/hapi';
 import { taskResult } from '../../../common/healthcheck';
 import { HealthCheck } from './health_check';
-import { addRoutesNotReadyServer } from './routes';
+import { addRoutesNotReadyServer, addRoutesReadyServer } from './routes';
+import { mockRouter } from './router.mock';
 
 function mockLogger(): any {
   return {
@@ -137,5 +138,47 @@ describe('Not-ready server healthcheck routes', () => {
       'Check reported a problem. Log in, or check the server logs, for details.'
     );
     expect(byName('critical').error).toBeNull();
+  });
+});
+
+describe('Ready server healthcheck routes', () => {
+  let getTasks: (query?: object) => Promise<any>;
+
+  beforeEach(async () => {
+    const healthcheck = new HealthCheck(mockLogger());
+    healthcheck.register({
+      name: 'ok-task',
+      run: jest.fn(() => taskResult.ok({ secret: 'ok-secret' })),
+    });
+    healthcheck.register({
+      name: 'warning-task',
+      run: jest.fn(() => taskResult.warning('check needs attention', { secret: 'warning-secret' })),
+    });
+    await healthcheck.run({}, ['ok-task', 'warning-task']);
+
+    const router = mockRouter.createRouter();
+    addRoutesReadyServer(router, { healthcheck, logger: mockLogger() });
+    const [, handler] = router.get.mock.calls.find(([{ path }]) => path === '/internal')!;
+    const response = { ok: ({ body }: any) => body, internalError: ({ body }: any) => body };
+    getTasks = (query = {}) => (handler as any)({}, { query }, response);
+  });
+
+  it('returns the tasks status and errors without their data', async () => {
+    const body = await getTasks();
+
+    expect(body.tasks).toHaveLength(2);
+    body.tasks.forEach((task: object) => expect(task).not.toHaveProperty('data'));
+    expect(JSON.stringify(body)).not.toContain('secret');
+    expect(body.tasks.find(({ name }: { name: string }) => name === 'warning-task')).toMatchObject({
+      result: 'yellow',
+      error: 'check needs attention',
+    });
+  });
+
+  it('returns a requested task without its data', async () => {
+    const body = await getTasks({ name: 'ok-task' });
+
+    expect(body.tasks).toEqual([expect.objectContaining({ name: 'ok-task', result: 'green' })]);
+    expect(body.tasks[0]).not.toHaveProperty('data');
   });
 });
