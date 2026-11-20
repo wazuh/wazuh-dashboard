@@ -415,7 +415,7 @@ rm -fr %{buildroot}
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-13.html
 * Wed Dec 02 2026 support <info@wazuh.com> - 4.14.12
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-12.html
-* Wed Nov 18 2026 support <info@wazuh.com> - 4.14.11
+* Wed Nov 25 2026 support <info@wazuh.com> - 4.14.11
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-11.html
 * Thu Nov 05 2026 support <info@wazuh.com> - 4.14.10
 - More info: https://documentation.wazuh.com/current/release-notes/release-4-14-10.html
