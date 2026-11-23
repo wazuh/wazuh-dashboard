@@ -14,7 +14,7 @@ external `./plugins/` directory.
 - OSD base version: `package.json` → `version` (e.g. `3.6.0`).
 - Wazuh version: `VERSION.json` and `package.json` → `wazuh` (e.g. `5.0.0`,
   revision `04`).
-- Node: see [`.nvmrc`](.nvmrc) (currently 22.22.0). Package manager: Yarn v1
+- Node: see [`.nvmrc`](.nvmrc) (currently 22.23.4). Package manager: Yarn v1
   (`packageManager` = `yarn@1.22.19`), Yarn **workspaces** (single dependency
   tree, unlike the plugins repo).
 - Default branch `main`; work happens on version branches (`4.14.x`, `5.0.0`,
