@@ -36,6 +36,7 @@ function setup() {
     username: { entry: 'opensearch.username', value: 'kibanaserver' },
     required: true,
     caMissing: 'no indexer CA',
+    host: 'an indexer node',
   };
   peers[1] = {
     ...peers[1],
@@ -45,6 +46,7 @@ function setup() {
     entry: 'wazuh_core.hosts.default.password',
     required: false,
     caMissing: 'no manager CA',
+    host: 'the manager master node',
   };
   const ctx = r.createContext({
     home: root,
@@ -454,6 +456,59 @@ test('install resolves everything from the peers; a restart changes nothing', ()
   for (const gone of ['certs', 'ca', 'export']) {
     assert.ok(!fs.existsSync(path.join(configDir, gone)));
   }
+});
+
+// A dashboard host with the Server API configured, as the package ships it.
+function dashboardHost() {
+  const host = setup();
+  host.ctx.env.WAZUH_DASHBOARD_CERT_SANS = 'DNS:dash';
+  fs.writeFileSync(
+    path.join(host.configDir, 'opensearch_dashboards.yml'),
+    'wazuh_core.hosts:\n  default:\n    url: https://localhost\n'
+  );
+  return host;
+}
+
+test('install with nothing placed lists what is missing and where to copy it from', () => {
+  const { configDir, peers, ctx } = dashboardHost();
+  let problems;
+  const out = captureOutput(() => {
+    problems = r.resolve(ctx, 'install');
+    r.report(ctx, 'install', problems);
+  });
+  const certs = path.join(configDir, 'certs');
+  for (const line of [
+    'MISSING WAZUH_INDEXER_KIBANASERVER_PASSWORD (kibanaserver)',
+    `copy it from ${path.join(peers[0].exportDir, 'credentials.env')} on an indexer node`,
+    `into ${path.join(configDir, 'local.env')}, or install wazuh-indexer on this host first`,
+    `MISSING ${path.join(certs, 'indexer-ca.pem')}: no indexer CA`,
+    `copy ${path.join(peers[0].exportDir, 'ca.pem')} from an indexer node there`,
+    // The manager's are warnings: the dashboard starts without them.
+    'warning: MISSING WAZUH_MANAGER_WUI_PASSWORD (wazuh-internal-client)',
+    `copy it from ${path.join(peers[1].exportDir, 'credentials.env')} on the manager master node`,
+    `warning: MISSING ${path.join(certs, 'manager-ca.pem')}: no manager CA`,
+    `copy ${path.join(peers[1].exportDir, 'ca.pem')} from the manager master node there`,
+    'does not start until every MISSING, INVALID or UNSAFE entry above is resolved',
+  ]) {
+    assert.ok(out.includes(line), `${line}\n--- in ---\n${out}`);
+  }
+  assert.ok(!out.includes('Start the dashboard'));
+  assert.ok(problems.length > 0);
+});
+
+test('install with the indexer placed says to start, and warns about the manager', () => {
+  const { peers, ctx } = dashboardHost();
+  exportPassword(peers, 0, 'Kibana.Pass1');
+  fs.writeFileSync(path.join(peers[0].exportDir, 'ca.pem'), caPair().certPem);
+  let problems;
+  const out = captureOutput(() => {
+    problems = r.resolve(ctx, 'install');
+    r.report(ctx, 'install', problems);
+  });
+  assert.deepStrictEqual(problems, []);
+  assert.ok(out.includes('warning: MISSING WAZUH_MANAGER_WUI_PASSWORD'));
+  assert.ok(out.includes('Start the dashboard and enable it at boot'));
+  assert.ok(!out.includes('does not start until'));
 });
 
 test('a staged peer CA and a staged dashboard CA are used and kept', () => {

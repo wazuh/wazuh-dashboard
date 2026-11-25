@@ -53,6 +53,8 @@ const PEERS = [
     // Without the indexer's password and CA the dashboard cannot work at all.
     required: true,
     caMissing: 'no CA to verify the indexer with',
+    // Where the operator copies the password and CA from, on a host without the peer.
+    host: 'an indexer node',
   },
   {
     name: 'manager',
@@ -69,6 +71,7 @@ const PEERS = [
     caMissing:
       'the Server API connection is refused until it is present; ' +
       'once wazuh-manager is installed, the next start imports it',
+    host: 'the manager master node',
   },
 ];
 
@@ -1055,13 +1058,16 @@ function dashboardAddress(ctx) {
   return os.hostname();
 }
 
-function printFirstLogin(ctx) {
+function printFirstLogin(ctx, complete) {
   const indexer = ctx.peers.find((p) => p.name === 'indexer');
   process.stdout.write(
     `\nWazuh dashboard: https://${dashboardAddress(ctx)}\n` +
       'Log in as admin, with WAZUH_INDEXER_ADMIN_PASSWORD from ' +
       `${path.join(indexer.exportDir, 'credentials.env')} on the indexer host.\n` +
-      'Start the dashboard and enable it at boot: systemctl enable --now wazuh-dashboard\n'
+      (complete
+        ? 'Start the dashboard and enable it at boot: systemctl enable --now wazuh-dashboard\n'
+        : 'The dashboard does not start until every MISSING, INVALID or UNSAFE entry above is ' +
+          'resolved.\nThen start it and enable it at boot: systemctl enable --now wazuh-dashboard\n')
   );
 }
 
@@ -1199,7 +1205,6 @@ function resolve(ctx, mode) {
   if (mode !== 'upgrade' && ensureDir(ctx, certsDir(ctx), 0o750, serviceGid(ctx))) {
     for (const peer of ctx.peers) cas[peer.name] = resolvePeerCa(ctx, peer);
   }
-  if (mode === 'install') printFirstLogin(ctx);
 
   for (const peer of ctx.peers) {
     if (passwords[peer.key] === 'invalid') {
@@ -1208,14 +1213,16 @@ function resolve(ctx, mode) {
         '        (it must not be JSON nor have surrounding whitespace)'
       );
     } else if (passwords[peer.key] === 'missing') {
-      const hint =
-        `        set it in ${path.join(ctx.configDir, 'local.env')}, ` +
-        `or install wazuh-${peer.name} on this host first`;
+      const hint = [
+        `        copy it from ${path.join(peer.exportDir, 'credentials.env')} on ${peer.host}`,
+        `        into ${path.join(ctx.configDir, 'local.env')}, ` +
+          `or install wazuh-${peer.name} on this host first`,
+      ];
       if (peer.required) {
-        ctx.problems.push(`MISSING ${peer.key} (${peer.account})`, hint);
-      } else if (mode === 'prestart') {
+        ctx.problems.push(`MISSING ${peer.key} (${peer.account})`, ...hint);
+      } else if (mode !== 'upgrade') {
         err(`warning: MISSING ${peer.key} (${peer.account}): ${peer.caMissing}`);
-        err(hint);
+        hint.forEach(err);
       }
     }
   }
@@ -1224,12 +1231,14 @@ function resolve(ctx, mode) {
     const file = path.join(dir, peerCa(peer));
     // Not resolved this run (--upgrade): judged by presence only.
     const state = cas[peer.name] || (lstatOrNull(file) ? 'ok' : 'missing');
+    const hint = `        copy ${path.join(peer.exportDir, 'ca.pem')} from ${peer.host} there`;
     if (state === 'invalid') {
       ctx.problems.push(`INVALID ${file}: it is not a valid, current CA certificate`);
     } else if (state === 'missing' && peer.required) {
-      ctx.problems.push(`MISSING ${file}: ${peer.caMissing}`);
-    } else if (state === 'missing' && mode === 'prestart') {
+      ctx.problems.push(`MISSING ${file}: ${peer.caMissing}`, hint);
+    } else if (state === 'missing' && mode !== 'upgrade') {
       err(`warning: MISSING ${file}: ${peer.caMissing}`);
+      err(hint);
     }
   }
   for (const name of [CERT, KEY]) {
@@ -1240,6 +1249,13 @@ function resolve(ctx, mode) {
     }
   }
   return ctx.problems;
+}
+
+// Prints what resolve() found. --install reports it and still succeeds; --prestart refuses the start.
+function report(ctx, mode, problems) {
+  // UNSAFE lines were printed when found.
+  problems.filter((p) => !p.startsWith('UNSAFE ')).forEach(err);
+  if (mode === 'install') printFirstLogin(ctx, !problems.length);
 }
 
 function main(argv) {
@@ -1268,10 +1284,9 @@ function main(argv) {
   if (mode === 'clear') return clear(ctx);
 
   const problems = resolve(ctx, mode);
-  if (mode !== 'prestart') return 0;
-  // UNSAFE lines were printed when found.
-  problems.filter((p) => !p.startsWith('UNSAFE ')).forEach(err);
-  return problems.length ? 1 : 0;
+  if (mode === 'upgrade') return 0;
+  report(ctx, mode, problems);
+  return mode === 'prestart' && problems.length ? 1 : 0;
 }
 
 module.exports = {
@@ -1292,6 +1307,7 @@ module.exports = {
   issueLeaf,
   validCa,
   resolve,
+  report,
   clear,
 };
 
