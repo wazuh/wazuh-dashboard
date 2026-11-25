@@ -107,7 +107,7 @@ function createContext({
   peers = PEERS,
   env = process.env,
 } = {}) {
-  return {
+  const ctx = {
     home,
     configDir,
     rootUid,
@@ -120,7 +120,10 @@ function createContext({
     reported: new Set(),
     keys: null,
     runKeystore: (args, input) => runKeystore(home, configDir, args, input),
+    readKeystoreValue: (entry) => readKeystoreValue(ctx, entry),
+    keystoreMtimeMs: null,
   };
+  return ctx;
 }
 
 const detail = (ctx, msg) => ctx.verbose && log(msg);
@@ -337,7 +340,7 @@ function lookup(ctx, key, alias, publisherDir, { allowEmpty = false } = {}) {
   if (publisherDir) sources.push(path.join(publisherDir, 'credentials.env'));
   for (const file of sources) {
     const value = readEnvFile(ctx, file)[key];
-    if (hit(value)) return { value, source: file };
+    if (hit(value)) return { value, source: file, fromExport: file !== sources[0] };
   }
   return null;
 }
@@ -423,7 +426,29 @@ function secureKeystore(ctx) {
 function loadKeys(ctx) {
   const { ok, stdout } = ctx.runKeystore(['list']);
   ctx.keys = ok ? new Set(stdout.split('\n').filter(Boolean)) : null;
+  // Taken before this run writes anything: the peers' exports are compared with it.
+  const stat = lstatOrNull(keystorePath(ctx));
+  ctx.keystoreMtimeMs = stat ? stat.mtimeMs : null;
   return ctx.keys;
+}
+
+// The CLI has no `get`, so the keystore is decrypted here, the way src/legacy/server/keystore/
+// keystore.js does it: `1:` + base64(salt 64 | iv 12 | tag 16 | ciphertext), PBKDF2-SHA512 with
+// 10000 rounds and an empty password, AES-256-GCM, a JSON object inside. Read into memory only,
+// never logged. undefined when the entry is absent or the keystore cannot be read.
+function readKeystoreValue(ctx, entry) {
+  const data = readTrusted(ctx, keystorePath(ctx));
+  if (!data) return undefined;
+  try {
+    const raw = Buffer.from(data.toString('utf8').split(':')[1], 'base64');
+    const key = crypto.pbkdf2Sync('', raw.subarray(0, 64), 10000, 32, 'sha512');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, raw.subarray(64, 76));
+    decipher.setAuthTag(raw.subarray(76, 92));
+    const text = decipher.update(raw.subarray(92), undefined, 'utf8') + decipher.final('utf8');
+    return JSON.parse(text)[entry];
+  } catch (e) {
+    return undefined;
+  }
 }
 
 function ensureKeystore(ctx) {
@@ -454,8 +479,8 @@ function readRecord(ctx) {
   return new Set(data ? data.toString('utf8').split('\n').filter(Boolean) : []);
 }
 
-function keystoreAdd(ctx, entry, value) {
-  const { ok } = ctx.runKeystore(['add', entry, '--stdin'], value);
+function keystoreAdd(ctx, entry, value, { force = false } = {}) {
+  const { ok } = ctx.runKeystore(['add', entry, '--stdin', ...(force ? ['--force'] : [])], value);
   secureKeystore(ctx);
   if (ok) {
     ctx.keys.add(entry);
@@ -475,12 +500,44 @@ function keystoreAdd(ctx, entry, value) {
 // Passwords
 // ---------------------------------------------------------------------------------------------
 
-// 'stored', 'missing' or 'invalid'.
-function resolvePassword(ctx, yml, peer) {
-  if (ctx.keys.has(peer.entry)) {
+// The keystore has the entry. It is kept, except when the peer on this host published a different
+// password after the keystore was last written (the peer was reinstalled, or published a new one):
+// the stored one no longer authenticates, like the CA the same run imports. A value from the
+// environment or local.env is the operator's seed and never replaces it. An export older than the
+// keystore is a stale one: the operator changed the password after it (wazuh-passwords-tool.sh
+// writes the keystore, and rbac_control never touches the export).
+function followPeerPassword(ctx, yml, peer) {
+  const kept = () => {
     detail(ctx, `${peer.entry} is already in the keystore`);
     return 'stored';
+  };
+  if (ymlHas(yml, peer.entry)) return kept();
+  const found = lookup(ctx, peer.key, peer.alias, peer.exportDir);
+  if (!found || !found.fromExport) return kept();
+  const stored = ctx.readKeystoreValue(peer.entry);
+  if (stored === undefined || found.value === String(stored)) return kept();
+  const exported = lstatOrNull(found.source);
+  if (ctx.keystoreMtimeMs !== null && exported && exported.mtimeMs <= ctx.keystoreMtimeMs) {
+    return kept();
   }
+  if (!storesVerbatim(found.value)) {
+    err(`${peer.key} from ${found.source} cannot be stored in the keystore as text`);
+    return 'invalid';
+  }
+  if (!keystoreAdd(ctx, peer.entry, found.value, { force: true })) {
+    err(
+      `INVALID ${peer.key}: the keystore did not accept the new password from ${found.source}; ` +
+        'the stored one differs and no longer matches the peer'
+    );
+    return 'invalid';
+  }
+  log(`replaced ${peer.entry} in the keystore with the one from ${found.source}`);
+  return 'stored';
+}
+
+// 'stored', 'missing' or 'invalid'.
+function resolvePassword(ctx, yml, peer) {
+  if (ctx.keys.has(peer.entry)) return followPeerPassword(ctx, yml, peer);
   if (ymlHas(yml, peer.entry)) {
     detail(ctx, `${peer.entry} is set in opensearch_dashboards.yml`);
     return 'stored';
