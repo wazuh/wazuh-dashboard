@@ -34,5 +34,11 @@ describe('AI features setting', () => {
     it('should require page reload', () => {
       expect(dashboardAssistantSettings.enableAIFeatures.requiresPageReload).toBe(true);
     });
+
+    // Wazuh
+    it('should be hidden and not scoped to dashboard admins', () => {
+      expect(dashboardAssistantSettings.enableAIFeatures.readonly).toBe(true);
+      expect(dashboardAssistantSettings.enableAIFeatures.scope).toBeUndefined();
+    });
   });
 });
