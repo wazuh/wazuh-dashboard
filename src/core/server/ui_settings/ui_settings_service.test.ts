@@ -41,6 +41,8 @@ import { savedObjectsClientMock } from '../mocks';
 import { savedObjectsServiceMock } from '../saved_objects/saved_objects_service.mock';
 import { mockCoreContext } from '../core_context.mock';
 import { uiSettingsType } from './saved_objects';
+// Wazuh
+import { opensearchServiceMock } from '../opensearch/opensearch_service.mock';
 
 const overrides = {
   overrideBaz: 'baz',
@@ -240,6 +242,71 @@ describe('uiSettings', () => {
           'configured'
         );
       });
+    });
+  });
+  // Wazuh
+  describe('AI features setting', () => {
+    const getAIFeaturesDefinition = async (start: { asScopedToClient: Function }) => {
+      MockUiSettingsClientConstructor.mockClear();
+      start.asScopedToClient(savedObjectsClient);
+      return MockUiSettingsClientConstructor.mock.calls[0][0].defaults.enableAIFeatures;
+    };
+    const flushPromises = () => new Promise((resolve) => setImmediate(resolve));
+
+    const createOpenSearch = (components: string[]) => {
+      const opensearch = opensearchServiceMock.createInternalStart();
+      opensearch.client.asInternalUser.cat.plugins.mockReturnValue(
+        opensearchServiceMock.createSuccessTransportRequestPromise(
+          components.map((component) => ({ component }))
+        )
+      );
+      return opensearch;
+    };
+
+    it('stays hidden when the indexer does not have ML Commons', async () => {
+      await service.setup(setupDeps);
+      const opensearch = createOpenSearch(['opensearch-security']);
+      const start = await service.start({ opensearch });
+      await flushPromises();
+
+      expect(opensearch.client.asInternalUser.cat.plugins).toHaveBeenCalledWith({
+        format: 'json',
+      });
+      expect((await getAIFeaturesDefinition(start)).readonly).toBe(true);
+    });
+
+    it('is shown when the indexer has ML Commons', async () => {
+      await service.setup(setupDeps);
+      const start = await service.start({
+        opensearch: createOpenSearch(['opensearch-security', 'opensearch-ml']),
+      });
+      await flushPromises();
+
+      expect((await getAIFeaturesDefinition(start)).readonly).toBe(false);
+    });
+
+    it('retries the check when the indexer does not answer', async () => {
+      jest.useFakeTimers();
+      try {
+        await service.setup(setupDeps);
+        const opensearch = createOpenSearch(['opensearch-ml']);
+        opensearch.client.asInternalUser.cat.plugins.mockReturnValueOnce(
+          opensearchServiceMock.createErrorTransportRequestPromise(new Error('not ready'))
+        );
+        const start = await service.start({ opensearch });
+        await Promise.resolve();
+        await Promise.resolve();
+        expect((await getAIFeaturesDefinition(start)).readonly).toBe(true);
+
+        jest.advanceTimersByTime(30000);
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(opensearch.client.asInternalUser.cat.plugins).toHaveBeenCalledTimes(2);
+        expect((await getAIFeaturesDefinition(start)).readonly).toBe(false);
+      } finally {
+        await service.stop();
+        jest.useRealTimers();
+      }
     });
   });
 });

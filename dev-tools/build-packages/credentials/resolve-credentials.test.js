@@ -55,16 +55,21 @@ function setup() {
     env: {},
   });
   ctx.gid = process.getgid();
-  // An in-memory keystore with the CLI's behaviour: `add` never overwrites.
+  // An in-memory keystore with the CLI's behaviour: `add` overwrites only with `--force`.
   const store = new Map();
   const ks = path.join(configDir, 'opensearch_dashboards.keystore');
-  ctx.runKeystore = ([cmd, key], input) => {
+  const control = { refuse: false };
+  ctx.runKeystore = ([cmd, key, ...flags], input) => {
     if (cmd === 'create') fs.writeFileSync(ks, '', { mode: 0o600 });
-    if (cmd === 'add' && !store.has(key)) store.set(key, input);
+    if (cmd === 'add') {
+      if (control.refuse) return { ok: false, stdout: '' };
+      if (!store.has(key) || flags.includes('--force')) store.set(key, input);
+    }
     if (cmd === 'remove') store.delete(key);
     return { ok: true, stdout: [...store.keys()].join('\n') };
   };
-  return { root, configDir, peers, ctx, store };
+  ctx.readKeystoreValue = (entry) => store.get(entry);
+  return { root, configDir, peers, ctx, store, control, ks };
 }
 
 function caPair() {
@@ -538,13 +543,147 @@ test('a world-readable local.env is read; only writable by others is UNSAFE', ()
   assert.deepStrictEqual(ctx.problems, []);
 });
 
+function exportPassword(peers, which, value, mtimeSeconds) {
+  const file = path.join(peers[which].exportDir, 'credentials.env');
+  const key = peers[which].key;
+  fs.writeFileSync(file, `${key}=${value}\n`);
+  if (mtimeSeconds !== undefined) fs.utimesSync(file, mtimeSeconds, mtimeSeconds);
+}
+
+test('a peer that publishes a different password replaces the stored one', () => {
+  for (const mode of ['prestart', 'upgrade', 'install']) {
+    const { configDir, peers, ctx, store, ks } = setup();
+    fs.writeFileSync(
+      path.join(configDir, 'opensearch_dashboards.yml'),
+      'wazuh_core.hosts:\n  default:\n    url: https://localhost\n'
+    );
+    exportPassword(peers, 0, 'Kibana.Pass1');
+    exportPassword(peers, 1, 'Wui.Pass1');
+    fs.writeFileSync(path.join(peers[0].exportDir, 'ca.pem'), caPair().certPem);
+    r.resolve(ctx, 'install');
+    assert.strictEqual(store.get('opensearch.password'), 'Kibana.Pass1');
+    assert.strictEqual(store.get('wazuh_core.hosts.default.password'), 'Wui.Pass1');
+
+    // Both peers are reinstalled: their exports are newer than the keystore.
+    fs.utimesSync(ks, 1000, 1000);
+    exportPassword(peers, 0, 'Kibana.Pass2', 2000);
+    exportPassword(peers, 1, 'Wui.Pass2', 2000);
+    const out = [];
+    const log = mock.method(process.stdout, 'write', (line) => out.push(String(line)));
+    ctx.problems = [];
+    try {
+      assert.deepStrictEqual(r.resolve(ctx, mode), []);
+    } finally {
+      log.mock.restore();
+    }
+    assert.strictEqual(store.get('opensearch.password'), 'Kibana.Pass2', mode);
+    assert.strictEqual(store.get('wazuh_core.hosts.default.password'), 'Wui.Pass2', mode);
+    assert.ok(out.some((l) => l.includes('replaced opensearch.password in the keystore')));
+    assert.ok(!out.some((l) => l.includes('Kibana.Pass') || l.includes('Wui.Pass')));
+  }
+});
+
+test('an unchanged export, a stale export and operator values keep the stored password', () => {
+  const { configDir, peers, ctx, store, ks } = setup();
+  exportPassword(peers, 0, 'Kibana.Pass1');
+  r.resolve(ctx, 'install');
+  const writes = mock.method(ctx, 'runKeystore');
+
+  // Same value: nothing is written.
+  fs.utimesSync(ks, 1000, 1000);
+  exportPassword(peers, 0, 'Kibana.Pass1', 2000);
+  r.resolve(ctx, 'prestart');
+  assert.ok(!writes.mock.calls.some((c) => c.arguments[0][0] === 'add'));
+
+  // The operator rotated the password after the export was written (wazuh-passwords-tool.sh):
+  // the export is stale and does not win.
+  store.set('opensearch.password', 'Rotated.Pass9');
+  exportPassword(peers, 0, 'Kibana.Pass1', 500);
+  fs.utimesSync(ks, 1000, 1000);
+  r.resolve(ctx, 'prestart');
+  assert.strictEqual(store.get('opensearch.password'), 'Rotated.Pass9');
+
+  // A value from the environment or local.env only seeds an empty keystore.
+  fs.utimesSync(ks, 1000, 1000);
+  exportPassword(peers, 0, 'Kibana.Pass2', 2000);
+  ctx.env.WAZUH_INDEXER_KIBANASERVER_PASSWORD = 'Env.Pass3';
+  r.resolve(ctx, 'prestart');
+  assert.strictEqual(store.get('opensearch.password'), 'Rotated.Pass9');
+  delete ctx.env.WAZUH_INDEXER_KIBANASERVER_PASSWORD;
+  fs.writeFileSync(
+    path.join(configDir, 'local.env'),
+    'WAZUH_INDEXER_KIBANASERVER_PASSWORD=L.Pass4\n',
+    {
+      mode: 0o600,
+    }
+  );
+  r.resolve(ctx, 'prestart');
+  assert.strictEqual(store.get('opensearch.password'), 'Rotated.Pass9');
+});
+
+test('a password set in opensearch_dashboards.yml is never replaced from an export', () => {
+  const { configDir, peers, ctx, store, ks } = setup();
+  store.set('opensearch.password', 'Operator.Pass1');
+  fs.writeFileSync(path.join(configDir, 'opensearch_dashboards.yml'), 'opensearch.password: Y\n');
+  fs.writeFileSync(ks, '', { mode: 0o600 });
+  fs.utimesSync(ks, 1000, 1000);
+  exportPassword(peers, 0, 'Kibana.Pass2', 2000);
+  r.resolve(ctx, 'prestart');
+  assert.strictEqual(store.get('opensearch.password'), 'Operator.Pass1');
+});
+
+test('a keystore that refuses the new password, or a value it would not store, fails the start', () => {
+  const { peers, ctx, store, control, ks } = setup();
+  exportPassword(peers, 0, 'Kibana.Pass1');
+  r.resolve(ctx, 'install');
+
+  fs.utimesSync(ks, 1000, 1000);
+  exportPassword(peers, 0, 'Kibana.Pass2', 2000);
+  control.refuse = true;
+  ctx.problems = [];
+  let problems = r.resolve(ctx, 'prestart');
+  assert.ok(problems.some((p) => p.startsWith('INVALID WAZUH_INDEXER_KIBANASERVER_PASSWORD')));
+  assert.strictEqual(store.get('opensearch.password'), 'Kibana.Pass1');
+  control.refuse = false;
+
+  exportPassword(peers, 0, '123456789e10', 3000);
+  ctx.problems = [];
+  problems = r.resolve(ctx, 'prestart');
+  assert.ok(problems.some((p) => p.startsWith('INVALID WAZUH_INDEXER_KIBANASERVER_PASSWORD')));
+  assert.strictEqual(store.get('opensearch.password'), 'Kibana.Pass1');
+});
+
+test('reads a value back from the keystore file the CLI wrote', () => {
+  const { configDir, ctx } = setup();
+  const plain = r.createContext({
+    home: ctx.home,
+    configDir,
+    rootUid: ctx.rootUid,
+    rootGid: ctx.rootGid,
+  });
+  const salt = crypto.randomBytes(64);
+  const iv = crypto.randomBytes(12);
+  const key = crypto.pbkdf2Sync('', salt, 10000, 32, 'sha512');
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const text = JSON.stringify({ 'opensearch.password': 'Kibana.Pass1' });
+  const body = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+  const blob = Buffer.concat([salt, iv, cipher.getAuthTag(), body]).toString('base64');
+  fs.writeFileSync(path.join(configDir, 'opensearch_dashboards.keystore'), `1:${blob}`, {
+    mode: 0o640,
+  });
+  assert.strictEqual(plain.readKeystoreValue('opensearch.password'), 'Kibana.Pass1');
+  assert.strictEqual(plain.readKeystoreValue('missing'), undefined);
+});
+
 test('--clear keeps a pair and keystore entries the resolver did not set', () => {
   const { configDir, peers, ctx, store } = setup();
   fs.writeFileSync(
     path.join(peers[0].exportDir, 'credentials.env'),
     'WAZUH_INDEXER_KIBANASERVER_PASSWORD=Kibana.Pass1\n'
   );
-  // The operator's own entry and pair, from a PKI that is not the dashboard's.
+  // The operator's own entry, written after the export was, and a pair from a PKI that is not the
+  // dashboard's.
+  fs.utimesSync(path.join(peers[0].exportDir, 'credentials.env'), 1, 1);
   store.set('opensearch.password', 'Operator.Pass1');
   const certs = path.join(configDir, 'certs');
   fs.mkdirSync(certs, { mode: 0o750 });

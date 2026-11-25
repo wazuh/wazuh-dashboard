@@ -50,9 +50,17 @@ The first hit wins: the process environment (scoped name, then alias), then
 `/etc/wazuh-dashboard/local.env`, then the publisher's `export/credentials.env`. An empty value is
 no hit.
 
-- A password already in the keystore or set in `opensearch_dashboards.yml` is never overwritten.
-  An operator's `opensearch.username` is never replaced with `kibanaserver`. Without a
-  `wazuh_core.hosts.default` host, the manager password is not needed.
+- A password set in `opensearch_dashboards.yml` is never overwritten. A password already in the
+  keystore is kept, except when the same-host peer's `export/credentials.env` holds a different
+  one and was written after the keystore was last written (the peer was reinstalled, or published
+  a new password): it replaces the stored one, like the peer's CA, and `--install`, `--upgrade`
+  and `--prestart` print `replaced <entry> in the keystore with the one from <file>`. A value
+  from the environment or `local.env` only fills an empty keystore and never replaces one. An
+  export older than the keystore is stale (`wazuh-passwords-tool.sh` writes the keystore,
+  `rbac_control` never the export) and is ignored. A keystore that refuses the new value is
+  `INVALID`, refusing the start. The CLI has no `get`, so the resolver decrypts the keystore
+  itself to compare. An operator's `opensearch.username` is never replaced with `kibanaserver`.
+  Without a `wazuh_core.hosts.default` host, the manager password is not needed.
 - `keystore add` trims the value and stores it `JSON.parse`d, so a value that is JSON or has
   surrounding whitespace is reported as `INVALID`, naming the key, never the value.
 - The secrets the dashboard owns are generated, never looked up: see [Owned secrets](#owned-secrets).
