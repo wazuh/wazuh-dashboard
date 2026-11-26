@@ -36,7 +36,10 @@ export interface HealthCheckServiceStart {
   status$: BehaviorSubject<{ status: TaskInfo['result']; checks: TaskInfo[] }>;
   client: {
     internal: {
-      fetch: (tasknames?: string[]) => Promise<HealthCheckStatus>;
+      fetch: (
+        tasknames?: string[],
+        options?: { asSystemRequest?: boolean }
+      ) => Promise<HealthCheckStatus>;
       run: (tasknames?: string[]) => Promise<HealthCheckStatus>;
     };
   };

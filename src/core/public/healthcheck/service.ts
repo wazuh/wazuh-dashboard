@@ -43,7 +43,7 @@ export class HealthcheckService {
       getDescription: (name: string) => this.descriptions.get(name),
       client: {
         internal: {
-          fetch: async (taskNames?: string[]) => {
+          fetch: async (taskNames?: string[], options?: { asSystemRequest?: boolean }) => {
             try {
               let query;
 
@@ -53,7 +53,12 @@ export class HealthcheckService {
                 };
               }
 
-              const response = await core.http.get('/api/healthcheck/internal', { query });
+              // Requests sent on a timer, with no user input, are flagged as system requests so
+              // they do not count as user activity (e.g. they do not renew the session).
+              const response = await core.http.get('/api/healthcheck/internal', {
+                query,
+                asSystemRequest: options?.asSystemRequest,
+              });
               const nextState = this.generateNextState({ checks: response.tasks });
               status$.next(nextState);
               return nextState;
