@@ -24,3 +24,6 @@ wazuh_core.hosts:
     username: wazuh-internal-client
     run_as: true
     ca: '/etc/wazuh-dashboard/certs/manager-ca.pem'
+
+# Show the bar that invites users to register the environment with Wazuh CTI
+wazuh_check_updates.ctiRegistrationUiEnabled: true
