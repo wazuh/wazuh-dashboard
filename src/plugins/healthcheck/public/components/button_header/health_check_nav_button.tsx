@@ -55,8 +55,12 @@ export const HealthCheckNavButton = ({
     getConfig().then((config) => {
       fetch().catch();
       const intervalConfig = config?.interval;
-      if (interval) {
-        updateInterval.current = interval(intervalConfig).subscribe(() => fetch());
+      if (intervalConfig) {
+        // The periodic refresh is not user activity: flag it as a system request so it does not
+        // renew the session.
+        updateInterval.current = interval(intervalConfig).subscribe(() =>
+          fetch(undefined, { asSystemRequest: true }).catch(() => {})
+        );
       }
     });
 

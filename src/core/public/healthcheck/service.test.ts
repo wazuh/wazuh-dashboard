@@ -67,6 +67,42 @@ describe('HealthcheckService', () => {
     expect(responseFetch2.checks).toEqual(initialChecks);
   });
 
+  describe('fetch', () => {
+    const startService = () => {
+      const http = httpServiceMock.createStartContract();
+      http.get.mockResolvedValue({ tasks: [] });
+      const start = new HealthcheckService().start({
+        http,
+        notifications: notificationServiceMock.createStartContract(),
+        chrome: chromeServiceMock.createStartContract(),
+        uiSettings: uiSettingsServiceMock.createStartContract(),
+        healthCheckConfig: {} as HealthCheckConfig,
+      });
+      return { http, start };
+    };
+
+    it('sends a regular request by default', async () => {
+      const { http, start } = startService();
+
+      await start.client.internal.fetch();
+
+      expect(http.get).toHaveBeenCalledTimes(1);
+      expect(http.get.mock.calls[0][0]).toBe('/api/healthcheck/internal');
+      expect(http.get.mock.calls[0][1]?.asSystemRequest).toBeFalsy();
+    });
+
+    it('sends a system request when requested, so it is not user activity', async () => {
+      const { http, start } = startService();
+
+      await start.client.internal.fetch(undefined, { asSystemRequest: true });
+
+      expect(http.get).toHaveBeenCalledWith('/api/healthcheck/internal', {
+        query: undefined,
+        asSystemRequest: true,
+      });
+    });
+  });
+
   it.each`
     scenario                                    | checks                                                                                           | status
     ${'there are no checks'}                    | ${[]}                                                                                            | ${'green'}

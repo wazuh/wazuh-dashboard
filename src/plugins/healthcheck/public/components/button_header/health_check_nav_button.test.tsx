@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { BehaviorSubject } from 'rxjs';
 import { HealthCheckStatus, TaskInfo } from 'src/core/common/healthcheck';
 import { HealthCheckNavButton, HealthCheckNavButtonProps } from './health_check_nav_button';
@@ -96,6 +96,56 @@ describe('HealthCheckNavButton', () => {
     const icon = getByTestId('healthcheck-icon');
     expect(icon).toHaveAttribute('data-icon-type', 'pulse');
     expect(icon).toHaveAttribute('data-icon-color', 'danger');
+  });
+
+  describe('periodic refresh', () => {
+    const renderWithInterval = (intervalMs: number) => {
+      const fetch = jest.fn().mockResolvedValue(undefined);
+      const { unmount } = render(
+        <HealthCheckNavButton
+          coreStart={coreStart}
+          status$={new BehaviorSubject<HealthCheckStatus>(buildStatus('green'))}
+          fetch={fetch}
+          getConfig={jest.fn().mockResolvedValue({ interval: intervalMs })}
+          getDescription={() => undefined}
+        />
+      );
+      return { fetch, unmount };
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('sends the timer-driven reads as system requests so they do not renew the session', async () => {
+      const { fetch, unmount } = renderWithInterval(1000);
+      // Let the config resolve: the read on mount is a regular request.
+      await act(async () => {});
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenLastCalledWith();
+
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenLastCalledWith(undefined, { asSystemRequest: true });
+      unmount();
+    });
+
+    it('does not start the timer when no interval is configured', async () => {
+      const { fetch, unmount } = renderWithInterval(0);
+      await act(async () => {});
+
+      // No timer scheduled: only the read on mount.
+      expect(jest.getTimerCount()).toBe(0);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      unmount();
+    });
   });
 
   describe('popover', () => {
