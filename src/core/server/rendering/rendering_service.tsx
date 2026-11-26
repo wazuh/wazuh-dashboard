@@ -51,9 +51,22 @@ import { OpenSearchDashboardsConfigType } from '../opensearch_dashboards_config'
 import { HttpConfigType } from '../http/http_config';
 import { SslConfig } from '../http/ssl_config';
 import { LoggerFactory } from '../logging';
+// Wazuh
+import { AuthStatus } from '../http/auth_state_storage';
+import { PackageInfo } from '../config';
 
 // Wazuh: fall back to the Wazuh brand when applicationTitle is invalid
 const DEFAULT_TITLE = 'Wazuh dashboard';
+
+// Wazuh: blanks the build details that the login page does not need. Version and build
+// number stay: the browser sends the version on every request and loads bundles by build number.
+const withoutBuildDetails = (packageInfo: Readonly<PackageInfo>): PackageInfo => ({
+  ...packageInfo,
+  branch: '',
+  buildSha: '',
+  wazuhRevision: '',
+  wazuhStage: '',
+});
 
 /** @internal */
 export class RenderingService {
@@ -86,9 +99,13 @@ export class RenderingService {
         uiSettings,
         { includeUserSettings = true, vars, nonce }: IRenderOptions
       ) => {
+        // Wazuh: a request with no session gets no build commit, branch, revision or stage
+        const isUnauthenticated = http.auth.get(request).status === AuthStatus.unauthenticated;
         const env = {
           mode: this.coreContext.env.mode,
-          packageInfo: this.coreContext.env.packageInfo,
+          packageInfo: isUnauthenticated
+            ? withoutBuildDetails(this.coreContext.env.packageInfo)
+            : this.coreContext.env.packageInfo,
         };
         const basePath = http.basePath.get(request);
         const uiPublicUrl = `${basePath}/ui`;
