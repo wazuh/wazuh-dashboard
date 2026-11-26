@@ -57,6 +57,9 @@ import { mockCoreContext } from '../core_context.mock';
 import { pluginServiceMock } from '../plugins/plugins_service.mock';
 import { dynamicConfigServiceMock } from '../config/dynamic_config_service.mock';
 import { DiscoveredPlugin } from '../plugins';
+// Wazuh
+import { AuthStatus } from '../http/auth_state_storage';
+import { httpServiceMock } from '../http/http_service.mock';
 
 const INJECTED_METADATA = {
   version: expect.any(String),
@@ -270,6 +273,65 @@ describe('RenderingService', () => {
         const data = JSON.parse(load(content)('osd-injected-metadata').attr('data') || '');
 
         expect(data.uiPlugins[0].config).toEqual({ uiProp: 'value' });
+      });
+
+      // Wazuh
+      describe('build details by authentication status', () => {
+        const packageInfo = {
+          version: '3.6.0',
+          branch: '5.0.0',
+          buildNum: 50011,
+          buildSha: 'bf834ef694a42e0881a00d2ecfb5619872af801c',
+          dist: true,
+          wazuhVersion: '5.0.0',
+          wazuhRevision: '04',
+          wazuhStage: 'rc3',
+        };
+
+        const renderWithAuthStatus = async (status: AuthStatus) => {
+          const contextWithBuild = {
+            ...context,
+            env: { ...context.env, mode: context.env.mode, packageInfo },
+          } as typeof context;
+          const http = httpServiceMock.createInternalSetupContract();
+          http.auth.get.mockReturnValue({ status, state: {} });
+          const { render: renderPage } = await new RenderingService(contextWithBuild).setup({
+            ...mockRenderingSetupDeps,
+            http,
+          });
+          const content = await renderPage(createOpenSearchDashboardsRequest(), uiSettings, {
+            nonce: 'test-nonce',
+          });
+          return JSON.parse(load(content)('osd-injected-metadata').attr('data') || '');
+        };
+
+        it('leaves out the build commit, branch, revision and stage with no session', async () => {
+          const data = await renderWithAuthStatus(AuthStatus.unauthenticated);
+
+          expect(data.branch).toBe('');
+          expect(data.env.packageInfo).toEqual({
+            ...packageInfo,
+            branch: '',
+            buildSha: '',
+            wazuhRevision: '',
+            wazuhStage: '',
+          });
+          expect(data.wazuhBuildInfo).toEqual({ version: '5.0.0', revision: '', stage: '' });
+          // The browser needs these to send requests and load the bundles
+          expect(data.version).toBe('3.6.0');
+          expect(data.buildNumber).toBe(50011);
+        });
+
+        it.each([AuthStatus.authenticated, AuthStatus.unknown])(
+          'keeps every build detail when the status is %s',
+          async (status) => {
+            const data = await renderWithAuthStatus(status);
+
+            expect(data.branch).toBe('5.0.0');
+            expect(data.env.packageInfo).toEqual(packageInfo);
+            expect(data.wazuhBuildInfo).toEqual({ version: '5.0.0', revision: '04', stage: 'rc3' });
+          }
+        );
       });
     });
   });
