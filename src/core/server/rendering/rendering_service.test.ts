@@ -294,7 +294,7 @@ describe('RenderingService', () => {
             env: { ...context.env, mode: context.env.mode, packageInfo },
           } as typeof context;
           const http = httpServiceMock.createInternalSetupContract();
-          http.auth.get.mockReturnValue({ status, state: {} });
+          (http.auth.get as jest.Mock).mockReturnValue({ status, state: {} });
           const { render: renderPage } = await new RenderingService(contextWithBuild).setup({
             ...mockRenderingSetupDeps,
             http,
