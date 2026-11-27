@@ -174,8 +174,8 @@ log "Fixing shebangs"
 log
 # TODO: investigate to remove this if possible
 # Fix ambiguous shebangs (necessary for RPM building)
-grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
-grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
+grep -rnwl './node_modules/' './plugins/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
+grep -rnwl './node_modules/' './plugins/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
 
 log
 log "Normalizing file modes"

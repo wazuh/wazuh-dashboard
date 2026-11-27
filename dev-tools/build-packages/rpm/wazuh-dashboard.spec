@@ -255,7 +255,7 @@ rm -fr %{buildroot}
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/src/docs"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules"
 %attr(-, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules/*"
-%attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules/.yarn-integrity"
+%attr(644, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node_modules/.yarn-integrity"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node"
 %attr(-, %{USER}, %{GROUP}) "%{INSTALL_DIR}/node/*"
 %dir %attr(750, %{USER}, %{GROUP}) "%{INSTALL_DIR}/data"
