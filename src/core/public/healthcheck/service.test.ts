@@ -87,8 +87,10 @@ describe('HealthcheckService', () => {
       await start.client.internal.fetch();
 
       expect(http.get).toHaveBeenCalledTimes(1);
-      expect(http.get.mock.calls[0][0]).toBe('/api/healthcheck/internal');
-      expect(http.get.mock.calls[0][1]?.asSystemRequest).toBeFalsy();
+      expect(http.get).toHaveBeenCalledWith('/api/healthcheck/internal', {
+        query: undefined,
+        asSystemRequest: undefined,
+      });
     });
 
     it('sends a system request when requested, so it is not user activity', async () => {
