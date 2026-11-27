@@ -105,6 +105,11 @@ function extractArchive(archive: string, dir: string) {
   });
 }
 
+const processProcOutput = (all: string | undefined) => {
+  const regexp = /\n[^\n]*\(node:\d+\) \[DEP0180\] DeprecationWarning: fs\.Stats constructor is deprecated\.\n[^\n]*\(Use `node --trace-deprecation \.\.\.` to show where the warning was created\)/g;
+  return all?.replace(regexp, '');
+};
+
 expect.addSnapshotSerializer(createReplaceSerializer(/[\d\.]+ sec/g, '<time>'));
 expect.addSnapshotSerializer(createReplaceSerializer(/\d+(\.\d+)?[sm]/g, '<time>'));
 expect.addSnapshotSerializer(createReplaceSerializer(/yarn (\w+) v[\d\.]+/g, 'yarn $1 <version>'));
@@ -148,7 +153,7 @@ it('builds a generated plugin into a viable archive', async () => {
     }
   );
 
-  expect(buildProc.all).toMatchInlineSnapshot(`
+  expect(processProcOutput(buildProc.all)).toMatchInlineSnapshot(`
     " info deleting the build and target directories
      info running @osd/optimizer
      │ info initialized, 0 bundles cached
@@ -242,7 +247,7 @@ it('builds a non-semver generated plugin into a viable archive', async () => {
     }
   );
 
-  expect(buildProc.all).toMatchInlineSnapshot(`
+  expect(processProcOutput(buildProc.all)).toMatchInlineSnapshot(`
     " info deleting the build and target directories
      info running @osd/optimizer
      │ info initialized, 0 bundles cached

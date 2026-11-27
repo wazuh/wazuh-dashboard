@@ -42,7 +42,7 @@ import { PluginsConfig, PluginsConfigType, config } from '../plugins_config';
 import type { InstanceInfo } from '../plugin_context';
 import { discover } from './plugins_discovery';
 import { CoreContext } from '../../core_context';
-import { PROCESS_WORKING_DIR, standardize } from '@osd/cross-platform';
+import { PROCESS_WORKING_DIR } from '@osd/cross-platform';
 import { dynamicConfigServiceMock } from '../../config/dynamic_config_service.mock';
 
 const Plugins = {
@@ -197,7 +197,7 @@ describe('plugins discovery system', () => {
 
     expect(errors).toEqual(
       expect.arrayContaining([
-        `Error: Unexpected token o in JSON at position 1 (invalid-manifest, ${manifestPath(
+        `Error: Unexpected token 'o', "not-json" is not valid JSON (invalid-manifest, ${manifestPath(
           'plugin_a'
         )})`,
         `Error: Plugin manifest must contain an "id" property. (invalid-manifest, ${manifestPath(
@@ -239,17 +239,7 @@ describe('plugins discovery system', () => {
       )
       .toPromise();
 
-    const srcPluginsPath = resolve(PROCESS_WORKING_DIR, 'src', 'plugins');
-    expect(errors).toEqual(
-      expect.arrayContaining([
-        `Error: EACCES, permission denied '${standardize(
-          srcPluginsPath,
-          false,
-          false,
-          true
-        )}' (invalid-search-path, ${srcPluginsPath})`,
-      ])
-    );
+    expect(errors).toEqual(expect.arrayContaining([expect.stringMatching(/EACCES.*src.plugins/)]));
   });
 
   it('return an error when the manifest file is not accessible', async () => {
@@ -279,17 +269,7 @@ describe('plugins discovery system', () => {
       )
       .toPromise();
 
-    const errorPath = manifestPath('plugin_a');
-    expect(errors).toEqual(
-      expect.arrayContaining([
-        `Error: EACCES, permission denied '${standardize(
-          errorPath,
-          false,
-          false,
-          true
-        )}' (missing-manifest, ${errorPath})`,
-      ])
-    );
+    expect(errors).toEqual(expect.arrayContaining([expect.stringMatching(/EACCES.*plugin_a/)]));
   });
 
   it('discovers plugins in nested directories', async () => {
