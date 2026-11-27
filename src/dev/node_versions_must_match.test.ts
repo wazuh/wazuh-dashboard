@@ -43,7 +43,7 @@ describe('All configs should use a single version of Node', () => {
       readFile('./.nvmrc', { encoding: 'utf-8' }),
     ]);
 
-    expect(semver.major(nodeVersion.trim())).to.be(Number(nvmrc.trim()));
+    expect(nodeVersion.trim()).to.be(nvmrc.trim());
   });
 
   it('should compare .node-version and engines.node from package.json', async () => {
