@@ -41,6 +41,23 @@ js-file() {
   echo "./plugins/$1/target/public/$1.$2.js"
 }
 
+# Set modes from content, not from the npm archives or the build umask:
+# directories 755, files 644, scripts (#!) and ELF binaries 755.
+normalize-modes() {
+  find "$1" -type d -exec chmod 755 {} +
+  find "$1" -type f -exec chmod 644 {} +
+  find "$1" -type f -print0 | (
+    export LC_ALL=C
+    while IFS= read -r -d '' file; do
+      magic=''
+      IFS= read -r -N 4 magic <"$file" || true
+      if [[ "$magic" == '#!'* || "$magic" == $'\x7fELF' ]]; then
+        printf '%s\0' "$file"
+      fi
+    done
+  ) | xargs -0 -r chmod 755
+}
+
 # Paths
 current_path="$(
   cd $(dirname $0)
@@ -157,15 +174,21 @@ log "Fixing shebangs"
 log
 # TODO: investigate to remove this if possible
 # Fix ambiguous shebangs (necessary for RPM building)
-grep -rnwl './node_modules/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
-grep -rnwl './node_modules/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
+grep -rnwl './node_modules/' './plugins/' -e '#!/usr/bin/env python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/env python/#!\/usr\/bin\/env python3/g' {}
+grep -rnwl './node_modules/' './plugins/' -e '#!/usr/bin/python$' | xargs -I {} sed -i 's/#!\/usr\/bin\/python/#!\/usr\/bin\/python3/g' {}
+
+log
+log "Normalizing file modes"
+log
+
+mkdir -p $out_dir
+cp ${current_path}/VERSION.json .
+normalize-modes .
 
 log
 log "Compressing final package"
 log
 
-mkdir -p $out_dir
-cp ${current_path}/VERSION.json .
 tar -czf $out_dir/wazuh-dashboard-$version-$revision-linux-$architecture.tar.gz *
 
 log Done!

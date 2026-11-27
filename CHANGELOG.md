@@ -8,6 +8,10 @@ All notable changes to the Wazuh app project will be documented in this file.
 
 - Support for Wazuh 4.14.12
 
+### Fixed
+
+- Fixed the file modes of the DEB and RPM packages, which changed with each build [#1789](https://github.com/wazuh/wazuh-dashboard/issues/1789)
+
 ## Wazuh dashboard v4.14.11 - OpenSearch Dashboards 2.19.7 - Revision 02
 
 ### Added
